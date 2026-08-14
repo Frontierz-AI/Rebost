@@ -1,0 +1,194 @@
+<script lang="ts">
+  import { api, formatBytes, formatWhen, piiLabel, type Card, type DocumentMeta } from "$lib/api";
+  import CopyActions from "$lib/components/CopyActions.svelte";
+  import { focusTrap } from "$lib/focus-trap";
+  import { FolderOpen, FileText, RefreshCw, ScanText, X } from "@lucide/svelte";
+
+  let {
+    doc,
+    card,
+    extractedText = $bindable(null),
+    onclose,
+  }: {
+    doc: DocumentMeta;
+    card: Card | null;
+    extractedText: string | null;
+    onclose: () => void;
+  } = $props();
+
+  function statusLabel(document: DocumentMeta): string {
+    if (document.status === "ready") return "Ready to use";
+    if (document.status === "reading") return "Reading…";
+    return document.error ?? "Couldn't read";
+  }
+
+  async function viewExtracted() {
+    extractedText = await api.documentText(doc.shelfId, doc.id);
+  }
+</script>
+
+<div
+  class="fixed inset-0 z-40 flex items-stretch justify-end bg-navy-950/25"
+  role="dialog"
+  aria-modal="true"
+  aria-label={doc.fileName}
+  tabindex="-1"
+  use:focusTrap
+  onclick={(e) => e.target === e.currentTarget && onclose()}
+  onkeydown={(e) => e.key === "Escape" && onclose()}
+>
+  <div class="flex h-full w-[480px] flex-col overflow-hidden bg-white shadow-pop">
+    <div class="border-b border-paper-line bg-paper-soft px-5 py-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex min-w-0 items-start gap-3">
+          <span class="mt-0.5 rounded-lg bg-navy-100 p-2 text-navy-700"><FileText size={16} /></span
+          >
+          <div class="min-w-0">
+            <p class="truncate text-[14.5px] font-semibold text-ink" title={doc.fileName}>
+              {doc.fileName}
+            </p>
+            <p
+              class="mt-0.5 text-[12px] {doc.status === 'error'
+                ? 'text-red-700/80'
+                : doc.status === 'ready'
+                  ? 'text-emerald-700'
+                  : 'text-amber-550'}"
+            >
+              {statusLabel(doc)}
+            </p>
+          </div>
+        </div>
+        <button type="button" class="btn-ghost !p-1.5" aria-label="Close" onclick={onclose}
+          ><X size={15} /></button
+        >
+      </div>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+      {#if extractedText !== null}
+        <div class="mb-3 flex items-center justify-between">
+          <span class="label">Extracted text, as Rebost searches it</span>
+          <button
+            type="button"
+            class="btn-ghost !py-1 !text-[11.5px]"
+            onclick={() => (extractedText = null)}>Back to details</button
+          >
+        </div>
+        <pre
+          class="rounded-lg border border-paper-line bg-paper-soft p-3 text-[11.5px] leading-relaxed whitespace-pre-wrap">{extractedText}</pre>
+      {:else}
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[12.5px]">
+          <div>
+            <dt class="label">Source</dt>
+            <dd class="mt-0.5 text-ink">
+              {doc.sourceType === "imported" ? "Imported" : `Linked · ${doc.sourceLabel}`}
+            </dd>
+          </div>
+          <div>
+            <dt class="label">Size</dt>
+            <dd class="mt-0.5 text-ink">{formatBytes(doc.sizeBytes)}</dd>
+          </div>
+          {#if doc.pages}<div>
+              <dt class="label">Pages</dt>
+              <dd class="mt-0.5 text-ink">{doc.pages}</dd>
+            </div>{/if}
+          <div>
+            <dt class="label">Searchable passages</dt>
+            <dd class="mt-0.5 text-ink">{doc.passageCount}</dd>
+          </div>
+          {#if card?.language}<div>
+              <dt class="label">Language</dt>
+              <dd class="mt-0.5 text-ink uppercase">{card.language}</dd>
+            </div>{/if}
+          <div>
+            <dt class="label">Updated</dt>
+            <dd class="mt-0.5 text-ink">{formatWhen(doc.updatedAt)}</dd>
+          </div>
+        </dl>
+
+        {#if doc.ocr}
+          <p
+            class="mt-3 flex items-center gap-2 rounded-lg bg-navy-50 px-3 py-2 text-[12px] text-navy-800"
+          >
+            <ScanText size={13.5} /> This file had no text layer, so Rebost read it with local OCR.
+          </p>
+        {/if}
+
+        {#if card}
+          {#if card.summary}
+            <h3 class="label mt-5 mb-1.5">Summary</h3>
+            <p class="text-[13px] leading-relaxed text-ink">{card.summary}</p>
+          {/if}
+          {#if card.keywords.length > 0}
+            <h3 class="label mt-4 mb-1.5">Keywords</h3>
+            <div class="flex flex-wrap gap-1.5">
+              {#each card.keywords as keyword}
+                <span class="chip !cursor-default bg-paper-soft text-ink-soft">{keyword}</span>
+              {/each}
+            </div>
+          {/if}
+          {#if card.outline.length > 0}
+            <h3 class="label mt-4 mb-1.5">Outline</h3>
+            <ul class="space-y-1">
+              {#each card.outline.slice(0, 14) as entry}
+                <li class="flex items-baseline justify-between gap-3 text-[12.5px]">
+                  <span class="truncate text-ink">{entry.title}</span>
+                  {#if entry.page}<span class="shrink-0 text-ink-faint">p. {entry.page}</span>{/if}
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        {/if}
+
+        {#if doc.piiTotal > 0}
+          <h3 class="label mt-5 mb-1.5">Personal information</h3>
+          <div class="rounded-lg border border-paper-line bg-paper-soft/60 px-3.5 py-2.5">
+            {#each Object.entries(doc.piiCategories ?? {}) as [category, count]}
+              <p class="flex justify-between py-0.5 text-[12.5px]">
+                <span class="text-ink-soft">{piiLabel(category, count)}</span>
+                <span class="font-semibold tabular-nums text-ink">{count}</span>
+              </p>
+            {/each}
+          </div>
+        {:else if doc.status === "ready"}
+          <p class="mt-5 text-[12px] text-ink-faint">No personal information detected.</p>
+        {/if}
+      {/if}
+    </div>
+
+    <div class="flex items-center gap-2 border-t border-paper-line px-4 py-3">
+      <button
+        type="button"
+        class="btn-outline !text-[12px]"
+        onclick={() => api.openOriginal(doc.path)}
+      >
+        <FileText size={13} /> Open original
+      </button>
+      <button
+        type="button"
+        class="btn-outline !text-[12px]"
+        onclick={() => api.revealItem(doc.path)}
+      >
+        <FolderOpen size={13} /> Show in folder
+      </button>
+      {#if doc.status === "ready" && extractedText === null}
+        <button type="button" class="btn-outline !text-[12px]" onclick={viewExtracted}>
+          <ScanText size={13} /> View extracted text
+        </button>
+      {/if}
+      {#if doc.status === "error"}
+        <button
+          type="button"
+          class="btn-amber !text-[12px]"
+          onclick={() => api.documentReprocess(doc.shelfId, doc.id).then(() => onclose())}
+        >
+          <RefreshCw size={13} /> Try again
+        </button>
+      {/if}
+      <span class="flex-1"></span>
+      {#if extractedText !== null}
+        <CopyActions text={extractedText} />
+      {/if}
+    </div>
+  </div>
+</div>

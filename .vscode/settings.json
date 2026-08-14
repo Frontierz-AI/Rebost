@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.linkedProjects": ["src-tauri/Cargo.toml"],
+  "rust-analyzer.cargo.targetDir": true,
+  "npm.packageManager": "pnpm"
+}

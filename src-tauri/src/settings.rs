@@ -1,0 +1,116 @@
+//! `settings.json` — the small amount of durable configuration.
+
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Settings {
+    /// Standing instructions, sent with every Chat message and Recipe run.
+    /// Never mixed with retrieved documents.
+    #[serde(alias = "house_rules")]
+    pub house_rules: String,
+    /// Root folder where managed Shelf folders are created.
+    /// `None` → `~/Documents/Rebost`.
+    #[serde(alias = "shelf_root")]
+    pub shelf_root: Option<PathBuf>,
+    /// The currently installed AI model (one at a time).
+    #[serde(alias = "active_model")]
+    pub active_model: Option<ActiveModel>,
+    /// Measured prompt-processing budget: how many characters of local
+    /// context this machine can comfortably feed to the model.
+    #[serde(alias = "context_budget_chars")]
+    pub context_budget_chars: Option<usize>,
+    /// Result of the installation benchmark (kept for diagnostics).
+    pub benchmark: Option<BenchmarkResult>,
+    /// First-run onboarding finished.
+    #[serde(alias = "onboarding_done")]
+    pub onboarding_done: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActiveModel {
+    /// GGUF file name inside `<app-data>/models/`.
+    pub file: String,
+    /// User-facing model name, e.g. "Gemma 4 12B".
+    pub name: String,
+    /// Where it came from ("huggingface" | "ollama").
+    pub source: String,
+    /// Repo or library reference, for Settings display.
+    pub reference: String,
+    /// License identifier shown before download.
+    pub license: Option<String>,
+    /// Approximate download size in bytes.
+    #[serde(alias = "size_bytes")]
+    pub size_bytes: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BenchmarkResult {
+    /// Prompt tokens processed per second, as measured on this machine.
+    #[serde(alias = "prompt_tokens_per_second")]
+    pub prompt_tokens_per_second: f64,
+    /// Generation tokens per second.
+    #[serde(alias = "generation_tokens_per_second")]
+    pub generation_tokens_per_second: f64,
+    /// When the benchmark ran (RFC 3339).
+    #[serde(alias = "measured_at")]
+    pub measured_at: String,
+    /// Model file that was measured.
+    #[serde(alias = "model_file")]
+    pub model_file: String,
+}
+
+impl Settings {
+    pub fn load(path: &Path) -> Self {
+        match std::fs::read_to_string(path) {
+            Ok(text) => serde_json::from_str(&text).unwrap_or_default(),
+            Err(_) => Self::default(),
+        }
+    }
+
+    pub fn save(&self, path: &Path) -> anyhow::Result<()> {
+        crate::paths::atomic_write(path, serde_json::to_string_pretty(self)?)?;
+        Ok(())
+    }
+
+    pub fn shelf_root(&self) -> PathBuf {
+        self.shelf_root
+            .clone()
+            .unwrap_or_else(crate::paths::Paths::default_shelf_root)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn corrupt_json_yields_defaults() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, "{not json").unwrap();
+        let settings = Settings::load(&path);
+        assert!(!settings.onboarding_done);
+        assert!(settings.house_rules.is_empty());
+    }
+
+    #[test]
+    fn roundtrip_and_snake_case_alias() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(
+            &path,
+            r#"{"house_rules":"Answer in Catalan.","onboarding_done":true}"#,
+        )
+        .unwrap();
+        let loaded = Settings::load(&path);
+        assert_eq!(loaded.house_rules, "Answer in Catalan.");
+        assert!(loaded.onboarding_done);
+        loaded.save(&path).unwrap();
+        let again = Settings::load(&path);
+        assert_eq!(again.house_rules, "Answer in Catalan.");
+    }
+}

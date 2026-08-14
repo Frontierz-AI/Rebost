@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/fetch-engine.mjs --dry-run
+      - run: pnpm check
+      - run: pnpm format:check
+      - run: pnpm test
+      - run: pnpm audit --prod
+
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    env:
+      # xberg-tesseract keeps leptonica/tesseract sources here. rust-cache
+      # deletes files under target/ when saving, which left empty dirs that
+      # the crate then treated as a complete source tree.
+      TESSERACT_RS_CACHE_DIR: ${{ github.workspace }}/.xberg-tesseract-cache
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.97.1
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-directories: ${{ github.workspace }}/.xberg-tesseract-cache
+      - name: Reset incomplete Tesseract sources
+        run: |
+          set -euo pipefail
+          cache="${TESSERACT_RS_CACHE_DIR}"
+          if [[ -d "${cache}/third_party/leptonica" && ! -f "${cache}/third_party/leptonica/CMakeLists.txt" ]]; then
+            echo "Incomplete leptonica source cache; removing ${cache}"
+            rm -rf "${cache}"
+          fi
+          rm -rf src-tauri/target/xberg-tesseract-cache
+      - name: Verify llama.cpp pins still exist
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib, re, subprocess, sys
+          text = pathlib.Path("src-tauri/src/engine/pin.rs").read_text()
+          urls = sorted(set(re.findall(
+              r'url: "(https://github.com/ggml-org/llama.cpp/releases/download/[^"]+\.(?:tar\.gz|zip))"',
+              text,
+          )))
+          if not urls:
+              sys.exit("no engine pin URLs in pin.rs")
+          for url in urls:
+              result = subprocess.run(
+                  ["curl", "-sI", "-o", "/dev/null", "-w", "%{http_code}", "-L", url],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              )
+              code = result.stdout.strip()
+              print(f"{code} {url}")
+              if code != "200":
+                  sys.exit(f"pin URL returned {code}: {url}")
+          PY
+      - run: cargo fmt --check
+        working-directory: src-tauri
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+      - run: cargo test
+        working-directory: src-tauri
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: src-tauri/Cargo.toml
+          command: check

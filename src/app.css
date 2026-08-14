@@ -1,0 +1,265 @@
+@import "tailwindcss";
+
+/*
+  Rebost design tokens — derived from the app icon:
+  deep navy cupboard, warm paper white, amber accents.
+*/
+@theme {
+  --color-navy-50: #f2f5fb;
+  --color-navy-100: #e3e9f6;
+  --color-navy-200: #c3cfe9;
+  --color-navy-300: #97abd7;
+  --color-navy-400: #6482c1;
+  --color-navy-500: #4263ab;
+  --color-navy-600: #324d90;
+  --color-navy-700: #2b3f75;
+  --color-navy-800: #273762;
+  --color-navy-900: #1d2949;
+  --color-navy-950: #131b31;
+
+  --color-amber-350: #e8c078;
+  --color-amber-450: #d9a94a;
+  --color-amber-550: #c08f2f;
+
+  --color-paper: #faf9f6;
+  --color-paper-soft: #f3f1ec;
+  --color-paper-line: #e7e3da;
+
+  --color-ink: #22283b;
+  --color-ink-soft: #5b6172;
+  --color-ink-faint: #8b90a0;
+
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --shadow-card: 0 1px 2px rgb(29 41 73 / 0.06), 0 4px 16px rgb(29 41 73 / 0.05);
+  --shadow-pop: 0 2px 6px rgb(29 41 73 / 0.12), 0 12px 32px rgb(29 41 73 / 0.14);
+
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+
+  /* Snappy by default — long transitions read as lag. */
+  --default-transition-duration: 100ms;
+}
+
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+#app {
+  height: 100%;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-amber-450) 35%, transparent);
+}
+
+@layer components {
+  .btn-primary,
+  .btn-amber,
+  .btn-ghost,
+  .btn-outline,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium cursor-default select-none disabled:opacity-45;
+  }
+  .btn-primary {
+    @apply bg-navy-900 text-white hover:bg-navy-800 disabled:hover:bg-navy-900;
+  }
+  .btn-amber {
+    @apply bg-amber-450 text-navy-950 hover:bg-amber-350 disabled:hover:bg-amber-450;
+  }
+  .btn-ghost {
+    @apply text-ink-soft hover:bg-navy-900/6 hover:text-ink;
+  }
+  .btn-outline {
+    @apply border border-paper-line bg-white text-ink hover:border-navy-300 hover:bg-navy-50/40;
+  }
+  .btn-danger {
+    @apply bg-red-700 text-white hover:bg-red-800 disabled:hover:bg-red-700;
+  }
+  .input {
+    @apply w-full rounded-lg border border-paper-line bg-white px-3 py-2 text-[13.5px] text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-navy-400 focus:ring-2 focus:ring-navy-100;
+  }
+  .card {
+    @apply rounded-xl border border-paper-line bg-white shadow-card;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium cursor-default select-none;
+  }
+  .label {
+    @apply text-[11px] font-semibold tracking-wide text-ink-faint uppercase;
+  }
+}
+
+/* Streaming caret */
+.stream-caret::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--color-amber-450);
+  border-radius: 2px;
+  animation: caret-pulse 1s ease-in-out infinite;
+}
+@keyframes caret-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Markdown body inside chat bubbles and recipe results */
+.md-body {
+  line-height: 1.62;
+  font-size: 13.8px;
+  user-select: text;
+  cursor: text;
+}
+.md-body > *:first-child {
+  margin-top: 0;
+}
+.md-body > *:last-child {
+  margin-bottom: 0;
+}
+.md-body p {
+  margin: 0.55em 0;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3 {
+  font-weight: 650;
+  color: var(--color-navy-900);
+  margin: 0.9em 0 0.35em;
+}
+.md-body h1 {
+  font-size: 1.2em;
+}
+.md-body h2 {
+  font-size: 1.1em;
+}
+.md-body h3 {
+  font-size: 1.02em;
+}
+.md-body ul,
+.md-body ol {
+  padding-left: 1.35em;
+  margin: 0.5em 0;
+}
+.md-body ul {
+  list-style: disc;
+}
+.md-body ol {
+  list-style: decimal;
+}
+.md-body li {
+  margin: 0.22em 0;
+}
+.md-body code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--color-paper-soft);
+  border: 1px solid var(--color-paper-line);
+  border-radius: 5px;
+  padding: 0.08em 0.35em;
+}
+.md-body pre {
+  background: var(--color-navy-950);
+  color: #e8ebf4;
+  border-radius: 9px;
+  padding: 0.8em 1em;
+  overflow-x: auto;
+  margin: 0.7em 0;
+}
+.md-body pre code {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 0.85em;
+}
+.md-body table {
+  border-collapse: collapse;
+  margin: 0.7em 0;
+  font-size: 0.95em;
+}
+.md-body th,
+.md-body td {
+  border: 1px solid var(--color-paper-line);
+  padding: 0.4em 0.7em;
+  text-align: left;
+}
+.md-body th {
+  background: var(--color-paper-soft);
+  font-weight: 600;
+}
+.md-body blockquote {
+  border-left: 3px solid var(--color-amber-450);
+  margin: 0.6em 0;
+  padding: 0.1em 0 0.1em 0.9em;
+  color: var(--color-ink-soft);
+}
+.md-body a {
+  color: var(--color-navy-500);
+  text-decoration: underline;
+}
+.md-body .cite-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 6px;
+  margin: 0 2px;
+  vertical-align: 1px;
+  border-radius: 6px;
+  cursor: default;
+  user-select: none;
+  background: var(--color-navy-100);
+  color: var(--color-navy-700);
+  border: 1px solid var(--color-navy-200);
+}
+.md-body .cite-chip:hover {
+  background: var(--color-amber-350);
+  border-color: var(--color-amber-450);
+  color: var(--color-navy-950);
+}
+
+/* Scrollbars that fit the paper/navy theme */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgb(29 41 73 / 0.16);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(29 41 73 / 0.3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
