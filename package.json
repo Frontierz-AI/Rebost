@@ -1,0 +1,71 @@
+{
+  "name": "rebost",
+  "private": true,
+  "version": "0.6.0",
+  "license": "MIT",
+  "description": "Private AI that works with your files.",
+  "author": {
+    "name": "Frontierz",
+    "url": "https://github.com/Frontierz-AI"
+  },
+  "contributors": [
+    {
+      "name": "Pau Garcia-Mila",
+      "email": "pau@frontierz.com",
+      "url": "https://github.com/paugm"
+    }
+  ],
+  "homepage": "https://github.com/Frontierz-AI/Rebost#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Frontierz-AI/Rebost.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Frontierz-AI/Rebost/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "format": "prettier --write \"src/**/*.{ts,svelte,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,svelte,css}\"",
+    "lint": "oxlint src",
+    "fetch-engine": "node scripts/fetch-engine.mjs",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.31.0",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-os": "^2.3.2",
+    "dompurify": "^3.4.13",
+    "marked": "^18.0.9",
+    "svelte-sonner": "^1.1.1"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tauri-apps/cli": "^2.11.4",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "jsdom": "^30.0.1",
+    "oxlint": "^1.78.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-svelte": "^4.1.1",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "svelte": "^5.56.9",
+    "svelte-check": "^4.7.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

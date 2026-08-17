@@ -1,0 +1,815 @@
+//! Conversations — append-oriented JSONL per thread (inspectable,
+//! recoverable, easy to re-index) plus a small threads.json index.
+
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::path::Path;
+
+use crate::limits::{clip_chars, THINKING_MAX_CHARS};
+use crate::paths::Paths;
+use crate::types::SourcePassage;
+
+/// Messages shown when a conversation opens, and each Read more click.
+pub const THREAD_PAGE_SIZE: usize = 50;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThreadMeta {
+    pub id: String,
+    pub title: String,
+    /// Shelf remembered for this conversation (None = No Shelf).
+    #[serde(default)]
+    pub shelf_id: Option<String>,
+    /// Hidden upload Shelf for this conversation, if files were attached.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub upload_shelf_id: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    #[serde(default)]
+    pub message_count: u32,
+}
+
+/// One look-through step before the answer (open a file, search, and so on).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityStep {
+    pub stage: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+}
+
+/// Keep the log short enough to reread; drop the oldest when it runs long.
+pub const ACTIVITY_MAX_STEPS: usize = 24;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StoredMessage {
+    pub id: String,
+    /// "user" | "assistant"
+    pub role: String,
+    pub text: String,
+    /// Reasoning trace, when the model produced one (shown collapsed).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub thinking: Option<String>,
+    /// What was looked through before the answer, when anything was.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub activity: Vec<ActivityStep>,
+    pub ts: String,
+    #[serde(default)]
+    pub shelf_id: Option<String>,
+    #[serde(default)]
+    pub sources: Vec<SourcePassage>,
+    /// "done" | "stopped" | "error"
+    #[serde(default = "default_status")]
+    pub status: String,
+}
+
+fn default_status() -> String {
+    "done".into()
+}
+
+/// Latest messages in a conversation, plus whether older ones exist.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThreadPage {
+    pub messages: Vec<StoredMessage>,
+    pub has_older: bool,
+}
+
+/// Drop passage bodies, clip thinking, and cap the look-through log before a
+/// message is stored or sent to the UI.
+pub(crate) fn compact_message(message: &mut StoredMessage) {
+    for source in &mut message.sources {
+        source.body.clear();
+    }
+    if let Some(thinking) = &mut message.thinking {
+        *thinking = clip_chars(thinking, THINKING_MAX_CHARS);
+        if thinking.is_empty() {
+            message.thinking = None;
+        }
+    }
+    if message.activity.len() > ACTIVITY_MAX_STEPS {
+        let skip = message.activity.len() - ACTIVITY_MAX_STEPS;
+        message.activity.drain(..skip);
+    }
+}
+
+/// Record a status step. Skips the generic thinking beat; opening the same
+/// file again is kept so a long file shows each window.
+pub(crate) fn push_activity(log: &mut Vec<ActivityStep>, stage: &str, file: Option<String>) {
+    if stage.is_empty() || stage == "thinking" {
+        return;
+    }
+    let file = file.filter(|name| !name.is_empty());
+    let repeatable = stage == "opening" || stage == "around";
+    if !repeatable {
+        if let Some(last) = log.last() {
+            if last.stage == stage && last.file == file {
+                return;
+            }
+        }
+    }
+    if log.len() >= ACTIVITY_MAX_STEPS {
+        log.remove(0);
+    }
+    log.push(ActivityStep {
+        stage: stage.to_string(),
+        file,
+    });
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct ThreadsFile {
+    threads: Vec<ThreadMeta>,
+}
+
+pub struct Conversations;
+
+impl Conversations {
+    pub fn list(paths: &Paths) -> Vec<ThreadMeta> {
+        let mut threads = read_threads(paths).threads;
+        threads.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        threads
+    }
+
+    pub fn get(paths: &Paths, thread_id: &str) -> Option<ThreadMeta> {
+        read_threads(paths)
+            .threads
+            .into_iter()
+            .find(|t| t.id == thread_id)
+    }
+
+    /// True when another conversation already has messages `search_chats` could return.
+    pub fn has_other_messages(paths: &Paths, thread_id: &str) -> bool {
+        read_threads(paths)
+            .threads
+            .iter()
+            .any(|thread| thread.id != thread_id && thread.message_count > 0)
+    }
+
+    pub fn create(paths: &Paths, shelf_id: Option<String>) -> Result<ThreadMeta> {
+        let now = chrono::Utc::now().to_rfc3339();
+        let meta = ThreadMeta {
+            id: crate::ids::thread_id(),
+            title: "New conversation".to_string(),
+            shelf_id,
+            upload_shelf_id: None,
+            created_at: now.clone(),
+            updated_at: now,
+            message_count: 0,
+        };
+        let mut file = read_threads(paths);
+        file.threads.push(meta.clone());
+        write_threads(paths, &file)?;
+        Ok(meta)
+    }
+
+    pub fn set_shelf(paths: &Paths, thread_id: &str, shelf_id: Option<String>) -> Result<()> {
+        let mut file = read_threads(paths);
+        if let Some(thread) = file.threads.iter_mut().find(|t| t.id == thread_id) {
+            thread.shelf_id = shelf_id;
+        }
+        write_threads(paths, &file)
+    }
+
+    /// Remember the hidden upload Shelf. Does not replace the library Shelf.
+    pub fn set_upload_shelf(paths: &Paths, thread_id: &str, shelf_id: String) -> Result<()> {
+        let mut file = read_threads(paths);
+        let thread = file
+            .threads
+            .iter_mut()
+            .find(|t| t.id == thread_id)
+            .ok_or_else(|| anyhow::anyhow!("thread not found"))?;
+        thread.upload_shelf_id = Some(shelf_id);
+        thread.updated_at = chrono::Utc::now().to_rfc3339();
+        write_threads(paths, &file)
+    }
+
+    pub fn rename(paths: &Paths, thread_id: &str, title: &str) -> Result<()> {
+        let title = clean_title(title)?;
+        let mut file = read_threads(paths);
+        let thread = file
+            .threads
+            .iter_mut()
+            .find(|t| t.id == thread_id)
+            .ok_or_else(|| anyhow::anyhow!("thread not found"))?;
+        thread.title = title;
+        thread.updated_at = chrono::Utc::now().to_rfc3339();
+        write_threads(paths, &file)
+    }
+
+    pub fn delete(paths: &Paths, thread_id: &str) -> Result<()> {
+        let mut file = read_threads(paths);
+        file.threads.retain(|t| t.id != thread_id);
+        write_threads(paths, &file)?;
+        let _ = std::fs::remove_file(paths.thread_path(thread_id));
+        Ok(())
+    }
+
+    /// Append a message and refresh thread metadata. An untitled thread
+    /// ("New conversation") takes its title from the first user message.
+    pub fn append(paths: &Paths, thread_id: &str, message: &StoredMessage) -> Result<()> {
+        let path = paths.thread_path(thread_id);
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        let mut file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)
+            .with_context(|| format!("open {}", path.display()))?;
+        let mut stored = message.clone();
+        compact_message(&mut stored);
+        writeln!(file, "{}", serde_json::to_string(&stored)?)?;
+
+        let mut threads = read_threads(paths);
+        if let Some(thread) = threads.threads.iter_mut().find(|t| t.id == thread_id) {
+            thread.updated_at = chrono::Utc::now().to_rfc3339();
+            thread.message_count += 1;
+            if thread.message_count == 1
+                && thread.title == "New conversation"
+                && message.role == "user"
+            {
+                thread.title = title_from(&message.text);
+            }
+            if message.shelf_id.is_some() {
+                thread.shelf_id = message.shelf_id.clone();
+            }
+        }
+        write_threads(paths, &threads)?;
+        Ok(())
+    }
+
+    pub fn messages(paths: &Paths, thread_id: &str) -> Vec<StoredMessage> {
+        let Ok(text) = std::fs::read_to_string(paths.thread_path(thread_id)) else {
+            return Vec::new();
+        };
+        text.lines()
+            .filter_map(|line| serde_json::from_str::<StoredMessage>(line).ok())
+            .map(|mut message| {
+                compact_message(&mut message);
+                message
+            })
+            .collect()
+    }
+
+    /// Newest `limit` messages, or the `limit` immediately older than `before_id`.
+    pub fn page(
+        paths: &Paths,
+        thread_id: &str,
+        before_id: Option<&str>,
+        limit: usize,
+    ) -> ThreadPage {
+        if limit == 0 {
+            return ThreadPage {
+                messages: Vec::new(),
+                has_older: false,
+            };
+        }
+        let mut newest_first = Vec::new();
+        let mut skipping = before_id.is_some();
+        let mut found_before = before_id.is_none();
+        let mut has_older = false;
+        for_each_jsonl_rev(&paths.thread_path(thread_id), |message| {
+            if skipping {
+                if before_id == Some(message.id.as_str()) {
+                    skipping = false;
+                    found_before = true;
+                }
+                return true;
+            }
+            if newest_first.len() >= limit {
+                has_older = true;
+                return false;
+            }
+            newest_first.push(message);
+            true
+        });
+        if before_id.is_some() && !found_before {
+            return ThreadPage {
+                messages: Vec::new(),
+                has_older: false,
+            };
+        }
+        for message in &mut newest_first {
+            compact_message(message);
+        }
+        newest_first.reverse();
+        ThreadPage {
+            messages: newest_first,
+            has_older,
+        }
+    }
+
+    /// Recent turns for the model — newest last, bounded in size.
+    pub fn recent_history(
+        paths: &Paths,
+        thread_id: &str,
+        max_messages: usize,
+        max_chars: usize,
+    ) -> Vec<StoredMessage> {
+        let mut selected: Vec<StoredMessage> = Vec::new();
+        let mut used = 0usize;
+        for_each_jsonl_rev(&paths.thread_path(thread_id), |message| {
+            if message.status == "error" {
+                return true;
+            }
+            let cost = message.text.chars().count().min(1600);
+            if selected.len() >= max_messages || used + cost > max_chars {
+                return false;
+            }
+            used += cost;
+            selected.push(message);
+            true
+        });
+        selected.reverse();
+        selected
+    }
+}
+
+pub fn thread_markdown(title: &str, messages: &[StoredMessage]) -> String {
+    let mut out = format!("# {}\n", title.trim());
+    for message in messages {
+        let heading = if message.role == "user" {
+            "You"
+        } else {
+            "Rebost"
+        };
+        out.push_str(&format!("\n**{heading}**\n\n{}\n", message.text.trim()));
+        if message.role != "user" && !message.sources.is_empty() {
+            out.push('\n');
+            for (index, source) in message.sources.iter().enumerate() {
+                if index > 0 {
+                    out.push_str(", ");
+                }
+                out.push_str(&source.sid);
+                out.push(' ');
+                out.push_str(&source.title);
+                if let Some(page) = source.page_start {
+                    out.push_str(&format!(" (p. {page})"));
+                }
+            }
+            out.push('\n');
+        }
+    }
+    out
+}
+
+pub fn export_file_stem(title: &str) -> String {
+    let clipped: String = title.chars().take(60).collect();
+    let cleaned = clipped
+        .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "-")
+        .trim()
+        .trim_matches('.')
+        .to_string();
+    if cleaned.is_empty() {
+        "conversation".into()
+    } else {
+        cleaned
+    }
+}
+
+fn clean_title(title: &str) -> Result<String> {
+    let cleaned = title.split_whitespace().collect::<Vec<_>>().join(" ");
+    if cleaned.is_empty() {
+        anyhow::bail!("Give this conversation a name.");
+    }
+    Ok(cleaned.chars().take(80).collect())
+}
+
+fn for_each_jsonl_rev(path: &Path, mut visit: impl FnMut(StoredMessage) -> bool) {
+    let Ok(mut file) = File::open(path) else {
+        return;
+    };
+    let Ok(mut pos) = file.seek(SeekFrom::End(0)) else {
+        return;
+    };
+    let mut leftover = Vec::new();
+    let mut buf = vec![0u8; 64 * 1024];
+    while pos > 0 {
+        let size = (buf.len() as u64).min(pos);
+        pos -= size;
+        if file.seek(SeekFrom::Start(pos)).is_err() {
+            return;
+        }
+        let n = size as usize;
+        if file.read_exact(&mut buf[..n]).is_err() {
+            return;
+        }
+        let mut combined = Vec::with_capacity(n + leftover.len());
+        combined.extend_from_slice(&buf[..n]);
+        combined.extend_from_slice(&leftover);
+        if let Some(first_nl) = combined.iter().position(|&b| b == b'\n') {
+            leftover = combined[..first_nl].to_vec();
+            let rest = &combined[first_nl + 1..];
+            for line in rest.split(|b| *b == b'\n').rev() {
+                if line.is_empty() {
+                    continue;
+                }
+                if let Ok(message) = serde_json::from_slice::<StoredMessage>(line) {
+                    if !visit(message) {
+                        return;
+                    }
+                }
+            }
+        } else {
+            leftover = combined;
+        }
+    }
+    if leftover.is_empty() {
+        return;
+    }
+    if let Ok(message) = serde_json::from_slice::<StoredMessage>(&leftover) {
+        visit(message);
+    }
+}
+
+fn title_from(text: &str) -> String {
+    let clean = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let mut title: String = clean.chars().take(48).collect();
+    if clean.chars().count() > 48 {
+        // Cut at a word boundary.
+        if let Some(pos) = title.rfind(' ') {
+            title.truncate(pos);
+        }
+        title.push('…');
+    }
+    if title.is_empty() {
+        "New conversation".to_string()
+    } else {
+        title
+    }
+}
+
+fn read_threads(paths: &Paths) -> ThreadsFile {
+    read_json(&paths.threads_index()).unwrap_or_default()
+}
+
+fn write_threads(paths: &Paths, file: &ThreadsFile) -> Result<()> {
+    write_json(&paths.threads_index(), file)
+}
+
+fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
+    let text = std::fs::read_to_string(path).ok()?;
+    serde_json::from_str(&text).ok()
+}
+
+fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
+    crate::paths::atomic_write(path, serde_json::to_string_pretty(value)?)?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn threads_roundtrip_and_title() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+
+        let thread = Conversations::create(&paths, None).unwrap();
+        let message = StoredMessage {
+            id: crate::ids::message_id(),
+            role: "user".into(),
+            text: "Explain EBITDA in simple terms for our monthly board meeting".into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        };
+        Conversations::append(&paths, &thread.id, &message).unwrap();
+
+        let listed = Conversations::list(&paths);
+        assert_eq!(listed.len(), 1);
+        assert!(listed[0].title.starts_with("Explain EBITDA"));
+        assert_eq!(listed[0].message_count, 1);
+
+        let messages = Conversations::messages(&paths, &thread.id);
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].text, message.text);
+        assert!(!Conversations::has_other_messages(&paths, &thread.id));
+
+        let other = Conversations::create(&paths, None).unwrap();
+        assert!(Conversations::has_other_messages(&paths, &other.id));
+        assert!(!Conversations::has_other_messages(&paths, &thread.id));
+    }
+
+    #[test]
+    fn set_shelf_does_not_clear_upload_shelf() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, None).unwrap();
+        Conversations::set_upload_shelf(&paths, &thread.id, "s_up".into()).unwrap();
+        Conversations::set_shelf(&paths, &thread.id, None).unwrap();
+        let loaded = Conversations::get(&paths, &thread.id).unwrap();
+        assert_eq!(loaded.shelf_id, None);
+        assert_eq!(loaded.upload_shelf_id.as_deref(), Some("s_up"));
+    }
+
+    #[test]
+    fn set_upload_shelf_keeps_the_library_shelf() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, Some("s_lib".into())).unwrap();
+        Conversations::set_upload_shelf(&paths, &thread.id, "s_up".into()).unwrap();
+        let loaded = Conversations::get(&paths, &thread.id).unwrap();
+        assert_eq!(loaded.shelf_id.as_deref(), Some("s_lib"));
+        assert_eq!(loaded.upload_shelf_id.as_deref(), Some("s_up"));
+    }
+
+    #[test]
+    fn rename_keeps_the_name_after_later_messages() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+
+        let thread = Conversations::create(&paths, None).unwrap();
+        Conversations::rename(&paths, &thread.id, "  Weekly notes  ").unwrap();
+        let message = StoredMessage {
+            id: crate::ids::message_id(),
+            role: "user".into(),
+            text: "What changed this week?".into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        };
+        Conversations::append(&paths, &thread.id, &message).unwrap();
+        assert_eq!(Conversations::list(&paths)[0].title, "Weekly notes");
+    }
+
+    #[test]
+    fn rename_to_new_conversation_is_kept_after_later_messages() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+
+        let thread = Conversations::create(&paths, None).unwrap();
+        let first = StoredMessage {
+            id: crate::ids::message_id(),
+            role: "user".into(),
+            text: "First question about the lease".into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        };
+        Conversations::append(&paths, &thread.id, &first).unwrap();
+        Conversations::rename(&paths, &thread.id, "New conversation").unwrap();
+        let second = StoredMessage {
+            id: crate::ids::message_id(),
+            role: "user".into(),
+            text: "And the dates?".into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        };
+        Conversations::append(&paths, &thread.id, &second).unwrap();
+        assert_eq!(Conversations::list(&paths)[0].title, "New conversation");
+    }
+
+    #[test]
+    fn thread_markdown_includes_answers_and_citation_titles() {
+        let md = thread_markdown(
+            "Lease notes",
+            &[StoredMessage {
+                id: "m1".into(),
+                role: "assistant".into(),
+                text: "Notice is 90 days. [S1]".into(),
+                thinking: Some("scratch".into()),
+                activity: Vec::new(),
+                ts: String::new(),
+                shelf_id: None,
+                sources: vec![crate::types::SourcePassage {
+                    sid: "S1".into(),
+                    document_id: "d1".into(),
+                    shelf_id: "s1".into(),
+                    title: "Lease.pdf".into(),
+                    section: None,
+                    page_start: Some(4),
+                    page_end: None,
+                    body: String::new(),
+                    path: String::new(),
+                    score: 1.0,
+                }],
+                status: "done".into(),
+            }],
+        );
+        assert!(md.starts_with("# Lease notes"));
+        assert!(md.contains("**Rebost**"));
+        assert!(md.contains("S1 Lease.pdf (p. 4)"));
+        assert!(!md.contains("scratch"));
+    }
+
+    #[test]
+    fn export_file_stem_strips_path_characters() {
+        assert_eq!(export_file_stem("a/b:c"), "a-b-c");
+        assert_eq!(export_file_stem("   "), "conversation");
+    }
+
+    fn stored(id: &str, text: &str) -> StoredMessage {
+        StoredMessage {
+            id: id.into(),
+            role: "user".into(),
+            text: text.into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        }
+    }
+
+    #[test]
+    fn append_omits_source_bodies_and_clips_thinking() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, None).unwrap();
+        let thinking: String = "á".repeat(THINKING_MAX_CHARS + 40);
+        let mut message = stored("m_src", "See [S1].");
+        message.role = "assistant".into();
+        message.thinking = Some(thinking);
+        message.sources = vec![crate::types::SourcePassage {
+            sid: "S1".into(),
+            document_id: "d1".into(),
+            shelf_id: "s1".into(),
+            title: "Lease.pdf".into(),
+            section: None,
+            page_start: Some(4),
+            page_end: None,
+            body: "the whole stuffed file ".repeat(200),
+            path: "/tmp/lease.pdf".into(),
+            score: 1.0,
+        }];
+        Conversations::append(&paths, &thread.id, &message).unwrap();
+
+        let raw = std::fs::read_to_string(paths.thread_path(&thread.id)).unwrap();
+        assert!(!raw.contains("the whole stuffed file"));
+        let parsed: StoredMessage = serde_json::from_str(raw.trim()).unwrap();
+        assert!(parsed.sources[0].body.is_empty());
+        assert_eq!(
+            parsed.thinking.as_ref().unwrap().chars().count(),
+            THINKING_MAX_CHARS
+        );
+    }
+
+    #[test]
+    fn page_returns_the_latest_messages_then_older() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, None).unwrap();
+        for i in 0..8 {
+            Conversations::append(
+                &paths,
+                &thread.id,
+                &stored(&format!("m{i}"), &format!("t{i}")),
+            )
+            .unwrap();
+        }
+
+        let first = Conversations::page(&paths, &thread.id, None, 3);
+        assert_eq!(
+            first
+                .messages
+                .iter()
+                .map(|m| m.id.as_str())
+                .collect::<Vec<_>>(),
+            ["m5", "m6", "m7"]
+        );
+        assert!(first.has_older);
+
+        let older = Conversations::page(&paths, &thread.id, Some("m5"), 3);
+        assert_eq!(
+            older
+                .messages
+                .iter()
+                .map(|m| m.id.as_str())
+                .collect::<Vec<_>>(),
+            ["m2", "m3", "m4"]
+        );
+        assert!(older.has_older);
+
+        let oldest = Conversations::page(&paths, &thread.id, Some("m2"), 3);
+        assert_eq!(
+            oldest
+                .messages
+                .iter()
+                .map(|m| m.id.as_str())
+                .collect::<Vec<_>>(),
+            ["m0", "m1"]
+        );
+        assert!(!oldest.has_older);
+    }
+
+    #[test]
+    fn page_reads_across_a_file_chunk() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, None).unwrap();
+        let blob = "x".repeat(800);
+        for i in 0..80 {
+            Conversations::append(
+                &paths,
+                &thread.id,
+                &stored(&format!("m{i}"), &format!("{blob}{i}")),
+            )
+            .unwrap();
+        }
+        let first = Conversations::page(&paths, &thread.id, None, 50);
+        assert_eq!(first.messages.first().map(|m| m.id.as_str()), Some("m30"));
+        assert_eq!(first.messages.last().map(|m| m.id.as_str()), Some("m79"));
+        assert!(first.has_older);
+        let older = Conversations::page(&paths, &thread.id, Some("m30"), 50);
+        assert_eq!(older.messages.first().map(|m| m.id.as_str()), Some("m0"));
+        assert_eq!(older.messages.last().map(|m| m.id.as_str()), Some("m29"));
+        assert!(!older.has_older);
+    }
+
+    #[test]
+    fn page_of_a_missing_thread_is_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let page = Conversations::page(&paths, "t_missing", None, 50);
+        assert!(page.messages.is_empty());
+        assert!(!page.has_older);
+    }
+
+    #[test]
+    fn page_clears_bodies_left_in_old_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, None).unwrap();
+        let line = serde_json::json!({
+            "id": "m1",
+            "role": "assistant",
+            "text": "Hi",
+            "ts": "now",
+            "sources": [{
+                "sid": "S1",
+                "documentId": "d1",
+                "shelfId": "s1",
+                "title": "A",
+                "body": "SECRET excerpt",
+                "path": "",
+                "score": 1.0
+            }],
+            "status": "done"
+        });
+        std::fs::write(paths.thread_path(&thread.id), format!("{line}\n")).unwrap();
+        let page = Conversations::page(&paths, &thread.id, None, 50);
+        assert_eq!(page.messages.len(), 1);
+        assert_eq!(page.messages[0].sources[0].body, "");
+        assert!(page.messages[0].activity.is_empty());
+    }
+
+    #[test]
+    fn push_activity_skips_thinking_and_keeps_each_open() {
+        let mut log = Vec::new();
+        push_activity(&mut log, "thinking", None);
+        push_activity(&mut log, "looking", None);
+        push_activity(&mut log, "looking", None);
+        push_activity(&mut log, "opening", Some("notes.md".into()));
+        push_activity(&mut log, "opening", Some("notes.md".into()));
+        push_activity(&mut log, "around", Some("notes.md".into()));
+        assert_eq!(
+            log.iter().map(|s| s.stage.as_str()).collect::<Vec<_>>(),
+            ["looking", "opening", "opening", "around"]
+        );
+    }
+
+    #[test]
+    fn compact_message_keeps_the_latest_activity_steps() {
+        let mut message = stored("m_act", "See [S1].");
+        message.role = "assistant".into();
+        for i in 0..(ACTIVITY_MAX_STEPS + 3) {
+            message.activity.push(ActivityStep {
+                stage: "opening".into(),
+                file: Some(format!("part-{i}.md")),
+            });
+        }
+        compact_message(&mut message);
+        assert_eq!(message.activity.len(), ACTIVITY_MAX_STEPS);
+        assert_eq!(message.activity[0].file.as_deref(), Some("part-3.md"));
+    }
+}

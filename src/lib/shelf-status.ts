@@ -1,0 +1,49 @@
+import type { ShelfStats } from "./api";
+
+export type ShelfListStatus = "ready" | "processing" | "syncing" | "error";
+
+type StatusStats = Pick<ShelfStats, "files" | "searchable" | "reading" | "errors"> & {
+  waiting?: number;
+};
+
+/** Badge for a Shelf card: work in flight first, then Ready. Empty Shelves have none. */
+export function shelfListStatus(stats: StatusStats): ShelfListStatus | null {
+  if (stats.reading > 0) return "processing";
+  if ((stats.waiting ?? 0) > 0) return "syncing";
+  if (stats.files === 0) return null;
+  if (stats.errors > 0) return "error";
+  return "ready";
+}
+
+export function shelfListStatusLabel(status: ShelfListStatus): string {
+  switch (status) {
+    case "ready":
+      return "Ready";
+    case "processing":
+      return "Processing";
+    case "syncing":
+      return "Syncing";
+    case "error":
+      return "Sync error";
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
+
+export function shelfListStatusClass(status: ShelfListStatus): string {
+  switch (status) {
+    case "ready":
+      return "bg-navy-100/70 text-navy-800";
+    case "processing":
+    case "syncing":
+      return "bg-amber-350/40 text-amber-550";
+    case "error":
+      return "bg-red-50 text-red-700/80";
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
