@@ -44,8 +44,8 @@
   <a
     {href}
     rel="noreferrer"
-    class="group flex items-baseline justify-between gap-4 px-7 py-3 hover:bg-navy-950/[0.04]
-      focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-amber-450"
+    class="group flex items-baseline justify-between gap-4 px-7 py-3 hover:bg-navy-950/[0.04] focus-visible:outline-2
+      focus-visible:outline-offset-[-2px] focus-visible:outline-amber-450 dark:hover:bg-white/4"
     onclick={(event) => openLink(event, link)}
   >
     <span class="shrink-0 text-[11px] font-semibold tracking-wide text-ink-faint uppercase">
@@ -74,7 +74,7 @@
     <img
       src={icon}
       alt=""
-      class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper"
+      class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper dark:shadow-none"
     />
     <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">Rebost</h1>
     <p class="mt-1 min-h-[1.2em] text-[11.5px] font-medium tracking-wide text-amber-550 uppercase">

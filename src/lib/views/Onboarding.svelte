@@ -154,7 +154,7 @@
       </div>
     {:else}
       <section
-        class="onboard-pane flex flex-col gap-8 rounded-2xl bg-white p-8 shadow-pop"
+        class="onboard-pane flex flex-col gap-8 rounded-2xl bg-surface p-8 shadow-pop dark:shadow-none dark:inset-ring dark:inset-ring-white/5"
         aria-labelledby="onboard-install-heading"
         aria-busy={busy}
         in:installCard
@@ -189,7 +189,7 @@
 
         {#if download}
           <div class="flex flex-col gap-3">
-            <div class="rounded-xl bg-paper-soft p-5">
+            <div class="rounded-xl bg-paper-soft p-5 dark:inset-ring dark:inset-ring-white/5">
               <DownloadProgress
                 {download}
                 cancelable
@@ -204,7 +204,9 @@
           </div>
         {:else if modelDone}
           <div class="flex flex-col gap-4">
-            <p class="flex items-baseline gap-2 text-[0.875rem] font-medium text-emerald-700">
+            <p
+              class="flex items-baseline gap-2 text-[0.875rem] font-medium text-emerald-700 dark:text-emerald-400"
+            >
               <Check size={16} class="size-4 h-lh shrink-0" aria-hidden="true" />
               The AI is installed.
             </p>
@@ -222,7 +224,9 @@
               <p class="max-w-[48ch] text-[0.875rem] text-pretty text-ink-soft">
                 There are several free AIs. Rebost picked one that should run well here.
               </p>
-              <div class="flex items-start gap-4 rounded-xl bg-paper-soft p-5">
+              <div
+                class="flex items-start gap-4 rounded-xl bg-paper-soft p-5 dark:inset-ring dark:inset-ring-white/5"
+              >
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <p class="text-[0.8125rem] font-medium text-ink-soft">
                     {failedDownload ? "Couldn't install" : "Chosen for this computer"}
@@ -237,7 +241,10 @@
                     About {formatBytes((lastRec ?? machine.recommendation).approxBytes)} to download.
                   </p>
                   {#if failedMessage}
-                    <p class="mt-1 text-[0.8125rem] text-pretty text-red-700" role="alert">
+                    <p
+                      class="mt-1 text-[0.8125rem] text-pretty text-red-700 dark:text-red-400"
+                      role="alert"
+                    >
                       {failedMessage}
                     </p>
                   {/if}
@@ -288,13 +295,13 @@
               {#if showMore && machine.alternatives.length > 0}
                 <ul
                   id="onboard-other-ais"
-                  class="overflow-hidden rounded-xl ring-1 ring-navy-950/10"
+                  class="overflow-hidden rounded-xl ring-1 ring-navy-950/10 dark:ring-white/10"
                   role="list"
                   transition:accordion
                 >
                   {#each machine.alternatives as alt (alt.reference)}
                     <li
-                      class="flex items-start gap-3 px-4 py-3 not-last:border-b not-last:border-navy-950/10"
+                      class="flex items-start gap-3 px-4 py-3 not-last:border-b not-last:border-paper-line"
                     >
                       <div class="min-w-0 flex-1">
                         <p

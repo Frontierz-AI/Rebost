@@ -97,7 +97,7 @@
     <img
       src={icon}
       alt=""
-      class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper"
+      class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper dark:shadow-none"
     />
     <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">Update Rebost</h1>
     {#if info}
@@ -133,7 +133,7 @@
         </p>
       </div>
       <div
-        class="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-100"
+        class="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-100 dark:bg-white/10"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -153,7 +153,9 @@
   {/if}
 
   {#if error}
-    <p class="mx-7 mt-3 text-center text-[12.5px] text-red-700" role="alert">{error}</p>
+    <p class="mx-7 mt-3 text-center text-[12.5px] text-red-700 dark:text-red-400" role="alert">
+      {error}
+    </p>
   {/if}
 
   <div class="about-reveal mt-auto flex justify-end gap-2 px-7 py-6">

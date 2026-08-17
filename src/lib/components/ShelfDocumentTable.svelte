@@ -53,7 +53,10 @@
     </thead>
     <tbody>
       {#each visibleDocs as doc (doc.id)}
-        <tr class="cursor-pointer hover:bg-navy-50/60" onclick={() => onOpen(doc)}>
+        <tr
+          class="cursor-pointer hover:bg-navy-50/60 dark:hover:bg-white/4"
+          onclick={() => onOpen(doc)}
+        >
           <td
             class="truncate border-b border-paper-line/70 py-2.5 pr-2.5 pl-8 font-medium text-ink"
             title={doc.relPath}
@@ -78,7 +81,7 @@
           >
           <td class="border-b border-paper-line/70 px-2.5 py-2.5">
             {#if doc.status === "ready"}
-              <span class="text-emerald-700">Ready</span>
+              <span class="text-emerald-700 dark:text-emerald-400">Ready</span>
             {:else if doc.status === "reading"}
               <span class="inline-flex items-center gap-1.5 text-amber-550">
                 <span
@@ -89,7 +92,7 @@
               </span>
             {:else}
               <span class="inline-flex items-center gap-2">
-                <span class="text-red-700/80" title={doc.error}>Error</span>
+                <span class="text-red-700/80 dark:text-red-400" title={doc.error}>Error</span>
                 <button
                   type="button"
                   class="btn-ghost !px-1.5 !py-0.5 !text-[11.5px]"

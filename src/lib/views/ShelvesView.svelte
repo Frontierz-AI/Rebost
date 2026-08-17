@@ -320,7 +320,9 @@
 
       {#if app.shelves.length === 0 && !creating}
         <div class="card flex flex-col items-center px-8 py-14 text-center">
-          <div class="mb-3 rounded-2xl bg-navy-100 p-3.5 text-navy-700">
+          <div
+            class="mb-3 rounded-2xl bg-navy-100 p-3.5 text-navy-700 dark:bg-white/10 dark:text-navy-200"
+          >
             <LibraryBig size={24} />
           </div>
           <h2 class="text-[16px] font-semibold text-ink">You don't have a Shelf yet</h2>
@@ -336,7 +338,7 @@
         <div class="grid grid-cols-2 gap-4">
           {#each app.shelves as shelfCard (shelfCard.id)}
             {@const status = shelfListStatus(shelfCard.stats)}
-            <div class="card group flex items-stretch hover:shadow-pop">
+            <div class="card group flex items-stretch hover:shadow-pop dark:hover:shadow-none">
               {#if renamingId === shelfCard.id}
                 <div class="flex min-w-0 flex-1 items-center gap-3 px-5 py-4">
                   <span class="rounded-xl bg-navy-900 p-2.5 text-amber-450"

@@ -121,7 +121,6 @@
           aria-label={editingId ? "Cancel edit Recipe" : "Cancel new Recipe"}
           onclick={cancelForm}><X size={14} aria-hidden="true" /></button
         >
-        >
       </div>
       <label class="sr-only" for="recipe-name">Recipe name</label>
       <!-- svelte-ignore a11y_autofocus -->
@@ -157,7 +156,9 @@
 
   <div class="grid grid-cols-2 gap-4">
     {#each recipes as recipe (recipe.id)}
-      <div class="card group relative flex flex-col px-5 py-4 text-left hover:shadow-pop">
+      <div
+        class="card group relative flex flex-col px-5 py-4 text-left hover:shadow-pop dark:hover:shadow-none"
+      >
         <div class="mb-1.5 flex items-center gap-2.5">
           <button
             type="button"
@@ -168,13 +169,13 @@
               ><ChefHat size={14} aria-hidden="true" /></span
             >
             <span class="flex-1 truncate text-[14px] font-semibold text-ink">{recipe.name}</span>
-            <span class="rounded-md p-1.5 text-navy-600" title="Use this Recipe">
+            <span class="rounded-md p-1.5 text-navy-600 dark:text-navy-300" title="Use this Recipe">
               <ArrowUpRight size={14} aria-hidden="true" />
             </span>
           </button>
           <button
             type="button"
-            class="rounded-md p-1.5 text-ink-faint hover:bg-navy-50 hover:text-ink"
+            class="rounded-md p-1.5 text-ink-faint hover:bg-navy-50 hover:text-ink dark:hover:bg-white/6"
             aria-label="Edit Recipe"
             title="Edit Recipe"
             onclick={(e) => beginEdit(recipe, e)}
@@ -183,7 +184,7 @@
           </button>
           <button
             type="button"
-            class="rounded-md p-1.5 text-ink-faint hover:bg-red-50 hover:text-red-700"
+            class="rounded-md p-1.5 text-ink-faint hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-400/10 dark:hover:text-red-400"
             aria-label="Delete Recipe"
             title="Delete Recipe"
             onclick={(e) => remove(recipe, e)}
@@ -198,7 +199,8 @@
           onclick={() => use(recipe)}
         >
           {#each previewParts(recipe.prompt) as part}
-            {#if part.ph}<span class="rounded bg-amber-350/40 px-1 py-px font-medium text-amber-550"
+            {#if part.ph}<span
+                class="rounded-md bg-amber-350/40 px-1 py-px font-medium text-amber-550 dark:bg-amber-450/15 dark:text-amber-350 dark:inset-ring dark:inset-ring-amber-450/45"
                 >{part.text}</span
               >{:else}{part.text}{/if}
           {/each}

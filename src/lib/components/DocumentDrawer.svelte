@@ -42,7 +42,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-40 flex items-stretch justify-end bg-navy-950/25"
+  class="fixed inset-0 z-40 flex items-stretch justify-end bg-navy-950/25 dark:bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-label={doc.fileName}
@@ -52,11 +52,16 @@
   onclick={(e) => e.target === e.currentTarget && onClose()}
   onkeydown={(e) => e.key === "Escape" && onClose()}
 >
-  <div class="flex h-full w-[480px] flex-col overflow-hidden bg-surface shadow-pop" in:drawerPanel>
+  <div
+    class="flex h-full w-[480px] flex-col overflow-hidden bg-surface shadow-pop dark:shadow-none"
+    in:drawerPanel
+  >
     <div class="border-b border-paper-line bg-paper-soft px-5 py-4">
       <div class="flex items-start justify-between gap-3">
         <div class="flex min-w-0 items-start gap-3">
-          <span class="mt-0.5 rounded-lg bg-navy-100 p-2 text-navy-700"><FileText size={16} /></span
+          <span
+            class="mt-0.5 rounded-lg bg-navy-100 p-2 text-navy-700 dark:bg-white/10 dark:text-navy-200"
+            ><FileText size={16} /></span
           >
           <div class="min-w-0">
             <p class="truncate text-[14.5px] font-semibold text-ink" title={doc.fileName}>
@@ -64,9 +69,9 @@
             </p>
             <p
               class="mt-0.5 text-[12px] {doc.status === 'error'
-                ? 'text-red-700/80'
+                ? 'text-red-700/80 dark:text-red-400'
                 : doc.status === 'ready'
-                  ? 'text-emerald-700'
+                  ? 'text-emerald-700 dark:text-emerald-400'
                   : 'text-amber-550'}"
             >
               {statusLabel(doc)}
@@ -123,7 +128,7 @@
 
         {#if doc.ocr}
           <p
-            class="mt-3 flex items-center gap-2 rounded-lg bg-navy-50 px-3 py-2 text-[12px] text-navy-800"
+            class="mt-3 flex items-center gap-2 rounded-lg bg-navy-50 px-3 py-2 text-[12px] text-navy-800 dark:bg-white/8 dark:text-navy-100"
           >
             <ScanText size={13.5} /> This file had no selectable text, so Rebost read it as a picture
             on this computer.

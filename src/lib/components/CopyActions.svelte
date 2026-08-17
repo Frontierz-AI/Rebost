@@ -57,9 +57,10 @@
     onclick={copyPlain}
     title="Copy"
   >
-    {#if copied === "plain"}<Check size={13} class="text-emerald-600" />{:else}<Copy
+    {#if copied === "plain"}<Check
         size={13}
-      />{/if}
+        class="text-emerald-600 dark:text-emerald-400"
+      />{:else}<Copy size={13} />{/if}
     Copy
   </button>
   {#if hasPii}
@@ -69,9 +70,10 @@
       onclick={copyRedacted}
       title="Replaces recognized identifiers before copying"
     >
-      {#if copied === "redacted"}<Check size={13} class="text-emerald-600" />{:else}<ShieldCheck
+      {#if copied === "redacted"}<Check
           size={13}
-        />{/if}
+          class="text-emerald-600 dark:text-emerald-400"
+        />{:else}<ShieldCheck size={13} />{/if}
       Copy without personal information
     </button>
   {/if}
