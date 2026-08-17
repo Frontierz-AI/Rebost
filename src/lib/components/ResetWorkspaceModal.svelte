@@ -26,7 +26,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-40 flex items-center justify-center bg-navy-950/25 p-6"
+  class="fixed inset-0 z-40 flex items-center justify-center bg-navy-950/25 p-6 dark:bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-labelledby="reset-dialog-title"
@@ -39,7 +39,11 @@
   onclick={(e) => e.target === e.currentTarget && !busy && onClose()}
   onkeydown={(e) => e.key === "Escape" && !busy && onClose()}
 >
-  <form class="card w-full max-w-[420px] shadow-pop" onsubmit={submit} in:dialogPanel>
+  <form
+    class="card w-full max-w-[420px] shadow-pop dark:shadow-none"
+    onsubmit={submit}
+    in:dialogPanel
+  >
     <div class="px-5 pt-5 pb-4">
       <h2 id="reset-dialog-title" class="text-[16px] font-semibold text-ink">Reset Rebost?</h2>
       <p id="reset-dialog-body" class="mt-2 text-[13px] leading-relaxed text-ink-soft">
@@ -64,7 +68,9 @@
       />
       <p id={hintId} class="mt-1.5 text-[11.5px] text-ink-faint">Capitals are required.</p>
       {#if mismatch}
-        <p id={errorId} class="mt-1 text-[12px] text-red-700" role="alert">Type DELETE exactly.</p>
+        <p id={errorId} class="mt-1 text-[12px] text-red-700 dark:text-red-400" role="alert">
+          Type DELETE exactly.
+        </p>
       {/if}
     </div>
     <div class="flex items-center justify-end gap-2 border-t border-paper-line px-5 py-3">

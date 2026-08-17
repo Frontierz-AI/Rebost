@@ -50,7 +50,7 @@
     <div class="fixed inset-0 z-20" role="presentation" onclick={close}></div>
     <div
       id={panelId}
-      class="absolute top-full left-0 z-30 mt-1.5 w-[16.5rem] rounded-xl border border-paper-line bg-surface p-3 shadow-pop"
+      class="absolute top-full left-0 z-30 mt-1.5 w-[16.5rem] rounded-xl border border-paper-line bg-surface p-3 shadow-pop dark:shadow-none"
       role="dialog"
       aria-label="More about {rec.name}"
       tabindex="-1"

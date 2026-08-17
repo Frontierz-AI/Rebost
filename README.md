@@ -6,7 +6,7 @@ Private AI that works with your files. What happens in your computer stays in yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-The current release is **0.6.0**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
+The current release is **0.7.0**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

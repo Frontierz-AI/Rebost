@@ -87,7 +87,7 @@
     data-pii-chip
     class="chip {filterPii === category
       ? 'bg-navy-900 text-white'
-      : 'bg-paper-soft text-ink-soft hover:bg-navy-100/70 hover:text-navy-800'}"
+      : 'bg-paper-soft text-ink-soft hover:bg-navy-100/70 hover:text-navy-800 dark:hover:bg-white/8 dark:hover:text-ink'}"
     aria-pressed={filterPii === category}
     onclick={() => toggle(category)}
   >
@@ -102,7 +102,7 @@
     data-pii-summary
     class="chip shrink-0 py-1 pr-2.5 pl-1.5 {filterPii === 'any'
       ? 'bg-navy-900 text-white'
-      : 'bg-navy-100/70 text-navy-800 hover:bg-navy-200/70'}"
+      : 'bg-navy-100/70 text-navy-800 hover:bg-navy-200/70 dark:bg-white/10 dark:text-navy-100 dark:hover:bg-white/15'}"
     aria-pressed={filterPii === "any"}
     onclick={() => toggle("any")}
   >
@@ -121,7 +121,7 @@
       <div class="relative shrink-0">
         <button
           type="button"
-          class="chip shrink-0 border border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70"
+          class="chip shrink-0 border border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70 dark:hover:bg-white/8"
           aria-label="More personal information"
           aria-haspopup="dialog"
           aria-expanded={moreOpen}
@@ -138,7 +138,7 @@
           ></div>
           <div
             id="pii-categories-menu"
-            class="absolute right-0 bottom-full z-30 mb-1.5 max-h-64 min-w-[220px] overflow-y-auto rounded-xl border border-paper-line bg-surface p-2 shadow-pop"
+            class="absolute right-0 bottom-full z-30 mb-1.5 max-h-64 min-w-[220px] overflow-y-auto rounded-xl border border-paper-line bg-surface p-2 shadow-pop dark:shadow-none"
             role="dialog"
             aria-label="Personal information"
             tabindex="-1"

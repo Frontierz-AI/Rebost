@@ -354,7 +354,7 @@
             {:else}
               <div class="group flex flex-col gap-1.5">
                 <div
-                  class="max-w-[92%] rounded-2xl rounded-bl-md border border-paper-line bg-surface px-4 py-3 shadow-card"
+                  class="max-w-[92%] rounded-2xl rounded-bl-md border border-paper-line bg-surface px-4 py-3 shadow-card dark:shadow-none"
                 >
                   <ThinkingPanel
                     id={message.id}
@@ -377,12 +377,12 @@
                       {#each message.sources as source (source.sid)}
                         <button
                           type="button"
-                          class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-amber-450 hover:bg-amber-350/60"
+                          class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-amber-450 hover:bg-amber-350/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100"
                           onclick={() => (openSource = source)}
                         >
                           <span class="font-bold">{source.sid}</span>
                           <span class="max-w-[220px] truncate font-normal">{source.title}</span>
-                          {#if source.pageStart}<span class="text-navy-400"
+                          {#if source.pageStart}<span class="text-navy-400 dark:text-navy-300"
                               >p. {source.pageStart}</span
                             >{/if}
                         </button>
@@ -406,7 +406,7 @@
               aria-busy="true"
             >
               <div
-                class="max-w-[92%] rounded-2xl rounded-bl-md border border-paper-line bg-surface px-4 py-3 shadow-card"
+                class="max-w-[92%] rounded-2xl rounded-bl-md border border-paper-line bg-surface px-4 py-3 shadow-card dark:shadow-none"
               >
                 {#if !activePending.text}
                   <ThinkingPanel

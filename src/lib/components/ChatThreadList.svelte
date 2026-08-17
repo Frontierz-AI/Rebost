@@ -80,7 +80,7 @@
   aria-hidden={!open}
 >
   <aside
-    class="mt-1 mb-2 ml-3 flex w-60 shrink-0 flex-col overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none {open
+    class="mt-1 mb-2 ml-3 flex w-60 shrink-0 flex-col overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none dark:shadow-none dark:ring-white/5 {open
       ? 'translate-x-0'
       : '-translate-x-full'}"
     inert={!open}

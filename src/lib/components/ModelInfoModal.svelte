@@ -58,7 +58,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-40 flex items-center justify-center bg-navy-950/25 p-6"
+  class="fixed inset-0 z-40 flex items-center justify-center bg-navy-950/25 p-6 dark:bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-labelledby="model-info-title"
@@ -69,7 +69,7 @@
   onclick={(e) => e.target === e.currentTarget && onClose()}
   onkeydown={(e) => e.key === "Escape" && onClose()}
 >
-  <div class="card w-full max-w-[440px] shadow-pop" in:dialogPanel>
+  <div class="card w-full max-w-[440px] shadow-pop dark:shadow-none" in:dialogPanel>
     <div class="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
       <div class="min-w-0">
         <h2 id="model-info-title" class="text-[16px] font-semibold break-words text-ink">
@@ -77,7 +77,7 @@
         </h2>
         {#if result.official}
           <span
-            class="mt-2 inline-flex rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800"
+            class="mt-2 inline-flex rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800 dark:bg-white/10 dark:text-navy-100"
           >
             Official
           </span>

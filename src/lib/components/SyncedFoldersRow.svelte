@@ -88,7 +88,7 @@
     data-synced-chip
     class="chip !cursor-default border py-1 pr-1 pl-2.5 {selected
       ? 'border-navy-900 bg-navy-900 text-white'
-      : 'border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70'}"
+      : 'border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70 dark:hover:bg-white/8'}"
   >
     <button
       type="button"
@@ -113,7 +113,7 @@
     </button>
     <button
       type="button"
-      class="rounded p-0.5 hover:bg-red-50 hover:text-red-700"
+      class="rounded p-0.5 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-400/10 dark:hover:text-red-400"
       aria-label="Remove synced folder from this Shelf"
       title="Remove from this Shelf (files stay on disk)"
       onclick={() => unlink(linked)}
@@ -133,7 +133,7 @@
       <div class="relative shrink-0">
         <button
           type="button"
-          class="chip shrink-0 border border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70"
+          class="chip shrink-0 border border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70 dark:hover:bg-white/8"
           aria-label="More synced folders"
           aria-haspopup="dialog"
           aria-expanded={moreOpen}
@@ -150,7 +150,7 @@
           ></div>
           <div
             id="synced-folders-menu"
-            class="absolute top-full right-0 z-30 mt-1.5 max-h-64 min-w-[240px] overflow-y-auto rounded-xl border border-paper-line bg-surface p-2 shadow-pop"
+            class="absolute top-full right-0 z-30 mt-1.5 max-h-64 min-w-[240px] overflow-y-auto rounded-xl border border-paper-line bg-surface p-2 shadow-pop dark:shadow-none"
             role="dialog"
             aria-label="Synced folders"
             tabindex="-1"

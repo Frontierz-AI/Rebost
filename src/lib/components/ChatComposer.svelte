@@ -140,7 +140,7 @@
       >
         <span>Install an AI first.</span>
         <span
-          class="font-semibold text-navy-700 underline-offset-2 group-hover:text-navy-900 group-hover:underline"
+          class="font-semibold text-navy-700 underline-offset-2 group-hover:text-navy-900 group-hover:underline dark:text-navy-200 dark:group-hover:text-white"
           >Install</span
         >
       </button>
@@ -148,7 +148,7 @@
     <div class="card relative flex flex-col gap-1 !rounded-2xl px-3 pt-2.5 pb-2">
       {#if listOpen}
         <div
-          class="absolute right-0 bottom-full left-0 z-30 mb-1 max-h-56 overflow-y-auto rounded-xl border border-paper-line bg-surface py-1 shadow-pop"
+          class="absolute right-0 bottom-full left-0 z-30 mb-1 max-h-56 overflow-y-auto rounded-xl border border-paper-line bg-surface py-1 shadow-pop dark:shadow-none"
           role="listbox"
           id="composer-file-list"
           aria-label={selectedShelf && chatState.uploadShelf
@@ -163,7 +163,7 @@
               role="option"
               aria-selected={index === highlight}
               class="flex w-full px-3 py-1.5 text-left text-[12.5px] {index === highlight
-                ? 'bg-navy-50 font-medium text-navy-800'
+                ? 'bg-navy-50 font-medium text-navy-800 dark:bg-white/8 dark:text-ink'
                 : 'text-ink hover:bg-paper-soft'}"
               onmousedown={(event) => event.preventDefault()}
               onclick={() => pickFile(name)}
@@ -202,7 +202,7 @@
             <button
               type="button"
               class="chip border {selectedShelf
-                ? 'border-navy-300 bg-navy-100/70 text-navy-800'
+                ? 'border-navy-300 bg-navy-100/70 text-navy-800 dark:border-white/15 dark:bg-white/10 dark:text-navy-100'
                 : 'border-paper-line bg-paper-soft text-ink-soft'} hover:border-navy-400"
               onclick={() => (shelfMenuOpen = !shelfMenuOpen)}
               aria-haspopup="listbox"
@@ -221,7 +221,7 @@
                 onkeydown={(e) => e.key === "Escape" && (shelfMenuOpen = false)}
               ></div>
               <div
-                class="absolute bottom-8 left-0 z-30 w-56 overflow-hidden rounded-xl border border-paper-line bg-surface shadow-pop"
+                class="absolute bottom-8 left-0 z-30 w-56 overflow-hidden rounded-xl border border-paper-line bg-surface shadow-pop dark:shadow-none"
                 role="listbox"
               >
                 <div class="py-1">
@@ -229,7 +229,7 @@
                     type="button"
                     class="flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] hover:bg-paper-soft {chatState.selectedShelfId ===
                     null
-                      ? 'font-semibold text-navy-800'
+                      ? 'font-semibold text-navy-800 dark:text-ink'
                       : 'text-ink'}"
                     onclick={() => {
                       shelfMenuOpen = false;
@@ -244,7 +244,7 @@
                       type="button"
                       class="flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] hover:bg-paper-soft {chatState.selectedShelfId ===
                       shelf.id
-                        ? 'font-semibold text-navy-800'
+                        ? 'font-semibold text-navy-800 dark:text-ink'
                         : 'text-ink'}"
                       onclick={() => {
                         shelfMenuOpen = false;

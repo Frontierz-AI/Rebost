@@ -243,7 +243,7 @@
       {/if}
 
       {#if modelDownload}
-        <div class="mb-4 rounded-xl border border-navy-200 bg-navy-50/60 px-4 py-3">
+        <div class="mb-4 rounded-xl border border-paper-line bg-paper-soft px-4 py-3">
           <DownloadProgress
             download={modelDownload}
             cancelable
@@ -253,7 +253,7 @@
           />
         </div>
       {:else if engineDownload}
-        <div class="mb-4 rounded-xl border border-navy-200 bg-navy-50/60 px-4 py-3">
+        <div class="mb-4 rounded-xl border border-paper-line bg-paper-soft px-4 py-3">
           <DownloadProgress download={engineDownload} cancelable />
         </div>
       {/if}
@@ -263,7 +263,7 @@
         <div
           class="flex items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 px-4 py-3"
         >
-          <BadgeCheck size={18} class="shrink-0 text-emerald-600" />
+          <BadgeCheck size={18} class="shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div class="min-w-0 flex-1">
             <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
             <p class="text-[11.5px] text-ink-soft">
@@ -274,7 +274,7 @@
           <span
             class="rounded-full px-2 py-1 text-[10.5px] font-semibold
           {app.engine.state === 'ready'
-              ? 'bg-emerald-100 text-emerald-800'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300'
               : app.engine.state === 'starting'
                 ? 'bg-amber-350/50 text-amber-550'
                 : 'bg-paper-soft text-ink-faint'}"
@@ -342,7 +342,7 @@
                     >
                     {#if result.official}
                       <span
-                        class="shrink-0 rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800"
+                        class="shrink-0 rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800 dark:bg-white/10 dark:text-navy-100"
                       >
                         Official
                       </span>
@@ -355,7 +355,7 @@
                       </span>
                     {:else if result.fits}
                       <span
-                        class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800"
+                        class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300"
                       >
                         Fits this computer
                       </span>
@@ -446,7 +446,7 @@
       </div>
       <button
         type="button"
-        class="btn-outline shrink-0 text-red-700 hover:border-red-300 hover:bg-red-50"
+        class="btn-outline shrink-0 text-red-700 hover:border-red-300 hover:bg-red-50 dark:text-red-400 dark:hover:border-red-400/40 dark:hover:bg-red-400/10"
         aria-haspopup="dialog"
         aria-expanded={showReset}
         aria-controls={showReset ? "reset-workspace-dialog" : undefined}

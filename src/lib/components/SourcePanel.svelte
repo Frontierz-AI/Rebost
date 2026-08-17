@@ -54,7 +54,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-40 flex items-end justify-end bg-navy-950/20 p-5"
+  class="fixed inset-0 z-40 flex items-end justify-end bg-navy-950/20 p-5 dark:bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-label={source.title}
@@ -65,11 +65,14 @@
   onkeydown={(e) => e.key === "Escape" && onClose()}
 >
   <div
-    class="card z-50 flex max-h-[70vh] w-[430px] flex-col overflow-hidden shadow-pop"
+    class="card z-50 flex max-h-[70vh] w-[430px] flex-col overflow-hidden shadow-pop dark:shadow-none"
     in:sheetPanel
   >
     <div class="flex items-start gap-3 border-b border-paper-line bg-paper-soft px-4 py-3">
-      <span class="mt-0.5 rounded-md bg-navy-100 p-1.5 text-navy-700"><FileText size={15} /></span>
+      <span
+        class="mt-0.5 rounded-md bg-navy-100 p-1.5 text-navy-700 dark:bg-white/10 dark:text-navy-200"
+        ><FileText size={15} /></span
+      >
       <div class="min-w-0 flex-1">
         <p class="truncate text-[13px] font-semibold text-ink">{source.title}</p>
         {#if location}<p class="text-[12px] text-ink-soft">{location}</p>{/if}

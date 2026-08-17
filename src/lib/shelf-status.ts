@@ -35,12 +35,12 @@ export function shelfListStatusLabel(status: ShelfListStatus): string {
 export function shelfListStatusClass(status: ShelfListStatus): string {
   switch (status) {
     case "ready":
-      return "bg-navy-100/70 text-navy-800";
+      return "bg-navy-100/70 text-navy-800 dark:bg-white/10 dark:text-navy-100";
     case "processing":
     case "syncing":
       return "bg-amber-350/40 text-amber-550";
     case "error":
-      return "bg-red-50 text-red-700/80";
+      return "bg-red-50 text-red-700/80 dark:bg-red-400/10 dark:text-red-400";
     default: {
       const _exhaustive: never = status;
       return _exhaustive;

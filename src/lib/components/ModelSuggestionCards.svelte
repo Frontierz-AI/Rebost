@@ -25,7 +25,7 @@
       {#each suggestions as rec, index (rec.reference)}
         {@const featured = index === 0}
         <li
-          class="flex flex-col justify-between gap-4 rounded-xl bg-surface p-4 ring-1 ring-navy-950/10"
+          class="flex flex-col justify-between gap-4 rounded-xl bg-surface p-4 ring-1 ring-navy-950/10 dark:ring-white/10"
         >
           <div class="flex min-w-0 flex-col gap-3">
             <div class="flex flex-col gap-1">

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
   Rebost design tokens — derived from the app icon:
@@ -107,19 +108,19 @@ textarea,
     @apply bg-amber-450 text-navy-950 hover:bg-amber-350 disabled:hover:bg-amber-450;
   }
   .btn-ghost {
-    @apply text-ink-soft hover:bg-navy-900/6 hover:text-ink;
+    @apply text-ink-soft hover:bg-navy-900/6 hover:text-ink dark:hover:bg-white/6;
   }
   .btn-outline {
-    @apply border border-paper-line bg-surface text-ink hover:border-navy-300 hover:bg-navy-50/40;
+    @apply border border-paper-line bg-surface text-ink hover:border-navy-300 hover:bg-navy-50/40 dark:hover:border-navy-500 dark:hover:bg-white/5;
   }
   .btn-danger {
     @apply bg-red-700 text-white hover:bg-red-800 disabled:hover:bg-red-700;
   }
   .input {
-    @apply w-full rounded-lg border border-paper-line bg-surface px-3 py-2 text-[13.5px] text-ink transition-colors outline-none placeholder:text-ink-faint focus:border-navy-400 focus:ring-2 focus:ring-navy-100;
+    @apply w-full rounded-lg border border-paper-line bg-surface px-3 py-2 text-[13.5px] text-ink transition-colors outline-none placeholder:text-ink-faint focus:border-navy-400 focus:ring-2 focus:ring-navy-100 dark:focus:ring-white/10;
   }
   .card {
-    @apply rounded-xl border border-paper-line bg-surface shadow-card;
+    @apply rounded-xl border border-paper-line bg-surface shadow-card dark:shadow-none;
   }
   .chip {
     @apply inline-flex shrink-0 cursor-default items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium whitespace-nowrap select-none;
@@ -386,33 +387,41 @@ textarea,
 html[data-theme="dark"] {
   color-scheme: dark;
   --color-paper: #171d2e;
-  --color-paper-soft: #1f263a;
+  --color-paper-soft: #161c2c;
   --color-paper-line: #343c54;
   --color-surface: #1f263a;
   --color-ink: #e8ebf4;
   --color-ink-soft: #a7adbd;
   --color-ink-faint: #7e8496;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 16px rgb(0 0 0 / 0.28);
-  --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.35);
+  --shadow-card: 0 0 #0000;
+  --shadow-pop: 0 0 #0000;
 }
 
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
     color-scheme: dark;
     --color-paper: #171d2e;
-    --color-paper-soft: #1f263a;
+    --color-paper-soft: #161c2c;
     --color-paper-line: #343c54;
     --color-surface: #1f263a;
     --color-ink: #e8ebf4;
     --color-ink-soft: #a7adbd;
     --color-ink-faint: #7e8496;
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 16px rgb(0 0 0 / 0.28);
-    --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.35);
+    --shadow-card: 0 0 #0000;
+    --shadow-pop: 0 0 #0000;
   }
 }
 
-html[data-theme="dark"] .btn-outline:hover {
-  background: var(--color-paper-soft);
+html[data-theme="dark"] .md-body a {
+  color: var(--color-navy-300);
+}
+
+html[data-theme="dark"] .think-slider {
+  background: linear-gradient(
+    to right,
+    var(--color-navy-400) var(--think-fill, 0%),
+    var(--color-paper-line) var(--think-fill, 0%)
+  );
 }
 
 html[data-theme="dark"] .md-body .cite-chip {
