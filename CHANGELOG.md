@@ -12,6 +12,10 @@ The app-data layout may change without a migration.
 
 - On a PC, pick Windows. Mac and Windows are the same version.
 
+### Security
+
+- HTTPS handling is updated so a noisy connection cannot fill memory.
+
 ## [0.7.0] - 2026-08-17
 
 ### Fixed
