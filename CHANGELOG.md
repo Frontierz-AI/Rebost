@@ -6,6 +6,12 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-08-18
+
+### Changed
+
+- On a PC, pick Windows. Mac and Windows are the same version.
+
 ## [0.7.0] - 2026-08-17
 
 ### Fixed
@@ -369,6 +375,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.5.5...v0.6.0
 [0.5.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.5.4...v0.5.5
