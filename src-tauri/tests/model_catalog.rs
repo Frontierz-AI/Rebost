@@ -15,12 +15,14 @@ fn profile() -> MachineProfile {
         apple_silicon: true,
         accelerator: "Metal".into(),
         free_disk_bytes: 500 * 1024 * 1024 * 1024,
+        process_arch: "test".into(),
+        os_arch: "test".into(),
     }
 }
 
 fn client() -> reqwest::Client {
     reqwest::Client::builder()
-        .user_agent("Rebost/0.8.0 (private desktop AI)")
+        .user_agent("Rebost/0.8.2 (private desktop AI)")
         .build()
         .unwrap()
 }

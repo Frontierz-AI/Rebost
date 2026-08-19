@@ -1,6 +1,6 @@
 # Signed installers
 
-GitHub Releases ship signed Mac DMGs and a Windows installer. The Windows file is signed when Azure Artifact Signing is configured; otherwise it is unsigned. Contributors do not need signing credentials.
+GitHub Releases ship signed Mac DMGs and Windows installers (regular PC and ARM). The Windows files are signed when Azure Artifact Signing is configured; otherwise they are unsigned. Contributors do not need signing credentials.
 
 ```bash
 pnpm tauri build

@@ -486,6 +486,9 @@
         <p>
           machine: {diag.machine.cpu} · {formatBytes(diag.machine.totalRamBytes)} RAM · {diag
             .machine.accelerator}
+          {diag.machine.processArch !== diag.machine.osArch
+            ? ` · ${diag.machine.processArch} on ${diag.machine.osArch}`
+            : ` · ${diag.machine.processArch}`}
         </p>
         <p>formats: {diag.supportedFormats.join(" ")}</p>
         {#if diag.engineLogPresent}

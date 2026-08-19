@@ -61,6 +61,7 @@ struct Inner {
     port: u16,
     model_file: String,
     reasoning: Option<reasoning::ReasoningCaps>,
+    chat_stall: Duration,
 }
 
 pub struct Engine {
@@ -232,6 +233,7 @@ impl Engine {
                 port: 0,
                 model_file: String::new(),
                 reasoning: None,
+                chat_stall: Duration::from_secs(90),
             }),
             start_lock: tokio::sync::Mutex::new(()),
             status: std::sync::Mutex::new(EngineStatus {

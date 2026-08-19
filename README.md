@@ -6,7 +6,7 @@ Private AI that works with your files. What happens in your computer stays in yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-The current release is **0.8.0**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
+The current release is **0.8.2**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -41,14 +41,13 @@ Download the installer for your machine from [GitHub Releases](https://github.co
 | Mac with an Apple chip | Mac (Apple chip) |
 | Intel Mac | Mac (Intel) |
 | Windows 10/11 | Windows |
+| Windows on ARM | Windows (ARM) |
 
 On a Mac, open the file and drag Rebost into Applications. On Windows, run the installer.
 
 Windows 11 already has what Rebost needs to draw its windows. On Windows 10, the installer may add a small Microsoft component ([WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)) if it is missing.
 
 On a regular Windows PC (not ARM), you need a graphics driver that supports Vulkan, from NVIDIA, AMD, or Intel.
-
-Windows on ARM is not on the Releases page yet. You can build it from source.
 
 If you already have Rebost, a later release can show up in the sidebar when GitHub is reachable. If not, nothing is shown.
 

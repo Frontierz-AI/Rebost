@@ -44,6 +44,12 @@ describe("userFacingError", () => {
     expect(userFacingError("engine archive did not contain llama-server")).toBe(
       "Rebost isn't ready yet. Try again in a moment.",
     );
+    expect(userFacingError("generation stalled")).toBe(
+      "Rebost couldn't finish that answer. Try again.",
+    );
+    expect(userFacingError("empty generation")).toBe(
+      "Rebost couldn't finish that answer. Try again.",
+    );
   });
 
   it("keeps quiet product copy and hides leftover pins", () => {
