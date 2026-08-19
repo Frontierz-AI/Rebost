@@ -14,14 +14,37 @@ pub fn preferred_optional_pin() -> Option<&'static EnginePin> {
 
 fn detected_accelerator() -> Option<&'static str> {
     #[cfg(all(windows, target_arch = "x86_64"))]
-    if nvidia_driver_present() {
-        return Some("CUDA");
+    {
+        // The x64 Windows copy on an ARM PC must not chase NVIDIA or Adreno.
+        // Vulkan offload on Adreno hangs; CUDA is not present.
+        if windows_host_is_arm64() {
+            return None;
+        }
+        if nvidia_driver_present() {
+            return Some("CUDA");
+        }
     }
     #[cfg(all(windows, target_arch = "aarch64"))]
     if adreno_present() {
         return Some("OpenCL");
     }
     None
+}
+
+/// True on Windows ARM, including an x64 process running under emulation.
+pub(crate) fn windows_host_is_arm64() -> bool {
+    #[cfg(not(windows))]
+    {
+        false
+    }
+    #[cfg(all(windows, target_arch = "aarch64"))]
+    {
+        true
+    }
+    #[cfg(all(windows, not(target_arch = "aarch64")))]
+    {
+        native_machine_is_arm64() || cpu_looks_like_snapdragon()
+    }
 }
 
 #[cfg(windows)]
@@ -47,7 +70,7 @@ fn adreno_present() -> bool {
         .any(|name| dir.join(name).is_file())
 }
 
-#[cfg(all(windows, target_arch = "aarch64"))]
+#[cfg(windows)]
 fn cpu_looks_like_snapdragon() -> bool {
     use sysinfo::CpuRefreshKind;
 
@@ -61,6 +84,33 @@ fn cpu_looks_like_snapdragon() -> bool {
     brand.contains("qualcomm") || brand.contains("snapdragon") || brand.contains("x elite")
 }
 
+#[cfg(all(windows, not(target_arch = "aarch64")))]
+fn native_machine_is_arm64() -> bool {
+    const IMAGE_FILE_MACHINE_ARM64: u16 = 0xAA64;
+    let mut process_machine = 0u16;
+    let mut native_machine = 0u16;
+    // SAFETY: kernel32, this process, and two stack u16 out-params.
+    let ok = unsafe {
+        IsWow64Process2(
+            GetCurrentProcess(),
+            &mut process_machine,
+            &mut native_machine,
+        )
+    };
+    ok != 0 && native_machine == IMAGE_FILE_MACHINE_ARM64
+}
+
+#[cfg(all(windows, not(target_arch = "aarch64")))]
+#[link(name = "kernel32")]
+extern "system" {
+    fn GetCurrentProcess() -> *mut std::ffi::c_void;
+    fn IsWow64Process2(
+        hProcess: *mut std::ffi::c_void,
+        pProcessMachine: *mut u16,
+        pNativeMachine: *mut u16,
+    ) -> i32;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -72,5 +122,13 @@ mod tests {
             assert_eq!(pin.os, std::env::consts::OS);
             assert_eq!(pin.arch, std::env::consts::ARCH);
         }
+    }
+
+    #[test]
+    fn macos_is_not_windows_arm() {
+        #[cfg(not(windows))]
+        assert!(!windows_host_is_arm64());
+        #[cfg(all(windows, target_arch = "aarch64"))]
+        assert!(windows_host_is_arm64());
     }
 }

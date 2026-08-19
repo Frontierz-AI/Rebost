@@ -25,7 +25,7 @@ mod prompts;
 mod queries;
 mod tools;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -336,6 +336,10 @@ async fn generate_with_tools(
     let mut rounds = 0usize;
     let mut answer_only = false;
     let mut did_answer_retry = false;
+    let mut thinking = match think {
+        ThinkLevel::Deep => ChatThinking::Deep,
+        ThinkLevel::Off | ThinkLevel::Light => ChatThinking::Off,
+    };
 
     loop {
         if cancel.load(Ordering::Relaxed) {
@@ -353,10 +357,7 @@ async fn generate_with_tools(
             tools::ToolSet::new(shelf_ok, !turn.sources.is_empty(), online, chats_ok, &used);
         let offer_tools = !answer_only && rounds < max_rounds && allowed.any();
         let mut options = ChatOptions::stream(0.7, answer_token_budget(ctx));
-        options.thinking = match think {
-            ThinkLevel::Deep => ChatThinking::Deep,
-            ThinkLevel::Off | ThinkLevel::Light => ChatThinking::Off,
-        };
+        options.thinking = thinking;
         if offer_tools {
             options.tools = Some(allowed.schema(&tools::labels_for_schema(&files)));
             options.tool_choice = Some("auto".into());
@@ -483,6 +484,7 @@ async fn generate_with_tools(
         if answer.is_empty() && !did_answer_retry {
             did_answer_retry = true;
             answer_only = true;
+            thinking = ChatThinking::Off;
             emit("status", json!({ "stage": "thinking" }));
             continue;
         }
@@ -490,7 +492,14 @@ async fn generate_with_tools(
         collected.finish_reason = output.finish_reason;
         break;
     }
+    if should_fail_empty_answer(&collected.answer, cancel.load(Ordering::Relaxed)) {
+        return Err(anyhow!("empty generation"));
+    }
     Ok(collected)
+}
+
+fn should_fail_empty_answer(answer: &str, cancelled: bool) -> bool {
+    !cancelled && answer.trim().is_empty()
 }
 
 fn should_emit_reading(library_id: Option<&str>, upload_id: Option<&str>) -> bool {
@@ -1253,6 +1262,14 @@ mod cancel_tests {
             captured[0].get("messageId").and_then(|id| id.as_str()),
             Some("")
         );
+    }
+
+    #[test]
+    fn a_blank_finished_turn_is_a_failure() {
+        assert!(should_fail_empty_answer("", false));
+        assert!(should_fail_empty_answer("   ", false));
+        assert!(!should_fail_empty_answer("Hello", false));
+        assert!(!should_fail_empty_answer("", true));
     }
 }
 

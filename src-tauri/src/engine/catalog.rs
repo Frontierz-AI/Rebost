@@ -12,6 +12,8 @@ pub struct MachineProfile {
     pub apple_silicon: bool,
     pub accelerator: String,
     pub free_disk_bytes: u64,
+    pub process_arch: String,
+    pub os_arch: String,
 }
 
 impl MachineProfile {
@@ -30,6 +32,7 @@ impl MachineProfile {
             .map(|d| d.available_space())
             .max()
             .unwrap_or(0);
+        let (process_arch, os_arch) = host_arch_labels();
         Self {
             total_ram_bytes: sys.total_memory(),
             available_ram_bytes: sys.available_memory(),
@@ -39,6 +42,8 @@ impl MachineProfile {
                 .map(|pin| pin.accelerator.to_string())
                 .unwrap_or_else(|_| "none".into()),
             free_disk_bytes,
+            process_arch,
+            os_arch,
         }
     }
 
@@ -47,6 +52,16 @@ impl MachineProfile {
     pub fn model_budget_bytes(&self) -> u64 {
         (self.total_ram_bytes as f64 * 0.55) as u64
     }
+}
+
+fn host_arch_labels() -> (String, String) {
+    let process = std::env::consts::ARCH.to_string();
+    let os = if super::gpu::windows_host_is_arm64() {
+        "aarch64".into()
+    } else {
+        process.clone()
+    };
+    (process, os)
 }
 
 const MIB: u64 = 1024 * 1024;
@@ -377,6 +392,8 @@ mod tests {
             apple_silicon: true,
             accelerator: "Metal".into(),
             free_disk_bytes: 500 * GIB,
+            process_arch: "test".into(),
+            os_arch: "test".into(),
         };
         assert_eq!(recommend(&mk(48)).name, "Qwen3.8 27B");
         assert_eq!(recommend(&mk(32)).name, "Gemma 4 12B");
@@ -430,6 +447,8 @@ mod tests {
             apple_silicon: true,
             accelerator: "Metal".into(),
             free_disk_bytes: 500 * GIB,
+            process_arch: "test".into(),
+            os_arch: "test".into(),
         };
         let none: Vec<_> = uninstalled_suggestions(&mk(48), None, 2)
             .into_iter()

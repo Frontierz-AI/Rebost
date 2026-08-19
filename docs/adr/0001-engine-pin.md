@@ -7,4 +7,4 @@ Contributors should not need a llama.cpp toolchain. Rebost pins a GitHub release
 
 Release installers **bundle that archive** (one OS/arch per artifact) so first chat does not hit GitHub. The binary is still not compiled from source: official builds include shared libraries, so the pin is shipped as a resource and unpacked into app data, not as a single `externalBin` sidecar.
 
-macOS uses Metal builds (arm64 and Intel, separate `.app`s). Windows x64 ships Vulkan and may download CUDA 12.4 at warmup when an NVIDIA driver is present. Windows ARM64 ships CPU and may download Adreno OpenCL on Snapdragon. Linux pins are in the matrix so the crate compiles. Linux is not a supported platform.
+macOS uses Metal builds (arm64 and Intel, separate `.app`s). Windows x64 ships Vulkan and may download CUDA 12.4 at warmup when an NVIDIA driver is present. Windows ARM64 ships CPU and may download Adreno OpenCL on Snapdragon; GitHub Releases attach that NSIS from `release-windows.yml`. Linux pins are in the matrix so the crate compiles. Linux is not a supported platform.

@@ -36,6 +36,14 @@ impl Engine {
             .then(|| format!("http://127.0.0.1:{}", inner.port))
     }
 
+    fn chat_stall(&self) -> Duration {
+        self.inner
+            .try_lock()
+            .ok()
+            .map(|inner| inner.chat_stall)
+            .unwrap_or(CHAT_STALL_TIMEOUT)
+    }
+
     /// Stream a chat completion. Reasoning traces (from `reasoning_content`
     /// deltas or inline `<think>` blocks) are separated from the answer and
     /// both are streamed through `on_event`. Returns the collected output.
@@ -153,7 +161,8 @@ impl Engine {
                 }
 
                 let stream = response.bytes_stream();
-                match consume_sse(stream, cancel, &mut on_event).await {
+                let stall = self.chat_stall();
+                match consume_sse_timed(stream, cancel, &mut on_event, stall).await {
                     Ok(mut output) => {
                         output.answer = output.answer.trim().to_string();
                         output.thinking = output.thinking.trim().to_string();
@@ -217,6 +226,7 @@ impl Engine {
 pub(crate) const CHAT_STALL_TIMEOUT: Duration = Duration::from_secs(90);
 
 /// Read an OpenAI-style SSE chat stream until `[DONE]`, cancel, or error.
+#[cfg(test)]
 pub(crate) async fn consume_sse<S, E>(
     stream: S,
     cancel: &Arc<AtomicBool>,

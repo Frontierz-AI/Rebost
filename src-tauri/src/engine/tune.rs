@@ -75,6 +75,9 @@ pub struct SpawnPlan {
     pub ubatch: u32,
     pub no_mmap: bool,
     pub flash_attn: &'static str,
+    /// llama.cpp `--cache-type-k/v`. OpenCL Adreno crashes on q8_0 KV.
+    pub cache_type: &'static str,
+    pub gpu_layers: u32,
 }
 
 impl SpawnPlan {
@@ -93,6 +96,8 @@ impl SpawnPlan {
             ubatch,
             no_mmap: super::pin::no_mmap_for(pin),
             flash_attn: flash_attn_for(pin),
+            cache_type: cache_type_for(pin),
+            gpu_layers: gpu_layers_for(pin),
         }
     }
 }
@@ -101,6 +106,31 @@ fn flash_attn_for(pin: &EnginePin) -> &'static str {
     match pin.accelerator {
         "CPU" | "OpenCL" => "auto",
         _ => "on",
+    }
+}
+
+fn cache_type_for(pin: &EnginePin) -> &'static str {
+    match pin.accelerator {
+        "OpenCL" => "f16",
+        _ => "q8_0",
+    }
+}
+
+fn gpu_layers_for(pin: &EnginePin) -> u32 {
+    match pin.accelerator {
+        "CPU" => 0,
+        "Vulkan" if super::gpu::windows_host_is_arm64() => 0,
+        _ => 99,
+    }
+}
+
+/// First-token wait. CPU (and the x64-on-ARM Vulkan copy running on CPU)
+/// can spend a minute on prefill before any SSE bytes arrive.
+pub fn chat_stall_timeout(plan: &SpawnPlan) -> std::time::Duration {
+    if plan.gpu_layers == 0 || plan.flash_attn == "auto" {
+        std::time::Duration::from_secs(180)
+    } else {
+        std::time::Duration::from_secs(90)
     }
 }
 
@@ -414,6 +444,8 @@ mod tests {
             apple_silicon: apple,
             accelerator: accel.into(),
             free_disk_bytes: 200 * GIB,
+            process_arch: "test".into(),
+            os_arch: "test".into(),
         }
     }
 
@@ -479,6 +511,24 @@ mod tests {
         assert_eq!((plan.batch, plan.ubatch), (256, 256));
         assert!(!plan.no_mmap);
         assert_eq!(plan.flash_attn, "auto");
+        assert_eq!(plan.cache_type, "q8_0");
+        assert_eq!(plan.gpu_layers, 0);
+    }
+
+    #[test]
+    fn cpu_and_opencl_wait_longer_for_the_first_token() {
+        let cpu = pin_for("windows", "aarch64").unwrap();
+        let cpu_plan = SpawnPlan::from_profile(&profile(16, false, "CPU"), cpu);
+        assert_eq!(
+            chat_stall_timeout(&cpu_plan),
+            std::time::Duration::from_secs(180)
+        );
+        let vulkan = pin_for("windows", "x86_64").unwrap();
+        let vulkan_plan = SpawnPlan::from_profile(&profile(16, false, "Vulkan"), vulkan);
+        assert_eq!(
+            chat_stall_timeout(&vulkan_plan),
+            std::time::Duration::from_secs(90)
+        );
     }
 
     #[test]
@@ -507,6 +557,15 @@ mod tests {
         assert_eq!(plan.context_tokens, 6144);
         assert_eq!((plan.batch, plan.ubatch), (1024, 512));
         assert!(!plan.no_mmap);
+        assert_eq!(plan.flash_attn, "auto");
+    }
+
+    #[test]
+    fn adreno_opencl_uses_f16_kv_cache() {
+        let pin = crate::engine::pin::optional_pin_for("windows", "aarch64", "OpenCL").unwrap();
+        let plan = SpawnPlan::from_profile(&profile(16, false, "OpenCL"), pin);
+        assert_eq!(plan.cache_type, "f16");
+        assert_eq!(plan.gpu_layers, 99);
         assert_eq!(plan.flash_attn, "auto");
     }
 

@@ -64,13 +64,13 @@ fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<Stri
         "-ub".into(),
         plan.ubatch.to_string(),
         "-ngl".into(),
-        "99".into(),
+        plan.gpu_layers.to_string(),
         "-fa".into(),
         plan.flash_attn.into(),
         "--cache-type-k".into(),
-        "q8_0".into(),
+        plan.cache_type.into(),
         "--cache-type-v".into(),
-        "q8_0".into(),
+        plan.cache_type.into(),
         "--jinja".into(),
         // Extract template-declared reasoning into reasoning_content
         // (DeepSeek-R1, Qwen3, …); inline-tag models are split
@@ -101,6 +101,31 @@ impl Engine {
                 .await,
             Ok(response) if response.status().is_success()
         )
+    }
+
+    /// `/health` only means weights loaded. OpenCL on Adreno can pass that
+    /// and then hang or return nothing on the first token.
+    async fn generation_probe_ok(&self, port: u16) -> bool {
+        let url = format!("http://127.0.0.1:{port}/completion");
+        let send = self
+            .client
+            .post(&url)
+            .json(&serde_json::json!({
+                "prompt": "Hi",
+                "n_predict": 4,
+                "cache_prompt": false,
+            }))
+            .send();
+        let Ok(Ok(response)) = tokio::time::timeout(Duration::from_secs(60), send).await else {
+            return false;
+        };
+        if !response.status().is_success() {
+            return false;
+        }
+        let value: serde_json::Value = response.json().await.unwrap_or_default();
+        let predicted = value["tokens_predicted"].as_i64().unwrap_or(0);
+        let content = value["content"].as_str().unwrap_or("");
+        predicted > 0 || !content.is_empty()
     }
 
     /// Bring the engine up if Chat needs it. Queued callers simply await.
@@ -242,15 +267,22 @@ impl Engine {
         let profile = MachineProfile::detect(self.ctx.paths.base());
         let hint = ModelHint::from_active(model, &self.ctx.paths.models_dir());
         let plan = SpawnPlan::for_model(&profile, pin, Some(&hint));
+        if pin.accelerator == "Vulkan" && super::gpu::windows_host_is_arm64() {
+            log::warn!(
+                "this Windows copy is running on ARM; using the CPU path so Chat can answer"
+            );
+        }
         log::info!(
-            "starting llama-server {} {} with {} (-c {} -b {} -ub {} -fa {}{})",
+            "starting llama-server {} {} with {} (-c {} -b {} -ub {} -ngl {} -fa {} --cache-type {}{})",
             ENGINE_BUILD,
             pin.accelerator,
             model.file,
             plan.context_tokens,
             plan.batch,
             plan.ubatch,
+            plan.gpu_layers,
             plan.flash_attn,
+            plan.cache_type,
             if plan.no_mmap { " --no-mmap" } else { "" }
         );
         self.set_status(EngineState::Starting, None);
@@ -322,6 +354,17 @@ impl Engine {
                 });
             }
             if self.health_ok(port).await {
+                if pin.accelerator == "OpenCL" && !self.generation_probe_ok(port).await {
+                    log::warn!("OpenCL loaded but a test reply failed; falling back to CPU");
+                    if let Some(pid) = child.id() {
+                        force_kill_pid(pid);
+                    }
+                    let _ = child.kill().await;
+                    return Err(SpawnFailed {
+                        try_bundled: true,
+                        error: anyhow!("OpenCL probe failed"),
+                    });
+                }
                 break;
             }
             if started.elapsed() > HEALTH_TIMEOUT {
@@ -350,6 +393,7 @@ impl Engine {
         inner.child = Some(child);
         inner.port = port;
         inner.model_file = model.file.clone();
+        inner.chat_stall = super::tune::chat_stall_timeout(&plan);
         let url = format!("http://127.0.0.1:{port}");
         inner.reasoning = Some(self.load_reasoning_caps(&url).await);
 
@@ -435,6 +479,8 @@ mod tests {
             ubatch: 512,
             no_mmap,
             flash_attn: flash,
+            cache_type: "q8_0",
+            gpu_layers: 99,
         }
     }
 
@@ -464,6 +510,25 @@ mod tests {
         let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan(false, "auto"));
         assert!(has_pair(&args, "-fa", "auto"));
         assert!(!args.iter().any(|a| a == "--no-mmap"));
+    }
+
+    #[test]
+    fn opencl_args_use_f16_cache() {
+        let mut plan = plan(false, "auto");
+        plan.cache_type = "f16";
+        plan.gpu_layers = 99;
+        let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan);
+        assert!(has_pair(&args, "--cache-type-k", "f16"));
+        assert!(has_pair(&args, "--cache-type-v", "f16"));
+        assert!(has_pair(&args, "-ngl", "99"));
+    }
+
+    #[test]
+    fn cpu_args_offload_no_layers() {
+        let mut plan = plan(false, "auto");
+        plan.gpu_layers = 0;
+        let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan);
+        assert!(has_pair(&args, "-ngl", "0"));
     }
 
     #[test]

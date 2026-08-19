@@ -80,6 +80,13 @@ pub(crate) fn map_user_error(text: &str) -> String {
     {
         return "The download couldn't be verified. Try again.".into();
     }
+    if lower.contains("generation failed")
+        || lower.contains("generation stalled")
+        || lower.contains("empty generation")
+        || lower.contains("chat stream")
+    {
+        return "Rebost couldn't finish that answer. Try again.".into();
+    }
     if lower.contains("stalled") {
         return "The download stalled. Check your connection and try again.".into();
     }
@@ -92,9 +99,6 @@ pub(crate) fn map_user_error(text: &str) -> String {
         || lower.contains("server ignored range")
     {
         return "The download didn't finish. Try again.".into();
-    }
-    if lower.contains("generation failed") || lower.contains("chat stream") {
-        return "Rebost couldn't finish that answer. Try again.".into();
     }
     if lower.contains(".gguf")
         || lower.contains("gguf")
@@ -198,6 +202,18 @@ mod tests {
         assert_eq!(
             friendly("engine archive did not contain llama-server"),
             "Rebost isn't ready yet. Try again in a moment."
+        );
+        assert_eq!(
+            friendly("generation stalled"),
+            "Rebost couldn't finish that answer. Try again."
+        );
+        assert_eq!(
+            friendly("empty generation"),
+            "Rebost couldn't finish that answer. Try again."
+        );
+        assert_eq!(
+            friendly("The download stalled. Check your connection and try again."),
+            "The download stalled. Check your connection and try again."
         );
     }
 }

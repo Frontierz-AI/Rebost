@@ -40,11 +40,11 @@ pnpm tauri build --target x86_64-apple-darwin
 
 Signed Mac installers **codesign every Mach-O inside the archive** (notary unpacks `.tar.gz`), then notarize. llama.cpp still unpacks on first chat; it is not a Tauri sidecar.
 
-Windows x64 needs a working Vulkan driver for the bundled pin. Windows arm64 ships CPU and can add Adreno OpenCL after warmup.
+Windows x64 needs a working Vulkan driver for the bundled pin. Windows arm64 ships CPU and can add Adreno OpenCL after warmup. GitHub Releases attach both NSIS installers from `release-windows.yml` (x64 on `windows-latest`, ARM64 on `windows-11-arm`). An x64 copy running on Windows ARM stays on CPU (`-ngl 0`) so Adreno Vulkan is not used.
 
 ## Flags
 
-Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0`, and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). `--no-mmap` only on discrete Vulkan and CUDA. CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k.
+Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU and the x64-on-ARM Vulkan copy use `-ngl 0`. `--no-mmap` only on discrete Vulkan and CUDA. CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
 
 Extracted binaries live in `engine/<build>-<accelerator>/` (for example `b10418-metal`, `b10418-cuda`). An older `engine/<build>/` folder is still used for the bundled pin.
 

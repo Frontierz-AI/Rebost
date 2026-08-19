@@ -6,6 +6,16 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-08-19
+
+### Added
+
+- On a Snapdragon PC, pick Windows (ARM).
+
+### Fixed
+
+- Chat no longer leaves a blank reply. Try again.
+
 ## [0.8.0] - 2026-08-18
 
 ### Changed
@@ -379,6 +389,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.0...v0.8.2
 [0.8.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.5.5...v0.6.0

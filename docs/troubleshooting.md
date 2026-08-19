@@ -5,6 +5,7 @@ If Chat is stuck or a download will not finish, start here. Settings → Diagnos
 | What you see | What to try |
 |--------------|-------------|
 | Stuck on "Warming up…" | Settings → Diagnostics; the log is on disk. Quit Rebost. Reset only if you can install the AI again. |
+| Chat thinks, then a blank bubble | Try again. On a Snapdragon PC, use the Windows (ARM) download. |
 | Download sits at 100% or "Checking the download…" | The check can take a while on a large file. Skip the check and use the file skips it. A mismatch deletes the file; try again. |
 | "Couldn't reach the AI catalogs" | Network to huggingface.co / ollama.com. Search is optional; the suggestion on this computer does not need it. |
 | Install refused (no checksum) | That listing has no checksum. Pick another AI. |

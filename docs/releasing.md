@@ -19,7 +19,7 @@ Docs that quote it (README, SECURITY, `docs/accessibility.md`, CHANGELOG, the bu
 pnpm tauri build
 ```
 
-That writes an unsigned DMG or NSIS for this machine. Gatekeeper will warn on macOS. Linux is not a supported platform. llama.cpp pins for Linux exist only so the crate compiles on Ubuntu CI; there is no Linux installer.
+That writes an unsigned DMG or NSIS for this machine. Gatekeeper will warn on macOS. Linux is not a supported platform. llama.cpp pins for Linux exist only so the crate compiles on Ubuntu CI; there is no Linux installer. Windows ARM64 NSIS is `pnpm tauri build --target aarch64-pc-windows-msvc` on ARM Windows, or the `windows-11-arm` job in `release-windows.yml`.
 
 Signed installers need credentials that are not in this repository. See [signing.md](signing.md).
 

@@ -139,6 +139,8 @@ export interface MachineProfile {
   appleSilicon: boolean;
   accelerator: string;
   freeDiskBytes: number;
+  processArch: string;
+  osArch: string;
 }
 
 export interface Recommendation {
@@ -322,6 +324,14 @@ export function userFacingError(error: unknown): string {
   ) {
     return "The download couldn't be verified. Try again.";
   }
+  if (
+    lower.includes("generation failed") ||
+    lower.includes("generation stalled") ||
+    lower.includes("empty generation") ||
+    lower.includes("chat stream")
+  ) {
+    return "Rebost couldn't finish that answer. Try again.";
+  }
   if (lower.includes("stalled")) {
     return "The download stalled. Check your connection and try again.";
   }
@@ -335,9 +345,6 @@ export function userFacingError(error: unknown): string {
     lower.includes("server ignored range")
   ) {
     return "The download didn't finish. Try again.";
-  }
-  if (lower.includes("generation failed") || lower.includes("chat stream")) {
-    return "Rebost couldn't finish that answer. Try again.";
   }
   if (
     lower.includes(".gguf") ||
