@@ -5,6 +5,7 @@ use futures_util::future::join_all;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
+use url::Url;
 
 pub use crate::engine::catalog::{
     recommend, runtime_need_bytes, smaller_alternatives, uninstalled_suggestions, CatalogEntry,
@@ -142,6 +143,20 @@ fn include_explore_hit(
         return false;
     }
     is_general_chat(pipeline_tag, tags)
+}
+
+/// A pasted `owner/repo` is kept even when browse would hide specialists.
+fn keep_explore_hit(
+    query: &str,
+    repo: &str,
+    pipeline_tag: Option<&str>,
+    tags: &[String],
+    files: &[(String, Option<u64>)],
+) -> bool {
+    if parse_hf_repo_query(query).is_some_and(|exact| exact.eq_ignore_ascii_case(repo)) {
+        return true;
+    }
+    include_explore_hit(query, pipeline_tag, tags, files)
 }
 
 /// Pick the best single-file GGUF from a repo file listing.
@@ -287,6 +302,95 @@ fn is_hf_namespace(value: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.'))
 }
 
+/// Hub paths that are not model repos (`/datasets/…`, `/spaces/…`).
+const HF_NON_MODEL_ROOTS: &[&str] = &[
+    "api",
+    "blog",
+    "chat",
+    "collections",
+    "datasets",
+    "docs",
+    "join",
+    "learn",
+    "login",
+    "metrics",
+    "models",
+    "organizations",
+    "papers",
+    "pricing",
+    "settings",
+    "spaces",
+    "tasks",
+];
+
+fn strip_query_noise(query: &str) -> &str {
+    query
+        .trim()
+        .trim_matches(|c: char| matches!(c, '"' | '\'' | '`' | '<' | '>' | '\u{201c}' | '\u{201d}'))
+        .trim()
+}
+
+fn is_hf_hub_host(host: &str) -> bool {
+    matches!(
+        host.to_ascii_lowercase().as_str(),
+        "huggingface.co" | "www.huggingface.co" | "hf.co" | "www.hf.co"
+    )
+}
+
+fn looks_like_hf_url(query: &str) -> bool {
+    let lower = query.to_ascii_lowercase();
+    lower.contains("://")
+        || lower.starts_with("huggingface.co/")
+        || lower.starts_with("www.huggingface.co/")
+        || lower.starts_with("hf.co/")
+        || lower.starts_with("www.hf.co/")
+}
+
+fn hf_repo_id(owner: &str, repo: &str) -> Option<String> {
+    if HF_NON_MODEL_ROOTS
+        .iter()
+        .any(|root| root.eq_ignore_ascii_case(owner))
+    {
+        return None;
+    }
+    let reference = format!("{owner}/{repo}");
+    validate_reference("huggingface", &reference)
+        .ok()
+        .map(|_| reference)
+}
+
+fn parse_hf_url_repo(query: &str) -> Option<String> {
+    let parsed = Url::parse(query)
+        .ok()
+        .or_else(|| Url::parse(&format!("https://{query}")).ok())?;
+    if !is_hf_hub_host(parsed.host_str()?) {
+        return None;
+    }
+    let mut segments = parsed.path_segments()?;
+    let owner = segments.next()?;
+    let repo = segments.next()?;
+    if owner.is_empty() || repo.is_empty() {
+        return None;
+    }
+    hf_repo_id(owner, repo)
+}
+
+/// Hugging Face `owner/repo`, or a huggingface.co / hf.co model page URL.
+fn parse_hf_repo_query(query: &str) -> Option<String> {
+    let query = strip_query_noise(query);
+    if query.is_empty() {
+        return None;
+    }
+    if looks_like_hf_url(query) {
+        return parse_hf_url_repo(query);
+    }
+    let (owner, repo) = query.split_once('/')?;
+    if repo.contains('/') {
+        return None;
+    }
+    hf_repo_id(owner, repo)
+}
+
 /// `Qwen3` / `Qwen2.5` → `Qwen`, so an author= query can hit the maker's org.
 fn strip_trailing_version(query: &str) -> String {
     query
@@ -297,6 +401,12 @@ fn strip_trailing_version(query: &str) -> String {
 
 fn publisher_guesses(query: &str) -> Vec<String> {
     let query = query.trim();
+    if let Some(repo) = parse_hf_repo_query(query) {
+        let owner = repo.split('/').next().unwrap_or("");
+        if is_hf_namespace(owner) {
+            return vec![owner.to_string()];
+        }
+    }
     let mut names = Vec::new();
     if is_hf_namespace(query) {
         names.push(query.to_string());
@@ -670,8 +780,54 @@ async fn hf_list_models(
     response.json().await.unwrap_or_default()
 }
 
+async fn hf_get_model(client: &reqwest::Client, repo: &str) -> Option<HfModel> {
+    if validate_reference("huggingface", repo).is_err() {
+        return None;
+    }
+    let mut query: Vec<(&str, &str)> = Vec::new();
+    for field in HF_EXPAND {
+        query.push(("expand", field));
+    }
+    let response = match client
+        .get(format!("https://huggingface.co/api/models/{repo}"))
+        .query(&query)
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(error) => {
+            log::debug!("hugging face model {repo}: {error:#}");
+            return None;
+        }
+    };
+    if !response.status().is_success() {
+        return None;
+    }
+    response.json().await.ok()
+}
+
+async fn hf_models_for_repo(client: &reqwest::Client, repo: &str) -> Vec<HfModel> {
+    let (owner, name) = repo.split_once('/').unwrap_or((repo, repo));
+    let (exact, search, author) = tokio::join!(
+        hf_get_model(client, repo),
+        hf_list_models(client, Some(name), None, 60, HfListSort::Downloads, None),
+        hf_list_models(client, None, Some(owner), 20, HfListSort::Created, None),
+    );
+    let mut models = Vec::new();
+    if let Some(model) = exact {
+        models.push(model);
+    }
+    models.extend(search);
+    models.extend(author);
+    dedup_models(&mut models);
+    models
+}
+
 async fn hf_models_for_query(client: &reqwest::Client, query: &str) -> Vec<HfModel> {
     let query = query.trim();
+    if let Some(repo) = parse_hf_repo_query(query) {
+        return hf_models_for_repo(client, &repo).await;
+    }
     if query.is_empty() {
         let (generation, vision) = tokio::join!(
             hf_list_models(
@@ -798,7 +954,13 @@ async fn search_huggingface(
             .flatten()
             .map(|s| (s.rfilename.clone(), None))
             .collect();
-        if !include_explore_hit(query, model.pipeline_tag.as_deref(), &model.tags, &files) {
+        if !keep_explore_hit(
+            query,
+            &repo,
+            model.pipeline_tag.as_deref(),
+            &model.tags,
+            &files,
+        ) {
             continue;
         }
         let Some((file, _)) = pick_gguf(&files) else {
@@ -1001,9 +1163,11 @@ pub async fn search_models(
     query: &str,
     profile: &MachineProfile,
 ) -> Result<Vec<ModelSearchResult>> {
-    let query = query.trim();
+    let query = parse_hf_repo_query(query.trim()).unwrap_or_else(|| query.trim().to_string());
+    let query = query.as_str();
+    let exact_repo = parse_hf_repo_query(query);
     let (hf, ollama) = tokio::join!(search_huggingface(client, query, profile), async {
-        if query.is_empty() {
+        if query.is_empty() || exact_repo.is_some() {
             Vec::new()
         } else {
             search_ollama(client, query, profile).await
@@ -1028,6 +1192,15 @@ pub async fn search_models(
         }
     }
     rank_search_results(&mut results, profile.model_budget_bytes());
+    if let Some(repo) = exact_repo {
+        if let Some(idx) = results
+            .iter()
+            .position(|result| result.reference.eq_ignore_ascii_case(&repo))
+        {
+            let hit = results.remove(idx);
+            results.insert(0, hit);
+        }
+    }
     results.truncate(HF_RESULT_LIMIT);
     Ok(results)
 }
@@ -1351,9 +1524,54 @@ mod tests {
             &coder_tags,
             &chat_files,
         ));
+        assert!(!keep_explore_hit(
+            "surya",
+            "someone/surya",
+            Some("image-text-to-text"),
+            &surya_tags,
+            &surya_files,
+        ));
+        assert!(keep_explore_hit(
+            "someone/surya",
+            "someone/surya",
+            Some("image-text-to-text"),
+            &surya_tags,
+            &surya_files,
+        ));
         assert!(query_wants_specialist("ocr"));
         assert!(query_wants_specialist("Yi coder"));
         assert!(!query_wants_specialist("Qwen3"));
+    }
+
+    #[test]
+    fn explore_query_reads_owner_repo_and_hub_urls() {
+        assert_eq!(
+            parse_hf_repo_query("OBLITERATUS/Qwen3.8-27B-OBLITERATED").as_deref(),
+            Some("OBLITERATUS/Qwen3.8-27B-OBLITERATED")
+        );
+        assert_eq!(
+            parse_hf_repo_query(
+                " https://huggingface.co/OBLITERATUS/Qwen3.8-27B-OBLITERATED/tree/main "
+            )
+            .as_deref(),
+            Some("OBLITERATUS/Qwen3.8-27B-OBLITERATED")
+        );
+        assert_eq!(
+            parse_hf_repo_query("hf.co/unsloth/Qwen3-0.6B-GGUF").as_deref(),
+            Some("unsloth/Qwen3-0.6B-GGUF")
+        );
+        assert_eq!(
+            parse_hf_repo_query("<https://huggingface.co/Qwen/Qwen3-8B>").as_deref(),
+            Some("Qwen/Qwen3-8B")
+        );
+        assert_eq!(
+            publisher_guesses("OBLITERATUS/Qwen3.8-27B-OBLITERATED"),
+            vec!["OBLITERATUS"]
+        );
+        assert!(parse_hf_repo_query("Qwen3").is_none());
+        assert!(parse_hf_repo_query("https://evil.example/owner/repo").is_none());
+        assert!(parse_hf_repo_query("https://huggingface.co/datasets/owner/repo").is_none());
+        assert!(parse_hf_repo_query("owner/repo/extra").is_none());
     }
 
     #[test]
@@ -1444,6 +1662,10 @@ mod tests {
         assert_eq!(publisher_guesses("Qwen"), vec!["Qwen"]);
         assert_eq!(publisher_guesses("Qwen3"), vec!["Qwen3", "Qwen"]);
         assert_eq!(publisher_guesses("Qwen2.5"), vec!["Qwen2.5", "Qwen"]);
+        assert_eq!(
+            publisher_guesses("https://huggingface.co/Qwen/Qwen3-8B"),
+            vec!["Qwen"]
+        );
         assert!(author_matches_search("Qwen", "Qwen3"));
         assert!(author_matches_search("meta-llama", "llama"));
         assert!(!author_matches_search("unsloth", "Qwen"));

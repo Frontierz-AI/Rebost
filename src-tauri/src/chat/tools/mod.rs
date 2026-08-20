@@ -6,7 +6,7 @@ mod parse;
 mod search;
 mod web;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::AtomicBool;
 
 use serde_json::{json, Value};
@@ -125,7 +125,7 @@ impl ToolSet {
     }
 
     /// Shelf or web tools that still need another look. `search_chats` alone
-    /// should not start another tool round — that left No Shelf answers blank.
+    /// should not start another tool round.
     pub(crate) fn follow_up_useful(self) -> bool {
         self.search_shelf
             || self.look_around
@@ -213,7 +213,7 @@ impl ToolSet {
         if self.open_file {
             let mut file = json!({
                 "type": "string",
-                "description": "Exact file name from the shelf list. Use the path when two files share a name.",
+                "description": "Exact file name from the shelf list. Use the path when two files share a name. This is the only argument.",
             });
             if !labels.is_empty() && labels.len() <= TOOL_ENUM_MAX {
                 file["enum"] = json!(labels);
@@ -222,15 +222,11 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": OPEN_SHELF_FILE,
-                    "description": "Open one named file from the shelf list. Use when excerpts are not enough and you know which file to read. A long file returns one window, not the whole file; call again with the same name for the next part.",
+                    "description": "Open one named file from the shelf list. Use when excerpts are not enough and you know which file to read. Pass only the file name. A long file returns the next unread window each time you call.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "file": file,
-                            "offset": {
-                                "type": "integer",
-                                "description": "Optional. Omit to start at the beginning, or to continue this file.",
-                            }
+                            "file": file
                         },
                         "required": ["file"]
                     }
@@ -242,7 +238,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_CHATS,
-                    "description": "Search earlier conversations, not this one. Use when the question needs something said there. Use what you find in the answer; do not cite those notes as [S1].",
+                    "description": "Search earlier conversations on this Shelf, not this one. Use only when the question refers to something said there. Skip it for a new request. Use what you find in the answer; do not cite those notes as [S1].",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -301,6 +297,8 @@ impl ToolSet {
 #[derive(Default)]
 pub(crate) struct ToolUse {
     opened: HashSet<String>,
+    /// Next character to send for each file already opened this turn.
+    pub(crate) open_next: HashMap<String, usize>,
     shelf_searches: usize,
     looks: usize,
     chats: usize,
@@ -314,9 +312,17 @@ impl ToolUse {
             ToolName::SearchShelf => self.shelf_searches += 1,
             ToolName::LookAround => self.looks += 1,
             ToolName::OpenFile => match change {
-                SourceChange::ReplaceDocument(source)
-                | SourceChange::OpenWindow { opened: source, .. } => {
+                SourceChange::ReplaceDocument(source) => {
                     self.opened.insert(source.document_id.clone());
+                }
+                SourceChange::OpenWindow {
+                    opened: source,
+                    next_char,
+                    ..
+                } => {
+                    self.opened.insert(source.document_id.clone());
+                    self.open_next
+                        .insert(source.document_id.clone(), *next_char);
                 }
                 SourceChange::None | SourceChange::ReplaceOne(_) | SourceChange::Append(_) => {}
             },
@@ -338,6 +344,8 @@ pub(crate) struct ToolCtx<'a> {
     pub think: ThinkLevel,
     pub allowed: ToolSet,
     pub cancel: &'a AtomicBool,
+    /// Next unread character per document, copied from `ToolUse` for this call.
+    pub open_next: HashMap<String, usize>,
 }
 
 impl ToolCtx<'_> {
@@ -367,6 +375,8 @@ pub(crate) enum SourceChange {
     OpenWindow {
         opened: SourcePassage,
         drop_sids: Vec<String>,
+        /// Character offset just after this window, for the next open.
+        next_char: usize,
     },
 }
 
@@ -445,11 +455,7 @@ pub(crate) async fn run_tool(call: &ToolCall, tool: &ToolCtx<'_>) -> ToolOutcome
     match name {
         ToolName::SearchShelf => search::search_shelf(tool, &query_arg(call)),
         ToolName::LookAround => search::look_around(tool, &id_arg(call)),
-        ToolName::OpenFile => open_shelf_file(
-            tool,
-            &requested_file_name(call).unwrap_or_default(),
-            parse::requested_offset(call),
-        ),
+        ToolName::OpenFile => open_shelf_file(tool, &requested_file_name(call).unwrap_or_default()),
         ToolName::SearchChats => search::search_chats(tool, &query_arg(call)),
         ToolName::SearchWeb => web::search_web(&query_arg(call), tool.cancel).await,
         ToolName::ReadWebPage => web::read_web_page(&url_arg(call), tool.cancel).await,
@@ -471,7 +477,9 @@ pub(crate) fn apply_change(sources: &mut Vec<SourcePassage>, change: SourceChang
             }
         }
         SourceChange::Append(new) => sources.extend(new),
-        SourceChange::OpenWindow { opened, drop_sids } => {
+        SourceChange::OpenWindow {
+            opened, drop_sids, ..
+        } => {
             sources.retain(|s| !drop_sids.iter().any(|id| id == &s.sid));
             if let Some(slot) = sources.iter_mut().find(|s| s.sid == opened.sid) {
                 *slot = opened;
@@ -719,19 +727,22 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("Use when"));
-        assert!(spec[2]["function"]["description"]
-            .as_str()
-            .unwrap()
-            .contains("Use when"));
+        let open = spec[2]["function"]["description"].as_str().unwrap();
+        assert!(open.contains("Use when"));
+        assert!(open.contains("next unread"));
+        assert!(open.contains("Pass only the file name"));
+        assert!(spec[2]["function"]["parameters"]["properties"]
+            .get("offset")
+            .is_none());
 
         let stuffed = ToolSet::new(false, false, false, true, &used);
         let spec = stuffed.schema(&[]);
         assert_eq!(spec.as_array().unwrap().len(), 1);
         assert_eq!(spec[0]["function"]["name"], SEARCH_CHATS);
-        assert!(spec[0]["function"]["description"]
-            .as_str()
-            .unwrap()
-            .contains("earlier conversations"));
+        let chats = spec[0]["function"]["description"].as_str().unwrap();
+        assert!(chats.contains("earlier conversations"));
+        assert!(chats.contains("this Shelf"));
+        assert!(chats.contains("Skip it for a new request"));
 
         let no_memory = ToolSet::new(false, false, false, false, &used);
         assert!(no_memory.schema(&[]).as_array().unwrap().is_empty());

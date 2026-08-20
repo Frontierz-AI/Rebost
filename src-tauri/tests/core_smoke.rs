@@ -95,7 +95,7 @@ async fn full_loop_answers_with_citations() {
     let memories = app
         .ctx
         .search
-        .search_messages("written notice to terminate", None, 8)
+        .search_messages("written notice to terminate", None, None, 8)
         .unwrap();
     assert!(
         !memories.is_empty(),

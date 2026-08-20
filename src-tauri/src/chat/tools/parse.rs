@@ -6,21 +6,6 @@ use crate::engine::ToolCall;
 
 use super::{is_known_tool, normalize_tool_name, ToolName};
 
-pub(crate) fn requested_offset(call: &ToolCall) -> Option<usize> {
-    let value = parse_arguments_value(&call.function.arguments)?;
-    for key in ["offset", "start", "from"] {
-        if let Some(n) = value.get(key).and_then(Value::as_u64) {
-            return Some(n as usize);
-        }
-        if let Some(text) = value.get(key).and_then(Value::as_str) {
-            if let Ok(n) = text.trim().parse::<usize>() {
-                return Some(n);
-            }
-        }
-    }
-    None
-}
-
 pub(crate) fn requested_file_name(call: &ToolCall) -> Option<String> {
     arg_string(
         &call.function.arguments,

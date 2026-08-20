@@ -7,6 +7,8 @@ import {
   isRecentRelease,
   modelBudgetBytes,
   nextExploreSort,
+  normalizeExploreQuery,
+  parseExploreRepoQuery,
   sortExploreResults,
   visibleExploreCount,
 } from "./explore-models";
@@ -24,6 +26,28 @@ function hit(name: string, extras: Partial<ModelSearchResult> = {}): ModelSearch
 const now = Date.parse("2026-08-20T12:00:00Z");
 const gib = 1024 * 1024 * 1024;
 const budget = 20 * gib;
+
+describe("explore repo paste", () => {
+  it("reads owner/repo and Hugging Face page URLs", () => {
+    expect(parseExploreRepoQuery("OBLITERATUS/Qwen3.8-27B-OBLITERATED")).toBe(
+      "OBLITERATUS/Qwen3.8-27B-OBLITERATED",
+    );
+    expect(
+      parseExploreRepoQuery(
+        " https://huggingface.co/OBLITERATUS/Qwen3.8-27B-OBLITERATED/tree/main ",
+      ),
+    ).toBe("OBLITERATUS/Qwen3.8-27B-OBLITERATED");
+    expect(parseExploreRepoQuery("hf.co/unsloth/Qwen3-0.6B-GGUF")).toBe(
+      "unsloth/Qwen3-0.6B-GGUF",
+    );
+    expect(parseExploreRepoQuery("<https://huggingface.co/Qwen/Qwen3-8B>")).toBe("Qwen/Qwen3-8B");
+    expect(normalizeExploreQuery("  https://huggingface.co/Qwen/Qwen3-8B  ")).toBe("Qwen/Qwen3-8B");
+    expect(parseExploreRepoQuery("Qwen3")).toBeUndefined();
+    expect(parseExploreRepoQuery("https://evil.example/owner/repo")).toBeUndefined();
+    expect(parseExploreRepoQuery("https://huggingface.co/datasets/owner/repo")).toBeUndefined();
+    expect(parseExploreRepoQuery("owner/repo/extra")).toBeUndefined();
+  });
+});
 
 describe("explore sort", () => {
   it("prefers official recent AIs that use this computer well", () => {

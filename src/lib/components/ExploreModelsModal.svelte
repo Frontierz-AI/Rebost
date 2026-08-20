@@ -7,6 +7,8 @@
     columnAriaSort,
     defaultExploreSortDir,
     nextExploreSort,
+    normalizeExploreQuery,
+    parseExploreRepoQuery,
     sortExploreResults,
     visibleExploreCount,
     type ExploreColumn,
@@ -89,7 +91,17 @@
   }
 
   function submitSearch() {
-    void runSearch(query.trim());
+    const next = normalizeExploreQuery(query);
+    query = next;
+    void runSearch(next);
+  }
+
+  function onSearchPaste(event: ClipboardEvent) {
+    const repo = parseExploreRepoQuery(event.clipboardData?.getData("text") ?? "");
+    if (!repo) return;
+    event.preventDefault();
+    query = repo;
+    void runSearch(repo);
   }
 
   function applyChip(next: ExploreSort) {
@@ -180,9 +192,12 @@
               id="explore-model-search"
               name="explore-model-search"
               class="input !pl-9"
-              placeholder="Muse, Gemma, Mistral…"
+              placeholder="Muse, Gemma, or Qwen/Qwen3"
+              autocomplete="off"
+              spellcheck="false"
               bind:value={query}
               onkeydown={(e) => e.key === "Enter" && submitSearch()}
+              onpaste={onSearchPaste}
             />
           </div>
           <button type="button" class="btn-primary shrink-0" onclick={submitSearch}>

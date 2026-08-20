@@ -331,12 +331,14 @@ async fn generate_with_tools(
         catalog_for_turn(ctx, shelf_id, upload_shelf_id)
     };
     let shelf_ok = !files.is_empty();
-    let chats_ok = Conversations::has_other_messages(&ctx.paths, thread_id);
+    let chats_ok = shelf_id
+        .is_some_and(|shelf| Conversations::has_other_shelf_messages(&ctx.paths, thread_id, shelf));
     let mut used = tools::ToolUse::default();
     let mut collected = ChatOutput::default();
     let mut rounds = 0usize;
     let mut answer_only = false;
     let mut did_answer_retry = false;
+    let prompt_len = turn.messages.len();
     let mut thinking = match think {
         ThinkLevel::Deep => ChatThinking::Deep,
         ThinkLevel::Off | ThinkLevel::Light => ChatThinking::Off,
@@ -438,6 +440,7 @@ async fn generate_with_tools(
                             &used,
                         ),
                         cancel: cancel.as_ref(),
+                        open_next: used.open_next.clone(),
                     },
                 )
                 .await;
@@ -486,6 +489,10 @@ async fn generate_with_tools(
             did_answer_retry = true;
             answer_only = true;
             thinking = ChatThinking::Off;
+            if should_drop_tool_transcript(rounds) {
+                rewind_to_prompt(&mut turn.messages, prompt_len);
+                log::info!("empty follow-up after tools; answering without tool notes");
+            }
             emit("status", json!({ "stage": "thinking" }));
             continue;
         }
@@ -501,6 +508,17 @@ async fn generate_with_tools(
 
 fn should_fail_empty_answer(answer: &str, cancelled: bool) -> bool {
     !cancelled && answer.trim().is_empty()
+}
+
+/// A blank follow-up after `search_chats` (or any tool) stays blank if we
+/// keep the tool transcript: leftover calls and think-only output are
+/// withheld. Drop those notes and answer from the original prompt.
+fn should_drop_tool_transcript(tool_rounds: usize) -> bool {
+    tool_rounds > 0
+}
+
+fn rewind_to_prompt(messages: &mut Vec<ChatMessage>, prompt_len: usize) {
+    messages.truncate(prompt_len);
 }
 
 fn should_emit_reading(library_id: Option<&str>, upload_id: Option<&str>) -> bool {
@@ -1132,6 +1150,7 @@ fn shelf_prompt_bits(
 mod cancel_tests {
     use super::*;
     use crate::core::NoopEvents;
+    use crate::engine::ToolCall;
     use crate::ingest::extract::ExtractorSettings;
     use crate::paths::Paths;
     use std::sync::atomic::Ordering;
@@ -1276,6 +1295,31 @@ mod cancel_tests {
         assert!(!should_fail_empty_answer("Hello", false));
         assert!(!should_fail_empty_answer("", true));
     }
+
+    #[test]
+    fn a_blank_follow_up_drops_tool_notes() {
+        assert!(!should_drop_tool_transcript(0));
+        assert!(should_drop_tool_transcript(1));
+    }
+
+    #[test]
+    fn rewind_keeps_the_prompt_and_drops_tool_turns() {
+        let mut messages = vec![
+            ChatMessage::text("system", "You are Rebost."),
+            ChatMessage::text("user", "Hello"),
+        ];
+        let prompt_len = messages.len();
+        let call = ToolCall::function(
+            "c1",
+            tools::SEARCH_CHATS,
+            r#"{"query":"office"}"#.to_string(),
+        );
+        messages.push(tools::assistant_tool_message(std::slice::from_ref(&call)));
+        messages.push(tools::tool_result_message(&call, "Earlier notes.".into()));
+        rewind_to_prompt(&mut messages, prompt_len);
+        assert_eq!(messages.len(), 2);
+        assert_eq!(messages[1].as_text(), "Hello");
+    }
 }
 
 #[cfg(test)]
@@ -1362,6 +1406,31 @@ mod prepare_tests {
                 &tools::ToolUse::default(),
             ),
             cancel: idle_cancel(),
+            open_next: HashMap::new(),
+        }
+    }
+
+    fn tool_ctx_used<'a>(
+        ctx: &'a Ctx,
+        thread_id: &'a str,
+        shelf_id: &'a str,
+        files: &'a [tools::ShelfFile],
+        sources: &'a [SourcePassage],
+        budget: usize,
+        used: &'a tools::ToolUse,
+    ) -> tools::ToolCtx<'a> {
+        tools::ToolCtx {
+            ctx,
+            thread_id,
+            shelf_id: Some(shelf_id),
+            upload_shelf_id: None,
+            files,
+            sources,
+            budget,
+            think: ThinkLevel::Off,
+            allowed: tools::ToolSet::new(true, !sources.is_empty(), false, true, used),
+            cancel: idle_cancel(),
+            open_next: used.open_next.clone(),
         }
     }
 
@@ -1720,7 +1789,7 @@ mod prepare_tests {
         let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
         assert_eq!(files.len(), 1);
         let tool = tool_ctx(&fixture.ctx, "t", &fixture.shelf.id, &files, &[], 12_000);
-        let outcome = super::tools::open_shelf_file(&tool, "encyclopedia.md", None);
+        let outcome = super::tools::open_shelf_file(&tool, "encyclopedia.md");
         let source = match outcome.change {
             tools::SourceChange::OpenWindow { opened, .. } => opened,
             other => panic!("expected opened file, got {other:?}"),
@@ -1729,7 +1798,7 @@ mod prepare_tests {
         assert!(source.body.to_lowercase().contains("zebra"));
         assert!(outcome.message.contains("[S1]"));
         assert!(matches!(
-            super::tools::open_shelf_file(&tool, "no-such.md", None).change,
+            super::tools::open_shelf_file(&tool, "no-such.md").change,
             tools::SourceChange::None
         ));
     }
@@ -1803,22 +1872,84 @@ mod prepare_tests {
         assert!(updated.body.len() > sources[0].body.len());
     }
 
+    fn user_line(text: &str) -> StoredMessage {
+        StoredMessage {
+            id: crate::ids::message_id(),
+            role: "user".into(),
+            text: text.into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        }
+    }
+
     #[tokio::test(flavor = "multi_thread")]
-    async fn search_chats_returns_notes_from_other_threads() {
+    async fn search_chats_returns_notes_from_other_threads_on_the_same_shelf() {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::new(dir.path().join("appdata"));
         let ctx = Ctx::new(paths, Arc::new(NoopEvents), ExtractorSettings::default()).unwrap();
+        let kitchen = Conversations::create(&ctx.paths, Some("s_kitchen".into())).unwrap();
+        let current = Conversations::create(&ctx.paths, Some("s_kitchen".into())).unwrap();
+        let office = Conversations::create(&ctx.paths, Some("s_office".into())).unwrap();
         let now = chrono::Utc::now();
+        let kitchen_note = user_line("The office move budget is twelve thousand euros.");
+        Conversations::append(&ctx.paths, &kitchen.id, &kitchen_note).unwrap();
         ctx.search
             .index_message(
-                "other",
-                "m_old",
+                &kitchen.id,
+                &kitchen_note.id,
                 "user",
-                "The office move budget is twelve thousand euros.",
+                &kitchen_note.text,
                 Some("en"),
                 now,
             )
             .unwrap();
+        let office_note = user_line("The office move budget is ninety thousand euros.");
+        Conversations::append(&ctx.paths, &office.id, &office_note).unwrap();
+        ctx.search
+            .index_message(
+                &office.id,
+                &office_note.id,
+                "user",
+                &office_note.text,
+                Some("en"),
+                now,
+            )
+            .unwrap();
+        let files: Vec<tools::ShelfFile> = Vec::new();
+        let tool = tools::ToolCtx {
+            ctx: ctx.as_ref(),
+            thread_id: &current.id,
+            shelf_id: Some("s_kitchen"),
+            upload_shelf_id: None,
+            files: &files,
+            sources: &[],
+            budget: 9_000,
+            think: ThinkLevel::Off,
+            allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
+            cancel: idle_cancel(),
+            open_next: HashMap::new(),
+        };
+        let call = ToolCall::function(
+            "c1",
+            tools::SEARCH_CHATS,
+            serde_json::json!({ "query": "office move budget" }).to_string(),
+        );
+        let outcome = tools::run_tool(&call, &tool).await;
+        assert!(matches!(outcome.change, tools::SourceChange::None));
+        assert!(outcome.message.to_lowercase().contains("twelve thousand"));
+        assert!(!outcome.message.to_lowercase().contains("ninety"));
+        assert!(outcome.message.contains("do not cite"));
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn search_chats_without_a_shelf_does_not_run() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().join("appdata"));
+        let ctx = Ctx::new(paths, Arc::new(NoopEvents), ExtractorSettings::default()).unwrap();
         let files: Vec<tools::ShelfFile> = Vec::new();
         let tool = tools::ToolCtx {
             ctx: ctx.as_ref(),
@@ -1831,6 +1962,7 @@ mod prepare_tests {
             think: ThinkLevel::Off,
             allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
             cancel: idle_cancel(),
+            open_next: HashMap::new(),
         };
         let call = ToolCall::function(
             "c1",
@@ -1838,9 +1970,7 @@ mod prepare_tests {
             serde_json::json!({ "query": "office move budget" }).to_string(),
         );
         let outcome = tools::run_tool(&call, &tool).await;
-        assert!(matches!(outcome.change, tools::SourceChange::None));
-        assert!(outcome.message.to_lowercase().contains("twelve thousand"));
-        assert!(outcome.message.contains("do not cite"));
+        assert!(outcome.message.contains("No Shelf is selected"));
     }
 
     async fn add_upload_file(
@@ -2032,11 +2162,12 @@ mod prepare_tests {
             &sources,
             1_200,
         );
-        let first = super::tools::open_shelf_file(&tool, "encyclopedia.md", None);
+        let first = super::tools::open_shelf_file(&tool, "encyclopedia.md");
         let tools::SourceChange::OpenWindow {
             opened: window,
             drop_sids,
-        } = first.change
+            ..
+        } = &first.change
         else {
             panic!("expected a window, got {:?}", first.change);
         };
@@ -2044,20 +2175,15 @@ mod prepare_tests {
         assert!(window.body.contains("START"));
         assert!(!window.body.contains("END unique"));
         assert_eq!(window.sid, "S2");
+        let window = window.clone();
 
         let mut after = sources.to_vec();
-        tools::apply_change(
-            &mut after,
-            tools::SourceChange::OpenWindow {
-                opened: window.clone(),
-                drop_sids,
-            },
-        );
+        tools::apply_change(&mut after, first.change);
         assert!(after.iter().any(|s| s.sid == "S1"));
         assert!(after.iter().any(|s| s.sid == "S2"));
 
         let tool = tool_ctx(&fixture.ctx, "t", &fixture.shelf.id, &files, &after, 1_200);
-        let second = super::tools::open_shelf_file(&tool, "encyclopedia.md", None);
+        let second = super::tools::open_shelf_file(&tool, "encyclopedia.md");
         let tools::SourceChange::OpenWindow { opened: next, .. } = second.change else {
             panic!("expected the next window, got {:?}", second.change);
         };
@@ -2067,6 +2193,60 @@ mod prepare_tests {
             next.body.contains("zebra") || next.body.contains("END"),
             "next window should move forward, got {}",
             next.body.chars().take(80).collect::<String>()
+        );
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn open_shelf_file_pages_when_the_model_repeats_offset_zero() {
+        let mut body = String::from("START unique opening.\n\n");
+        for i in 0..80 {
+            body.push_str(&format!(
+                "middle paragraph {i} with enough words to split windows.\n\n"
+            ));
+        }
+        body.push_str("END unique closing.\n");
+        let fixture = shelf_with_file("encyclopedia.md", &body).await;
+        let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
+        let mut used = tools::ToolUse::default();
+        let mut sources = Vec::new();
+        let mut windows = Vec::new();
+        let mut cursors = Vec::new();
+        for _ in 0..3 {
+            let tool = tool_ctx_used(
+                &fixture.ctx,
+                "t",
+                &fixture.shelf.id,
+                &files,
+                &sources,
+                1_200,
+                &used,
+            );
+            let call = ToolCall::function(
+                "c1",
+                tools::OPEN_SHELF_FILE,
+                serde_json::json!({ "file": "encyclopedia.md", "offset": 0 }).to_string(),
+            );
+            let outcome = tools::run_tool(&call, &tool).await;
+            let tools::SourceChange::OpenWindow {
+                opened, next_char, ..
+            } = &outcome.change
+            else {
+                panic!("expected a window, got {:?}", outcome.change);
+            };
+            windows.push(opened.body.clone());
+            cursors.push(*next_char);
+            tools::note_use(&mut used, &call, &outcome.change);
+            tools::apply_change(&mut sources, outcome.change);
+        }
+        assert_ne!(windows[0], windows[1]);
+        assert_ne!(windows[1], windows[2]);
+        assert!(windows[0].contains("START unique opening."));
+        assert!(!windows[1].contains("START unique opening."));
+        assert!(cursors[0] < cursors[1] && cursors[1] < cursors[2]);
+        assert!(
+            windows[2].contains("middle paragraph") || windows[2].contains("END unique"),
+            "third window should keep moving, got {}",
+            windows[2].chars().take(80).collect::<String>()
         );
     }
 
