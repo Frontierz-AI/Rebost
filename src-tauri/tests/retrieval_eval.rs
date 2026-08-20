@@ -213,7 +213,7 @@ async fn conversation_memory_is_searchable_and_excludes_current_thread() {
     let hits = app
         .ctx
         .search
-        .search_messages("office move budget", Some("t_current"), 8)
+        .search_messages("office move budget", Some("t_current"), None, 8)
         .unwrap();
     assert!(!hits.is_empty());
     assert!(

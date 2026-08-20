@@ -6,7 +6,7 @@ Private AI that works with your files. What happens in your computer stays in yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-The current release is **0.8.3**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
+The current release is **0.8.4**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -18,7 +18,7 @@ The current release is **0.8.3**. Rebost runs on macOS (Apple Silicon and Intel)
 
 Rebost is a desktop app. You talk to an AI on your own computer. You can chat alone, or add files to a Shelf and ask about them.
 
-Chat is the home screen. Attach a file when you need to, or drop files onto Chat; they stay on that conversation. Choose a Shelf when the answer should come from your files; citations open the source. A new conversation keeps the Shelf you last chose. A file you attach is read first. If that first look isn't enough, Chat can search again, open a named file, or read the next part of a long one. Open Thinking to see what it looked through. With no Shelf, Rebost uses what the AI already knows. A setting lets Chat look things up on the web; it stays off until you turn it on. Your files are not sent online. What you already said in the chat still counts, with or without a Shelf. After idle, the first message may say "Warming up…" while the AI gets ready. Stop works then too.
+Chat is the home screen. Attach a file when you need to, or drop files onto Chat; they stay on that conversation. Choose a Shelf when the answer should come from your files; citations open the source. A new conversation keeps the Shelf you last chose. A file you attach is read first. If that first look isn't enough, Chat can search again, open a named file, or read the next part of a long one. Open Thinking to see what it looked through. With no Shelf, Rebost uses what the AI already knows. A setting lets Chat look things up on the web; it stays off until you turn it on. Your files are not sent online. What you already said in the chat still counts, with or without a Shelf. Earlier conversations Chat looks up stay on the same Shelf. After idle, the first message may say "Warming up…" while the AI gets ready. Stop works then too.
 
 A new chat can start from a Recipe. You can edit a Recipe after you save it.
 
@@ -26,7 +26,7 @@ Add PDFs, Word files, or spreadsheets to a Shelf, or link a folder so new files 
 
 Recipes save prompts you reuse. Placeholders use `«…»`. When a placeholder is a document name, Chat can fill it from files on that Shelf.
 
-House rules set tone and language for every chat. Settings opens from the menu (⌘, on a Mac, Ctrl+, on Windows). Explore other AIs is there too, if you want something other than the suggestion.
+House rules set tone and language for every chat. Settings opens from the menu (⌘, on a Mac, Ctrl+, on Windows). Explore other AIs is there too, if you want something other than the suggestion. Paste a catalog page or an owner/name to go straight to that AI.
 
 When an answer contains personal information, you can copy it with those identifiers removed.
 

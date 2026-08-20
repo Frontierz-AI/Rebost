@@ -145,12 +145,27 @@ impl Conversations {
             .find(|t| t.id == thread_id)
     }
 
-    /// True when another conversation already has messages `search_chats` could return.
-    pub fn has_other_messages(paths: &Paths, thread_id: &str) -> bool {
+    /// Other conversations on this Shelf that already have messages
+    /// `search_chats` could return. No-Shelf threads are never listed.
+    pub fn other_ids_on_shelf(paths: &Paths, thread_id: &str, shelf_id: &str) -> Vec<String> {
+        if shelf_id.trim().is_empty() {
+            return Vec::new();
+        }
         read_threads(paths)
             .threads
             .iter()
-            .any(|thread| thread.id != thread_id && thread.message_count > 0)
+            .filter(|thread| {
+                thread.id != thread_id
+                    && thread.message_count > 0
+                    && thread.shelf_id.as_deref() == Some(shelf_id)
+            })
+            .map(|thread| thread.id.clone())
+            .collect()
+    }
+
+    /// True when another conversation on this Shelf already has messages.
+    pub fn has_other_shelf_messages(paths: &Paths, thread_id: &str, shelf_id: &str) -> bool {
+        !Self::other_ids_on_shelf(paths, thread_id, shelf_id).is_empty()
     }
 
     pub fn create(paths: &Paths, shelf_id: Option<String>) -> Result<ThreadMeta> {
@@ -534,13 +549,59 @@ mod tests {
         let messages = Conversations::messages(&paths, &thread.id);
         assert_eq!(messages.len(), 1);
         assert_eq!(messages[0].text, message.text);
-        assert!(!Conversations::has_other_messages(&paths, &thread.id));
-
         let other = Conversations::create(&paths, None).unwrap();
-        assert!(Conversations::has_other_messages(&paths, &other.id));
-        assert!(!Conversations::has_other_messages(&paths, &thread.id));
         assert!(crate::chat::avatars::name_for(&thread.avatar_id).is_some());
         assert_ne!(thread.avatar_id, other.avatar_id);
+    }
+
+    fn user_line(text: &str) -> StoredMessage {
+        StoredMessage {
+            id: crate::ids::message_id(),
+            role: "user".into(),
+            text: text.into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: chrono::Utc::now().to_rfc3339(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        }
+    }
+
+    #[test]
+    fn shelf_memory_only_sees_the_same_shelf() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+
+        let kitchen = Conversations::create(&paths, Some("s_kitchen".into())).unwrap();
+        Conversations::append(&paths, &kitchen.id, &user_line("Kitchen restock")).unwrap();
+        let kitchen_now = Conversations::create(&paths, Some("s_kitchen".into())).unwrap();
+        let office = Conversations::create(&paths, Some("s_office".into())).unwrap();
+        Conversations::append(&paths, &office.id, &user_line("Office move")).unwrap();
+        let loose = Conversations::create(&paths, None).unwrap();
+        Conversations::append(&paths, &loose.id, &user_line("No shelf chat")).unwrap();
+
+        assert!(Conversations::has_other_shelf_messages(
+            &paths,
+            &kitchen_now.id,
+            "s_kitchen"
+        ));
+        assert_eq!(
+            Conversations::other_ids_on_shelf(&paths, &kitchen_now.id, "s_kitchen"),
+            vec![kitchen.id.clone()]
+        );
+        assert!(!Conversations::has_other_shelf_messages(
+            &paths,
+            &kitchen.id,
+            "s_kitchen"
+        ));
+        assert!(Conversations::other_ids_on_shelf(&paths, &office.id, "s_office").is_empty());
+        assert!(Conversations::other_ids_on_shelf(&paths, &loose.id, "").is_empty());
+        assert!(
+            !Conversations::other_ids_on_shelf(&paths, &office.id, "s_kitchen")
+                .contains(&office.id)
+        );
     }
 
     #[test]

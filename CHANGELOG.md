@@ -6,6 +6,22 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-08-21
+
+### Added
+
+- In Explore other AIs, paste a catalog page or an owner/name to open that AI first.
+
+### Changed
+
+- When Chat looks at earlier conversations, it stays on the same Shelf.
+- Chat looks through files or the web when the question needs it.
+
+### Fixed
+
+- Opening a long file again continues from where the last look stopped.
+- After Chat looks through files, a blank follow-up is answered instead of left empty.
+
 ## [0.8.3] - 2026-08-20
 
 ### Added
@@ -406,6 +422,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.4]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.0...v0.8.2
 [0.8.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.7.0...v0.8.0

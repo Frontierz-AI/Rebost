@@ -153,6 +153,19 @@ pub(crate) fn continue_offset(
     locate_window_end(extracted, &window.body)
 }
 
+/// Where the next `open_shelf_file` should start. Never rewinds: a model
+/// offset is ignored; the furthest of the sent cursor and the last window wins.
+pub(crate) fn next_open_start(
+    extracted: &str,
+    sources: &[SourcePassage],
+    document_id: &str,
+    sent_through: Option<usize>,
+) -> usize {
+    let from_sent = sent_through.unwrap_or(0);
+    let from_window = continue_offset(extracted, sources, document_id).unwrap_or(0);
+    from_sent.max(from_window)
+}
+
 /// Character offset just after this excerpt in the extracted file.
 pub(crate) fn locate_window_end(extracted: &str, body: &str) -> Option<usize> {
     let needle = window_needle(body);
@@ -161,6 +174,14 @@ pub(crate) fn locate_window_end(extracted: &str, body: &str) -> Option<usize> {
     }
     let byte = extracted.find(needle)?;
     Some(extracted[..byte + needle.len()].chars().count())
+}
+
+/// Offset after a window we just sent. If `find` hits an earlier repeat of
+/// the same text, advance by the window length instead of rewinding.
+pub(crate) fn next_read_offset(extracted: &str, body: &str, start: usize) -> usize {
+    let by_len = start.saturating_add(window_needle(body).chars().count());
+    let located = locate_window_end(extracted, body).filter(|n| *n > start);
+    located.unwrap_or(by_len).max(start.saturating_add(1))
 }
 
 fn window_needle(body: &str) -> &str {
@@ -570,5 +591,16 @@ mod tests {
         assert_eq!(continue_offset(extracted, &[clipped], "d1"), Some(4));
         assert!(body_is_file_prefix(extracted, "AAAA"));
         assert!(!body_is_file_prefix(extracted, "BBBB"));
+        assert_eq!(next_open_start(extracted, &sources, "d1", Some(0)), 4);
+        assert_eq!(next_open_start(extracted, &sources, "d1", Some(10)), 10);
+    }
+
+    #[test]
+    fn next_read_offset_does_not_rewind_on_repeated_text() {
+        let extracted = "AAAA\n\nAAAA\n\nAAAA";
+        let start = 6;
+        let next = next_read_offset(extracted, "AAAA", start);
+        assert!(next > start, "got {next} from {start}");
+        assert_eq!(next, 10);
     }
 }

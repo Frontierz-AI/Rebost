@@ -512,10 +512,12 @@ impl SearchIndex {
     }
 
     /// Search older conversation memory, excluding the active thread.
+    /// `only_threads` limits hits to those conversations (same Shelf).
     pub fn search_messages(
         &self,
         message: &str,
         exclude_thread: Option<&str>,
+        only_threads: Option<&[String]>,
         limit: usize,
     ) -> Result<Vec<MemorySnippet>> {
         let tokens = self.content_tokens(message);
@@ -562,6 +564,25 @@ impl SearchIndex {
                     IndexRecordOption::Basic,
                 )),
             ));
+        }
+        match only_threads {
+            Some([]) => return Ok(Vec::new()),
+            Some(threads) => {
+                let any: Vec<(Occur, Box<dyn Query>)> = threads
+                    .iter()
+                    .map(|id| {
+                        (
+                            Occur::Should,
+                            Box::new(TermQuery::new(
+                                Term::from_field_text(self.fields.thread_id, id),
+                                IndexRecordOption::Basic,
+                            )) as Box<dyn Query>,
+                        )
+                    })
+                    .collect();
+                clauses.push((Occur::Must, Box::new(BooleanQuery::new(any))));
+            }
+            None => {}
         }
         let query = BooleanQuery::new(clauses);
         let searcher = self.reader.searcher();
@@ -980,5 +1001,41 @@ mod tests {
             hits.iter().map(|h| h.document_id.as_str()).collect();
         assert!(ids.contains("d1"), "{ids:?}");
         assert!(ids.contains("d2"), "{ids:?}");
+    }
+
+    #[test]
+    fn message_search_can_limit_to_listed_threads() {
+        let (_dir, search) = index();
+        let now = chrono::Utc::now();
+        search
+            .index_message(
+                "t_kitchen",
+                "m1",
+                "user",
+                "The office move budget is twelve thousand euros.",
+                Some("en"),
+                now,
+            )
+            .unwrap();
+        search
+            .index_message(
+                "t_office",
+                "m2",
+                "user",
+                "The office move budget is ninety thousand euros.",
+                Some("en"),
+                now,
+            )
+            .unwrap();
+        let kitchen = vec!["t_kitchen".to_string()];
+        let hits = search
+            .search_messages("office move budget", Some("t_now"), Some(&kitchen), 8)
+            .unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].thread_id, "t_kitchen");
+        assert!(search
+            .search_messages("office move budget", Some("t_now"), Some(&[]), 8)
+            .unwrap()
+            .is_empty());
     }
 }

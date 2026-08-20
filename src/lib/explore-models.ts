@@ -4,6 +4,88 @@ export const EXPLORE_PAGE_SIZE = 50;
 export const MODEL_BUDGET_FRACTION = 0.55;
 const GIB = 1024 * 1024 * 1024;
 
+const HF_NON_MODEL_ROOTS = new Set([
+  "api",
+  "blog",
+  "chat",
+  "collections",
+  "datasets",
+  "docs",
+  "join",
+  "learn",
+  "login",
+  "metrics",
+  "models",
+  "organizations",
+  "papers",
+  "pricing",
+  "settings",
+  "spaces",
+  "tasks",
+]);
+
+const HF_HUB_PREFIXES = [
+  "https://huggingface.co/",
+  "http://huggingface.co/",
+  "https://www.huggingface.co/",
+  "http://www.huggingface.co/",
+  "https://hf.co/",
+  "http://hf.co/",
+  "https://www.hf.co/",
+  "http://www.hf.co/",
+  "huggingface.co/",
+  "www.huggingface.co/",
+  "hf.co/",
+  "www.hf.co/",
+];
+
+function isHfRepoPart(value: string): boolean {
+  return value.length > 0 && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value);
+}
+
+function hfRepoId(owner: string, repo: string): string | undefined {
+  if (HF_NON_MODEL_ROOTS.has(owner.toLowerCase())) return undefined;
+  if (!isHfRepoPart(owner) || !isHfRepoPart(repo)) return undefined;
+  return `${owner}/${repo}`;
+}
+
+function stripExploreQueryNoise(query: string): string {
+  return query
+    .trim()
+    .replace(/^["'`<\u201c]+|["'`>\u201d]+$/g, "")
+    .trim();
+}
+
+function hfHubPath(query: string): string | undefined {
+  const lower = query.toLowerCase();
+  for (const prefix of HF_HUB_PREFIXES) {
+    if (lower.startsWith(prefix)) {
+      return query.slice(prefix.length).split(/[?#]/, 1)[0] ?? "";
+    }
+  }
+  return undefined;
+}
+
+/** Hugging Face `owner/repo`, or a huggingface.co / hf.co model page URL. */
+export function parseExploreRepoQuery(query: string): string | undefined {
+  const raw = stripExploreQueryNoise(query);
+  if (!raw) return undefined;
+  const path = hfHubPath(raw);
+  if (path != null) {
+    const [owner, name] = path.split("/").filter(Boolean);
+    if (!owner || !name) return undefined;
+    return hfRepoId(owner, name);
+  }
+  const slash = raw.indexOf("/");
+  if (slash <= 0 || raw.includes("/", slash + 1)) return undefined;
+  return hfRepoId(raw.slice(0, slash), raw.slice(slash + 1));
+}
+
+export function normalizeExploreQuery(query: string): string {
+  const trimmed = query.trim();
+  return parseExploreRepoQuery(trimmed) ?? trimmed;
+}
+
 export type ExploreSort = "best" | "released" | "size" | "downloads";
 export type ExploreSortDir = "asc" | "desc";
 export type ExploreColumn = "released" | "size" | "downloads";

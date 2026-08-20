@@ -22,7 +22,7 @@ fn profile() -> MachineProfile {
 
 fn client() -> reqwest::Client {
     reqwest::Client::builder()
-        .user_agent("Rebost/0.8.3 (private desktop AI)")
+        .user_agent("Rebost/0.8.4 (private desktop AI)")
         .build()
         .unwrap()
 }
@@ -63,6 +63,24 @@ async fn search_merges_catalogs_and_labels_fit() {
                 && !blob.contains("wan2")
                 && !blob.contains("parakeet"),
             "custom packs, CI stubs, and non-chat AIs must stay hidden: {blob}"
+        );
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "network"]
+async fn search_looks_up_owner_repo_and_page_url() {
+    for query in [
+        "unsloth/Qwen3-0.6B-GGUF",
+        "https://huggingface.co/unsloth/Qwen3-0.6B-GGUF",
+    ] {
+        let results = models::search_models(&client(), query, &profile())
+            .await
+            .expect("search");
+        assert_eq!(
+            results.first().map(|r| r.reference.as_str()),
+            Some("unsloth/Qwen3-0.6B-GGUF"),
+            "{query}"
         );
     }
 }
