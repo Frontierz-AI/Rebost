@@ -39,4 +39,4 @@ Copy `.env.example`. Vite variables:
 
 ## Toolchain
 
-Pinned: Rust 1.97.1, pnpm 11.21.0, Node 22 (`.nvmrc`).
+Pinned: Rust 1.97.1, pnpm 11.22.0, Node 22 (`.nvmrc`).
