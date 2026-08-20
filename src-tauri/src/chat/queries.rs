@@ -17,7 +17,7 @@ pub(crate) async fn extra_search_queries(
     let messages = vec![
         ChatMessage::text(
             "system",
-            "You write search queries that find answers in the user's files.",
+            "You write search queries that find answers in the user's files. Output only the queries.",
         ),
         ChatMessage::text("user", extra_query_prompt(question, count)),
     ];
