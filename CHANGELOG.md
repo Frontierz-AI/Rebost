@@ -6,6 +6,23 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-08-20
+
+### Added
+
+- Each conversation has an animal face in the list and next to replies. Chat uses that name if it introduces itself.
+- Settings has Explore other AIs. Browse public catalogs and sort by what fits this computer, newest, smallest download, or most downloaded. Only the search words leave this computer.
+
+### Changed
+
+- Chat writes more plainly.
+- Deleting a short conversation no longer asks first. Rebost still asks when the thread has five or more messages.
+- Diagnostics can open the AI log on this computer.
+
+### Fixed
+
+- An AI this computer can't run is refused after download, with a clear message.
+
 ## [0.8.2] - 2026-08-19
 
 ### Added
@@ -389,6 +406,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.0...v0.8.2
 [0.8.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.6.0...v0.7.0

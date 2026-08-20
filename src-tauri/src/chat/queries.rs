@@ -17,7 +17,7 @@ pub(crate) async fn extra_search_queries(
     let messages = vec![
         ChatMessage::text(
             "system",
-            "You write search queries that find answers in the user's files. Output only the queries.",
+            "You write search queries that find answers in the user's files.",
         ),
         ChatMessage::text("user", extra_query_prompt(question, count)),
     ];
@@ -40,16 +40,25 @@ pub(crate) async fn extra_search_queries(
 }
 
 fn extra_query_prompt(question: &str, count: usize) -> String {
-    format!(
-        "Write exactly {count} search queries for finding the answer in the user's files.\n\
-Same language as the question.\n\
-Line 1: names, dates, amounts, and clause-like terms from the question. Keywords only.\n\
-Line 2: a paraphrase that uses different wording.\n\
-Line 3: a likely filename, heading, or section title.\n\
-One query per line. No numbering, quotes, or commentary.\n\
-Do not repeat the original question.\n\n\
-Question:\n{question}"
-    )
+    const JOBS: &[&str] = &[
+        "names, dates, and amounts from the question. Keywords only.",
+        "a paraphrase that uses different wording.",
+        "a likely filename, heading, or section title.",
+    ];
+    let mut prompt = format!(
+        "Write exactly {count} search queries. Same language as the question. Queries only. \
+Do not repeat the question.\n"
+    );
+    for i in 0..count {
+        let job = JOBS
+            .get(i)
+            .copied()
+            .unwrap_or("another distinct keyword query.");
+        prompt.push_str(&format!("Line {}: {job}\n", i + 1));
+    }
+    prompt.push_str("\nQuestion:\n");
+    prompt.push_str(question);
+    prompt
 }
 
 pub(crate) fn parse_search_queries(raw: &str, original: &str, count: usize) -> Vec<String> {
@@ -133,5 +142,8 @@ non-compete after leaving\n";
         assert!(prompt.contains("Line 2:"));
         assert!(prompt.contains("Line 3:"));
         assert!(prompt.contains("filename"));
+        let two = extra_query_prompt("When can they terminate?", 2);
+        assert!(two.contains("Line 2:"));
+        assert!(!two.contains("Line 3:"));
     }
 }

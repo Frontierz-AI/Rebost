@@ -177,7 +177,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_SHELF,
-                    "description": "Search this Shelf for more excerpts using a keyword query. Use when the current excerpts do not cover the question. Prefer names, dates, and distinctive terms over repeating the user's question.",
+                    "description": "Search this Shelf. Use names and dates, not the whole question.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -196,7 +196,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": LOOK_AROUND,
-                    "description": "Load more text around an existing source excerpt. When the excerpt is the start of a long file, this continues forward. If there is no room, the already-seen start is replaced. id is a source id such as S1.",
+                    "description": "More text around a source id (S1).",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -213,7 +213,7 @@ impl ToolSet {
         if self.open_file {
             let mut file = json!({
                 "type": "string",
-                "description": "Exact file name from the shelf list. Use the path form when two files share a name.",
+                "description": "Exact name from the shelf list. Use the path when two files share a name.",
             });
             if !labels.is_empty() && labels.len() <= TOOL_ENUM_MAX {
                 file["enum"] = json!(labels);
@@ -222,14 +222,14 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": OPEN_SHELF_FILE,
-                    "description": "Load a window of one file when the excerpts are not enough. A long file returns one window, not the whole file. Call again with the same name to read the next part. File type does not limit how much can be read. Use the exact name from the shelf list. Keep excerpts you already have from other parts of the file.",
+                    "description": "Open one named file. Call again for the next part.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "file": file,
                             "offset": {
                                 "type": "integer",
-                                "description": "Optional character offset. Omit to start at the beginning, or to continue from the last window of this file."
+                                "description": "Optional. Omit to start or to continue this file."
                             }
                         },
                         "required": ["file"]
@@ -242,7 +242,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_CHATS,
-                    "description": "Search earlier conversations, not this one, when the question needs something said there. Prefer names, dates, and distinctive terms. Use what you find in the answer; do not cite those notes.",
+                    "description": "Search earlier conversations. Do not cite them.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -261,13 +261,13 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_WEB,
-                    "description": "Look up current public information on the web. Use for facts, news, or pages that are not on the Shelf. Write a short public query: names of public things, not Shelf text, not personal details, not chat. Results are not Shelf sources; never cite them as [S1]. Name the site or page title in prose.",
+                    "description": "Public web search.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Public web query. Do not include Shelf excerpts, personal details, or private identifiers."
+                                "description": "Public web query."
                             }
                         },
                         "required": ["query"]
@@ -280,13 +280,13 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": READ_WEB_PAGE,
-                    "description": "Open one http(s) URL and return the readable text as markdown. Use after search_web when a specific page is needed. Only open a public page URL. Do not put Shelf text or personal details in the URL. Not a Shelf source; never cite it as [S1].",
+                    "description": "Read one public URL.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "url": {
                                 "type": "string",
-                                "description": "Full http or https URL of a public page. Do not embed private text in the URL."
+                                "description": "Public http(s) URL."
                             }
                         },
                         "required": ["url"]
@@ -759,17 +759,17 @@ mod tests {
         let query = search["function"]["parameters"]["properties"]["query"]["description"]
             .as_str()
             .unwrap();
-        assert!(query.contains("Do not include Shelf excerpts"));
+        assert_eq!(query, "Public web query.");
         let page = spec
             .as_array()
             .unwrap()
             .iter()
             .find(|t| t["function"]["name"] == READ_WEB_PAGE)
             .unwrap();
-        assert!(page["function"]["description"]
-            .as_str()
-            .unwrap()
-            .contains("Do not put Shelf text"));
+        assert_eq!(
+            page["function"]["description"].as_str().unwrap(),
+            "Read one public URL."
+        );
     }
 
     #[test]

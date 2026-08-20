@@ -6,7 +6,7 @@ Private AI that works with your files. What happens in your computer stays in yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-The current release is **0.8.2**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
+The current release is **0.8.3**. Rebost runs on macOS (Apple Silicon and Intel) and Windows 10/11. Chat, Shelves, and the AI stay on the machine that runs the app.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -26,11 +26,11 @@ Add PDFs, Word files, or spreadsheets to a Shelf, or link a folder so new files 
 
 Recipes save prompts you reuse. Placeholders use `«…»`. When a placeholder is a document name, Chat can fill it from files on that Shelf.
 
-House rules set tone and language for every chat. Settings opens from the menu (⌘, on a Mac, Ctrl+, on Windows).
+House rules set tone and language for every chat. Settings opens from the menu (⌘, on a Mac, Ctrl+, on Windows). Explore other AIs is there too, if you want something other than the suggestion.
 
 When an answer contains personal information, you can copy it with those identifiers removed.
 
-You can rename a conversation. Download is at the top of the thread.
+Each conversation has a face. You can rename it. Download is at the top of the thread.
 
 ### Install
 
@@ -53,7 +53,7 @@ If you already have Rebost, a later release can show up in the sidebar when GitH
 
 ### First run
 
-1. Onboarding: the privacy promise, then install the AI recommended for this computer. You can skip and do it later in Settings.
+1. Onboarding: the privacy promise, then install the AI recommended for this computer. You can skip and do it later in Settings. Explore other AIs is there too. Install skips one this computer can't run.
 2. The first chat may take a moment while Rebost gets ready.
 3. Optional: create a Shelf, drop files or link a folder. Rebost reads them on this computer.
 4. In Chat, choose that Shelf when the answer should come from your files. Citations open the source.
