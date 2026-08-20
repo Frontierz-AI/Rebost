@@ -1,6 +1,6 @@
 # Rebost accessibility reference
 
-Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.8.2, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
+Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.8.3, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
 
 This file is a factual reference, not prompt instructions.
 
@@ -22,7 +22,7 @@ This file is a factual reference, not prompt instructions.
 | Chat composer | Bottom of Chat; `textarea` |
 | Document drawer | Dialog-like overlay on Shelves when a row is opened |
 
-Document drawer, source panel, the Reset Rebost dialog, the AI More info card, and the Update window trap Tab, move initial focus into the dialog, and close on Escape. Icon-only Send / Stop / New conversation / Add files / Rename / Download expose `aria-label`. Copy and delete controls are visible without hover.
+Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the AI More info card, and the Update window trap Tab, move initial focus into the dialog, and close on Escape. Icon-only Send / Stop / New conversation / Add files / Rename / Download expose `aria-label`. Copy and delete controls are visible without hover.
 
 ## Keyboard
 
@@ -35,18 +35,18 @@ Document drawer, source panel, the Reset Rebost dialog, the AI More info card, a
 | Chat / Shelves / Recipes | `⌘1` / `⌘2` / `⌘3` (Windows: `Ctrl+1`–`3`) |
 | Settings | `⌘,` (Windows: `Ctrl+,`) |
 | Fill a «placeholder» from Shelf files | `↑` `↓` then `Return` or `Tab` (composer, when a list is shown). `Shift+Return` still inserts a newline |
-| Close drawers, source panel, Reset dialog, AI More info, Update window | `Escape` |
+| Close drawers, source panel, Reset dialog, Explore other AIs, AI More info, Update window | `Escape` |
 | Open citation | `Return` on a citation chip inside the answer |
 | Read earlier Chat messages | `Read more` at the top of a long conversation |
 
 VoiceOver rotor: form controls and buttons. Headings exist in Shelves/Settings; Chat thread list is a list of buttons.
 
-## Known gaps (0.8.2)
+## Known gaps (0.8.3)
 
 - No VoiceOver custom actions for "copy without personal information" beyond the visible button label.
 - Windows Narrator has not been verified.
 
-Form fields on Shelves, Recipes, Settings, and Chat (composer, Shelf picker, Reset confirmation) have labels. Icon-only controls expose `aria-label`. Drawers, the Reset dialog, the AI More info card, and the Update window trap Tab.
+Form fields on Shelves, Recipes, Settings, and Chat (composer, Shelf picker, Reset confirmation) have labels. Icon-only controls expose `aria-label`. Drawers, the Reset dialog, Explore other AIs, the AI More info card, and the Update window trap Tab.
 
 ## Settings relevant to AT
 

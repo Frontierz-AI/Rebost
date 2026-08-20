@@ -1418,7 +1418,7 @@ mod prepare_tests {
         assert!(prepared.sources[0].body.contains("Staff handbook"));
         assert!(prepared.sources[0].body.to_lowercase().contains("tuesday"));
         assert!(!user.as_text().contains("OLDER CONVERSATION NOTES"));
-        assert!(system.contains("recent turns from this conversation only"));
+        assert!(system.contains("You are"));
         assert!(!system.contains("search_chats"));
     }
 
