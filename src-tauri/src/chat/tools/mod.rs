@@ -177,7 +177,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_SHELF,
-                    "description": "Search this Shelf. Use names and dates, not the whole question.",
+                    "description": "Search this Shelf for more excerpts. Use when the current excerpts do not cover the question. Prefer names, dates, and distinctive terms over repeating the user's question.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -196,7 +196,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": LOOK_AROUND,
-                    "description": "More text around a source id (S1).",
+                    "description": "Load more text around an existing source excerpt. Use when a citation is cut off or you need the next part of that file. id is a source id such as S1.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -213,7 +213,7 @@ impl ToolSet {
         if self.open_file {
             let mut file = json!({
                 "type": "string",
-                "description": "Exact name from the shelf list. Use the path when two files share a name.",
+                "description": "Exact file name from the shelf list. Use the path when two files share a name.",
             });
             if !labels.is_empty() && labels.len() <= TOOL_ENUM_MAX {
                 file["enum"] = json!(labels);
@@ -222,14 +222,14 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": OPEN_SHELF_FILE,
-                    "description": "Open one named file. Call again for the next part.",
+                    "description": "Open one named file from the shelf list. Use when excerpts are not enough and you know which file to read. A long file returns one window, not the whole file; call again with the same name for the next part.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "file": file,
                             "offset": {
                                 "type": "integer",
-                                "description": "Optional. Omit to start or to continue this file."
+                                "description": "Optional. Omit to start at the beginning, or to continue this file.",
                             }
                         },
                         "required": ["file"]
@@ -242,7 +242,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_CHATS,
-                    "description": "Search earlier conversations. Do not cite them.",
+                    "description": "Search earlier conversations, not this one. Use when the question needs something said there. Use what you find in the answer; do not cite those notes as [S1].",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -261,13 +261,13 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_WEB,
-                    "description": "Public web search.",
+                    "description": "Search the public web. Use for facts, news, or pages that are not on the Shelf. Keep the query public: no Shelf text or personal details. Do not cite results as [S1]; name the site or page title in the answer.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Public web query."
+                                "description": "Public web query. No Shelf text or personal details.",
                             }
                         },
                         "required": ["query"]
@@ -280,13 +280,13 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": READ_WEB_PAGE,
-                    "description": "Read one public URL.",
+                    "description": "Read one public http(s) page as text. Use after search_web when you need a specific page. Do not put Shelf text or personal details in the URL. Do not cite it as [S1].",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "url": {
                                 "type": "string",
-                                "description": "Public http(s) URL."
+                                "description": "Full http or https URL of a public page.",
                             }
                         },
                         "required": ["url"]
@@ -715,6 +715,14 @@ mod tests {
             spec[2]["function"]["parameters"]["properties"]["file"]["enum"][0],
             "a.md"
         );
+        assert!(spec[0]["function"]["description"]
+            .as_str()
+            .unwrap()
+            .contains("Use when"));
+        assert!(spec[2]["function"]["description"]
+            .as_str()
+            .unwrap()
+            .contains("Use when"));
 
         let stuffed = ToolSet::new(false, false, false, true, &used);
         let spec = stuffed.schema(&[]);
@@ -759,17 +767,16 @@ mod tests {
         let query = search["function"]["parameters"]["properties"]["query"]["description"]
             .as_str()
             .unwrap();
-        assert_eq!(query, "Public web query.");
+        assert!(query.contains("No Shelf text"));
         let page = spec
             .as_array()
             .unwrap()
             .iter()
             .find(|t| t["function"]["name"] == READ_WEB_PAGE)
             .unwrap();
-        assert_eq!(
-            page["function"]["description"].as_str().unwrap(),
-            "Read one public URL."
-        );
+        let page_desc = page["function"]["description"].as_str().unwrap();
+        assert!(page_desc.contains("Use after search_web"));
+        assert!(page_desc.contains("Do not cite it as [S1]"));
     }
 
     #[test]
