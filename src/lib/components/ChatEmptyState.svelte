@@ -2,7 +2,10 @@
   import { api, type Recipe } from "$lib/api";
   import { promptNeedsShelf } from "$lib/placeholders";
   import { app, chatState, fillDraft } from "$lib/stores.svelte";
+  import ConversationFace from "./ConversationFace.svelte";
   import mark from "../../assets/R.webp";
+
+  let { avatarId = null }: { avatarId?: string | null } = $props();
 
   let recipes = $state<Recipe[]>([]);
   const hasModel = $derived(!!app.settings?.activeModel);
@@ -30,7 +33,13 @@
 </script>
 
 <div class="flex h-full flex-col items-center justify-center px-8">
-  <img src={mark} alt="Rebost" class="mb-3 w-[100px] rounded-2xl" />
+  {#if avatarId}
+    <div class="mb-3">
+      <ConversationFace {avatarId} size="hero" />
+    </div>
+  {:else}
+    <img src={mark} alt="Rebost" class="mb-3 w-[100px] rounded-2xl" />
+  {/if}
   {#if !hasModel}
     <h2 class="text-[19px] font-semibold text-ink">Install an AI first</h2>
     <p class="mt-1 mb-6 max-w-md text-center text-[13px] text-ink-soft">

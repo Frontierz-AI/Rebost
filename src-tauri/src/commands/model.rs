@@ -105,6 +105,8 @@ pub fn model_install(
                 "stalled"
             } else if message.contains("SHA-256") || message.contains("verification") {
                 "verification failed"
+            } else if message.contains("incompatible-format") {
+                "incompatible-format"
             } else if message.contains("invalid") || message.contains("unsupported model") {
                 "That AI source isn't allowed."
             } else if message.contains("switch-failed") {

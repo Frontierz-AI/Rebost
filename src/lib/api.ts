@@ -102,6 +102,7 @@ export interface ThreadMeta {
   createdAt: string;
   updatedAt: string;
   messageCount: number;
+  avatarId: string;
 }
 
 export interface ChatActivityStep {
@@ -306,6 +307,9 @@ export function userFacingError(error: unknown): string {
   if (lower.includes("switch-failed")) {
     return "That AI didn't start. You're still using the previous one.";
   }
+  if (lower.includes("incompatible-format")) {
+    return "This AI uses a format Rebost can't run. Pick another.";
+  }
   if (
     lower.includes("warmup-failed") ||
     lower.includes("llama-server") ||
@@ -448,6 +452,7 @@ export const api = {
   redactText: (text: string) => invoke<string>("redact_text", { text }),
   textHasPii: (text: string) => invoke<boolean>("text_has_pii", { text }),
   diagnostics: () => invoke<Diagnostics>("diagnostics"),
+  openEngineLog: () => invoke<void>("open_engine_log"),
 
   showAboutWindow: () => invoke<void>("show_about_window"),
   aboutInfo: () => invoke<AboutInfo>("about_info"),
@@ -597,6 +602,8 @@ export function downloadErrorMessage(error: string): string | null {
       return "That AI didn't start. You're still using the previous one.";
     case "warmup-failed":
       return "Rebost isn't ready yet. Try again in a moment.";
+    case "incompatible-format":
+      return "This AI uses a format Rebost can't run. Pick another.";
     default:
       return "The download didn't finish. Try again.";
   }

@@ -28,6 +28,7 @@
   import ChatEmptyState from "$lib/components/ChatEmptyState.svelte";
   import ThinkingStatus from "$lib/components/ThinkingStatus.svelte";
   import ThinkingPanel from "$lib/components/ThinkingPanel.svelte";
+  import ConversationFace from "$lib/components/ConversationFace.svelte";
   import { confirmDanger } from "$lib/native-dialog";
   import { tick } from "svelte";
 
@@ -246,8 +247,15 @@
   });
 
   async function removeThread(threadId: string) {
-    const ok = await confirmDanger("Delete this conversation? This cannot be undone.", "Delete");
-    if (!ok) return;
+    const thread = app.threads.find((t) => t.id === threadId);
+    const count =
+      threadId === chatState.activeThreadId
+        ? Math.max(thread?.messageCount ?? 0, chatState.messages.length)
+        : (thread?.messageCount ?? 0);
+    if (count >= 5) {
+      const ok = await confirmDanger("Delete this conversation? This cannot be undone.", "Delete");
+      if (!ok) return;
+    }
     try {
       await api.threadDelete(threadId);
       if (chatState.activeThreadId === threadId) {
@@ -317,7 +325,7 @@
       class="min-h-0 flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_0%,black_calc(100%-25px),transparent_100%)]"
     >
       {#if empty}
-        <ChatEmptyState />
+        <ChatEmptyState avatarId={activeThread?.avatarId} />
       {:else}
         <div class="mx-auto flex max-w-[760px] flex-col gap-4 px-6 pt-4 pb-6">
           {#if activeThread}
@@ -352,101 +360,111 @@
                 </div>
               </div>
             {:else}
-              <div class="group flex flex-col gap-1.5">
-                <div
-                  class="max-w-[92%] rounded-2xl rounded-bl-md border border-paper-line bg-surface px-4 py-3 shadow-card dark:shadow-none"
-                >
-                  <ThinkingPanel
-                    id={message.id}
-                    open={!!openThinking[message.id]}
-                    onToggle={() =>
-                      (openThinking = {
-                        ...openThinking,
-                        [message.id]: !openThinking[message.id],
-                      })}
-                    thinking={message.thinking}
-                    activity={message.activity}
-                  />
-                  <Markdown
-                    text={message.text}
-                    sources={message.sources}
-                    onCite={(s) => (openSource = s)}
-                  />
-                  {#if message.sources.length > 0}
-                    <div class="mt-2.5 flex flex-wrap gap-1.5 border-t border-paper-line pt-2.5">
-                      {#each message.sources as source (source.sid)}
-                        <button
-                          type="button"
-                          class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-amber-450 hover:bg-amber-350/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100"
-                          onclick={() => (openSource = source)}
-                        >
-                          <span class="font-bold">{source.sid}</span>
-                          <span class="max-w-[220px] truncate font-normal">{source.title}</span>
-                          {#if source.pageStart}<span class="text-navy-400 dark:text-navy-300"
-                              >p. {source.pageStart}</span
-                            >{/if}
-                        </button>
-                      {/each}
-                    </div>
-                  {/if}
-                  {#if message.status === "stopped"}
-                    <p class="mt-1.5 text-[11px] text-ink-faint italic">Stopped.</p>
-                  {/if}
+              <div class="group flex items-start gap-2.5">
+                {#if activeThread}
+                  <ConversationFace avatarId={activeThread.avatarId} />
+                {/if}
+                <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <div
+                    class="max-w-[92%] rounded-2xl rounded-tl-md border border-paper-line bg-surface px-4 py-3 shadow-card dark:shadow-none"
+                  >
+                    <ThinkingPanel
+                      id={message.id}
+                      open={!!openThinking[message.id]}
+                      onToggle={() =>
+                        (openThinking = {
+                          ...openThinking,
+                          [message.id]: !openThinking[message.id],
+                        })}
+                      thinking={message.thinking}
+                      activity={message.activity}
+                    />
+                    <Markdown
+                      text={message.text}
+                      sources={message.sources}
+                      onCite={(s) => (openSource = s)}
+                    />
+                    {#if message.sources.length > 0}
+                      <div class="mt-2.5 flex flex-wrap gap-1.5 border-t border-paper-line pt-2.5">
+                        {#each message.sources as source (source.sid)}
+                          <button
+                            type="button"
+                            class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-amber-450 hover:bg-amber-350/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100"
+                            onclick={() => (openSource = source)}
+                          >
+                            <span class="font-bold">{source.sid}</span>
+                            <span class="max-w-[220px] truncate font-normal">{source.title}</span>
+                            {#if source.pageStart}<span class="text-navy-400 dark:text-navy-300"
+                                >p. {source.pageStart}</span
+                              >{/if}
+                          </button>
+                        {/each}
+                      </div>
+                    {/if}
+                    {#if message.status === "stopped"}
+                      <p class="mt-1.5 text-[11px] text-ink-faint italic">Stopped.</p>
+                    {/if}
+                  </div>
+                  <CopyActions text={message.text} subtle />
                 </div>
-                <CopyActions text={message.text} subtle />
               </div>
             {/if}
           {/each}
 
           {#if activePending}
             <div
-              class="flex flex-col gap-1.5"
+              class="flex items-start gap-2.5"
               aria-live="polite"
               aria-atomic="false"
               aria-busy="true"
             >
-              <div
-                class="max-w-[92%] rounded-2xl rounded-bl-md border border-paper-line bg-surface px-4 py-3 shadow-card dark:shadow-none"
-              >
-                {#if !activePending.text}
-                  <ThinkingPanel
-                    id="pending"
-                    live
-                    open={!!openThinking.pending}
-                    onToggle={() =>
-                      (openThinking = { ...openThinking, pending: !openThinking.pending })}
-                    thinking={activePending.thinking}
-                    activity={activePending.activity}
-                  >
-                    {#snippet lead()}
-                      <span
-                        class="inline-block size-2 shrink-0 animate-pulse rounded-full bg-amber-450 motion-reduce:animate-none"
-                      ></span>
-                      <span class="min-w-0 grow">
-                        {#key activePending.threadId}
-                          <ThinkingStatus
-                            {warming}
-                            stage={pendingStage}
-                            hasShelf={pendingHasShelf}
-                            hasHistory={pendingHasHistory}
-                            file={activePending.file}
-                          />
-                        {/key}
-                      </span>
-                    {/snippet}
-                  </ThinkingPanel>
-                {:else}
-                  <ThinkingPanel
-                    id="pending"
-                    live
-                    open={!!openThinking.pending}
-                    onToggle={() =>
-                      (openThinking = { ...openThinking, pending: !openThinking.pending })}
-                    thinking={activePending.thinking}
-                    activity={activePending.activity}
-                  />
-                  <Markdown text={activePending.text} streaming />
-                {/if}
+              {#if activeThread}
+                <ConversationFace avatarId={activeThread.avatarId} />
+              {/if}
+              <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div
+                  class="max-w-[92%] rounded-2xl rounded-tl-md border border-paper-line bg-surface px-4 py-3 shadow-card dark:shadow-none"
+                >
+                  {#if !activePending.text}
+                    <ThinkingPanel
+                      id="pending"
+                      live
+                      open={!!openThinking.pending}
+                      onToggle={() =>
+                        (openThinking = { ...openThinking, pending: !openThinking.pending })}
+                      thinking={activePending.thinking}
+                      activity={activePending.activity}
+                    >
+                      {#snippet lead()}
+                        <span
+                          class="inline-block size-2 shrink-0 animate-pulse rounded-full bg-amber-450 motion-reduce:animate-none"
+                        ></span>
+                        <span class="min-w-0 grow">
+                          {#key activePending.threadId}
+                            <ThinkingStatus
+                              {warming}
+                              stage={pendingStage}
+                              hasShelf={pendingHasShelf}
+                              hasHistory={pendingHasHistory}
+                              file={activePending.file}
+                            />
+                          {/key}
+                        </span>
+                      {/snippet}
+                    </ThinkingPanel>
+                  {:else}
+                    <ThinkingPanel
+                      id="pending"
+                      live
+                      open={!!openThinking.pending}
+                      onToggle={() =>
+                        (openThinking = { ...openThinking, pending: !openThinking.pending })}
+                      thinking={activePending.thinking}
+                      activity={activePending.activity}
+                    />
+                    <Markdown text={activePending.text} streaming />
+                  {/if}
+                </div>
               </div>
             </div>
           {/if}

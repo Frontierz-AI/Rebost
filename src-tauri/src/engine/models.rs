@@ -17,8 +17,11 @@ const QUANT_PREFERENCE: &[&str] = &[
     "BF16",
 ];
 
-/// How many Hugging Face hits to show (after ranking) and resolve file sizes for.
-const HF_RESULT_LIMIT: usize = 18;
+/// How many catalog hits to return after ranking (Explore paginates these).
+const HF_RESULT_LIMIT: usize = 75;
+/// Resolve sizes for this many Hugging Face hits before merge.
+const HF_SIZE_CAP: usize = 80;
+const RECENT_DAYS: i64 = 90;
 
 /// Names that signal a file/repo llama-server can't chat with.
 fn is_unusable_artifact(name: &str) -> bool {
@@ -38,12 +41,115 @@ fn is_unusable_artifact(name: &str) -> bool {
     .any(|t| lower.contains(t))
 }
 
+/// Research packs that use unofficial `custom_*` tensor types.
+fn is_custom_quant_artifact(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    if lower.contains("packed_1bit") || lower.contains("packed-1bit") || lower.contains("1-bit") {
+        return true;
+    }
+    if lower
+        .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+        .any(|part| part.starts_with("custom_"))
+    {
+        return true;
+    }
+    lower
+        .split(|c: char| !c.is_ascii_alphanumeric())
+        .any(|part| part == "1bit")
+}
+
+/// CI stubs and moved-weight placeholders (e.g. ggml-org/models-moved).
+fn is_stub_catalog_name(name: &str) -> bool {
+    let compact: String = name
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_ascii_lowercase();
+    compact.contains("modelsmoved")
+}
+
+fn is_hidden_catalog_name(name: &str) -> bool {
+    is_unusable_artifact(name) || is_custom_quant_artifact(name) || is_stub_catalog_name(name)
+}
+
+/// Hub task for a chat / document AI. `conversational` only means a chat template.
+const TEXT_GENERATION: &str = "text-generation";
+const IMAGE_TEXT_TO_TEXT: &str = "image-text-to-text";
+
+/// Typed query tokens that mean “show specialists” (ocr / coder).
+const SPECIALIST_QUERY_TOKENS: &[&str] = &["ocr", "coder", "code"];
+
+/// Hub tag tokens for OCR or coding specialists. Not product names.
+const SPECIALIST_TAG_TOKENS: &[&str] = &["ocr", "coder", "pdf", "layout"];
+
+fn task_eq(value: &str, expected: &str) -> bool {
+    value.eq_ignore_ascii_case(expected)
+}
+
+fn alnum_tokens(value: &str) -> impl Iterator<Item = String> + '_ {
+    value
+        .split(|c: char| !c.is_ascii_alphanumeric())
+        .filter(|part| !part.is_empty())
+        .map(|part| part.to_ascii_lowercase())
+}
+
+fn has_task(pipeline_tag: Option<&str>, tags: &[String], task: &str) -> bool {
+    pipeline_tag.is_some_and(|tag| task_eq(tag, task)) || tags.iter().any(|tag| task_eq(tag, task))
+}
+
+fn is_text_generation(pipeline_tag: Option<&str>, tags: &[String]) -> bool {
+    has_task(pipeline_tag, tags, TEXT_GENERATION)
+}
+
+fn is_general_vision_chat(pipeline_tag: Option<&str>, tags: &[String]) -> bool {
+    has_task(pipeline_tag, tags, IMAGE_TEXT_TO_TEXT) && !has_specialist_tag(tags)
+}
+
+fn is_general_chat(pipeline_tag: Option<&str>, tags: &[String]) -> bool {
+    is_text_generation(pipeline_tag, tags) || is_general_vision_chat(pipeline_tag, tags)
+}
+
+fn has_projector_sibling(files: &[(String, Option<u64>)]) -> bool {
+    files
+        .iter()
+        .any(|(name, _)| name.to_ascii_lowercase().contains("mmproj"))
+}
+
+/// Typed Explore query is asking for a specialist (ocr, coder), not general chat.
+fn query_wants_specialist(query: &str) -> bool {
+    alnum_tokens(query).any(|token| SPECIALIST_QUERY_TOKENS.contains(&token.as_str()))
+}
+
+fn has_specialist_tag(tags: &[String]) -> bool {
+    tags.iter()
+        .any(|tag| alnum_tokens(tag).any(|token| SPECIALIST_TAG_TOKENS.contains(&token.as_str())))
+}
+
+/// Empty browse: general chat only. A query with ocr/coder/code can include specialists.
+fn include_explore_hit(
+    query: &str,
+    pipeline_tag: Option<&str>,
+    tags: &[String],
+    files: &[(String, Option<u64>)],
+) -> bool {
+    if query_wants_specialist(query) {
+        return true;
+    }
+    if has_specialist_tag(tags) {
+        return false;
+    }
+    if has_projector_sibling(files) && !is_general_chat(pipeline_tag, tags) {
+        return false;
+    }
+    is_general_chat(pipeline_tag, tags)
+}
+
 /// Pick the best single-file GGUF from a repo file listing.
 pub fn pick_gguf(files: &[(String, Option<u64>)]) -> Option<(String, Option<u64>)> {
     let candidates: Vec<&(String, Option<u64>)> = files
         .iter()
         .filter(|(name, _)| name.to_lowercase().ends_with(".gguf"))
-        .filter(|(name, _)| !is_unusable_artifact(name))
+        .filter(|(name, _)| !is_hidden_catalog_name(name))
         // Multi-part files (…-00001-of-00003.gguf) need merging — skip.
         .filter(|(name, _)| !name.contains("-of-"))
         .collect();
@@ -118,6 +224,8 @@ struct HfModel {
     author: Option<String>,
     #[serde(default)]
     tags: Vec<String>,
+    #[serde(default, rename = "pipeline_tag")]
+    pipeline_tag: Option<String>,
     #[serde(default, rename = "createdAt")]
     created_at: Option<String>,
     #[serde(default, rename = "lastModified")]
@@ -379,17 +487,118 @@ fn dedup_models(models: &mut Vec<HfModel>) {
     });
 }
 
-fn rank_search_results(results: &mut [ModelSearchResult]) {
+fn parse_released_on(value: &str) -> Option<chrono::NaiveDate> {
+    let day = value.chars().take(10).collect::<String>();
+    chrono::NaiveDate::parse_from_str(&day, "%Y-%m-%d")
+        .ok()
+        .or_else(|| {
+            if day.len() == 7 {
+                chrono::NaiveDate::parse_from_str(&format!("{day}-01"), "%Y-%m-%d").ok()
+            } else {
+                None
+            }
+        })
+}
+
+fn recency_score(released: Option<&str>, today: chrono::NaiveDate) -> i64 {
+    let Some(date) = released.and_then(parse_released_on) else {
+        return 0;
+    };
+    let days = today.signed_duration_since(date).num_days();
+    if !(0..=365).contains(&days) {
+        return 0;
+    }
+    if days <= RECENT_DAYS {
+        100 - days / 2
+    } else if days <= 180 {
+        42
+    } else {
+        16
+    }
+}
+
+fn usage_score(size_bytes: Option<u64>, budget: u64) -> i64 {
+    let Some(size) = size_bytes else {
+        return 32;
+    };
+    if budget == 0 {
+        return 32;
+    }
+    let need = runtime_need_bytes(size);
+    if need > budget {
+        return 0;
+    }
+    let ratio = need as f64 / budget as f64;
+    if (0.45..=0.85).contains(&ratio) {
+        100
+    } else if ratio > 0.85 {
+        78
+    } else if ratio >= 0.30 {
+        68
+    } else if ratio >= 0.15 {
+        44
+    } else {
+        22
+    }
+}
+
+fn download_score(downloads: Option<u64>) -> i64 {
+    let n = downloads.unwrap_or(0) as f64;
+    (((n + 1.0).log10() * 8.0).round() as i64).min(48)
+}
+
+fn official_score(official: bool) -> i64 {
+    if official {
+        48
+    } else {
+        0
+    }
+}
+
+fn fit_score(fits: Option<bool>) -> i64 {
+    match fits {
+        Some(true) => 120,
+        None => 28,
+        Some(false) => 0,
+    }
+}
+
+/// Mix of fit, recency, how well the file uses this machine, Official, then downloads.
+fn best_score(result: &ModelSearchResult, today: chrono::NaiveDate, budget: u64) -> i64 {
+    if result.fits == Some(false) {
+        return download_score(result.downloads);
+    }
+    fit_score(result.fits)
+        + recency_score(result.released.as_deref(), today)
+        + usage_score(result.size_bytes, budget)
+        + official_score(result.official)
+        + download_score(result.downloads)
+}
+
+fn released_newest_first(left: Option<&str>, right: Option<&str>) -> Ordering {
+    match (left, right) {
+        (Some(a), Some(b)) => b.cmp(a),
+        (Some(_), None) => Ordering::Less,
+        (None, Some(_)) => Ordering::Greater,
+        (None, None) => Ordering::Equal,
+    }
+}
+
+/// Default Explore order: fit, recent, good use of memory, Official, downloads.
+fn rank_search_results(results: &mut [ModelSearchResult], budget: u64) {
+    rank_search_results_on(results, chrono::Utc::now().date_naive(), budget);
+}
+
+fn rank_search_results_on(
+    results: &mut [ModelSearchResult],
+    today: chrono::NaiveDate,
+    budget: u64,
+) {
     results.sort_by(|a, b| {
-        b.official
-            .cmp(&a.official)
-            .then_with(|| match (&a.released, &b.released) {
-                (Some(left), Some(right)) => right.cmp(left),
-                (Some(_), None) => Ordering::Less,
-                (None, Some(_)) => Ordering::Greater,
-                (None, None) => Ordering::Equal,
-            })
-            .then_with(|| b.downloads.unwrap_or(0).cmp(&a.downloads.unwrap_or(0)))
+        best_score(b, today, budget)
+            .cmp(&best_score(a, today, budget))
+            .then_with(|| released_newest_first(a.released.as_deref(), b.released.as_deref()))
+            .then_with(|| a.name.cmp(&b.name))
     });
 }
 
@@ -398,30 +607,47 @@ const HF_EXPAND: &[&str] = &[
     "createdAt",
     "downloads",
     "downloadsAllTime",
+    "pipeline_tag",
     "siblings",
     "tags",
 ];
 
 /// Hugging Face Hub list endpoint. Empty on network/HTTP errors so search
 /// can still return the other catalog.
+#[derive(Clone, Copy)]
+enum HfListSort {
+    Created,
+    Downloads,
+}
+
 async fn hf_list_models(
     client: &reqwest::Client,
     search: Option<&str>,
     author: Option<&str>,
     limit: u32,
-    sort_by_created: bool,
+    sort: HfListSort,
+    task: Option<&str>,
 ) -> Vec<HfModel> {
     let mut query: Vec<(&str, String)> =
         vec![("filter", "gguf".into()), ("limit", limit.to_string())];
+    if let Some(task) = task {
+        query.push(("filter", task.to_string()));
+    }
     if let Some(search) = search {
         query.push(("search", search.to_string()));
     }
     if let Some(author) = author {
         query.push(("author", author.to_string()));
     }
-    if sort_by_created {
-        query.push(("sort", "createdAt".into()));
-        query.push(("direction", "-1".into()));
+    match sort {
+        HfListSort::Created => {
+            query.push(("sort", "createdAt".into()));
+            query.push(("direction", "-1".into()));
+        }
+        HfListSort::Downloads => {
+            query.push(("sort", "downloads".into()));
+            query.push(("direction", "-1".into()));
+        }
     }
     for field in HF_EXPAND {
         query.push(("expand", (*field).into()));
@@ -445,6 +671,31 @@ async fn hf_list_models(
 }
 
 async fn hf_models_for_query(client: &reqwest::Client, query: &str) -> Vec<HfModel> {
+    let query = query.trim();
+    if query.is_empty() {
+        let (generation, vision) = tokio::join!(
+            hf_list_models(
+                client,
+                None,
+                None,
+                80,
+                HfListSort::Downloads,
+                Some("text-generation"),
+            ),
+            hf_list_models(
+                client,
+                None,
+                None,
+                40,
+                HfListSort::Downloads,
+                Some("image-text-to-text"),
+            ),
+        );
+        let mut models = generation;
+        models.extend(vision);
+        dedup_models(&mut models);
+        return models;
+    }
     let guesses = publisher_guesses(query);
     let author_fetches = guesses.iter().map(|guess| {
         let client = client.clone();
@@ -454,10 +705,20 @@ async fn hf_models_for_query(client: &reqwest::Client, query: &str) -> Vec<HfMod
         } else {
             Some(query.to_string())
         };
-        async move { hf_list_models(&client, search.as_deref(), Some(&author), 20, true).await }
+        async move {
+            hf_list_models(
+                &client,
+                search.as_deref(),
+                Some(&author),
+                20,
+                HfListSort::Created,
+                None,
+            )
+            .await
+        }
     });
     let (mut models, author_lists) = tokio::join!(
-        hf_list_models(client, Some(query), None, 40, false),
+        hf_list_models(client, Some(query), None, 60, HfListSort::Downloads, None),
         join_all(author_fetches)
     );
     for list in author_lists {
@@ -472,21 +733,26 @@ async fn hf_models_for_query(client: &reqwest::Client, query: &str) -> Vec<HfMod
         .cloned()
         .collect();
     if !missing.is_empty() {
-        let extra =
-            join_all(
-                missing.into_iter().map(|name| {
-                    let client = client.clone();
-                    let search = if name.eq_ignore_ascii_case(query) {
-                        None
-                    } else {
-                        Some(query.to_string())
-                    };
-                    async move {
-                        hf_list_models(&client, search.as_deref(), Some(&name), 20, true).await
-                    }
-                }),
-            )
-            .await;
+        let extra = join_all(missing.into_iter().map(|name| {
+            let client = client.clone();
+            let search = if name.eq_ignore_ascii_case(query) {
+                None
+            } else {
+                Some(query.to_string())
+            };
+            async move {
+                hf_list_models(
+                    &client,
+                    search.as_deref(),
+                    Some(&name),
+                    20,
+                    HfListSort::Created,
+                    None,
+                )
+                .await
+            }
+        }))
+        .await;
         for list in extra {
             models.extend(list);
         }
@@ -500,6 +766,7 @@ async fn gguf_file_size(client: &reqwest::Client, repo: &str, file: &str) -> Opt
         .get(format!(
             "https://huggingface.co/api/models/{repo}/tree/main"
         ))
+        .query(&[("recursive", "true")])
         .send()
         .await
         .ok()?;
@@ -522,7 +789,7 @@ async fn search_huggingface(
         let Some(repo) = model.repo_id() else {
             continue;
         };
-        if is_unusable_artifact(&repo) {
+        if is_hidden_catalog_name(&repo) {
             continue;
         }
         let files: Vec<(String, Option<u64>)> = model
@@ -531,6 +798,9 @@ async fn search_huggingface(
             .flatten()
             .map(|s| (s.rfilename.clone(), None))
             .collect();
+        if !include_explore_hit(query, model.pipeline_tag.as_deref(), &model.tags, &files) {
+            continue;
+        }
         let Some((file, _)) = pick_gguf(&files) else {
             continue;
         };
@@ -556,8 +826,13 @@ async fn search_huggingface(
             fits: None,
         });
     }
-    rank_search_results(&mut results);
-    results.truncate(HF_RESULT_LIMIT);
+    results.sort_by(|a, b| {
+        b.downloads
+            .unwrap_or(0)
+            .cmp(&a.downloads.unwrap_or(0))
+            .then_with(|| released_newest_first(a.released.as_deref(), b.released.as_deref()))
+    });
+    results.truncate(HF_SIZE_CAP);
 
     let budget = profile.model_budget_bytes();
     let sizes = join_all(results.iter().map(|result| {
@@ -689,6 +964,9 @@ async fn search_ollama(
     let budget = profile.model_budget_bytes();
     let mut results = Vec::new();
     for name in names {
+        if is_hidden_catalog_name(&name) {
+            continue;
+        }
         match ollama_manifest(client, &name).await {
             Ok((layer, license)) => {
                 let fits = layer.size.map(|s| runtime_need_bytes(s) <= budget);
@@ -716,16 +994,21 @@ async fn search_ollama(
 }
 
 /// Explore other models: Hugging Face + Ollama, duplicates merged.
-/// Company files are never sent anywhere — only this query string.
+/// An empty query browses popular Hugging Face GGUFs. Company files are
+/// never sent anywhere — only this query string.
 pub async fn search_models(
     client: &reqwest::Client,
     query: &str,
     profile: &MachineProfile,
 ) -> Result<Vec<ModelSearchResult>> {
-    let (hf, ollama) = tokio::join!(
-        search_huggingface(client, query, profile),
-        search_ollama(client, query, profile)
-    );
+    let query = query.trim();
+    let (hf, ollama) = tokio::join!(search_huggingface(client, query, profile), async {
+        if query.is_empty() {
+            Vec::new()
+        } else {
+            search_ollama(client, query, profile).await
+        }
+    });
     let mut results = hf.unwrap_or_else(|error| {
         log::warn!("hugging face search: {error:#}");
         Vec::new()
@@ -744,8 +1027,40 @@ pub async fn search_models(
             results.push(extra);
         }
     }
-    rank_search_results(&mut results);
+    rank_search_results(&mut results, profile.model_budget_bytes());
+    results.truncate(HF_RESULT_LIMIT);
     Ok(results)
+}
+
+async fn reject_if_header_incompatible(client: &reqwest::Client, url: &str) -> Result<()> {
+    let response = match client
+        .get(url)
+        .header(reqwest::header::RANGE, "bytes=0-524287")
+        .send()
+        .await
+    {
+        Ok(response) => response,
+        Err(_) => return Ok(()),
+    };
+    if !response.status().is_success() {
+        return Ok(());
+    }
+    if response.status() == reqwest::StatusCode::OK
+        && response.content_length().unwrap_or(0) > 2 * 1024 * 1024
+    {
+        return Ok(());
+    }
+    let Ok(bytes) = response.bytes().await else {
+        return Ok(());
+    };
+    match super::gguf::inspect_header(&bytes) {
+        super::gguf::GgufCompat::CustomFormat | super::gguf::GgufCompat::UnsupportedTensors => {
+            Err(anyhow!("incompatible-format"))
+        }
+        super::gguf::GgufCompat::Ok
+        | super::gguf::GgufCompat::Incomplete
+        | super::gguf::GgufCompat::Unreadable => Ok(()),
+    }
 }
 
 /// A concrete, verifiable model download.
@@ -912,6 +1227,7 @@ pub async fn resolve_download(
             let url =
                 format!("https://huggingface.co/{reference}/resolve/main/{file}?download=true");
             let file_name = file.rsplit('/').next().unwrap_or(&file).to_string();
+            reject_if_header_incompatible(client, &url).await?;
             Ok(ResolvedDownload {
                 url,
                 file_name,
@@ -937,6 +1253,107 @@ mod tests {
         ];
         let (picked, _) = pick_gguf(&files).unwrap();
         assert_eq!(picked, "Model-Q4_K_M.gguf");
+    }
+
+    #[test]
+    fn gguf_picker_hides_custom_one_bit_packs() {
+        let files = vec![
+            ("gemma4_31b_packed_1bit_v11.gguf".to_string(), None),
+            ("gemma-4-31B-it-Q4_K_M.gguf".to_string(), None),
+        ];
+        let (picked, _) = pick_gguf(&files).unwrap();
+        assert_eq!(picked, "gemma-4-31B-it-Q4_K_M.gguf");
+        assert!(pick_gguf(&[("gemma4_31b_packed_1bit_v11.gguf".into(), None)]).is_none());
+        assert!(is_custom_quant_artifact("arcticoneai/gemma4-31B-1bit"));
+        assert!(is_custom_quant_artifact("custom_1bit_packed.gguf"));
+        assert!(!is_custom_quant_artifact("gemma-4-31B-it-IQ1_S.gguf"));
+        assert!(!is_custom_quant_artifact("unsloth/gemma-4-31B-it-GGUF"));
+        assert!(is_hidden_catalog_name("ggml-org/models-moved"));
+        assert!(is_hidden_catalog_name("models moved"));
+        assert!(!is_hidden_catalog_name("unsloth/Muse-Glimmer-30B-GGUF"));
+    }
+
+    #[test]
+    fn explore_keeps_chat_ais_and_hides_specialists_until_searched() {
+        let chat_files = vec![("Qwen3-8B-Q4_K_M.gguf".into(), None)];
+        let lfm_tags = [
+            "gguf".into(),
+            "text-generation".into(),
+            "conversational".into(),
+        ];
+        let paddle_files = vec![
+            ("PaddleOCR-VL-1.6-GGUF.gguf".into(), None),
+            ("PaddleOCR-VL-1.6-GGUF-mmproj.gguf".into(), None),
+        ];
+        let surya_tags = [
+            "gguf".into(),
+            "image-text-to-text".into(),
+            "ocr".into(),
+            "conversational".into(),
+        ];
+        let surya_files = vec![
+            ("surya-2.gguf".into(), None),
+            ("surya-2-mmproj.gguf".into(), None),
+        ];
+        let coder_tags = [
+            "gguf".into(),
+            "text-generation".into(),
+            "base_model:01-ai/Yi-Coder-1.5B-Chat".into(),
+        ];
+
+        assert!(include_explore_hit(
+            "",
+            Some("text-generation"),
+            &lfm_tags,
+            &chat_files
+        ));
+        assert!(include_explore_hit(
+            "",
+            Some("image-text-to-text"),
+            &[
+                "gguf".into(),
+                "image-text-to-text".into(),
+                "conversational".into()
+            ],
+            &[
+                ("gemma-3-4b-it-Q4_K_M.gguf".into(), None),
+                ("mmproj-model-f16-4B.gguf".into(), None),
+            ],
+        ));
+        assert!(!include_explore_hit(
+            "",
+            None,
+            &["gguf".into(), "conversational".into()],
+            &chat_files,
+        ));
+        assert!(!include_explore_hit(
+            "",
+            None,
+            &["gguf".into()],
+            &paddle_files
+        ));
+        assert!(!include_explore_hit(
+            "",
+            Some("image-text-to-text"),
+            &surya_tags,
+            &surya_files,
+        ));
+        assert!(!include_explore_hit(
+            "",
+            Some("text-generation"),
+            &coder_tags,
+            &chat_files
+        ));
+        assert!(include_explore_hit("ocr", None, &surya_tags, &surya_files));
+        assert!(include_explore_hit(
+            "coder",
+            Some("text-generation"),
+            &coder_tags,
+            &chat_files,
+        ));
+        assert!(query_wants_specialist("ocr"));
+        assert!(query_wants_specialist("Yi coder"));
+        assert!(!query_wants_specialist("Qwen3"));
     }
 
     #[test]
@@ -989,6 +1406,7 @@ mod tests {
             model_id: None,
             author: Some(author.into()),
             tags: tags.iter().map(|t| t.to_string()).collect(),
+            pipeline_tag: None,
             created_at: None,
             last_modified: None,
             downloads: None,
@@ -1002,6 +1420,8 @@ mod tests {
         official: bool,
         released: Option<&str>,
         downloads: Option<u64>,
+        fits: Option<bool>,
+        size_bytes: Option<u64>,
     ) -> ModelSearchResult {
         ModelSearchResult {
             id: name.into(),
@@ -1009,13 +1429,13 @@ mod tests {
             source: "huggingface".into(),
             reference: format!("org/{name}"),
             file: None,
-            size_bytes: None,
+            size_bytes,
             license: None,
             released: released.map(str::to_string),
             downloads,
             publisher: Some("org".into()),
             official,
-            fits: None,
+            fits,
         }
     }
 
@@ -1131,19 +1551,56 @@ mod tests {
     }
 
     #[test]
-    fn rank_puts_official_first_then_newest() {
+    fn rank_mixes_fit_recency_usage_and_official() {
+        let today = chrono::NaiveDate::from_ymd_opt(2026, 8, 20).unwrap();
+        let budget = 20 * 1024 * 1024 * 1024;
+        let right = Some(9 * 1024 * 1024 * 1024);
+        let tiny = Some(400 * 1024 * 1024);
+        let huge = Some(40 * 1024 * 1024 * 1024);
         let mut results = vec![
-            search_hit("community-new", false, Some("2026-08-14"), Some(9_000_000)),
-            search_hit("official-old", true, Some("2025-01-01"), Some(100)),
-            search_hit("official-new", true, Some("2026-02-02"), Some(50)),
-            search_hit("undated", false, None, Some(1)),
+            search_hit(
+                "too-large",
+                false,
+                Some("2026-08-01"),
+                Some(42_000_000),
+                Some(false),
+                huge,
+            ),
+            search_hit(
+                "official-old-rightsize",
+                true,
+                Some("2025-01-01"),
+                Some(8_000_000),
+                Some(true),
+                right,
+            ),
+            search_hit(
+                "unofficial-recent-tiny",
+                false,
+                Some("2026-08-10"),
+                Some(50),
+                Some(true),
+                tiny,
+            ),
+            search_hit(
+                "official-recent-rightsize",
+                true,
+                Some("2026-08-01"),
+                Some(120_000),
+                Some(true),
+                right,
+            ),
+            search_hit("undated", false, None, Some(1), None, None),
         ];
-        rank_search_results(&mut results);
+        rank_search_results_on(&mut results, today, budget);
         let names: Vec<_> = results.iter().map(|r| r.name.as_str()).collect();
-        assert_eq!(
-            names,
-            ["official-new", "official-old", "community-new", "undated"]
+        assert_eq!(names[0], "official-recent-rightsize");
+        assert_eq!(names[1], "official-old-rightsize");
+        assert!(
+            names.iter().position(|n| *n == "unofficial-recent-tiny")
+                < names.iter().position(|n| *n == "too-large")
         );
+        assert_eq!(*names.last().unwrap(), "too-large");
     }
 
     #[test]

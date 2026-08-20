@@ -58,7 +58,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-40 flex items-center justify-center bg-navy-950/25 p-6 dark:bg-black/50"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-navy-950/25 p-6 dark:bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-labelledby="model-info-title"
@@ -67,7 +67,11 @@
   use:focusTrap
   transition:overlay
   onclick={(e) => e.target === e.currentTarget && onClose()}
-  onkeydown={(e) => e.key === "Escape" && onClose()}
+  onkeydown={(e) => {
+    if (e.key !== "Escape") return;
+    e.stopPropagation();
+    onClose();
+  }}
 >
   <div class="card w-full max-w-[440px] shadow-pop dark:shadow-none" in:dialogPanel>
     <div class="flex items-start justify-between gap-3 px-5 pt-5 pb-3">

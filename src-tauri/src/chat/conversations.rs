@@ -3,6 +3,7 @@
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
@@ -29,6 +30,9 @@ pub struct ThreadMeta {
     pub updated_at: String,
     #[serde(default)]
     pub message_count: u32,
+    /// Animal face for this conversation. Catalog id from `avatars`.
+    #[serde(default)]
+    pub avatar_id: String,
 }
 
 /// One look-through step before the answer (open a file, search, and so on).
@@ -129,13 +133,13 @@ pub struct Conversations;
 
 impl Conversations {
     pub fn list(paths: &Paths) -> Vec<ThreadMeta> {
-        let mut threads = read_threads(paths).threads;
-        threads.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
-        threads
+        let mut file = load_threads(paths);
+        file.threads.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+        file.threads
     }
 
     pub fn get(paths: &Paths, thread_id: &str) -> Option<ThreadMeta> {
-        read_threads(paths)
+        load_threads(paths)
             .threads
             .into_iter()
             .find(|t| t.id == thread_id)
@@ -151,16 +155,24 @@ impl Conversations {
 
     pub fn create(paths: &Paths, shelf_id: Option<String>) -> Result<ThreadMeta> {
         let now = chrono::Utc::now().to_rfc3339();
+        let mut file = read_threads(paths);
+        assign_missing_avatars(&mut file.threads);
+        let used: HashSet<String> = file
+            .threads
+            .iter()
+            .map(|thread| thread.avatar_id.clone())
+            .collect();
+        let id = crate::ids::thread_id();
         let meta = ThreadMeta {
-            id: crate::ids::thread_id(),
+            id: id.clone(),
             title: "New conversation".to_string(),
             shelf_id,
             upload_shelf_id: None,
             created_at: now.clone(),
             updated_at: now,
             message_count: 0,
+            avatar_id: super::avatars::pick_id(&id, &used).to_string(),
         };
-        let mut file = read_threads(paths);
         file.threads.push(meta.clone());
         write_threads(paths, &file)?;
         Ok(meta)
@@ -447,6 +459,35 @@ fn read_threads(paths: &Paths) -> ThreadsFile {
     read_json(&paths.threads_index()).unwrap_or_default()
 }
 
+fn load_threads(paths: &Paths) -> ThreadsFile {
+    let mut file = read_threads(paths);
+    if assign_missing_avatars(&mut file.threads) {
+        if let Err(error) = write_threads(paths, &file) {
+            log::error!("saving conversation faces: {error:#}");
+        }
+    }
+    file
+}
+
+fn assign_missing_avatars(threads: &mut [ThreadMeta]) -> bool {
+    let mut used: HashSet<String> = threads
+        .iter()
+        .filter(|thread| super::avatars::name_for(&thread.avatar_id).is_some())
+        .map(|thread| thread.avatar_id.clone())
+        .collect();
+    let mut changed = false;
+    for thread in threads.iter_mut() {
+        if super::avatars::name_for(&thread.avatar_id).is_some() {
+            continue;
+        }
+        let id = super::avatars::pick_id(&thread.id, &used);
+        used.insert(id.to_string());
+        thread.avatar_id = id.to_string();
+        changed = true;
+    }
+    changed
+}
+
 fn write_threads(paths: &Paths, file: &ThreadsFile) -> Result<()> {
     write_json(&paths.threads_index(), file)
 }
@@ -498,6 +539,20 @@ mod tests {
         let other = Conversations::create(&paths, None).unwrap();
         assert!(Conversations::has_other_messages(&paths, &other.id));
         assert!(!Conversations::has_other_messages(&paths, &thread.id));
+        assert!(crate::chat::avatars::name_for(&thread.avatar_id).is_some());
+        assert_ne!(thread.avatar_id, other.avatar_id);
+    }
+
+    #[test]
+    fn list_fills_in_a_face_for_older_threads() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        let raw = r#"{"threads":[{"id":"t_old","title":"Old","createdAt":"2026-01-01T00:00:00Z","updatedAt":"2026-01-01T00:00:00Z","messageCount":0}]}"#;
+        std::fs::write(paths.threads_index(), raw).unwrap();
+        let listed = Conversations::list(&paths);
+        assert_eq!(listed.len(), 1);
+        assert!(crate::chat::avatars::name_for(&listed[0].avatar_id).is_some());
     }
 
     #[test]

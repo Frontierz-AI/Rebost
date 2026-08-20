@@ -287,7 +287,7 @@ impl Engine {
         );
         self.set_status(EngineState::Starting, None);
 
-        let log_path = self.ctx.paths.logs_dir().join("engine.log");
+        let log_path = self.ctx.paths.engine_log_path();
         let _ = std::fs::create_dir_all(self.ctx.paths.logs_dir());
 
         let mut command = Command::new(binary);

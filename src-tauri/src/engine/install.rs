@@ -116,6 +116,11 @@ impl Engine {
         )
         .await?;
 
+        if let Err(error) = super::gguf::require_engine_compatible(&dest) {
+            let _ = std::fs::remove_file(&dest);
+            return Err(error);
+        }
+
         if previous.is_some() {
             self.wait_until_chat_idle().await;
         }

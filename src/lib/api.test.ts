@@ -68,6 +68,15 @@ describe("downloadErrorMessage", () => {
   it("keeps the previous AI when the new one does not start", () => {
     expect(downloadErrorMessage("switch-failed")).toContain("previous");
   });
+
+  it("names an incompatible AI without the file format", () => {
+    expect(downloadErrorMessage("incompatible-format")).toBe(
+      "This AI uses a format Rebost can't run. Pick another.",
+    );
+    expect(userFacingError("incompatible-format")).toBe(
+      "This AI uses a format Rebost can't run. Pick another.",
+    );
+  });
 });
 
 describe("Privacy Lens labels", () => {
