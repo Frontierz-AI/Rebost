@@ -2,7 +2,8 @@
   import type { ShelfView, ThreadMeta } from "$lib/api";
   import { threadShelfSubtitle } from "$lib/shelf-label";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
-  import { Plus, MessageCircle, Trash2, Lock, Pencil } from "@lucide/svelte";
+  import { Plus, Trash2, Lock, Pencil } from "@lucide/svelte";
+  import ConversationFace from "./ConversationFace.svelte";
 
   let {
     threads,
@@ -106,6 +107,9 @@
             {activeThreadId === thread.id ? 'bg-paper-soft' : 'hover:bg-paper-soft/60'}"
           oncontextmenu={(event) => onThreadMenu(thread, event)}
         >
+          <div class="flex shrink-0 items-center pl-2">
+            <ConversationFace avatarId={thread.avatarId} />
+          </div>
           {#if editingId === thread.id}
             <label class="sr-only" for="rename-{thread.id}">Conversation name</label>
             <!-- svelte-ignore a11y_autofocus -->
@@ -124,7 +128,6 @@
               onclick={() => onOpen(thread.id)}
               ondblclick={(e) => beginRename(thread, e)}
             >
-              <MessageCircle size={14} class="shrink-0 text-ink-faint" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-[12.5px] font-medium text-ink">{thread.title}</span
                 >

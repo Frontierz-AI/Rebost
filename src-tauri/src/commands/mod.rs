@@ -64,6 +64,9 @@ pub(crate) fn map_user_error(text: &str) -> String {
     if lower.contains("switch-failed") {
         return "That AI didn't start. You're still using the previous one.".into();
     }
+    if lower.contains("incompatible-format") {
+        return "This AI uses a format Rebost can't run. Pick another.".into();
+    }
     if lower.contains("warmup-failed")
         || lower.contains("llama-server")
         || lower.contains("health timeout")
@@ -189,6 +192,10 @@ mod tests {
         assert_eq!(
             friendly("model file must be .gguf"),
             "That AI isn't available. Try another."
+        );
+        assert_eq!(
+            friendly("incompatible-format"),
+            "This AI uses a format Rebost can't run. Pick another."
         );
         assert_eq!(
             friendly("SHA-256 mismatch: got abcd, expected efgh"),

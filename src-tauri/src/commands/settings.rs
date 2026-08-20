@@ -4,10 +4,13 @@ use serde::Serialize;
 use std::sync::Arc;
 use tauri::{AppHandle, State};
 
+use tauri_plugin_opener::OpenerExt;
+
 use super::{friendly, CmdResult};
 use crate::core::Ctx;
 use crate::engine::models::MachineProfile;
 use crate::engine::{Engine, EngineStatus};
+use crate::paths::Paths;
 use crate::settings::ActiveModel;
 
 #[derive(Serialize)]
@@ -130,7 +133,7 @@ pub fn diagnostics(
     engine: State<'_, Arc<Engine>>,
 ) -> Diagnostics {
     let settings = crate::core::read_lock(&ctx.settings).clone();
-    let log_path = ctx.paths.logs_dir().join("engine.log");
+    let log_path = ctx.paths.engine_log_path();
     let mut formats: Vec<String> = crate::ingest::extract::supported_extensions()
         .iter()
         .cloned()
@@ -152,6 +155,23 @@ pub fn diagnostics(
     }
 }
 
+pub(crate) fn require_engine_log(paths: &Paths) -> CmdResult<std::path::PathBuf> {
+    let log_path = paths.engine_log_path();
+    if !log_path.is_file() {
+        return Err("The engine log isn't on this computer yet.".into());
+    }
+    Ok(log_path)
+}
+
+/// Open the engine log in the default app. Path is fixed; the UI never sends one.
+#[tauri::command]
+pub fn open_engine_log(app: AppHandle, ctx: State<'_, Arc<Ctx>>) -> CmdResult<()> {
+    let log_path = require_engine_log(&ctx.paths)?;
+    app.opener()
+        .open_path(log_path.to_string_lossy().to_string(), None::<String>)
+        .map_err(friendly)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -168,5 +188,18 @@ mod tests {
             require_reset_confirmation(""),
             Err("Type DELETE to confirm.".into())
         );
+    }
+
+    #[test]
+    fn engine_log_open_requires_a_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path());
+        paths.ensure().unwrap();
+        assert_eq!(
+            require_engine_log(&paths),
+            Err("The engine log isn't on this computer yet.".into())
+        );
+        std::fs::write(paths.engine_log_path(), "ok").unwrap();
+        assert_eq!(require_engine_log(&paths).unwrap(), paths.engine_log_path());
     }
 }

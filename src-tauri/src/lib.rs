@@ -254,6 +254,7 @@ pub fn run() {
             commands::redact_text,
             commands::text_has_pii,
             commands::diagnostics,
+            commands::open_engine_log,
             commands::recipes_list,
             commands::recipe_create,
             commands::recipe_update,

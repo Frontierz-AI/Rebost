@@ -153,6 +153,10 @@ impl Paths {
     pub fn logs_dir(&self) -> PathBuf {
         self.base.join("logs")
     }
+
+    pub fn engine_log_path(&self) -> PathBuf {
+        self.logs_dir().join("engine.log")
+    }
 }
 
 /// Write `contents` to `path` via a sibling `.tmp` file, then rename.
@@ -184,6 +188,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::new(dir.path().join("io.rebost.desktop"));
         assert_eq!(paths.library_dir(), paths.base().join(LIBRARY_DIR));
+        assert_eq!(paths.engine_log_path(), paths.logs_dir().join("engine.log"));
         paths.ensure().unwrap();
         assert!(paths.library_dir().is_dir());
     }

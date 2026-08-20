@@ -2,34 +2,29 @@
   import {
     api,
     formatBytes,
-    formatCount,
     type Diagnostics,
     type MachineView,
     type ModelSearchResult,
     type Recommendation,
   } from "$lib/api";
+  import { modelBudgetBytes } from "$lib/explore-models";
   import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
   import { HOUSE_RULES_MAX_CHARS, clipChars } from "$lib/text-cap";
-  import { Cpu, Search, Download, BadgeCheck, Stethoscope, Save, Info } from "@lucide/svelte";
+  import { Cpu, Search, BadgeCheck, Stethoscope, Save } from "@lucide/svelte";
   import DownloadProgress from "$lib/components/DownloadProgress.svelte";
   import ResetWorkspaceModal from "$lib/components/ResetWorkspaceModal.svelte";
-  import ModelInfoModal from "$lib/components/ModelInfoModal.svelte";
+  import ExploreModelsModal from "$lib/components/ExploreModelsModal.svelte";
   import ModelSuggestionCards from "$lib/components/ModelSuggestionCards.svelte";
   import icon from "../../assets/rebost-icon.png";
 
   let machine = $state<MachineView | null>(null);
-  let searchQuery = $state("");
-  let searching = $state(false);
-  let results = $state<ModelSearchResult[] | null>(null);
-  // Not $state: bumping it in the clear-query effect would loop forever.
-  let searchGen = 0;
-  let info = $state<ModelSearchResult | null>(null);
   let houseRules = $state(app.settings?.houseRules ?? "");
   let onlineResearch = $state(app.settings?.allowOnlineResearch ?? false);
   let rulesSaved = $state(false);
   let diag = $state<Diagnostics | null>(null);
   let showDiag = $state(false);
   let showReset = $state(false);
+  let showExplore = $state(false);
   let resetting = $state(false);
   const hasAi = $derived(!!app.settings?.activeModel);
 
@@ -52,64 +47,6 @@
   const engineDownload = $derived(
     Object.values(app.downloads).find((d) => d.kind === "engine" && !d.done && !d.error),
   );
-
-  $effect(() => {
-    if (searchQuery.trim() !== "") return;
-    searchGen += 1;
-    results = null;
-    searching = false;
-    info = null;
-  });
-
-  /** Tab-focus a name only when it actually overflows and can scroll. */
-  function overflowX(node: HTMLElement, label: string) {
-    const sync = () => {
-      const overflow = node.scrollWidth > node.clientWidth + 1;
-      if (overflow) {
-        node.tabIndex = 0;
-        node.setAttribute("aria-label", label);
-      } else {
-        node.removeAttribute("tabindex");
-        node.removeAttribute("aria-label");
-      }
-    };
-    const observer = new ResizeObserver(sync);
-    observer.observe(node);
-    requestAnimationFrame(sync);
-    return {
-      update(next: string) {
-        label = next;
-        sync();
-      },
-      destroy() {
-        observer.disconnect();
-      },
-    };
-  }
-
-  async function searchModels() {
-    const query = searchQuery.trim();
-    if (!query) {
-      searchGen += 1;
-      results = null;
-      searching = false;
-      info = null;
-      return;
-    }
-    const gen = ++searchGen;
-    searching = true;
-    try {
-      const found = await api.modelsSearch(query);
-      if (gen !== searchGen) return;
-      results = found;
-    } catch (error) {
-      if (gen !== searchGen) return;
-      notifyInvokeError(error);
-      results = [];
-    } finally {
-      if (gen === searchGen) searching = false;
-    }
-  }
 
   function installFrom(result: ModelSearchResult) {
     void install(
@@ -304,114 +241,26 @@
         </div>
       {/if}
 
-      <div class="mt-5">
-        <h3 class="label mb-2">Explore other AIs</h3>
-        <div class="flex gap-2">
-          <div class="relative flex-1">
-            <Search size={13.5} class="absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint" />
-            <label class="sr-only" for="model-search">Search for an AI</label>
-            <input
-              id="model-search"
-              name="model-search"
-              class="input !pl-9"
-              placeholder="Search: Muse, Gemma, Mistral…"
-              bind:value={searchQuery}
-              onkeydown={(e) => e.key === "Enter" && searchModels()}
-            />
-          </div>
-          <button type="button" class="btn-outline" onclick={searchModels} disabled={searching}>
-            {searching ? "Searching…" : "Search"}
-          </button>
+      <div
+        class="mt-5 flex items-center gap-4 border-t border-navy-950/10 pt-5 dark:border-white/10"
+      >
+        <div class="min-w-0 flex-1">
+          <h3 class="text-[15px] font-semibold text-ink">Explore other AIs</h3>
+          <p class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
+            Browse public catalogs for something else. Only the search words leave this computer.
+          </p>
         </div>
-        <p class="mt-1.5 text-[11px] text-ink-faint">
-          Original publishers first, then newest. Download counts come from Hugging Face. Only the
-          search words leave this computer.
-        </p>
-
-        {#if results !== null}
-          <div class="mt-3 overflow-hidden rounded-xl border border-paper-line">
-            {#each results as result (result.source + result.reference)}
-              <div
-                class="flex items-center gap-3 border-b border-paper-line/70 bg-surface px-4 py-2.5 last:border-b-0"
-              >
-                <div class="min-w-0 flex-1">
-                  <p class="flex min-w-0 items-center gap-2 text-[13px] font-medium text-ink">
-                    <span
-                      class="min-w-0 flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain whitespace-nowrap"
-                      use:overflowX={result.name}>{result.name}</span
-                    >
-                    {#if result.official}
-                      <span
-                        class="shrink-0 rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800 dark:bg-white/10 dark:text-navy-100"
-                      >
-                        Official
-                      </span>
-                    {/if}
-                    {#if result.fits === false}
-                      <span
-                        class="shrink-0 rounded-full bg-paper-soft px-2 py-0.5 text-[10px] font-semibold text-ink-faint"
-                      >
-                        Too large for this computer
-                      </span>
-                    {:else if result.fits}
-                      <span
-                        class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300"
-                      >
-                        Fits this computer
-                      </span>
-                    {/if}
-                  </p>
-                  <p class="truncate text-[11.5px] text-ink-faint">
-                    {[
-                      result.publisher,
-                      result.downloads != null && result.downloads > 0
-                        ? `${formatCount(result.downloads)} downloads`
-                        : null,
-                      result.sizeBytes != null ? formatBytes(result.sizeBytes) : null,
-                      result.license,
-                      result.released,
-                      result.source.replace("+", " + "),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                </div>
-                <div class="flex shrink-0 items-center gap-1.5">
-                  <button
-                    type="button"
-                    class="btn-outline shrink-0 !py-1.5 !text-[12px]"
-                    aria-haspopup="dialog"
-                    aria-expanded={info?.reference === result.reference &&
-                      info?.source === result.source}
-                    aria-controls={info?.reference === result.reference
-                      ? "model-info-dialog"
-                      : undefined}
-                    onclick={() => (info = result)}
-                  >
-                    <Info size={12.5} aria-hidden="true" /> More info
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-outline shrink-0 !py-1.5 !text-[12px]"
-                    onclick={() => installFrom(result)}
-                    disabled={!!modelDownload}
-                  >
-                    <Download size={12.5} aria-hidden="true" /> Install
-                  </button>
-                </div>
-              </div>
-            {:else}
-              <p class="bg-surface px-4 py-3 text-[12.5px] text-ink-soft">
-                Nothing found for that search.
-              </p>
-            {/each}
-          </div>
-          {#if results.length > 0}
-            <p class="mt-1.5 text-[11px] text-ink-faint">
-              Rebost uses one AI at a time, sized for this computer.
-            </p>
-          {/if}
-        {/if}
+        <button
+          type="button"
+          class="btn-outline shrink-0"
+          aria-haspopup="dialog"
+          aria-expanded={showExplore}
+          aria-controls={showExplore ? "explore-models-dialog" : undefined}
+          onclick={() => (showExplore = true)}
+        >
+          <Search size={13.5} aria-hidden="true" />
+          Browse AIs
+        </button>
       </div>
     </section>
   {/snippet}
@@ -492,29 +341,34 @@
         </p>
         <p>formats: {diag.supportedFormats.join(" ")}</p>
         {#if diag.engineLogPresent}
-          <details class="mt-2">
-            <summary>engine log location</summary>
-            <p class="mt-1 text-[10.5px] leading-relaxed">
-              Log contents stay on disk (they can name local files). Path:
-              <code class="break-all">{diag.engineLogPath}</code>
-            </p>
-          </details>
+          <p class="mt-2">
+            engine log location:
+            <button
+              type="button"
+              class="rounded-sm text-left break-all underline decoration-navy-200 underline-offset-2 hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+              aria-label="Open engine log"
+              onclick={() => api.openEngineLog().catch(notifyInvokeError)}
+            >
+              <code>{diag.engineLogPath}</code>
+            </button>
+          </p>
+          <p class="mt-1 text-[10.5px] leading-relaxed text-ink-faint">
+            Log contents stay on disk (they can name local files).
+          </p>
         {/if}
       </div>
     {/if}
   </section>
 </div>
 
-{#if info}
-  <ModelInfoModal
-    result={info}
+{#if showExplore}
+  <ExploreModelsModal
     installing={!!modelDownload}
-    onClose={() => (info = null)}
-    onInstall={() => {
-      const selected = info;
-      if (!selected) return;
-      installFrom(selected);
-      info = null;
+    budgetBytes={modelBudgetBytes(machine?.profile.totalRamBytes)}
+    onClose={() => (showExplore = false)}
+    onInstall={(result) => {
+      installFrom(result);
+      showExplore = false;
     }}
   />
 {/if}

@@ -62,6 +62,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `redact_text` | `text` | redacted string |
 | `text_has_pii` | `text` | `bool` |
 | `diagnostics` | — | `Diagnostics` (no engine log body) |
+| `open_engine_log` | — | `()` (opens the on-disk engine log; no path from the UI) |
 | `recipes_list` | — | `Recipe[]` |
 | `recipe_create` | `name`, `prompt` | `Recipe` |
 | `recipe_delete` | `id` | `()` |

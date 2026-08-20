@@ -72,10 +72,21 @@ pub(crate) fn build_system_prompt(
     full_files: bool,
     shelf_tools: bool,
     online: bool,
+    avatar_name: &str,
 ) -> String {
-    let mut prompt = String::from(
-        "You are Rebost, a private AI assistant running entirely on this computer. Be helpful, \
+    let name = if avatar_name.trim().is_empty() {
+        "Rebost"
+    } else {
+        avatar_name.trim()
+    };
+    let mut prompt = format!(
+        "You are {name}, a private AI assistant running entirely on this computer. When you \
+introduce yourself, use that name and stop; do not list what you can do. Be helpful, \
 practical and concise. Answer in the language the user writes in.\n\
+Write plainly. Never use em dashes (—) or en dashes (–); a comma or a period is enough. \
+Skip chatbot filler (Great question, I hope this helps, What can I help you with). \
+Don't announce the answer. Don't force groups of three or \"it's not X, it's Y\". \
+Skip stock words like delve, pivotal, landscape, tapestry.\n\
 If you think through the problem before answering, put all of that reasoning between <think> \
 and </think> tags, and write the final answer after the closing tag, never inside it.\n\
 The messages include recent turns from this conversation only.\n",
@@ -393,8 +404,16 @@ mod tests {
     #[test]
     fn system_prompt_carries_shelf_inventory_apart_from_retrieved_excerpts() {
         let inventory = "Shelf \"Work\" · 2 files: invoice.md, notes.md.";
-        let with_sources =
-            build_system_prompt("", Some("Work"), Some(inventory), None, false, false, false);
+        let with_sources = build_system_prompt(
+            "",
+            Some("Work"),
+            Some(inventory),
+            None,
+            false,
+            false,
+            false,
+            "Rebost",
+        );
         assert!(with_sources.contains(inventory));
         assert!(with_sources.contains("LOCAL DOCUMENT SOURCES"));
         assert!(with_sources.contains("excerpts, not the full shelf"));
@@ -403,14 +422,30 @@ mod tests {
         assert!(!with_sources.contains("No passages from"));
         assert_no_tool_names(&with_sources);
 
-        let whole_files =
-            build_system_prompt("", Some("Work"), Some(inventory), None, true, false, false);
+        let whole_files = build_system_prompt(
+            "",
+            Some("Work"),
+            Some(inventory),
+            None,
+            true,
+            false,
+            false,
+            "Rebost",
+        );
         assert!(whole_files.contains("the full files"));
         assert!(!whole_files.contains("excerpts, not the full shelf"));
         assert_no_tool_names(&whole_files);
 
-        let can_open =
-            build_system_prompt("", Some("Work"), Some(inventory), None, false, true, false);
+        let can_open = build_system_prompt(
+            "",
+            Some("Work"),
+            Some(inventory),
+            None,
+            false,
+            true,
+            false,
+            "Rebost",
+        );
         assert!(can_open.contains("look up more from this Shelf"));
         assert!(can_open.contains("couldn't find it in \"Work\""));
         assert!(can_open.contains("excerpts, not the full shelf"));
@@ -424,21 +459,30 @@ mod tests {
             false,
             true,
             false,
+            "Rebost",
         );
         assert!(with_notes.contains("Named file notes"));
         assert!(with_notes.contains("Kitchen restock"));
         assert_no_tool_names(&with_notes);
 
-        let without_sources =
-            build_system_prompt("", Some("Work"), Some(inventory), None, false, false, false);
+        let without_sources = build_system_prompt(
+            "",
+            Some("Work"),
+            Some(inventory),
+            None,
+            false,
+            false,
+            false,
+            "Rebost",
+        );
         assert_eq!(with_sources, without_sources);
 
-        let no_shelf = build_system_prompt("", None, None, None, false, false, false);
+        let no_shelf = build_system_prompt("", None, None, None, false, false, false, "Rebost");
         assert!(!no_shelf.contains("Shelf \""));
         assert!(no_shelf.contains("recent turns from this conversation only"));
         assert_no_tool_names(&no_shelf);
 
-        let online = build_system_prompt("", None, None, None, false, false, true);
+        let online = build_system_prompt("", None, None, None, false, false, true, "Rebost");
         assert!(online.contains("Online lookup is on"));
         assert!(online.contains("never [S1]"));
         assert!(online.contains("no Shelf text"));
@@ -449,12 +493,22 @@ mod tests {
     #[test]
     fn house_rules_live_in_system_prompt_not_user_content() {
         let rules = "Always reply in Catalan.";
-        let prompt = build_system_prompt(rules, None, None, None, false, false, false);
+        let prompt = build_system_prompt(rules, None, None, None, false, false, false, "Rebost");
         assert!(prompt.contains("House rules. Always follow these:"));
         assert!(prompt.contains(rules));
         let user = build_user_content("hello", &[], &[]);
         assert_eq!(user, "hello");
         assert!(!user.contains("House rules"));
         assert!(!user.contains(rules));
+    }
+
+    #[test]
+    fn system_prompt_uses_the_conversation_face_name() {
+        let prompt = build_system_prompt("", None, None, None, false, false, false, "Cheetah");
+        assert!(prompt.contains("You are Cheetah, a private AI assistant"));
+        assert!(prompt.contains("When you introduce yourself, use that name and stop"));
+        assert!(prompt.contains("Never use em dashes"));
+        assert!(prompt.contains("Skip chatbot filler"));
+        assert!(!prompt.contains("You are Rebost"));
     }
 }

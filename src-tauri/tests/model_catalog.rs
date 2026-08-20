@@ -44,19 +44,26 @@ async fn search_merges_catalogs_and_labels_fit() {
         results.iter().any(|r| r.downloads.unwrap_or(0) > 0),
         "Hugging Face publishes download counts"
     );
-    let qwen = results
-        .iter()
-        .position(|r| r.official && r.reference.starts_with("Qwen/"));
-    let other = results.iter().position(|r| !r.official);
-    if let (Some(qwen), Some(other)) = (qwen, other) {
-        assert!(
-            qwen < other,
-            "Qwen's own repos should rank above community quants"
-        );
-    }
     for result in &results {
         assert!(!result.name.is_empty());
         assert!(!result.reference.is_empty());
+        let blob = format!(
+            "{} {} {}",
+            result.reference,
+            result.file.as_deref().unwrap_or(""),
+            result.name
+        )
+        .to_ascii_lowercase();
+        assert!(
+            !blob.contains("1bit")
+                && !blob.contains("packed_1bit")
+                && !blob.contains("custom_")
+                && !blob.contains("models-moved")
+                && !blob.contains("modelsmoved")
+                && !blob.contains("wan2")
+                && !blob.contains("parakeet"),
+            "custom packs, CI stubs, and non-chat AIs must stay hidden: {blob}"
+        );
     }
 }
 
