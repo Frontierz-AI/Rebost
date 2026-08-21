@@ -20,7 +20,7 @@
     if (path && import.meta.env.VITE_SNAPSHOT_LABEL === "about") {
       window.setTimeout(() => {
         api.devSnapshot(path, "about").catch((error) => console.error(invokeError(error)));
-      }, 800);
+      }, 2000);
     }
 
     function onKey(event: KeyboardEvent) {
