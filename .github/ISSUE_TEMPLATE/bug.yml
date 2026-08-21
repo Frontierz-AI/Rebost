@@ -25,7 +25,7 @@ body:
     id: os
     attributes:
       label: OS and hardware
-      placeholder: "macOS 15.x M4 24 GB / Windows 11 x64 32 GB"
+      placeholder: "Mac 15, Apple chip, 24 GB / Windows 11, 32 GB"
     validations:
       required: true
   - type: input

@@ -6,6 +6,12 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Changed
+
+- First-run cards describe Chat, a Shelf, and Recipes.
+- First run asks you to install the suggested AI.
+- Settings calls the section AI, and the web setting Online.
+
 ## [0.8.5] - 2026-08-21
 
 ### Changed

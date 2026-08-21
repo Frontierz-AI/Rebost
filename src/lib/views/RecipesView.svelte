@@ -15,7 +15,7 @@
   import { confirmDanger } from "$lib/native-dialog";
 
   let recipes = $state<Recipe[]>([]);
-  let formOpen = $state(false);
+  let formOpen = $state(import.meta.env.VITE_START_RECIPE === "new");
   let editingId = $state<string | null>(null);
   let formName = $state("");
   let formPrompt = $state("");
@@ -211,7 +211,7 @@
         <ChefHat size={22} class="mb-2 text-ink-faint" aria-hidden="true" />
         <p class="text-[13.5px] font-medium text-ink">No Recipes yet</p>
         <p class="mt-1 text-[12.5px] text-ink-soft">
-          Save a prompt you repeat, or bring back the defaults.
+          Save a question you will ask again. You can reuse it on any Shelf.
         </p>
       </div>
     {/each}

@@ -178,43 +178,48 @@
       {/if}
     </div>
 
-    <div class="flex items-center gap-2 border-t border-paper-line px-4 py-3">
-      <button
-        type="button"
-        class="btn-outline !text-[12px]"
-        onclick={() => api.openOriginal(doc.path).catch(notifyInvokeError)}
-      >
-        <FileText size={13} /> Open original
-      </button>
-      <button
-        type="button"
-        class="btn-outline !text-[12px]"
-        onclick={() => api.revealItem(doc.path).catch(notifyInvokeError)}
-      >
-        <FolderOpen size={13} /> Show in folder
-      </button>
-      {#if doc.status === "ready" && extractedText === null}
-        <button type="button" class="btn-outline !text-[12px]" onclick={viewExtracted}>
-          <ScanText size={13} /> View the text
-        </button>
-      {/if}
-      {#if doc.status === "error"}
-        <button
-          type="button"
-          class="btn-amber !text-[12px]"
-          onclick={() =>
-            api
-              .documentReprocess(doc.shelfId, doc.id)
-              .then(() => onClose())
-              .catch(notifyInvokeError)}
-        >
-          <RefreshCw size={13} /> Try again
-        </button>
-      {/if}
-      <span class="flex-1"></span>
+    <div class="flex flex-col gap-2 border-t border-paper-line px-4 py-3">
       {#if extractedText !== null}
         <CopyActions text={extractedText} />
       {/if}
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="btn-outline shrink-0 !text-[12px] whitespace-nowrap"
+          onclick={() => api.openOriginal(doc.path).catch(notifyInvokeError)}
+        >
+          <FileText size={13} class="shrink-0" aria-hidden="true" /> Open original
+        </button>
+        <button
+          type="button"
+          class="btn-outline shrink-0 !text-[12px] whitespace-nowrap"
+          onclick={() => api.revealItem(doc.path).catch(notifyInvokeError)}
+        >
+          <FolderOpen size={13} class="shrink-0" aria-hidden="true" /> Show in folder
+        </button>
+        {#if doc.status === "ready" && extractedText === null}
+          <button
+            type="button"
+            class="btn-outline shrink-0 !text-[12px] whitespace-nowrap"
+            onclick={viewExtracted}
+          >
+            <ScanText size={13} class="shrink-0" aria-hidden="true" /> View the text
+          </button>
+        {/if}
+        {#if doc.status === "error"}
+          <button
+            type="button"
+            class="btn-amber shrink-0 !text-[12px] whitespace-nowrap"
+            onclick={() =>
+              api
+                .documentReprocess(doc.shelfId, doc.id)
+                .then(() => onClose())
+                .catch(notifyInvokeError)}
+          >
+            <RefreshCw size={13} class="shrink-0" aria-hidden="true" /> Try again
+          </button>
+        {/if}
+      </div>
     </div>
   </div>
 </div>

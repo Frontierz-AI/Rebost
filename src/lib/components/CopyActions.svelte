@@ -50,30 +50,32 @@
   }
 </script>
 
-<div class="flex items-center gap-1 {subtle ? 'text-ink-faint' : ''}">
+<div class="flex flex-wrap items-center gap-x-1 gap-y-0.5 {subtle ? 'text-ink-faint' : ''}">
   <button
     type="button"
-    class="btn-ghost !px-2 !py-1 !text-[11.5px]"
+    class="btn-ghost shrink-0 !px-2 !py-1 !text-[11.5px] whitespace-nowrap"
     onclick={copyPlain}
     title="Copy"
   >
     {#if copied === "plain"}<Check
         size={13}
-        class="text-emerald-600 dark:text-emerald-400"
-      />{:else}<Copy size={13} />{/if}
+        class="shrink-0 text-emerald-600 dark:text-emerald-400"
+        aria-hidden="true"
+      />{:else}<Copy size={13} class="shrink-0" aria-hidden="true" />{/if}
     Copy
   </button>
   {#if hasPii}
     <button
       type="button"
-      class="btn-ghost !px-2 !py-1 !text-[11.5px]"
+      class="btn-ghost shrink-0 !px-2 !py-1 !text-[11.5px] whitespace-nowrap"
       onclick={copyRedacted}
       title="Replaces recognized identifiers before copying"
     >
       {#if copied === "redacted"}<Check
           size={13}
-          class="text-emerald-600 dark:text-emerald-400"
-        />{:else}<ShieldCheck size={13} />{/if}
+          class="shrink-0 text-emerald-600 dark:text-emerald-400"
+          aria-hidden="true"
+        />{:else}<ShieldCheck size={13} class="shrink-0" aria-hidden="true" />{/if}
       Copy without personal information
     </button>
   {/if}

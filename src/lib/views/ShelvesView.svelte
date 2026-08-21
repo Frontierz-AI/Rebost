@@ -33,7 +33,7 @@
   import { importFeedback } from "$lib/shelf-cap";
   import { shelfListStatus, shelfListStatusClass, shelfListStatusLabel } from "$lib/shelf-status";
 
-  let creating = $state(app.createShelf);
+  let creating = $state(app.createShelf || import.meta.env.VITE_START_CREATE_SHELF === "1");
   if (app.createShelf) app.createShelf = false;
 
   let newName = $state("");
@@ -44,6 +44,7 @@
   let filterType = $state<string | null>(null);
   let searchText = $state("");
   let openDoc = $state<DocumentMeta | null>(null);
+  let openedStartDoc = $state(false);
   let openCard = $state<Card | null>(null);
   let extractedText = $state<string | null>(null);
   let deleting = $state(false);
@@ -76,6 +77,15 @@
     } else {
       documents = [];
     }
+  });
+
+  $effect(() => {
+    if (openedStartDoc) return;
+    if (import.meta.env.VITE_START_DOC !== "first") return;
+    const first = documents[0];
+    if (!first) return;
+    openedStartDoc = true;
+    void openFile(first);
   });
 
   // Native drag & drop of files onto the shelf detail.
@@ -327,8 +337,8 @@
           </div>
           <h2 class="text-[16px] font-semibold text-ink">You don't have a Shelf yet</h2>
           <p class="mt-1 mb-5 max-w-md text-[13px] leading-relaxed text-ink-soft">
-            A Shelf is a group of files Chat can use. Create one and add files, then choose it in
-            Chat when you ask.
+            A Shelf is a folder Chat answers from. Create one, add files or attach a folder you
+            already use, then choose it in Chat.
           </p>
           <button type="button" class="btn-primary" onclick={() => (creating = true)}
             ><Plus size={15} /> Create your first Shelf</button

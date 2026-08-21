@@ -22,9 +22,10 @@
   let onlineResearch = $state(app.settings?.allowOnlineResearch ?? false);
   let rulesSaved = $state(false);
   let diag = $state<Diagnostics | null>(null);
-  let showDiag = $state(false);
+  let showDiag = $state(import.meta.env.VITE_START_DIAG === "1");
   let showReset = $state(false);
-  let showExplore = $state(false);
+  let showExplore = $state(import.meta.env.VITE_START_EXPLORE === "1");
+  let openedAbout = $state(false);
   let resetting = $state(false);
   const hasAi = $derived(!!app.settings?.activeModel);
 
@@ -39,6 +40,13 @@
   $effect(() => {
     houseRules = clipChars(app.settings?.houseRules ?? "", HOUSE_RULES_MAX_CHARS);
     onlineResearch = app.settings?.allowOnlineResearch ?? false;
+  });
+
+  $effect(() => {
+    if (openedAbout) return;
+    if (import.meta.env.VITE_START_ABOUT !== "1") return;
+    openedAbout = true;
+    api.showAboutWindow().catch(notifyInvokeError);
   });
 
   const modelDownload = $derived(
@@ -123,8 +131,8 @@
     <section class="card mb-6 px-6 py-5">
       <h2 class="mb-1 text-[15px] font-semibold text-ink">House rules</h2>
       <p class="mb-3 text-[12.5px] leading-snug text-ink-soft">
-        Standing instructions: tone, language, what never to promise. Rebost follows them in every
-        conversation and Recipe.
+        How the AI should answer: tone, language, what never to promise. Set this once. Rebost
+        follows it in every conversation and Recipe.
       </p>
       <label class="sr-only" for="house-rules">House rules</label>
       <textarea
@@ -156,12 +164,10 @@
           onchange={() => void saveOnline()}
         />
         <span>
-          <h2 class="text-[15px] font-semibold text-ink">
-            Allow your AI to conduct online research
-          </h2>
+          <h2 class="text-[15px] font-semibold text-ink">Online</h2>
           <p id="online-research-help" class="mt-1 text-[12.5px] leading-snug text-ink-soft">
-            Turn this on so your AI can search the public web. Your files are not sent online. Once
-            the pages are in, the answer is still written on this computer.
+            Turn this on so Chat can look things up on the public web. Your files stay on this
+            computer. The answer is still written here.
           </p>
         </span>
       </label>
@@ -170,7 +176,7 @@
 
   {#snippet aiSection()}
     <section class="card mb-6 px-6 py-5">
-      <h2 class="mb-1 text-[15px] font-semibold text-ink">AI Brain</h2>
+      <h2 class="mb-1 text-[15px] font-semibold text-ink">AI</h2>
       {#if machine}
         <p class="mb-4 flex items-center gap-1.5 text-[12px] text-ink-faint">
           <Cpu size={12.5} />

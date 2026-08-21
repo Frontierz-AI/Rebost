@@ -16,6 +16,13 @@
       .then((value) => (info = value))
       .catch((error) => console.error(invokeError(error)));
 
+    const path = import.meta.env.VITE_SNAPSHOT_PATH as string | undefined;
+    if (path && import.meta.env.VITE_SNAPSHOT_LABEL === "about") {
+      window.setTimeout(() => {
+        api.devSnapshot(path, "about").catch((error) => console.error(invokeError(error)));
+      }, 800);
+    }
+
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         getCurrentWindow().close();
@@ -81,7 +88,7 @@
       {#if info}Version {info.version}{/if}
     </p>
     <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
-      Private AI that works with your files. What happens in your computer stays in your computer.
+      Private AI that works with your files. What happens on your computer stays on your computer.
     </p>
   </header>
 

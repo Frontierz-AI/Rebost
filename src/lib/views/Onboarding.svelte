@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { fade } from "svelte/transition";
-  import { Lock, LibraryBig, ChefHat, Download, Check, ChevronDown } from "@lucide/svelte";
+  import { MessageCircle, LibraryBig, ChefHat, Download, Check, ChevronDown } from "@lucide/svelte";
   import {
     api,
     downloadErrorMessage,
@@ -15,10 +15,12 @@
   import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
   import mark from "../../assets/R.webp";
 
-  let step = $state<"promise" | "model">("promise");
+  let step = $state<"promise" | "model">(
+    import.meta.env.VITE_START_ONBOARD === "model" ? "model" : "promise",
+  );
   let machine = $state<MachineView | null>(null);
   let installing = $state(false);
-  let showMore = $state(false);
+  let showMore = $state(import.meta.env.VITE_START_ONBOARD_MORE === "1");
   let lastRec = $state<Recommendation | null>(null);
   let installHeading = $state<HTMLHeadingElement | null>(null);
 
@@ -111,16 +113,16 @@
         <img src={mark} alt="Rebost" class="mb-5 w-[100px] rounded-2xl" />
         <h1 class="text-[28px] font-bold text-white">Welcome to Rebost</h1>
         <p class="mt-2 max-w-md text-[15px] leading-relaxed text-white/65">
-          Private AI that works with your files. What happens in your computer stays in your
-          computer.
+          Rebost is a private AI that works with your files.<br />What happens on your computer
+          stays on your computer.
         </p>
         <div class="mt-8 grid w-full grid-cols-3 gap-3">
           <div class="onboard-card rounded-xl bg-white/6 px-4 py-4 text-left">
-            <Lock size={17} class="mb-2 text-mint" />
-            <p class="text-[12.5px] font-semibold text-white">On this computer</p>
-            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-white/55">
-              Chats and files stay here. After you install an AI, answers are generated on this
-              computer.
+            <MessageCircle size={17} class="mb-2 text-mint" />
+            <p class="text-[14px] font-semibold text-white">Private by Design</p>
+            <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
+              Talk to your personal AI: brainstorm ideas, ask questions or put it to work on your
+              files.
             </p>
           </div>
           <div
@@ -128,9 +130,10 @@
             style="animation-delay: 60ms"
           >
             <LibraryBig size={17} class="mb-2 text-mint" />
-            <p class="text-[12.5px] font-semibold text-white">Private shelves and files</p>
-            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-white/55">
-              Add files to a Shelf and your AI will cite the pages where it found the answers.
+            <p class="text-[14px] font-semibold text-white">One Shelf at a Time</p>
+            <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
+              A Shelf can be a project, a client or an idea. Create it, attach a folder and start
+              working on it.
             </p>
           </div>
           <div
@@ -138,9 +141,10 @@
             style="animation-delay: 120ms"
           >
             <ChefHat size={17} class="mb-2 text-mint" />
-            <p class="text-[12.5px] font-semibold text-white">Your best recipes</p>
-            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-white/55">
-              Save instructions and ideas you use often, so they're just one click away next time.
+            <p class="text-[14px] font-semibold text-white">Recipes for Everything</p>
+            <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
+              Recipes are tasks you can reuse across Shelves and Chats, so you don't start from
+              scratch every time.
             </p>
           </div>
         </div>
@@ -178,7 +182,7 @@
           tabindex="-1"
           class="max-w-md text-[28px] font-bold text-balance text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
         >
-          Rebost needs to download a brain first.
+          Install the suggested AI.
         </h1>
         <p class="mt-2 max-w-md text-[15px] leading-relaxed text-white/65">
           That's the AI that answers you on this computer. It can take a few minutes.

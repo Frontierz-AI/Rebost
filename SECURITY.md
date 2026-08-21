@@ -6,6 +6,8 @@ The current release is **0.8.5**.
 
 ## What Rebost does with data
 
+The app is MIT. There is no account to create.
+
 Chat, reading your files, search, and answers run on this computer. Your files and the AI stay here.
 
 Rebost uses the network when you **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows machines a faster copy may be downloaded the first time you chat.

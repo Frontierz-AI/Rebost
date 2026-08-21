@@ -96,22 +96,22 @@
         </p>
       {/if}
     </div>
-    <div class="flex items-center justify-between gap-2 border-t border-paper-line px-3 py-2">
+    <div class="flex flex-col gap-2 border-t border-paper-line px-3 py-2.5">
       <CopyActions text={body} />
-      <div class="flex gap-1.5">
+      <div class="grid grid-cols-2 gap-1.5">
         <button
           type="button"
-          class="btn-outline !py-1.5 !text-[12px]"
+          class="btn-outline w-full !px-3 !py-1.5 !text-[12px] whitespace-nowrap"
           onclick={() => api.revealItem(source.path).catch(notifyInvokeError)}
         >
-          <FolderOpen size={13} /> Show in folder
+          <FolderOpen size={13} class="shrink-0" aria-hidden="true" /> Show in folder
         </button>
         <button
           type="button"
-          class="btn-outline !py-1.5 !text-[12px]"
+          class="btn-outline w-full !px-3 !py-1.5 !text-[12px] whitespace-nowrap"
           onclick={() => api.openOriginal(source.path).catch(notifyInvokeError)}
         >
-          <ExternalLink size={13} /> Open original
+          <ExternalLink size={13} class="shrink-0" aria-hidden="true" /> Open original
         </button>
       </div>
     </div>
