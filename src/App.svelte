@@ -32,10 +32,20 @@
 
   onMount(() => {
     setNotifier((message) => toast(message));
-    bootstrap().catch((error) => {
-      console.error(error);
-      toast("Rebost couldn't finish starting. Try again.");
-    });
+    bootstrap()
+      .catch((error) => {
+        console.error(error);
+        toast("Rebost couldn't finish starting. Try again.");
+      })
+      .finally(() => {
+        const path = import.meta.env.VITE_SNAPSHOT_PATH as string | undefined;
+        if (!path) return;
+        const delay = Number(import.meta.env.VITE_SNAPSHOT_DELAY ?? "1800");
+        const label = (import.meta.env.VITE_SNAPSHOT_LABEL as string | undefined) || "main";
+        window.setTimeout(() => {
+          api.devSnapshot(path, label).catch((error) => console.error(error));
+        }, delay);
+      });
 
     function onKey(event: KeyboardEvent) {
       const action = shortcutAction(event);

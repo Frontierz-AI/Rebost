@@ -455,6 +455,8 @@ export const api = {
   openEngineLog: () => invoke<void>("open_engine_log"),
 
   showAboutWindow: () => invoke<void>("show_about_window"),
+  devSnapshot: (path: string, label?: string) =>
+    invoke<void>("dev_snapshot", { path, label: label ?? null }),
   aboutInfo: () => invoke<AboutInfo>("about_info"),
   openExternal: (link: ExternalLink) => invoke<void>("open_external", { link }),
 

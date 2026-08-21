@@ -23,6 +23,7 @@ pub mod reset;
 pub mod search;
 pub mod settings;
 pub mod shelf;
+pub mod snapshot;
 pub mod types;
 pub mod updater;
 
@@ -260,6 +261,7 @@ pub fn run() {
             commands::recipe_update,
             commands::recipe_delete,
             commands::recipes_restore_defaults,
+            snapshot::dev_snapshot,
             about::about_info,
             about::show_about_window,
             about::open_external,

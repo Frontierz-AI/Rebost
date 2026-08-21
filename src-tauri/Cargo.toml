@@ -98,6 +98,15 @@ dirs = "6"
 readabilityrs = "0.1.4"
 url = "2.5.8"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.4"
+objc2-foundation = { version = "0.3.2", features = ["NSData", "NSDictionary"] }
+objc2-app-kit = { version = "0.3.2", features = [
+    "NSView",
+    "NSBitmapImageRep",
+    "NSImageRep",
+] }
+
 [dev-dependencies]
 tempfile = "3"
 

@@ -48,7 +48,7 @@ CI runs frontend checks and `cargo deny` on every push. The Rust job runs only w
 ## Dev utilities
 
 - `./scripts/reset.sh` (macOS) or `./scripts/reset.ps1` (Windows): wipe Rebost app data (Shelf files in `library/` are kept). Settings → Reset Rebost does the same from the running app.
-- `cargo run --manifest-path src-tauri/Cargo.toml --example seed -- [--model PATH] [--fresh]`: demo library (refuses if Rebost is open)
+- `cargo run --manifest-path src-tauri/Cargo.toml --example seed -- [--model PATH] [--fresh] [--empty] [--ai-name "Muse Glimmer"]`: Harbor, Notes, and a full chat list (refuses if Rebost is open). `--empty` finishes first run with no Shelves.
 - `VITE_START_VIEW=shelves VITE_START_SHELF=first pnpm tauri dev`: land on a specific screen
 
 Logs: Settings → Diagnostics (paths only; the engine log body stays on disk). On macOS also `~/Library/Logs/io.rebost.desktop/`. Engine stdout is `logs/engine.log` under app data.
@@ -81,7 +81,7 @@ Formatters own spaces and wrapping. `just check` runs svelte-check, Prettier, ox
 
 Sentence case. Delete anything the name or types already say.
 
-**User-facing copy.** Name the outcome, not the machinery. Prefer AI over model. Do not put GGUF, llama.cpp, or SHA-256 in the UI or in README For users. Errors say what failed and what to do. Product words: Shelf, Recipe, Chat, House rules.
+**User-facing copy.** Name the outcome, not the machinery. Prefer AI over model. Do not put GGUF, llama.cpp, or SHA-256 in the UI or in README For users. Errors say what failed and what to do. Product words: Shelf, Recipe, Chat, House rules. Public copy follows the site's four facts (install and ask, Mac and Windows, no account, open source) and four product ideas (Chat, Shelves, Recipes, House rules). First run says take the suggested AI, never "brain". The setting is Online.
 
 ## Pull requests
 

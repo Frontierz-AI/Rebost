@@ -1,6 +1,6 @@
 # Privacy
 
-Your files and the AI stay on this computer. Reading, search, and answers happen here. Rebost uses the network when you search for or install an AI, when the included runtime is missing, and for a quiet update check. Settings → Online, when you turn it on, also looks things up on the public web. Counts of personal information are counts, not a legal opinion.
+Files you put on a Shelf stay on this computer. Reading, search, and answers happen here. Rebost uses the network to search for or install an AI, when the included runtime is missing, and to check for a newer version. Settings → Online, when you turn it on, also looks things up on the public web. Counts of personal information are counts, not a legal opinion.
 
 ## Claims
 

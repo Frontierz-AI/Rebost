@@ -268,7 +268,21 @@ fn is_default_work(entry: &CatalogEntry) -> bool {
     }
 }
 
+fn forced_recommend_index() -> Option<usize> {
+    let name = std::env::var("REBOST_FORCE_RECOMMEND").ok()?;
+    let name = name.trim();
+    if name.is_empty() {
+        return None;
+    }
+    CATALOG
+        .iter()
+        .position(|entry| entry.name.eq_ignore_ascii_case(name))
+}
+
 fn pick_index(profile: &MachineProfile) -> usize {
+    if let Some(index) = forced_recommend_index() {
+        return index;
+    }
     CATALOG
         .iter()
         .position(|entry| is_default_work(entry) && fits(entry, profile))

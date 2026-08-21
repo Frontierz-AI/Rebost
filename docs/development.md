@@ -23,12 +23,15 @@ Copy `.env.example`. Vite variables:
 
 - `VITE_START_VIEW`: `chat` \| `shelves` \| `recipes` \| `settings`
 - `VITE_START_SHELF=first`: open the first shelf in Shelves view
+- `VITE_START_ONBOARD=model`: first-run install step
+- `VITE_START_SOURCE=first` / `VITE_START_THINKING=first` / `VITE_START_DOC=first`: open a citation, Thinking, or the first file
+- `VITE_SNAPSHOT_PATH`: write a PNG of the window after start (debug Mac builds)
 
 ## Reset and seed
 
 `./scripts/reset.sh` (macOS) or `./scripts/reset.ps1` (Windows) deletes Rebost app data and related caches, and keeps `library/` (managed Shelf files). Settings → Reset Rebost does the same from inside the running app (type `DELETE` to confirm). Older `~/Documents/Rebost` folders, if any, also stay.
 
-`cargo run --manifest-path src-tauri/Cargo.toml --example seed -- [--fresh] [--model GGUF]` fills a demo library. Seed refuses if Rebost is open.
+`cargo run --manifest-path src-tauri/Cargo.toml --example seed -- [--fresh] [--empty] [--model GGUF] [--ai-name "Muse Glimmer"]` fills a demo library. Harbor (seven files) and Notes (three), plus a list of conversations. `--empty` finishes first run with no Shelves. Seed refuses if Rebost is open. `REBOST_FORCE_RECOMMEND=Muse Glimmer` makes first run offer that AI.
 
 ## Logging
 
