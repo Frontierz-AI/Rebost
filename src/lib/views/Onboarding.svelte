@@ -208,11 +208,7 @@
             <Check size={16} class="size-4 h-lh shrink-0" aria-hidden="true" />
             The AI is installed.
           </p>
-          <button
-            type="button"
-            class="btn-amber mt-9 !px-7 !py-2.5 !text-[14px]"
-            onclick={finish}
-          >
+          <button type="button" class="btn-amber mt-9 !px-7 !py-2.5 !text-[14px]" onclick={finish}>
             Start using Rebost
           </button>
         {:else}
@@ -221,15 +217,15 @@
               <p class="text-[15px] leading-relaxed text-white/55">
                 There are several free AIs. Rebost picked one that should run well here.
               </p>
-              <div class="onboard-card flex items-start gap-4 rounded-xl bg-white/10 px-4 py-4 text-left">
+              <div
+                class="onboard-card flex items-start gap-4 rounded-xl bg-white/10 px-4 py-4 text-left"
+              >
                 <Download size={17} class="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <p class="text-[12.5px] font-semibold text-white">
                     {failedDownload ? "Couldn't install" : "Chosen for this computer"}
                   </p>
-                  <p
-                    class="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-white"
-                  >
+                  <p class="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-white">
                     <span class="min-w-0 truncate">{(lastRec ?? machine.recommendation).name}</span>
                     <ModelCatalogInfo rec={lastRec ?? machine.recommendation} onDark />
                   </p>

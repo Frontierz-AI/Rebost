@@ -35,7 +35,9 @@
     </p>
   </div>
   <div
-    class="h-1.5 overflow-hidden rounded-full {onDark ? 'bg-white/10' : 'bg-navy-100 dark:bg-white/10'}"
+    class="h-1.5 overflow-hidden rounded-full {onDark
+      ? 'bg-white/10'
+      : 'bg-navy-100 dark:bg-white/10'}"
     role="progressbar"
     aria-valuemin={0}
     aria-valuemax={100}
