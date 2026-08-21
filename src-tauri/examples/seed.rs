@@ -126,6 +126,18 @@ Never put a personal mobile on the door."
                 size_bytes: std::fs::metadata(&model_path)?.len(),
             });
             println!("active AI: {ai_name}");
+        } else {
+            // Screenshots / UI work: show the suggested name even if the
+            // weights are not on disk.
+            settings.active_model = Some(rebost::settings::ActiveModel {
+                file: "Muse-Glimmer-30B.gguf".into(),
+                name: ai_name.clone(),
+                source: "huggingface".into(),
+                reference: ai_ref.clone(),
+                license: Some("Apache-2.0".into()),
+                size_bytes: 15143 * 1024 * 1024,
+            });
+            println!("active AI: {ai_name} (label only)");
         }
     }
     ctx.save_settings();
