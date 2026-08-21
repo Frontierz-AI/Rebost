@@ -76,7 +76,9 @@
   $effect(() => {
     if (openedStartSource) return;
     if (import.meta.env.VITE_START_SOURCE !== "first") return;
-    const cited = chatState.messages.find((message) => message.sources.length > 0);
+    const cited = [...chatState.messages]
+      .reverse()
+      .find((message) => message.sources.length > 0);
     if (!cited?.sources[0]) return;
     openedStartSource = true;
     openSource = cited.sources[0] ?? null;
@@ -85,9 +87,9 @@
   $effect(() => {
     if (openedStartThinking) return;
     if (import.meta.env.VITE_START_THINKING !== "first") return;
-    const withThink = chatState.messages.find(
-      (message) => message.thinking || (message.activity?.length ?? 0) > 0,
-    );
+    const withThink = [...chatState.messages]
+      .reverse()
+      .find((message) => message.thinking || (message.activity?.length ?? 0) > 0);
     if (!withThink) return;
     openedStartThinking = true;
     openThinking = { ...openThinking, [withThink.id]: true };

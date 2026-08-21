@@ -43,11 +43,7 @@
         if (import.meta.env.VITE_SNAPSHOT_LABEL === "about") return;
         const delay = Number(import.meta.env.VITE_SNAPSHOT_DELAY ?? "5000");
         window.setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              api.devSnapshot(path, "main").catch((error) => console.error(error));
-            });
-          });
+          api.devSnapshot(path, "main").catch((error) => console.error(error));
         }, delay);
       });
 

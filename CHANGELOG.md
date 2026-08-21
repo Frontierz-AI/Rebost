@@ -6,6 +6,8 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.6] - 2026-08-21
+
 ### Changed
 
 - First-run cards describe Chat, a Shelf, and Recipes.
@@ -438,6 +440,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.6]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.2...v0.8.3

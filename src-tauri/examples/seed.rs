@@ -9,8 +9,11 @@
 //!
 //! `--fresh` wipes app data (keeps `library/` unless you delete it).
 //! `--empty` finishes first run and installs the AI name, with no Shelves
-//! or conversations. Omit it for Harbor, Notes, and a full chat list.
+//! or conversations. Omit it for Harbor, Notes, and ten conversation types.
 //! `--ai-name` is the Settings label (default: Muse Glimmer).
+//!
+//! Chat lists newest first. `VITE_START_THREAD=1` opens the look-through
+//! thread. See `.cursor/skills/update-screenshots/SKILL.md`.
 
 use rebost::chat::conversations::{ActivityStep, Conversations, StoredMessage};
 use rebost::core::{Ctx, NoopEvents};
@@ -330,140 +333,88 @@ fn looked(file: &str) -> Vec<ActivityStep> {
 }
 
 fn seed_conversations(ctx: &Ctx, harbor: &str, notes: &str) -> anyhow::Result<()> {
-    // Oldest first so the opening-date thread is the one Chat reopens.
+    // Oldest first. Chat lists newest first, so thread 1 is the last one here.
+    // Screenshot names: chat-01 … chat-10 match VITE_START_THREAD.
 
-    let parking = new_thread(ctx, Some(notes), "Parking on the 8th")?;
+    // 10. Small Shelf (Notes): two files, one ask.
+    let notes_day = new_thread(ctx, Some(notes), "Opening day notes")?;
     user(
         ctx,
-        &parking,
+        &notes_day,
         Some(notes),
-        "Where do we park on opening day?",
+        "What should Sam do first on the 8th, and when do the sign proofs land?",
     )?;
     assistant(
         ctx,
-        &parking,
+        &notes_day,
         Some(notes),
-        "Two spaces behind the building [S1]. The street ones fill by 9:30 [S1]. On the 8th, Sam arrives first and cones the back pair [S1].",
-        sources(ctx, notes, &["Parking.md"]),
-        None,
-        looked("Parking.md"),
-    )?;
-    user(ctx, &parking, Some(notes), "Is that written down for Sam?")?;
-    assistant(
-        ctx,
-        &parking,
-        Some(notes),
-        "Yes. It is in Parking, in Notes [S1].",
-        sources(ctx, notes, &["Parking.md"]),
-        None,
-        Vec::new(),
-    )?;
-
-    let printer = new_thread(ctx, Some(notes), "Printer proofs")?;
-    user(
-        ctx,
-        &printer,
-        Some(notes),
-        "When do the sign proofs come back?",
-    )?;
-    assistant(
-        ctx,
-        &printer,
-        Some(notes),
-        "25 August is the date they gave [S1]. They have Elena's copy from How we write [S1].",
-        sources(ctx, notes, &["Call with the printer.md"]),
-        None,
-        looked("Call with the printer.md"),
+        "On the 8th, Sam arrives first and cones the two spaces behind the building [S1]. The street ones fill by 9:30 [S1]. Sign proofs come back on 25 August [S2]. They have Elena's copy from How we write. No new words [S2].",
+        sources(ctx, notes, &["Parking.md", "Call with the printer.md"]),
+        Some("Parking is in Notes. The printer call is there too. Harbor has the hours if Sam needs them."),
+        vec![
+            ActivityStep {
+                stage: "looking".into(),
+                file: None,
+            },
+            ActivityStep {
+                stage: "opening".into(),
+                file: Some("Parking.md".into()),
+            },
+            ActivityStep {
+                stage: "opening".into(),
+                file: Some("Call with the printer.md".into()),
+            },
+        ],
     )?;
     user(
         ctx,
-        &printer,
+        &notes_day,
         Some(notes),
         "What if the gold on navy is too dark?",
     )?;
     assistant(
         ctx,
-        &printer,
+        &notes_day,
         Some(notes),
-        "They will try amber on navy instead [S1]. No new words. Use the hours as written [S1].",
+        "They will try amber on navy instead [S1]. Hours stay as written [S1].",
         sources(ctx, notes, &["Call with the printer.md"]),
         None,
         Vec::new(),
     )?;
 
-    let write = new_thread(ctx, Some(harbor), "How we write")?;
+    // 9. Brainstorm, no Shelf.
+    let ideas = new_thread(ctx, None, "Ideas for opening week")?;
     user(
         ctx,
-        &write,
-        Some(harbor),
-        "How should we write the name and the hours?",
+        &ideas,
+        None,
+        "Give me five small ideas for the week we open. Keep them cheap and local. The name is Harbor.",
     )?;
     assistant(
         ctx,
-        &write,
-        Some(harbor),
-        "The name is Harbor. Not Harbor & Co. Not Harbor Studio [S1]. Hours are written 10:00–14:00, not 10-2 [S1]. Short sentences. First names. No slogans [S1].",
-        sources(ctx, harbor, &["How we write.md"]),
-        Some("How we write is Elena's note for anything that leaves the building."),
-        looked("How we write.md"),
+        &ideas,
+        None,
+        "1. A handwritten card in the window: hours 10:00–19:00, Saturdays 10:00–14:00. Nothing else.\n\
+2. One pot of coffee on Monday morning. First names on the cups.\n\
+3. A short note on the door: the desk number, not a mobile.\n\
+4. Ask two neighbours to walk through on Saturday and say what they could not find.\n\
+5. A one-page sheet for anyone new that week: Brief, then Decisions, then the FAQ.",
+        Vec::new(),
+        None,
+        Vec::new(),
     )?;
-    user(
-        ctx,
-        &write,
-        Some(harbor),
-        "Someone asked if we open on the 1st. Can I put that on a sign?",
-    )?;
+    user(ctx, &ideas, None, "Which one should we do first?")?;
     assistant(
         ctx,
-        &write,
-        Some(harbor),
-        "No. If a date is not in Decisions, do not invent one. Say you will check [S1].",
-        sources(ctx, harbor, &["How we write.md"]),
+        &ideas,
+        None,
+        "The card in the window. Hours are already decided. People walking past need those first.",
+        Vec::new(),
         None,
         Vec::new(),
     )?;
 
-    let painter = new_thread(ctx, Some(harbor), "Painter on Friday")?;
-    user(ctx, &painter, Some(harbor), "When is the painter coming?")?;
-    assistant(
-        ctx,
-        &painter,
-        Some(harbor),
-        "Friday 21 August [S1]. The room has to be empty Thursday night. Marc [S1].",
-        sources(ctx, harbor, &["Meeting 12 August.md"]),
-        None,
-        looked("Meeting 12 August.md"),
-    )?;
-    user(
-        ctx,
-        &painter,
-        Some(harbor),
-        "Does the hall need to be cleared too?",
-    )?;
-    assistant(
-        ctx,
-        &painter,
-        Some(harbor),
-        "That is still an open note. Scratch from 20 August says to ask Marc whether the painter needs the hall cleared, or only the front room. It is not in Decisions.",
-        sources(ctx, notes, &["Scratch 20 August.md"]),
-        None,
-        looked("Scratch 20 August.md"),
-    )?;
-    user(ctx, &painter, Some(harbor), "Who confirms the painter?")?;
-    assistant(
-        ctx,
-        &painter,
-        Some(harbor),
-        "Marc confirms the painter [S1]. The week-of note says he already confirmed Friday [S2].",
-        sources(
-            ctx,
-            harbor,
-            &["Meeting 12 August.md", "Week of 18 August.md"],
-        ),
-        None,
-        Vec::new(),
-    )?;
-
+    // 8. Still open: do not invent a decision.
     let friday = new_thread(ctx, Some(harbor), "Friday evening")?;
     user(
         ctx,
@@ -477,9 +428,7 @@ fn seed_conversations(ctx: &Ctx, harbor: &str, notes: &str) -> anyhow::Result<()
         Some(harbor),
         "Not yet. Jordi wants to try it. Keep it out of Decisions until we say yes [S1].",
         sources(ctx, harbor, &["Brief.md"]),
-        Some(
-            "Brief and Decisions both leave Friday evening open. Week of 18 August says the same.",
-        ),
+        Some("Brief and Decisions both leave Friday evening open."),
         looked("Brief.md"),
     )?;
     user(ctx, &friday, Some(harbor), "Did anyone write a date?")?;
@@ -487,7 +436,7 @@ fn seed_conversations(ctx: &Ctx, harbor: &str, notes: &str) -> anyhow::Result<()
         ctx,
         &friday,
         Some(harbor),
-        "No date. Decisions says Jordi still wants to try Friday evening in October, and that it is not a decision yet [S1].",
+        "No date. Decisions says it is not a decision yet [S1].",
         sources(ctx, harbor, &["Decisions.md"]),
         None,
         looked("Decisions.md"),
@@ -502,94 +451,246 @@ fn seed_conversations(ctx: &Ctx, harbor: &str, notes: &str) -> anyhow::Result<()
         ctx,
         &friday,
         Some(harbor),
-        "Say it is still open. Point them at Brief, then Decisions [S1].",
-        sources(ctx, harbor, &["Brief.md"]),
+        "Say it is still open. Point them at Brief, then Decisions [S1]. If a date is not in Decisions, do not invent one [S2].",
+        sources(ctx, harbor, &["Brief.md", "How we write.md"]),
         None,
         Vec::new(),
     )?;
 
-    let owners = new_thread(ctx, Some(harbor), "Who owns what")?;
+    // 7. Meeting notes to an action list.
+    let actions = new_thread(ctx, Some(harbor), "Actions from 12 August")?;
     user(
         ctx,
-        &owners,
+        &actions,
         Some(harbor),
-        "Who owns the folder and the FAQ?",
+        "Turn the 12 August meeting into an action list. Owner and a date for each item.",
     )?;
     assistant(
         ctx,
-        &owners,
+        &actions,
         Some(harbor),
-        "Ana: the folder, the dates, the FAQ [S1]. Jordi: the brief and the one-pager for new people [S1]. Marc: the room and the painter [S1]. Elena: signs and the street-facing copy [S1]. Sam: hours on the door and the phone [S1].",
-        sources(ctx, harbor, &["Decisions.md"]),
+        "From the meeting [S1] and the week-of note [S2]:\n\
+- Ana updates Decisions and the FAQ. After 12 August.\n\
+- Marc confirms the painter. Friday 21 August. Room empty Thursday night.\n\
+- Elena sends sign proofs. Back 25 August.\n\
+- Jordi posts the one-page brief. He said Monday. The week-of note says he posted it.\n\
+- Ana sends Sam the steps for the shared folder on the office PC.\n\
+Still open: Friday evening in October. Not an action until we decide.",
+        sources(
+            ctx,
+            harbor,
+            &["Meeting 12 August.md", "Week of 18 August.md"],
+        ),
+        Some("The meeting closed the date and Saturday hours. The week-of note shows what landed."),
+        looked("Meeting 12 August.md"),
+    )?;
+    user(ctx, &actions, Some(harbor), "What is left for this week?")?;
+    assistant(
+        ctx,
+        &actions,
+        Some(harbor),
+        "Painter on Friday. Room empty Thursday night [S1]. Sam is setting up the shared folder [S1].",
+        sources(ctx, harbor, &["Week of 18 August.md"]),
         None,
-        looked("Decisions.md"),
+        Vec::new(),
     )?;
-    user(ctx, &owners, Some(harbor), "Who do I write to about signs?")?;
+
+    // 6. Compare two files.
+    let compare = new_thread(ctx, Some(harbor), "Saturday hours, two files")?;
+    user(
+        ctx,
+        &compare,
+        Some(harbor),
+        "Do FAQ and Decisions agree on Saturday hours? If they differ, which one do I trust?",
+    )?;
     assistant(
         ctx,
-        &owners,
+        &compare,
         Some(harbor),
-        "elena@harbor.example for signs and street copy [S1].",
+        "They agree. Saturdays are 10:00–14:00 [S1] [S2].\n\
+Decisions adds why: Elena asked for a full day. July was quiet after lunch, so we cut it [S1].\n\
+FAQ answers the later-Saturday question: not this year [S2].\n\
+Trust Decisions for the why. Trust the FAQ for what to tell someone who writes in.",
+        sources(ctx, harbor, &["Decisions.md", "FAQ.md"]),
+        Some("Same hours in both files. Decisions keeps the history. FAQ is the public wording."),
+        vec![
+            ActivityStep {
+                stage: "looking".into(),
+                file: None,
+            },
+            ActivityStep {
+                stage: "opening".into(),
+                file: Some("Decisions.md".into()),
+            },
+            ActivityStep {
+                stage: "opening".into(),
+                file: Some("FAQ.md".into()),
+            },
+        ],
+    )?;
+
+    // 5. Draft from House rules and How we write.
+    let draft = new_thread(ctx, Some(harbor), "Copy for the door")?;
+    user(
+        ctx,
+        &draft,
+        Some(harbor),
+        "Draft the words for the door. Hours, the number, nothing else. Elena's rules.",
+    )?;
+    assistant(
+        ctx,
+        &draft,
+        Some(harbor),
+        "Harbor\n\
+Weekdays 10:00–19:00\n\
+Saturdays 10:00–14:00\n\
+Closed Sunday\n\
++34 612 000 110\n\n\
+The name is Harbor. Not Harbor & Co [S1]. Hours as written, not 10-2 [S1]. The number is the desk [S2]. No personal mobile [S3].",
+        sources(ctx, harbor, &["How we write.md", "FAQ.md", "Decisions.md"]),
+        Some("How we write first. Then FAQ for hours and the number. Decisions for what we will not put on the door."),
+        looked("How we write.md"),
+    )?;
+    user(
+        ctx,
+        &draft,
+        Some(harbor),
+        "Can I add 'see you in September'?",
+    )?;
+    assistant(
+        ctx,
+        &draft,
+        Some(harbor),
+        "No. Short sentences. No slogans [S1]. The date is Monday 8 September 2026 if you need a date at all [S2].",
+        sources(ctx, harbor, &["How we write.md", "Decisions.md"]),
+        None,
+        Vec::new(),
+    )?;
+
+    // 4. Translate, keep numbers exact.
+    let translate = new_thread(ctx, Some(harbor), "Hours in Catalan")?;
+    user(
+        ctx,
+        &translate,
+        Some(harbor),
+        "Translate the hours and the door number into Catalan. Keep the times and the number exact.",
+    )?;
+    assistant(
+        ctx,
+        &translate,
+        Some(harbor),
+        "De dilluns a divendres, 10:00–19:00. Dissabtes, 10:00–14:00. Diumenge tancat [S1].\n\
+El número de la porta: +34 612 000 110. És el del taulell [S1].",
         sources(ctx, harbor, &["FAQ.md"]),
         None,
-        Vec::new(),
-    )?;
-
-    let names = new_thread(ctx, None, "Other names we tried")?;
-    user(
-        ctx,
-        &names,
-        None,
-        "We already picked Harbor. Remind me what we ruled out, in one line.",
-    )?;
-    assistant(
-        ctx,
-        &names,
-        None,
-        "Harbor & Co and Harbor Studio. The name is Harbor.",
-        Vec::new(),
-        None,
-        Vec::new(),
-    )?;
-
-    let door = new_thread(ctx, Some(harbor), "Number on the door")?;
-    user(ctx, &door, Some(harbor), "What number goes on the door?")?;
-    assistant(
-        ctx,
-        &door,
-        Some(harbor),
-        "The desk number: +34 612 000 110 [S1]. Do not put a personal mobile on the door [S2].",
-        sources(ctx, harbor, &["FAQ.md", "Decisions.md"]),
-        Some("FAQ and Decisions agree. The number is the desk. No personal mobiles."),
         looked("FAQ.md"),
     )?;
-    user(ctx, &door, Some(harbor), "Who answers that phone?")?;
+    user(
+        ctx,
+        &translate,
+        Some(harbor),
+        "And the line about personal mobiles?",
+    )?;
     assistant(
         ctx,
-        &door,
+        &translate,
         Some(harbor),
-        "Sam: hours on the door and the phone [S1].",
+        "No poseu un mòbil personal a la porta [S1].",
         sources(ctx, harbor, &["Decisions.md"]),
+        None,
+        Vec::new(),
+    )?;
+
+    // 3. Short fact.
+    let painter = new_thread(ctx, Some(harbor), "Painter on Friday")?;
+    user(ctx, &painter, Some(harbor), "When is the painter coming?")?;
+    assistant(
+        ctx,
+        &painter,
+        Some(harbor),
+        "Friday 21 August [S1]. The room has to be empty Thursday night. Marc [S1].",
+        sources(ctx, harbor, &["Timeline.md"]),
+        None,
+        looked("Timeline.md"),
+    )?;
+
+    // 2. Long working thread.
+    let week = new_thread(ctx, Some(harbor), "Week of 18 August")?;
+    user(
+        ctx,
+        &week,
+        Some(harbor),
+        "Walk me through this week from the folder. What is done, what is next, what is still open.",
+    )?;
+    assistant(
+        ctx,
+        &week,
+        Some(harbor),
+        "Done: Jordi posted the brief. Ana rewrote the FAQ. Marc confirmed the painter for Friday. Elena sent the first sign proof. It is in the mail, not in this folder [S1].\n\
+This week: painter on Friday. Room empty Thursday night. Sam is setting up the shared folder on the office PC [S1].\n\
+Open: Friday evening in October. Still not a decision [S1].",
+        sources(ctx, harbor, &["Week of 18 August.md"]),
+        Some("The week-of note is the short list. Timeline has the dates if we need them."),
+        looked("Week of 18 August.md"),
+    )?;
+    user(ctx, &week, Some(harbor), "Give me the dates in order.")?;
+    assistant(
+        ctx,
+        &week,
+        Some(harbor),
+        "21 August. Painter. Room empty Thursday night. Marc [S1].\n\
+25 August. Sign proofs back from the printer. Elena [S1].\n\
+1 September. Soft walkthrough, no public hours. Ana and Sam [S1].\n\
+8 September. We open. 10:00. Everyone [S1].\n\
+Saturdays. 10:00–14:00. Sam on the door [S1].",
+        sources(ctx, harbor, &["Timeline.md"]),
+        None,
+        looked("Timeline.md"),
+    )?;
+    user(
+        ctx,
+        &week,
+        Some(harbor),
+        "Does the hall need to be cleared for the painter?",
+    )?;
+    assistant(
+        ctx,
+        &week,
+        Some(harbor),
+        "That is still a scratch note. Ask Marc whether the painter needs the hall cleared, or only the front room [S1]. It is not in Decisions.",
+        sources(ctx, notes, &["Scratch 20 August.md"]),
+        None,
+        looked("Scratch 20 August.md"),
+    )?;
+    user(ctx, &week, Some(harbor), "Who should I ping today?")?;
+    assistant(
+        ctx,
+        &week,
+        Some(harbor),
+        "Marc, if the room is not empty yet. Elena, if the 25 August proofs need a chase. Sam, if the shared folder is not on the office PC [S1].",
+        sources(ctx, harbor, &["Week of 18 August.md"]),
         None,
         Vec::new(),
     )?;
     user(
         ctx,
-        &door,
+        &week,
         Some(harbor),
-        "Can we put Ana's mobile as a backup?",
+        "Write a three-line update I can send the group.",
     )?;
     assistant(
         ctx,
-        &door,
+        &week,
         Some(harbor),
-        "No. We will not put a personal mobile on the door [S1]. The number on the FAQ is the desk [S1].",
-        sources(ctx, harbor, &["Decisions.md"]),
+        "Painter Friday. Room empty Thursday night.\n\
+Proofs back 25 August.\n\
+We open Monday 8 September, 10:00. Saturdays 10:00–14:00.",
+        sources(ctx, harbor, &["Timeline.md"]),
         None,
-        looked("Decisions.md"),
+        Vec::new(),
     )?;
 
-    // Hero thread: last, so Chat opens here.
+    // 1. Look through files. Newest. Chat reopens here. Citation shot.
     let open = new_thread(ctx, Some(harbor), "When do we open?")?;
     user(ctx, &open, Some(harbor), "When do we open?")?;
     assistant(
@@ -674,7 +775,17 @@ The 1st was asked and turned down.",
         looked("Decisions.md"),
     )?;
 
-    println!("conversations ready");
+    println!("conversations ready (newest first for VITE_START_THREAD):");
+    println!("  1  When do we open?          look through files");
+    println!("  2  Week of 18 August         long working thread");
+    println!("  3  Painter on Friday         short fact");
+    println!("  4  Hours in Catalan          translate");
+    println!("  5  Copy for the door         draft");
+    println!("  6  Saturday hours, two files compare");
+    println!("  7  Actions from 12 August    meeting to actions");
+    println!("  8  Friday evening            still open");
+    println!("  9  Ideas for opening week    brainstorm, no Shelf");
+    println!("  10 Opening day notes         small Shelf");
     Ok(())
 }
 

@@ -6,7 +6,7 @@ Private AI that works with your files. What happens on your computer stays on yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-The current release is **0.8.5**. Rebost runs on Mac (Apple chip and Intel) and Windows 10/11. The app is free and MIT licensed. There is no account to create.
+The current release is **0.8.6**. Rebost runs on Mac (Apple chip and Intel) and Windows 10/11. The app is free and MIT licensed. There is no account to create.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
