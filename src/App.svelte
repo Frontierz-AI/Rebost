@@ -40,10 +40,14 @@
       .finally(() => {
         const path = import.meta.env.VITE_SNAPSHOT_PATH as string | undefined;
         if (!path) return;
-        const delay = Number(import.meta.env.VITE_SNAPSHOT_DELAY ?? "1800");
-        const label = (import.meta.env.VITE_SNAPSHOT_LABEL as string | undefined) || "main";
+        if (import.meta.env.VITE_SNAPSHOT_LABEL === "about") return;
+        const delay = Number(import.meta.env.VITE_SNAPSHOT_DELAY ?? "5000");
         window.setTimeout(() => {
-          api.devSnapshot(path, label).catch((error) => console.error(error));
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              api.devSnapshot(path, "main").catch((error) => console.error(error));
+            });
+          });
         }, delay);
       });
 
