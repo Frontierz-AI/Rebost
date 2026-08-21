@@ -139,7 +139,8 @@
         onclick={() => (app.view = "settings")}
       >
         <span>To start using Rebost you need to download an AI.</span>
-        <span class="font-semibold text-navy-700 group-hover:text-navy-900 dark:text-navy-200 dark:group-hover:text-white"
+        <span
+          class="font-semibold text-navy-700 group-hover:text-navy-900 dark:text-navy-200 dark:group-hover:text-white"
           >Install</span
         >
       </button>

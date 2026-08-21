@@ -37,9 +37,7 @@ describe("explore repo paste", () => {
         " https://huggingface.co/OBLITERATUS/Qwen3.8-27B-OBLITERATED/tree/main ",
       ),
     ).toBe("OBLITERATUS/Qwen3.8-27B-OBLITERATED");
-    expect(parseExploreRepoQuery("hf.co/unsloth/Qwen3-0.6B-GGUF")).toBe(
-      "unsloth/Qwen3-0.6B-GGUF",
-    );
+    expect(parseExploreRepoQuery("hf.co/unsloth/Qwen3-0.6B-GGUF")).toBe("unsloth/Qwen3-0.6B-GGUF");
     expect(parseExploreRepoQuery("<https://huggingface.co/Qwen/Qwen3-8B>")).toBe("Qwen/Qwen3-8B");
     expect(normalizeExploreQuery("  https://huggingface.co/Qwen/Qwen3-8B  ")).toBe("Qwen/Qwen3-8B");
     expect(parseExploreRepoQuery("Qwen3")).toBeUndefined();
