@@ -7,9 +7,11 @@
   let {
     rec,
     source = "huggingface",
+    onDark = false,
   }: {
     rec: Recommendation;
     source?: string;
+    onDark?: boolean;
   } = $props();
 
   let open = $state(false);
@@ -33,7 +35,9 @@
 <div class="relative inline-flex shrink-0">
   <button
     type="button"
-    class="btn-ghost relative !p-1 text-ink-soft hover:text-ink"
+    class="btn-ghost relative !p-1 {onDark
+      ? 'text-white/55 hover:text-white'
+      : 'text-ink-soft hover:text-ink'}"
     aria-label="More about {rec.name}"
     aria-haspopup="dialog"
     aria-expanded={open}

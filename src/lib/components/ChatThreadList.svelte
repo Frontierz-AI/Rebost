@@ -168,9 +168,9 @@
       {/each}
     </div>
     <div
-      class="mx-3 mb-3 flex items-start gap-2.5 rounded-xl border border-amber-450/35 bg-amber-350/10 px-3 py-2.5"
+      class="mx-3 mb-3 flex items-start gap-2.5 rounded-xl border border-navy-200 bg-navy-50 px-3 py-2.5"
     >
-      <Lock size={13} class="mt-0.5 shrink-0 text-amber-550" />
+      <Lock size={13} class="mt-0.5 shrink-0 text-navy-700" />
       <p class="text-[11px] leading-snug text-ink-soft">What happens here stays here.</p>
     </div>
   </aside>

@@ -45,7 +45,7 @@
     {href}
     rel="noreferrer"
     class="group flex items-baseline justify-between gap-4 px-7 py-3 hover:bg-navy-950/[0.04] focus-visible:outline-2
-      focus-visible:outline-offset-[-2px] focus-visible:outline-amber-450 dark:hover:bg-white/4"
+      focus-visible:outline-offset-[-2px] focus-visible:outline-navy-500 dark:hover:bg-white/4"
     onclick={(event) => openLink(event, link)}
   >
     <span class="shrink-0 text-[11px] font-semibold tracking-wide text-ink-faint uppercase">
@@ -55,7 +55,7 @@
       <span class="truncate">{name}</span>
       <ArrowUpRight
         size={13}
-        class="shrink-0 text-ink-faint transition-colors group-hover:text-amber-550"
+        class="shrink-0 text-ink-faint transition-colors group-hover:text-navy-600"
       />
     </span>
   </a>
@@ -77,7 +77,7 @@
       class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper dark:shadow-none"
     />
     <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">Rebost</h1>
-    <p class="mt-1 min-h-[1.2em] text-[11.5px] font-medium tracking-wide text-amber-550 uppercase">
+    <p class="mt-1 min-h-[1.2em] text-[11.5px] font-medium tracking-wide text-navy-500">
       {#if info}Version {info.version}{/if}
     </p>
     <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">

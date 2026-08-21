@@ -63,6 +63,7 @@ Logs: Settings → Diagnostics (paths only; the engine log body stays on disk). 
 | Add a file format | `docs/ingest-formats.md` |
 | Chat prompts | `src-tauri/src/chat/prompts.rs` |
 | UI copy | the view (English) |
+| UI colors, buttons, shapes | `docs/ui.md`, `src/app.css` |
 | In-app updates | `src-tauri/src/updater.rs`, `src/lib/views/UpdateWindow.svelte` |
 
 ## House style

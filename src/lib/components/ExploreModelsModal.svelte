@@ -372,7 +372,7 @@
                     {/if}
                     {#if fit === "ok"}
                       <span
-                        class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300"
+                        class="shrink-0 rounded-full bg-ready px-2 py-0.5 text-[10px] font-semibold text-ready-ink dark:bg-navy-200/20 dark:text-navy-200"
                       >
                         Fits this computer
                       </span>

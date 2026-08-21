@@ -165,7 +165,7 @@
             class="flex min-w-0 flex-1 items-center gap-2.5 text-left"
             onclick={() => use(recipe)}
           >
-            <span class="rounded-lg bg-navy-900 p-2 text-amber-450"
+            <span class="rounded-lg bg-navy-900 p-2 text-mint"
               ><ChefHat size={14} aria-hidden="true" /></span
             >
             <span class="flex-1 truncate text-[14px] font-semibold text-ink">{recipe.name}</span>
@@ -200,7 +200,7 @@
         >
           {#each previewParts(recipe.prompt) as part}
             {#if part.ph}<span
-                class="rounded-md bg-amber-350/40 px-1 py-px font-medium text-amber-550 dark:bg-amber-450/15 dark:text-amber-350 dark:inset-ring dark:inset-ring-amber-450/45"
+                class="rounded-md bg-navy-100 px-1 py-px font-medium text-navy-800 dark:bg-navy-500/15 dark:text-navy-200 dark:inset-ring dark:inset-ring-navy-500/45"
                 >{part.text}</span
               >{:else}{part.text}{/if}
           {/each}
@@ -218,7 +218,7 @@
   </div>
 
   <div class="mt-5 flex justify-center">
-    <button type="button" class="btn-ghost !text-[12px]" onclick={restoreDefaults}>
+    <button type="button" class="btn-ghost !px-3 !py-1.5 !text-[12px]" onclick={restoreDefaults}>
       <RotateCcw size={12.5} aria-hidden="true" /> Restore default Recipes
     </button>
   </div>

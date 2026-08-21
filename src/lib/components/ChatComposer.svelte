@@ -135,12 +135,11 @@
       <button
         type="button"
         id="composer-needs-ai"
-        class="group mb-2 flex w-full items-center justify-between rounded-lg border border-amber-450/50 bg-amber-350/20 px-3 py-2 text-[12.5px] text-ink hover:border-amber-450 hover:bg-amber-350/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
+        class="group mb-2 flex w-full items-center justify-between rounded-lg border border-navy-500/50 bg-navy-100 px-3 py-2 text-[12.5px] text-ink hover:border-navy-500 hover:bg-navy-200/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
         onclick={() => (app.view = "settings")}
       >
-        <span>Install an AI first.</span>
-        <span
-          class="font-semibold text-navy-700 underline-offset-2 group-hover:text-navy-900 group-hover:underline dark:text-navy-200 dark:group-hover:text-white"
+        <span>To start using Rebost you need to download an AI.</span>
+        <span class="font-semibold text-navy-700 group-hover:text-navy-900 dark:text-navy-200 dark:group-hover:text-white"
           >Install</span
         >
       </button>
@@ -289,7 +288,7 @@
         {#if generating}
           <button
             type="button"
-            class="btn-primary !rounded-full !p-2.5"
+            class="btn-primary btn-icon"
             onclick={onStop}
             title="Stop"
             aria-label="Stop generating"
@@ -299,7 +298,7 @@
         {:else}
           <button
             type="button"
-            class="btn-amber !rounded-full !p-2.5"
+            class="btn-amber btn-icon"
             onclick={onSend}
             disabled={!hasModel || !chatState.draft.trim()}
             title={hasModel ? "Send" : "Install an AI first"}

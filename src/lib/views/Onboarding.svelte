@@ -110,15 +110,15 @@
       >
         <img src={mark} alt="Rebost" class="mb-5 w-[100px] rounded-2xl" />
         <h1 class="text-[28px] font-bold text-white">Welcome to Rebost</h1>
-        <p class="mt-2 max-w-md text-[15px] leading-relaxed text-navy-200">
+        <p class="mt-2 max-w-md text-[15px] leading-relaxed text-white/65">
           Private AI that works with your files. What happens in your computer stays in your
           computer.
         </p>
         <div class="mt-8 grid w-full grid-cols-3 gap-3">
           <div class="onboard-card rounded-xl bg-white/6 px-4 py-4 text-left">
-            <Lock size={17} class="mb-2 text-amber-450" />
+            <Lock size={17} class="mb-2 text-mint" />
             <p class="text-[12.5px] font-semibold text-white">On this computer</p>
-            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-navy-200">
+            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-white/55">
               Chats and files stay here. After you install an AI, answers are generated on this
               computer.
             </p>
@@ -127,9 +127,9 @@
             class="onboard-card rounded-xl bg-white/6 px-4 py-4 text-left"
             style="animation-delay: 60ms"
           >
-            <LibraryBig size={17} class="mb-2 text-amber-450" />
+            <LibraryBig size={17} class="mb-2 text-mint" />
             <p class="text-[12.5px] font-semibold text-white">Private shelves and files</p>
-            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-navy-200">
+            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-white/55">
               Add files to a Shelf and your AI will cite the pages where it found the answers.
             </p>
           </div>
@@ -137,9 +137,9 @@
             class="onboard-card rounded-xl bg-white/6 px-4 py-4 text-left"
             style="animation-delay: 120ms"
           >
-            <ChefHat size={17} class="mb-2 text-amber-450" />
+            <ChefHat size={17} class="mb-2 text-mint" />
             <p class="text-[12.5px] font-semibold text-white">Your best recipes</p>
-            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-navy-200">
+            <p class="mt-1 min-h-[4.5rem] text-[11.5px] leading-snug text-white/55">
               Save instructions and ideas you use often, so they're just one click away next time.
             </p>
           </div>
@@ -154,7 +154,7 @@
       </div>
     {:else}
       <section
-        class="onboard-pane flex flex-col gap-8 rounded-2xl bg-surface p-8 shadow-pop dark:shadow-none dark:inset-ring dark:inset-ring-white/5"
+        class="onboard-pane flex flex-col items-center rounded-3xl bg-white/[0.04] px-8 py-8 text-center ring-1 ring-white/15"
         aria-labelledby="onboard-install-heading"
         aria-busy={busy}
         in:installCard
@@ -162,7 +162,7 @@
         {#snippet skipButton()}
           <button
             type="button"
-            class="btn-ghost relative ml-auto shrink-0 !text-[0.8125rem]"
+            class="btn-ghost relative ml-auto shrink-0 py-2 pr-2 pl-3 !text-[0.8125rem] !text-white/55 hover:!bg-white/8 hover:!text-white"
             onclick={skip}
           >
             <span
@@ -172,79 +172,72 @@
             Skip and download it later
           </button>
         {/snippet}
-        <div class="flex flex-col gap-2">
-          <p class="text-[0.8125rem] font-medium text-ink-soft">Install an AI</p>
-          <h1
-            id="onboard-install-heading"
-            bind:this={installHeading}
-            tabindex="-1"
-            class="max-w-[40ch] text-[1.5rem] font-semibold tracking-tight text-balance text-ink outline-none"
-          >
-            Rebost needs to download a brain first.
-          </h1>
-          <p class="max-w-[40ch] text-[1rem] text-pretty text-ink">
-            That's the AI that answers you on this computer. It can take a few minutes.
-          </p>
-        </div>
+        <h1
+          id="onboard-install-heading"
+          bind:this={installHeading}
+          tabindex="-1"
+          class="max-w-md text-[28px] font-bold text-balance text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
+        >
+          Rebost needs to download a brain first.
+        </h1>
+        <p class="mt-2 max-w-md text-[15px] leading-relaxed text-white/65">
+          That's the AI that answers you on this computer. It can take a few minutes.
+        </p>
 
         {#if download}
-          <div class="flex flex-col gap-3">
-            <div class="rounded-xl bg-paper-soft p-5 dark:inset-ring dark:inset-ring-white/5">
+          <div class="mt-8 flex w-full flex-col gap-3">
+            <div class="onboard-card rounded-xl bg-white/10 px-4 py-4 text-left">
               <DownloadProgress
                 {download}
-                cancelable
+                cancelable={download.phase !== "verifying"}
+                onDark
+                skipVerifyLabel="Skip the check and continue"
                 note={download.phase === "verifying"
                   ? "Making sure the file arrived intact."
                   : "Rebost will be ready when it finishes."}
               />
             </div>
-            <div class="flex justify-end">
-              {@render skipButton()}
-            </div>
+            {#if download.phase !== "verifying"}
+              <div class="flex justify-end">
+                {@render skipButton()}
+              </div>
+            {/if}
           </div>
         {:else if modelDone}
-          <div class="flex flex-col gap-4">
-            <p
-              class="flex items-baseline gap-2 text-[0.875rem] font-medium text-emerald-700 dark:text-emerald-400"
-            >
-              <Check size={16} class="size-4 h-lh shrink-0" aria-hidden="true" />
-              The AI is installed.
-            </p>
-            <button
-              type="button"
-              class="btn-primary self-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
-              onclick={finish}
-            >
-              Start using Rebost
-            </button>
-          </div>
+          <p class="mt-8 flex items-baseline gap-2 text-[15px] font-medium text-mint">
+            <Check size={16} class="size-4 h-lh shrink-0" aria-hidden="true" />
+            The AI is installed.
+          </p>
+          <button
+            type="button"
+            class="btn-amber mt-9 !px-7 !py-2.5 !text-[14px]"
+            onclick={finish}
+          >
+            Start using Rebost
+          </button>
         {:else}
-          <div class="flex flex-col gap-3">
+          <div class="mt-8 flex w-full flex-col gap-3">
             {#if machine}
-              <p class="max-w-[48ch] text-[0.875rem] text-pretty text-ink-soft">
+              <p class="text-[15px] leading-relaxed text-white/55">
                 There are several free AIs. Rebost picked one that should run well here.
               </p>
-              <div
-                class="flex items-start gap-4 rounded-xl bg-paper-soft p-5 dark:inset-ring dark:inset-ring-white/5"
-              >
+              <div class="onboard-card flex items-start gap-4 rounded-xl bg-white/10 px-4 py-4 text-left">
+                <Download size={17} class="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
-                  <p class="text-[0.8125rem] font-medium text-ink-soft">
+                  <p class="text-[12.5px] font-semibold text-white">
                     {failedDownload ? "Couldn't install" : "Chosen for this computer"}
                   </p>
                   <p
-                    class="flex min-w-0 items-center gap-1 text-[1.0625rem] font-semibold text-ink"
+                    class="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-white"
                   >
                     <span class="min-w-0 truncate">{(lastRec ?? machine.recommendation).name}</span>
-                    <ModelCatalogInfo rec={lastRec ?? machine.recommendation} />
+                    <ModelCatalogInfo rec={lastRec ?? machine.recommendation} onDark />
                   </p>
-                  <p class="text-[0.8125rem] text-pretty text-ink-soft tabular-nums">
+                  <p class="text-[11.5px] leading-snug text-white/55 tabular-nums">
                     About {formatBytes((lastRec ?? machine.recommendation).approxBytes)} to download.
                   </p>
                   {#if failedMessage}
-                    <p
-                      class="mt-1 text-[0.8125rem] text-pretty text-red-700 dark:text-red-400"
-                      role="alert"
-                    >
+                    <p class="mt-1 text-[11.5px] leading-snug text-red-300" role="alert">
                       {failedMessage}
                     </p>
                   {/if}
@@ -252,7 +245,7 @@
                 {#if failedDownload}
                   <button
                     type="button"
-                    class="btn-amber shrink-0 py-2 pr-3 pl-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+                    class="btn-amber shrink-0"
                     onclick={() => machine && installRec(lastRec ?? machine.recommendation)}
                   >
                     Try again
@@ -260,10 +253,9 @@
                 {:else if !busy}
                   <button
                     type="button"
-                    class="btn-amber shrink-0 py-2 pr-3 pl-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+                    class="btn-amber shrink-0"
                     onclick={() => machine && installRec(machine.recommendation)}
                   >
-                    <Download size={16} class="size-4 h-lh shrink-0" aria-hidden="true" />
                     Install
                   </button>
                 {/if}
@@ -273,7 +265,7 @@
                 {#if machine.alternatives.length > 0}
                   <button
                     type="button"
-                    class="btn-ghost relative py-2 pr-2 pl-3 !text-[0.8125rem]"
+                    class="btn-ghost relative py-2 pr-2 pl-3 !text-[0.8125rem] !text-white/55 hover:!bg-white/8 hover:!text-white"
                     onclick={() => (showMore = !showMore)}
                     aria-expanded={showMore}
                     aria-controls="onboard-other-ais"
@@ -295,28 +287,28 @@
               {#if showMore && machine.alternatives.length > 0}
                 <ul
                   id="onboard-other-ais"
-                  class="overflow-hidden rounded-xl ring-1 ring-navy-950/10 dark:ring-white/10"
+                  class="onboard-card overflow-hidden rounded-xl bg-white/10"
                   role="list"
                   transition:accordion
                 >
                   {#each machine.alternatives as alt (alt.reference)}
                     <li
-                      class="flex items-start gap-3 px-4 py-3 not-last:border-b not-last:border-paper-line"
+                      class="flex items-start gap-3 px-4 py-3 text-left not-last:border-b not-last:border-white/10"
                     >
                       <div class="min-w-0 flex-1">
                         <p
-                          class="flex min-w-0 items-center gap-1 text-[0.875rem] font-semibold text-ink"
+                          class="flex min-w-0 items-center gap-1 text-[12.5px] font-semibold text-white"
                         >
                           <span class="min-w-0 truncate">{alt.name}</span>
-                          <ModelCatalogInfo rec={alt} />
+                          <ModelCatalogInfo rec={alt} onDark />
                         </p>
-                        <p class="text-[0.8125rem] text-ink-soft tabular-nums">
+                        <p class="text-[11.5px] leading-snug text-white/55 tabular-nums">
                           About {formatBytes(alt.approxBytes)} to download.
                         </p>
                       </div>
                       <button
                         type="button"
-                        class="btn-outline shrink-0 py-1.5 pr-2.5 pl-2.5 !text-[0.75rem]"
+                        class="btn-amber shrink-0 !px-4 !text-[12px]"
                         onclick={() => installRec(alt)}
                         disabled={busy}
                       >

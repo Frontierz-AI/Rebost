@@ -81,7 +81,7 @@
           >
           <td class="border-b border-paper-line/70 px-2.5 py-2.5">
             {#if doc.status === "ready"}
-              <span class="text-emerald-700 dark:text-emerald-400">Ready</span>
+              <span class="text-ready-ink dark:text-navy-300">Ready</span>
             {:else if doc.status === "reading"}
               <span class="inline-flex items-center gap-1.5 text-amber-550">
                 <span

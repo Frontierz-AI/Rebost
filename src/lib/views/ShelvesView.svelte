@@ -311,7 +311,7 @@
             autofocus
             onkeydown={(e) => e.key === "Enter" && createShelf()}
           />
-          <button type="button" class="btn-amber !py-1.5" onclick={createShelf}>Create</button>
+          <button type="button" class="btn-amber" onclick={createShelf}>Create</button>
           <button type="button" class="btn-ghost !py-1.5" onclick={() => (creating = false)}
             >Cancel</button
           >
@@ -341,7 +341,7 @@
             <div class="card group flex items-stretch hover:shadow-pop dark:hover:shadow-none">
               {#if renamingId === shelfCard.id}
                 <div class="flex min-w-0 flex-1 items-center gap-3 px-5 py-4">
-                  <span class="rounded-xl bg-navy-900 p-2.5 text-amber-450"
+                  <span class="rounded-xl bg-navy-900 p-2.5 text-mint"
                     ><LibraryBig size={18} aria-hidden="true" /></span
                   >
                   <label class="sr-only" for="rename-shelf-{shelfCard.id}">Shelf name</label>
@@ -363,7 +363,7 @@
                   onclick={() => (app.openShelfId = shelfCard.id)}
                 >
                   <div class="flex items-center gap-3">
-                    <span class="rounded-xl bg-navy-900 p-2.5 text-amber-450"
+                    <span class="rounded-xl bg-navy-900 p-2.5 text-mint"
                       ><LibraryBig size={18} aria-hidden="true" /></span
                     >
                     <span class="min-w-0">
@@ -440,7 +440,7 @@
   <div class="relative flex h-full min-h-0 flex-col overflow-hidden">
     {#if dropActive && documents.length > 0}
       <div
-        class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-amber-450 bg-amber-350/20"
+        class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50"
       >
         <p class="rounded-xl bg-navy-900 px-4 py-2 text-[13.5px] font-medium text-white shadow-pop">
           Drop files to add them to {shelf.name}
@@ -495,7 +495,7 @@
 
         {#if documents.length > 0}
           <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            <button type="button" class="btn-primary py-2 pr-3 pl-2" onclick={addFiles}>
+            <button type="button" class="btn-primary" onclick={addFiles}>
               <FolderInput size={14} class="shrink-0" aria-hidden="true" />
               Add files
             </button>
@@ -517,7 +517,7 @@
       <div class="flex min-h-0 flex-1 flex-col px-8 pb-4">
         <div
           class="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 rounded-xl border-2 border-dashed px-8 py-10 text-center {dropActive
-            ? 'border-amber-450 bg-amber-350/20'
+            ? 'border-navy-500 bg-navy-100/50'
             : 'border-paper-line bg-paper-soft/40'}"
           role="region"
           aria-label="Empty Shelf"
@@ -531,7 +531,7 @@
             </p>
           </div>
           <div class="flex flex-wrap items-center justify-center gap-2">
-            <button type="button" class="btn-primary py-2 pr-3 pl-2" onclick={addFiles}>
+            <button type="button" class="btn-primary" onclick={addFiles}>
               <FolderInput size={14} class="shrink-0" aria-hidden="true" />
               Add files
             </button>

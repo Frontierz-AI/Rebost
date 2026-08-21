@@ -91,7 +91,7 @@
         <p class="text-[13px] text-ink-soft">This file isn't available.</p>
       {:else}
         <p class="flex items-center gap-2 text-[13px] text-ink-soft">
-          <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-450"></span>
+          <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-navy-500"></span>
           <span class="sr-only">Loading</span>
         </p>
       {/if}

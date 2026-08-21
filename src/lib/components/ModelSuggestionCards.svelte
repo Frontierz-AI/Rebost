@@ -30,7 +30,7 @@
           <div class="flex min-w-0 flex-col gap-3">
             <div class="flex flex-col gap-1">
               {#if featured}
-                <p class="text-[0.6875rem] font-medium text-amber-550">Best fit</p>
+                <p class="text-[0.6875rem] font-medium text-navy-700">Best fit</p>
               {/if}
               <p class="text-[0.9375rem] font-semibold text-ink">{rec.name}</p>
               <p class="text-[0.8125rem] text-pretty text-ink-soft">{rec.blurb}</p>
