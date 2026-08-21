@@ -311,9 +311,13 @@ export async function bootstrap() {
   app.engine = engineStatus;
   app.onboarding = !(app.settings?.onboardingDone || app.settings?.activeModel);
 
-  // Chat is home: reopen the most recent conversation.
+  // Chat is home: reopen the most recent conversation, or a numbered one
+  // for screenshots (`VITE_START_THREAD=1` is the top of the list).
   if (app.threads.length > 0) {
-    openThread(app.threads[0]!.id).catch(notifyInvokeError);
+    const startThread = Number(import.meta.env.VITE_START_THREAD ?? "0");
+    const index = startThread >= 1 ? startThread - 1 : 0;
+    const thread = app.threads[index] ?? app.threads[0];
+    if (thread) openThread(thread.id).catch(notifyInvokeError);
   } else {
     chatState.selectedShelfId = preferredShelfForNew();
   }

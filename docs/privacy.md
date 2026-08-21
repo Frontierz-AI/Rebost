@@ -18,10 +18,10 @@ Files you put on a Shelf stay on this computer. Reading, search, and answers hap
 |-------------|------|---------|
 | `github.com/ggml-org/llama.cpp` | Runtime missing from the installer (`tauri dev` without fetch, or a broken bundle); Windows may also fetch CUDA 12.4 (NVIDIA) or Adreno OpenCL (Snapdragon) at first warmup | HTTPS GET of a pinned archive; SHA-256 checked |
 | GitHub Releases (`latest.json` on the repo in `Cargo.toml` `package.repository`) | Startup of a release build, in the background. `tauri dev` does not check. | HTTPS GET of a small JSON file. Failure is ignored; no UI. The GitHub repo must be public or the fetch 404s. |
-| `huggingface.co` | Explore / install | Search query, IP, `Rebost/0.8.5` user agent |
+| `huggingface.co` | Explore / install | Search query, IP, `Rebost/0.8.6` user agent |
 | `ollama.com` / `registry.ollama.ai` | Explore / install | Same |
 | `127.0.0.1:<port>` | Chat, benchmark | Full prompts including retrieved passages |
-| `en.wikipedia.org`, `api.duckduckgo.com`, `api.you.com` | Chat, only if Settings → Online is on | The search query Chat writes; IP; `Rebost/0.8.5` user agent. Prompts ask Chat not to put Shelf text or personal details in the query. |
+| `en.wikipedia.org`, `api.duckduckgo.com`, `api.you.com` | Chat, only if Settings → Online is on | The search query Chat writes; IP; `Rebost/0.8.6` user agent. Prompts ask Chat not to put Shelf text or personal details in the query. |
 | The page Chat opens | Chat, only if Settings → Online is on and the AI asks to read a URL | HTTPS GET of that URL from this computer. Loopback and private addresses are refused. Prompts ask Chat not to put private text in the URL. |
 
 No analytics SDK is bundled.
