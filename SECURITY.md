@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-The current release is **0.8.4**.
+The current release is **0.8.5**.
 
 ## What Rebost does with data
 
@@ -10,7 +10,7 @@ Chat, reading your files, search, and answers run on this computer. Your files a
 
 Rebost uses the network when you **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows machines a faster copy may be downloaded the first time you chat.
 
-Those requests send a query string, IP address, and a `Rebost/0.8.4` user agent. They do not include Shelf documents.
+Those requests send a query string, IP address, and a `Rebost/0.8.5` user agent. They do not include Shelf documents.
 
 With Online on in Settings, Chat can also look things up on the public web from this computer. Those lookups do not go through Rebost. Chat is asked not to put private details in them.
 

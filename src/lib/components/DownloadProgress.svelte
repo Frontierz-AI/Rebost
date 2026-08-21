@@ -6,10 +6,14 @@
     download,
     cancelable = false,
     note,
+    onDark = false,
+    skipVerifyLabel = "Skip the check and use the file",
   }: {
     download: DownloadEvent;
     cancelable?: boolean;
     note?: string;
+    onDark?: boolean;
+    skipVerifyLabel?: string;
   } = $props();
 
   function pct(received?: number, total?: number | null): number {
@@ -23,15 +27,15 @@
 
 <div class="flex flex-col gap-2">
   <div class="flex items-center justify-between text-[13px]">
-    <p class="font-medium text-ink">{downloadHeadline(download)}</p>
-    <p class="text-ink-soft tabular-nums">
+    <p class="font-medium {onDark ? 'text-white' : 'text-ink'}">{downloadHeadline(download)}</p>
+    <p class="tabular-nums {onDark ? 'text-white/55' : 'text-ink-soft'}">
       {formatTransferBytes(download.received)}{download.total
         ? ` / ${formatTransferBytes(download.total)}`
         : ""}
     </p>
   </div>
   <div
-    class="h-1.5 overflow-hidden rounded-full bg-navy-100 dark:bg-white/10"
+    class="h-1.5 overflow-hidden rounded-full {onDark ? 'bg-white/10' : 'bg-navy-100 dark:bg-white/10'}"
     role="progressbar"
     aria-valuemin={0}
     aria-valuemax={100}
@@ -40,7 +44,7 @@
   >
     {#if determinate}
       <div
-        class="progress-bar h-full w-full bg-amber-450"
+        class="progress-bar h-full w-full bg-navy-500"
         style="transform: scaleX({percent / 100})"
       ></div>
     {:else}
@@ -48,23 +52,27 @@
     {/if}
   </div>
   {#if note}
-    <p class="text-[11.5px] text-ink-faint">{note}</p>
+    <p class="text-[11.5px] {onDark ? 'text-white/45' : 'text-ink-faint'}">{note}</p>
   {/if}
   {#if (download.kind === "model" && download.phase === "verifying") || cancelable}
     <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
       {#if download.kind === "model" && download.phase === "verifying"}
         <button
           type="button"
-          class="rounded-sm text-[11.5px] text-ink-soft underline decoration-navy-200 underline-offset-2 hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+          class="btn-ghost !px-2 !py-1 !text-[11.5px] {onDark
+            ? '!text-white/55 hover:!bg-white/8 hover:!text-white'
+            : ''}"
           onclick={() => api.downloadSkipVerify(download.id)}
         >
-          Skip the check and use the file
+          {skipVerifyLabel}
         </button>
       {/if}
       {#if cancelable}
         <button
           type="button"
-          class="btn-ghost !px-2 !py-1 !text-[11.5px]"
+          class="btn-ghost !px-2 !py-1 !text-[11.5px] {onDark
+            ? '!text-white/55 hover:!bg-white/8 hover:!text-white'
+            : ''}"
           onclick={() => api.downloadCancel(download.id)}
         >
           <X size={11} aria-hidden="true" /> Cancel

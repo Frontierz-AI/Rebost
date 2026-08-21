@@ -47,7 +47,7 @@
     </p>
     <button
       type="button"
-      class="btn-amber focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+      class="btn-amber focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
       onclick={() => (app.view = "settings")}
     >
       Install

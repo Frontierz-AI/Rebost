@@ -2,45 +2,57 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
-  Rebost design tokens — derived from the app icon:
-  deep navy cupboard, warm paper white, amber accents.
+  Rebost design tokens — product green, dark green, cool paper.
+  Amber scale is orange, for in-progress only. Fonts stay system UI.
 */
 @theme {
-  --color-navy-50: #f2f5fb;
-  --color-navy-100: #e3e9f6;
-  --color-navy-200: #c3cfe9;
-  --color-navy-300: #97abd7;
-  --color-navy-400: #6482c1;
-  --color-navy-500: #4263ab;
-  --color-navy-600: #324d90;
-  --color-navy-700: #2b3f75;
-  --color-navy-800: #273762;
-  --color-navy-900: #1d2949;
-  --color-navy-950: #131b31;
+  --color-navy-50: #e8f8f3;
+  --color-navy-100: #e0f9ee;
+  --color-navy-200: #b0efd8;
+  --color-navy-300: #7ed9c0;
+  --color-navy-400: #3ddeba;
+  --color-navy-500: #05d9ab;
+  --color-navy-600: #04c49a;
+  --color-navy-700: #4c744e;
+  --color-navy-800: #103639;
+  --color-navy-900: #103639;
+  --color-navy-950: #103639;
 
-  --color-amber-350: #e8c078;
-  --color-amber-450: #d9a94a;
-  --color-amber-550: #c08f2f;
+  --color-mint: #05d9ab;
+  --color-mint-hover: #04c49a;
+  --color-mint-light: #e0f9ee;
+  --color-mint-soft: #b0efd8;
+  --color-mint-secondary: #aaf1ac;
 
-  --color-paper: #faf9f6;
-  --color-paper-soft: #f3f1ec;
-  --color-paper-line: #e7e3da;
+  --color-amber-350: #ffc68a;
+  --color-amber-450: #ff9302;
+  --color-amber-550: #d46d12;
+
+  --color-paper: #f8f8f8;
+  --color-paper-soft: #f6f7f8;
+  --color-paper-line: #d9d9d9;
   --color-surface: #ffffff;
 
-  --color-ink: #22283b;
-  --color-ink-soft: #5b6172;
-  --color-ink-faint: #8b90a0;
+  --color-ink: #0f0b0a;
+  --color-ink-soft: #606062;
+  --color-ink-faint: #a0a0a2;
+  --color-rail-idle: #a3acad;
+
+  --color-danger: #e7112d;
+  --color-danger-hover: #c40e26;
+  --color-ready: #aaf1ac;
+  --color-ready-ink: #4c744e;
 
   --font-sans:
     ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
-  --shadow-card: 0 1px 2px rgb(29 41 73 / 0.06), 0 4px 16px rgb(29 41 73 / 0.05);
-  --shadow-pop: 0 2px 6px rgb(29 41 73 / 0.12), 0 12px 32px rgb(29 41 73 / 0.14);
+  --shadow-card: 0 2px 9px rgb(15 11 10 / 0.1);
+  --shadow-pop: 0 2px 9px rgb(15 11 10 / 0.1);
 
   --radius-lg: 0.625rem;
-  --radius-xl: 0.875rem;
+  --radius-xl: 1rem;
 
   /* Snappy by default — long transitions read as lag. */
   --default-transition-duration: 100ms;
@@ -90,7 +102,7 @@ textarea,
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-amber-450) 35%, transparent);
+  background: color-mix(in srgb, var(--color-navy-500) 35%, transparent);
 }
 
 @layer components {
@@ -99,28 +111,29 @@ textarea,
   .btn-ghost,
   .btn-outline,
   .btn-danger {
-    @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium select-none disabled:opacity-45;
+    @apply inline-flex h-9 cursor-default items-center justify-center gap-1.5 rounded-full px-6 text-[13px] font-medium select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800 disabled:opacity-45;
   }
-  .btn-primary {
-    @apply bg-navy-900 text-white hover:bg-navy-800 disabled:hover:bg-navy-900;
-  }
+  .btn-primary,
   .btn-amber {
-    @apply bg-amber-450 text-navy-950 hover:bg-amber-350 disabled:hover:bg-amber-450;
+    @apply bg-navy-500 text-[#0f0b0a] hover:bg-navy-600 disabled:bg-navy-100 disabled:text-navy-800 disabled:opacity-100 disabled:hover:bg-navy-100;
   }
   .btn-ghost {
-    @apply text-ink-soft hover:bg-navy-900/6 hover:text-ink dark:hover:bg-white/6;
+    @apply h-auto px-3 py-1.5 text-ink-soft hover:bg-navy-900/6 hover:text-ink dark:hover:bg-white/6;
   }
   .btn-outline {
-    @apply border border-paper-line bg-surface text-ink hover:border-navy-300 hover:bg-navy-50/40 dark:hover:border-navy-500 dark:hover:bg-white/5;
+    @apply border border-paper-line bg-surface text-ink hover:border-navy-800 hover:bg-navy-50/40 dark:hover:border-navy-500 dark:hover:bg-white/5;
   }
   .btn-danger {
-    @apply bg-red-700 text-white hover:bg-red-800 disabled:hover:bg-red-700;
+    @apply bg-danger text-white hover:bg-danger-hover disabled:hover:bg-danger;
+  }
+  .btn-icon {
+    @apply !h-9 !w-9 !px-0;
   }
   .input {
-    @apply w-full rounded-lg border border-paper-line bg-surface px-3 py-2 text-[13.5px] text-ink transition-colors outline-none placeholder:text-ink-faint focus:border-navy-400 focus:ring-2 focus:ring-navy-100 dark:focus:ring-white/10;
+    @apply w-full rounded-lg border border-paper-line bg-surface px-3 py-2 text-[13.5px] text-ink transition-colors outline-none placeholder:text-ink-faint focus:border-navy-500 focus:ring-2 focus:ring-navy-100 dark:focus:ring-white/10;
   }
   .card {
-    @apply rounded-xl border border-paper-line bg-surface shadow-card dark:shadow-none;
+    @apply rounded-2xl border border-paper-line bg-surface shadow-card dark:shadow-none;
   }
   .chip {
     @apply inline-flex shrink-0 cursor-default items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium whitespace-nowrap select-none;
@@ -180,7 +193,7 @@ textarea,
   inset: 0 auto 0 0;
   width: 45%;
   border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, var(--color-amber-450), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-navy-500), transparent);
   animation: progress-shimmer 1.4s ease-in-out infinite;
 }
 
@@ -191,7 +204,7 @@ textarea,
   .progress-indeterminate::after {
     animation: none;
     width: 40%;
-    background: var(--color-amber-450);
+    background: var(--color-navy-500);
   }
 }
 
@@ -203,7 +216,7 @@ textarea,
   height: 14px;
   margin-left: 2px;
   vertical-align: -2px;
-  background: var(--color-amber-450);
+  background: var(--color-navy-500);
   border-radius: 2px;
   animation: caret-pulse 1s ease-in-out infinite;
 }
@@ -301,7 +314,7 @@ textarea,
   font-weight: 600;
 }
 .md-body blockquote {
-  border-left: 3px solid var(--color-amber-450);
+  border-left: 3px solid var(--color-navy-500);
   margin: 0.6em 0;
   padding: 0.1em 0 0.1em 0.9em;
   color: var(--color-ink-soft);
@@ -327,9 +340,9 @@ textarea,
   border: 1px solid var(--color-navy-200);
 }
 .md-body .cite-chip:hover {
-  background: var(--color-amber-350);
-  border-color: var(--color-amber-450);
-  color: var(--color-navy-950);
+  background: var(--color-navy-200);
+  border-color: var(--color-navy-500);
+  color: var(--color-navy-800);
 }
 
 .think-slider {
@@ -340,8 +353,8 @@ textarea,
   border-radius: 999px;
   background: linear-gradient(
     to right,
-    var(--color-navy-700) var(--think-fill, 0%),
-    var(--color-navy-200) var(--think-fill, 0%)
+    var(--color-navy-500) var(--think-fill, 0%),
+    var(--color-navy-100) var(--think-fill, 0%)
   );
   outline: none;
 }
@@ -352,7 +365,7 @@ textarea,
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: var(--color-navy-900);
+  background: var(--color-navy-500);
   border: 2px solid var(--color-surface);
   box-shadow: 0 0 0 1px var(--color-navy-300);
 }
@@ -368,7 +381,7 @@ textarea,
   height: 16px;
   border: 2px solid var(--color-surface);
   border-radius: 999px;
-  background: var(--color-navy-900);
+  background: var(--color-navy-500);
   box-shadow: 0 0 0 1px var(--color-navy-300);
 }
 
@@ -383,16 +396,16 @@ textarea,
   }
 }
 
-/* OS dark appearance: same brand, ink on a dim cupboard. */
+/* OS dark appearance: ink on dark green. */
 html[data-theme="dark"] {
   color-scheme: dark;
-  --color-paper: #171d2e;
-  --color-paper-soft: #161c2c;
-  --color-paper-line: #343c54;
-  --color-surface: #1f263a;
-  --color-ink: #e8ebf4;
-  --color-ink-soft: #a7adbd;
-  --color-ink-faint: #7e8496;
+  --color-paper: #0b1f21;
+  --color-paper-soft: #0e292c;
+  --color-paper-line: #1a4a4e;
+  --color-surface: #14383b;
+  --color-ink: #f8f8f8;
+  --color-ink-soft: #c5d4d2;
+  --color-ink-faint: #8aa09c;
   --shadow-card: 0 0 #0000;
   --shadow-pop: 0 0 #0000;
 }
@@ -400,13 +413,13 @@ html[data-theme="dark"] {
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-paper: #171d2e;
-    --color-paper-soft: #161c2c;
-    --color-paper-line: #343c54;
-    --color-surface: #1f263a;
-    --color-ink: #e8ebf4;
-    --color-ink-soft: #a7adbd;
-    --color-ink-faint: #7e8496;
+    --color-paper: #0b1f21;
+    --color-paper-soft: #0e292c;
+    --color-paper-line: #1a4a4e;
+    --color-surface: #14383b;
+    --color-ink: #f8f8f8;
+    --color-ink-soft: #c5d4d2;
+    --color-ink-faint: #8aa09c;
     --shadow-card: 0 0 #0000;
     --shadow-pop: 0 0 #0000;
   }

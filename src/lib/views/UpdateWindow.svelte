@@ -101,7 +101,7 @@
     />
     <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">Update Rebost</h1>
     {#if info}
-      <p class="mt-1 text-[11.5px] font-medium tracking-wide text-amber-550 uppercase">
+      <p class="mt-1 text-[11.5px] font-medium tracking-wide text-navy-500">
         Version {info.version} is available
       </p>
       <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
@@ -142,7 +142,7 @@
       >
         {#if determinate}
           <div
-            class="progress-bar h-full w-full bg-amber-450"
+            class="progress-bar h-full w-full bg-navy-500"
             style="transform: scaleX({percent / 100})"
           ></div>
         {:else}

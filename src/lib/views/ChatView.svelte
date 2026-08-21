@@ -299,7 +299,7 @@
 <div class="relative flex h-full min-h-0">
   {#if dropActive}
     <div
-      class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-amber-450 bg-amber-350/20"
+      class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50"
     >
       <p class="rounded-xl bg-navy-900 px-4 py-2 text-[13.5px] font-medium text-white shadow-pop">
         {dropHint}
@@ -389,7 +389,7 @@
                         {#each message.sources as source (source.sid)}
                           <button
                             type="button"
-                            class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-amber-450 hover:bg-amber-350/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100"
+                            class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-navy-500 hover:bg-navy-200/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100"
                             onclick={() => (openSource = source)}
                           >
                             <span class="font-bold">{source.sid}</span>
@@ -437,7 +437,7 @@
                     >
                       {#snippet lead()}
                         <span
-                          class="inline-block size-2 shrink-0 animate-pulse rounded-full bg-amber-450 motion-reduce:animate-none"
+                          class="inline-block size-2 shrink-0 animate-pulse rounded-full bg-navy-500 motion-reduce:animate-none"
                         ></span>
                         <span class="min-w-0 grow">
                           {#key activePending.threadId}

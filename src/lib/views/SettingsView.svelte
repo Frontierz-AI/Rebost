@@ -151,7 +151,7 @@
           name="online-research"
           type="checkbox"
           aria-describedby="online-research-help"
-          class="mt-1.5 size-4 shrink-0 rounded border-paper-line accent-navy-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+          class="mt-1.5 size-4 shrink-0 rounded border-paper-line accent-navy-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
           bind:checked={onlineResearch}
           onchange={() => void saveOnline()}
         />
@@ -200,7 +200,7 @@
         <div
           class="flex items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 px-4 py-3"
         >
-          <BadgeCheck size={18} class="shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <BadgeCheck size={18} class="shrink-0 text-navy-600 dark:text-navy-400" />
           <div class="min-w-0 flex-1">
             <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
             <p class="text-[11.5px] text-ink-soft">
@@ -211,7 +211,7 @@
           <span
             class="rounded-full px-2 py-1 text-[10.5px] font-semibold
           {app.engine.state === 'ready'
-              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300'
+              ? 'bg-ready text-ready-ink dark:bg-navy-200/20 dark:text-navy-200'
               : app.engine.state === 'starting'
                 ? 'bg-amber-350/50 text-amber-550'
                 : 'bg-paper-soft text-ink-faint'}"
@@ -345,7 +345,7 @@
             engine log location:
             <button
               type="button"
-              class="rounded-sm text-left break-all underline decoration-navy-200 underline-offset-2 hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-400"
+              class="rounded-sm text-left break-all underline decoration-navy-200 underline-offset-2 hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
               aria-label="Open engine log"
               onclick={() => api.openEngineLog().catch(notifyInvokeError)}
             >

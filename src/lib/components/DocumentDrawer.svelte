@@ -71,7 +71,7 @@
               class="mt-0.5 text-[12px] {doc.status === 'error'
                 ? 'text-red-700/80 dark:text-red-400'
                 : doc.status === 'ready'
-                  ? 'text-emerald-700 dark:text-emerald-400'
+                  ? 'text-ready-ink dark:text-navy-300'
                   : 'text-amber-550'}"
             >
               {statusLabel(doc)}

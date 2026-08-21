@@ -17,7 +17,7 @@
     <li class="relative py-0.5 text-[0.75rem] leading-5 {current ? 'text-ink' : 'text-ink-soft'}">
       <span
         class="absolute top-[0.55em] -left-[9.5px] size-1.5 rounded-full {current
-          ? 'bg-amber-450'
+          ? 'bg-navy-500'
           : 'bg-navy-300'}"
         aria-hidden="true"
       ></span>

@@ -132,8 +132,8 @@
           aria-current={app.view === item.view ? "page" : undefined}
           class="mb-1.5 flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5
             {app.view === item.view
-            ? 'bg-white/12 text-amber-450'
-            : 'text-navy-300 hover:bg-white/6 hover:text-white'}"
+            ? 'bg-navy-500/15 text-navy-500'
+            : 'text-rail-idle hover:bg-navy-500/10 hover:text-white'}"
           onclick={() => {
             app.view = item.view;
             if (item.view === "shelves") app.openShelfId = null;
@@ -149,7 +149,7 @@
           type="button"
           aria-label="Update available, version {app.update.version}"
           class="mb-1.5 flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5 text-amber-450
-            hover:bg-white/6 hover:text-white"
+            hover:bg-amber-450/10 hover:text-amber-350"
           onclick={() => api.showUpdateWindow().catch(notifyInvokeError)}
         >
           <span class="relative">
@@ -168,8 +168,8 @@
         aria-current={app.view === "settings" ? "page" : undefined}
         class="flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5
           {app.view === 'settings'
-          ? 'bg-white/12 text-amber-450'
-          : 'text-navy-300 hover:bg-white/6 hover:text-white'}"
+          ? 'bg-navy-500/15 text-navy-500'
+          : 'text-rail-idle hover:bg-navy-500/10 hover:text-white'}"
         onclick={() => (app.view = "settings")}
       >
         <Settings size={19} />

@@ -6,6 +6,16 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-08-21
+
+### Changed
+
+- Colors are mint, dark green, and cool gray. Buttons are pills.
+- First run stays on the dark screen when you install an AI.
+- After the AI file is in, Skip the check and continue is the only extra action.
+- The sidebar uses a plain gray when a section is not selected.
+- Small text buttons such as Diagnostics have a bit of vertical padding.
+
 ## [0.8.4] - 2026-08-21
 
 ### Added
@@ -422,6 +432,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.0...v0.8.2

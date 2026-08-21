@@ -9,7 +9,7 @@ use tokio::io::AsyncBufReadExt;
 use super::pin::is_llama_server_file_name;
 
 pub(crate) const USER_AGENT: &str =
-    "Rebost/0.8.4 (local-first open-source desktop AI; https://github.com/Frontierz-AI/Rebost)";
+    "Rebost/0.8.5 (local-first open-source desktop AI; https://github.com/Frontierz-AI/Rebost)";
 
 pub(crate) fn is_compute_failure(text: &str) -> bool {
     let lower = text.to_ascii_lowercase();
