@@ -73,8 +73,8 @@ pub fn runtime_need_bytes(file_bytes: u64) -> u64 {
 }
 
 /// A curated, ordered catalog used for the first-run recommendation.
-/// The app never fetches Artificial Analysis. Rows are general document
-/// models (mixed-language shelves, chat, recipes). Coding checkpoints and
+/// Rows are hardcoded, never fetched. They are general document models
+/// (mixed-language shelves, chat, recipes). Coding checkpoints and
 /// single-language specialists are not listed; Explore can still find them.
 /// Order is capability, highest first. The default install is the first
 /// `Documents` row that fits RAM.

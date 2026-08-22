@@ -22,7 +22,11 @@ fn profile() -> MachineProfile {
 
 fn client() -> reqwest::Client {
     reqwest::Client::builder()
-        .user_agent("Rebost/0.8.7 (private desktop AI)")
+        .user_agent(concat!(
+            "Rebost/",
+            env!("CARGO_PKG_VERSION"),
+            " (private desktop AI)"
+        ))
         .build()
         .unwrap()
 }

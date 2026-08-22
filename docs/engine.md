@@ -24,7 +24,7 @@ Optional downloads (app data, not the installer):
 
 | Host | When | Archive | Extra |
 |------|------|---------|-------|
-| Windows x64 | NVIDIA driver (`nvcuda.dll`) | `win-cuda-12.4-x64.zip` (~250 MB) | `cudart-llama-bin-win-cuda-12.4-x64.zip` (~370 MB) — llama.cpp does not ship `cudart`/`cublas` in the CUDA zip |
+| Windows x64 | NVIDIA driver (`nvcuda.dll`) | `win-cuda-12.4-x64.zip` (~250 MB) | `cudart-llama-bin-win-cuda-12.4-x64.zip` (~370 MB), because llama.cpp does not ship `cudart`/`cublas` in the CUDA zip |
 | Windows arm64 | Snapdragon / Adreno | `win-opencl-adreno-arm64.zip` (~13 MB) | — |
 
 CUDA 12.4 rather than 13.x so older NVIDIA GPUs still load. If the optional download fails, or llama-server **exits or never becomes healthy** (missing DLL, wrong GPU, hung driver), Rebost uses the bundled Vulkan or CPU build and skips the optional pin for the rest of that session. A slow load of the *bundled* pin is still a timeout, not a reason to fetch CUDA.
@@ -50,7 +50,7 @@ Extracted binaries live in `engine/<build>-<accelerator>/` (for example `b10418-
 
 ## First run
 
-1. If `engine/<build>-<accelerator>/llama-server` (`.exe` on Windows) exists — and CUDA’s `cudart64_12.dll` sidecar is present when that pin needs it — use it. The bundled pin also accepts the older `engine/<build>/` layout.
+1. If `engine/<build>-<accelerator>/llama-server` (`.exe` on Windows) exists, use it. CUDA pins also need the `cudart64_12.dll` sidecar present. The bundled pin also accepts the older `engine/<build>/` layout.
 2. Else if the host matches an optional GPU pin, download that archive (and the CUDA runtime zip on NVIDIA Windows).
 3. Else if `REBOST_ENGINE_ARCHIVE` is set, unpack that archive and SHA-256-verify it (tests / air-gapped). Used for the bundled pin only.
 4. Else if the installer bundled the pin, unpack it in place. Signed Mac builds re-sign Mach-O inside it for notarization, so that archive is **not** checked against the GitHub pin SHA.

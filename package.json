@@ -1,7 +1,7 @@
 {
   "name": "rebost",
   "private": true,
-  "version": "0.8.7",
+  "version": "0.8.8",
   "license": "MIT",
   "description": "Private AI that works with your files.",
   "author": {
@@ -11,7 +11,7 @@
   "contributors": [
     {
       "name": "Pau Garcia-Mila",
-      "email": "pau@frontierz.com",
+      "email": "info-rebost-app@frontierz.com",
       "url": "https://github.com/paugm"
     }
   ],

@@ -221,7 +221,7 @@
     event.stopPropagation();
     if (deleting) return;
     const ok = await confirmDanger(
-      `Delete “${shelfView.name}”?\n\nThis won't delete any files from your computer. It just takes this Shelf out of Rebost.`,
+      `Delete “${shelfView.name}”?\n\nThis won't delete any files from your computer. Rebost will stop using this Shelf.`,
       "Delete Shelf",
     );
     if (!ok) return;

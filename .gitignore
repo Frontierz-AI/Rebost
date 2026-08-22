@@ -60,6 +60,10 @@ REBOST-DEFINITION-v2.md
 .ai/
 MODEL-RECOMMENDATIONS.md
 
+# Screenshot set used to build the site and the docs images. The README uses
+# docs/assets/*.webp instead, so these stay on the maintainer's machine.
+screenshots/
+
 # Throwaway DMG layout preview (regenerate with `just dmg-preview`)
 src-tauri/dmg/preview.png
 src-tauri/dmg/preview-Rebost.dmg

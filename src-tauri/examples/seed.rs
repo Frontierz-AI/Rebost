@@ -13,7 +13,7 @@
 //! `--ai-name` is the Settings label (default: Muse Glimmer).
 //!
 //! Chat lists newest first. `VITE_START_THREAD=1` opens the look-through
-//! thread. See `.cursor/skills/update-screenshots/SKILL.md`.
+//! thread.
 
 use rebost::chat::conversations::{ActivityStep, Conversations, StoredMessage};
 use rebost::core::{Ctx, NoopEvents};

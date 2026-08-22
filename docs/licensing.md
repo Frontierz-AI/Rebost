@@ -9,6 +9,6 @@ The application is MIT. An installed AI carries its own license, shown before th
 | Tesseract traineddata | Apache-2.0 | `src-tauri/resources/tessdata/` |
 | Hugging Face / Ollama weights | **Upstream** (Apache-2.0, MIT, Gemma, and others) | Shown before install |
 
-The MIT grant does **not** cover AI weights. **Gemma 4** is Apache-2.0; **Gemma 3 and earlier** use Gemma Terms. Catalog strings are maintained in `src-tauri/src/engine/catalog.rs`. Keep them accurate.
+The MIT grant does **not** cover AI weights. **Gemma 4** is Apache-2.0; **Gemma 3 and earlier** use Gemma Terms. The license string shown before an install comes from `src-tauri/src/engine/catalog.rs`.
 
 See [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md).

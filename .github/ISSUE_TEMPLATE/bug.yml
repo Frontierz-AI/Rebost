@@ -7,6 +7,9 @@ body:
     attributes:
       value: |
         Search existing issues first. Security issues go to SECURITY.md, not here.
+
+        This form is for something the app does wrong. Answer quality depends on
+        the installed AI, so that belongs in Discussions instead.
   - type: textarea
     id: what
     attributes:
@@ -18,7 +21,7 @@ body:
     id: version
     attributes:
       label: Version
-      placeholder: "0.8.7 / git SHA / tauri dev"
+      placeholder: "0.8.8 / git SHA / tauri dev"
     validations:
       required: true
   - type: input
@@ -44,5 +47,4 @@ body:
     attributes:
       label: Checks
       options:
-        - label: I reproduced this on a current `main` build
-        - label: This is not a complaint about answer quality
+        - label: I reproduced this on the latest release, or on a current `main` build

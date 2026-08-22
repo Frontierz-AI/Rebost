@@ -6,11 +6,11 @@ Private AI that works with your files. What happens on your computer stays on yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-Rebost is a desktop application for Mac and Windows. It runs an AI on the machine where it is installed and answers questions about documents held on that machine. Questions are typed in Chat, the answer is generated locally, and the answer cites the files it drew on so every claim can be traced back to a source document.
+Rebost is a desktop application for Mac and Windows. It runs an AI on the machine where it is installed and answers questions about documents kept there. Questions go in Chat, the answer is generated locally, and each answer cites the files it drew on.
 
-Documents reach the AI through a Shelf, a folder on the same machine that a conversation can be pointed at. Chat searches the selected Shelf, quotes what it finds, and links each citation back to the file it came from. Two other ideas sit alongside it: a Recipe is a prompt saved for reuse, and House rules are standing instructions that apply to every conversation.
+Documents reach the AI through a Shelf, a folder on the same machine that a conversation can be pointed at. Chat searches the selected Shelf, quotes what it finds, and links each citation back to the file it came from. There are two more ideas to know. A Recipe is a prompt saved for reuse, and House rules are standing instructions that apply to every conversation.
 
-The first launch offers an AI sized for the machine's memory and downloads it. That download stays on disk and is what later answers are generated with. There is no account, no seat to assign, and no usage meter; the application is MIT licensed and free. Rebost uses the network to find and install an AI and to check for a newer release. Documents on a Shelf are not uploaded, and web lookups are a setting that is off until it is turned on.
+The first launch offers an AI sized for the machine's memory and downloads it. That file stays on disk, and every later answer is generated from it. The application is MIT licensed and free to use, and it works without an account. Rebost uses the network to find and install an AI and to check for a newer release. Documents on a Shelf are not uploaded, and web lookups are a setting that stays off until it is turned on.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **0.8.7**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **0.8.8**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine | Installer |
 |---------|-----------|
@@ -41,7 +41,7 @@ Once installed, Rebost checks GitHub for a newer release and shows it in the sid
 
 ### Chat
 
-Chat is the main window, and a question sent there is answered by the installed AI without leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. To answer from a folder instead, a Shelf is selected in the composer before the question is sent. Answers that used a file carry a citation, and opening the citation opens the source.
+Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation, and opening the citation opens the source.
 
 <p align="center">
   <img src="docs/assets/conversation.webp" alt="Rebost Chat: a Shelf selected and an answer with citations." width="880" />
@@ -57,7 +57,7 @@ A Shelf is how a folder becomes available to Chat. Creating a Shelf and linking 
 
 ### Recipes
 
-A Recipe is a prompt saved once and reopened later against any Shelf. Opening one starts a new conversation with that prompt already in the composer, which removes the need to retype a request that recurs. The wording remains editable after it has been saved.
+A Recipe is a prompt saved once and reopened later against any Shelf. Opening one starts a new conversation with that prompt already in the composer, so a request that comes up every week does not have to be typed again. A saved Recipe can still be edited.
 
 <p align="center">
   <img src="docs/assets/recipes.webp" alt="Rebost Recipes: saved prompts ready to reuse." width="880" />
@@ -78,14 +78,14 @@ Settings opens from the menu, or with ⌘, on a Mac and Ctrl+, on Windows. Explo
 A first session usually runs in this order.
 
 1. Install Rebost from the release that matches the machine.
-2. Accept the AI offered on first launch, or skip it and install one later from Settings. Rebost refuses an AI the machine cannot run.
+2. Install the AI offered on first launch, or skip it and install one later from Settings. Rebost refuses an AI the machine cannot run.
 3. Create a Shelf, then link a folder or drop files into it. Rebost reads those documents so Chat can search them.
 4. In Chat, select that Shelf and ask. Citations on the answer open the source file.
 5. Save recurring requests as Recipes, and write House rules once for a consistent tone.
 
 The first message after launch waits while the AI is loaded into memory. Later messages in the same session do not.
 
-A team works the same way, one install per person. Each person runs Rebost on their own machine and points a Shelf at the folder the team already shares, so there is no server to run and no account to administer. [docs/team.md](docs/team.md) covers that setup.
+A team works the same way, one install per person. Each person runs Rebost on their own machine and points a Shelf at the folder the team already shares, which leaves no server in the middle. [docs/team.md](docs/team.md) covers that setup.
 
 ## Questions
 

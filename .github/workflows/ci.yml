@@ -40,7 +40,7 @@ jobs:
       rust: ${{ steps.filter.outputs.rust }}
     steps:
       - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -156,7 +156,7 @@ jobs:
       - run: cargo fmt --check
         working-directory: src-tauri
       # Linux is not a product. Skip the desktop cdylib/staticlib and
-      # integration tests; those stay on `just test` / cut-release.
+      # integration tests; those stay on `just test` and the release build.
       - name: Clippy (lib + unit tests, rlib)
         working-directory: src-tauri
         run: cargo clippy --lib --tests --config 'lib.crate-type=["rlib"]' -- -D warnings

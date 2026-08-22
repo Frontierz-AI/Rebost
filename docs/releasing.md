@@ -11,7 +11,7 @@ The same version must appear in:
 - `src-tauri/Cargo.toml` (package `version` only)
 - `src-tauri/Cargo.lock` (`name = "rebost"`)
 
-Docs that quote it (README, SECURITY, `docs/accessibility.md`, CHANGELOG, the bug template, the HTTP user agent in `engine/process.rs`, `docs/privacy.md`) should match. Historical CHANGELOG sections stay as they were.
+Docs that quote it (README, SECURITY, `docs/accessibility.md`, CHANGELOG, the bug template, `docs/privacy.md`) should match. The HTTP user agent reads its version from `CARGO_PKG_VERSION`, so it follows the bump without an edit. Historical CHANGELOG sections stay as they were.
 
 ## What a contributor can build
 

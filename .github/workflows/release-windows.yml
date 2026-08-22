@@ -1,5 +1,5 @@
-# Windows NSIS (x64 Vulkan + ARM64 CPU). Does not run on push — cut-release
-# dispatches it after the version bump is on the remote:
+# Windows NSIS (x64 Vulkan + ARM64 CPU). Does not run on push. Dispatch it
+# once the version bump is on the remote:
 #   gh workflow run release-windows.yml
 #
 # Authenticode-signs when these secrets are set and SignTool succeeds;

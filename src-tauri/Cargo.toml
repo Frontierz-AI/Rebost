@@ -1,8 +1,8 @@
 [package]
 name = "rebost"
-version = "0.8.7"
+version = "0.8.8"
 description = "Private AI that works with your files."
-authors = ["Frontierz", "Pau Garcia-Mila <pau@frontierz.com>"]
+authors = ["Frontierz", "Pau Garcia-Mila <info-rebost-app@frontierz.com>"]
 license = "MIT"
 # About Rebost and the in-app updater read this. Change it if the GitHub repo moves.
 repository = "https://github.com/Frontierz-AI/Rebost"
@@ -87,7 +87,7 @@ sha2 = "0.11.0"
 regex = "1"
 anyhow = "1"
 log = "0.4"
-fs4 = "0.13.1"
+fs4 = "1.1.0"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4"] }
 futures-util = "0.3"

@@ -1,39 +1,19 @@
 # Branding
 
-The name **Rebost** and the marks in this folder identify this open-source project.
+The name **Rebost** and the marks in `docs/assets/` identify this open-source project.
 
 Official description: **Private AI that works with your files. What happens on your computer stays on your computer.**
 
-Tight spots may use the first sentence alone. A privacy reminder may use the second sentence alone.
+Either sentence can stand on its own: the first where space is tight, the second where the point is privacy.
 
-Where there is room for a job sentence: **Point it at the folder the work already lives in.**
+User-facing English names the outcome rather than the machinery, and prefers AI over model. Product words are Shelf, Recipe, Chat, and House rules.
 
-Public facts, next to the official line:
+## Trademark
 
-1. Install it, point it at the folder, ask. On first run, take the suggested AI.
-2. It runs on Mac and Windows. Apple chip or Intel. Windows 10 and 11, including ARM.
-3. There is nothing to sign up for. No seats, no usage meter.
-4. The app is MIT. The source is public.
+The MIT license in [LICENSE](../LICENSE) covers the code. It does not grant rights to the Rebost name or to the marks in `docs/assets/`.
 
-Product ideas, written as app-surface copy. In the app, "this computer" is where the reader is sitting; in the README and `docs/`, name the machine instead ("the machine where Rebost is installed", "locally").
+Factual use of the name is fine, and so are screenshots of the unmodified app: "a fork of Rebost", "compatible with Rebost shelves".
 
-- Chat is where questions go. The AI answers on this computer.
-- A Shelf is a folder already kept for work. Citations open the source.
-- A Recipe is a saved question reused on any Shelf.
-- House rules set how the AI should answer. Set once.
+The name should not imply that something is this project when it is not. Give a fork or a separate service its own name and icon, so nobody has to guess whether it is maintained here.
 
-First run says take the suggested AI, never "brain". The web setting is Online.
-
-Public copy names the outcome, not the machinery. Prefer AI over model.
-
-You may:
-
-- Use the name in factual statements ("fork of Rebost", "compatible with Rebost shelves")
-- Use screenshots of the unmodified app
-
-You may not:
-
-- Ship a fork or a hosted service under the name Rebost
-- Use the Dock icon or `Rebost.png` as the primary mark of a different product
-
-Questions: pau@frontierz.com
+Questions: info-rebost-app@frontierz.com

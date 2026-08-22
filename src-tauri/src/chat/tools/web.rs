@@ -19,7 +19,7 @@ use super::{clip_label, ToolOutcome};
 const USER_AGENT: &str = concat!(
     "Rebost/",
     env!("CARGO_PKG_VERSION"),
-    " (https://github.com/Frontierz-AI/Rebost; pau@frontierz.com)"
+    " (https://github.com/Frontierz-AI/Rebost; info-rebost-app@frontierz.com)"
 );
 
 const SEARCH_MAX_CHARS: usize = 6_000;

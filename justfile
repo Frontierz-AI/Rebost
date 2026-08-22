@@ -55,7 +55,7 @@ test:
     cd src-tauri && cargo test
     pnpm test
 
-# Format, then check and test. Skills run this before a commit or a release bump.
+# Format, then check and test. Run this before a commit or a release bump.
 gate:
     just fmt
     just check

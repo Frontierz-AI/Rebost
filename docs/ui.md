@@ -62,8 +62,8 @@ Shared classes in `app.css`. All five are **pills** (`rounded-full`), 36px tall 
 |-------|------|------|
 | `btn-primary` | Mint fill, ink `#0f0b0a` | The one action on a screen (Save, Create, Install) |
 | `btn-amber` | Same as primary | Send, Continue, empty-state Install. Prefer `btn-primary` for new work |
-| `btn-outline` | White card, `paper-line` border | Cancel, secondary, “Add folder” |
-| `btn-ghost` | No chrome; `ink-soft`; 12px padding | Dismiss, icon rows, “Later” |
+| `btn-outline` | White card, `paper-line` border | Cancel, secondary, "Add folder" |
+| `btn-ghost` | No chrome; `ink-soft`; 12px padding | Dismiss, icon rows, "Later" |
 | `btn-danger` | Red fill, white type | Reset Rebost and other deletes that need a confirm |
 
 Add `btn-icon` for a 36×36 circle (Send, Stop). Ghost icon buttons usually override to `!p-1.5` instead.
@@ -131,4 +131,4 @@ Sonner, top-right. Surface + paper-line. Close control is always visible, top-ri
 
 ## Copy and a11y
 
-User-facing English follows [branding](branding.md) (outcome, not machinery; AI over model). Keyboard and VoiceOver: [accessibility.md](accessibility.md). New controls need a name: visible label, or `aria-label` on icon-only buttons.
+User-facing English follows the House style in [CONTRIBUTING.md](../CONTRIBUTING.md) (outcome, not machinery; AI over model). Keyboard and VoiceOver: [accessibility.md](accessibility.md). New controls need a name: visible label, or `aria-label` on icon-only buttons.
