@@ -17,7 +17,7 @@ pnpm tauri dev
 
 `pnpm tauri build` fetches the pinned llama.cpp archive for that target (~11–33 MB) and ships it in the bundle. Without signing credentials the DMG / NSIS is unsigned. See [docs/releasing.md](docs/releasing.md).
 
-For `pnpm tauri dev`, run `pnpm fetch-engine` once if you want first chat to stay offline. Otherwise the running app downloads the pin.
+For `pnpm tauri dev`, run `pnpm fetch-engine` once so first chat can stay offline. Otherwise the running app downloads the pin.
 
 ## One test
 
@@ -27,7 +27,7 @@ cargo test --manifest-path src-tauri/Cargo.toml --test pipeline_test markdown_co
 pnpm exec vitest run src/lib/focus-trap.test.ts
 ```
 
-Optional full-loop smoke (downloads nothing if you pass local files):
+Optional full-loop smoke (downloads nothing if local files are passed):
 
 ```bash
 cargo test --manifest-path src-tauri/Cargo.toml --test core_smoke -- --ignored --nocapture
@@ -81,14 +81,16 @@ Formatters own spaces and wrapping. `just check` runs svelte-check, Prettier, ox
 
 Sentence case. Delete anything the name or types already say.
 
-**User-facing copy.** Name the outcome, not the machinery. Prefer AI over model. Do not put GGUF, llama.cpp, or SHA-256 in the UI or in README For users. Errors say what failed and what to do. Product words: Shelf, Recipe, Chat, House rules. Public copy follows the site's four facts (install and ask, Mac and Windows, no account, open source) and four product ideas (Chat, Shelves, Recipes, House rules). First run says take the suggested AI, never "brain". The setting is Online.
+**User-facing copy.** Name the outcome, not the machinery. Prefer AI over model. Do not put GGUF, llama.cpp, or SHA-256 in the UI or in the README above Develop. Errors say what failed and what to do. Product words: Shelf, Recipe, Chat, House rules. Public copy follows the site's four facts (install and ask, Mac and Windows, no account, open source) and four product ideas (Chat, Shelves, Recipes, House rules). Impersonal: the app is the subject, not "you". First run says take the suggested AI, never "brain". The setting is Online.
+
+**Register.** The app UI is read by someone sitting at the machine, so "here" and "this computer" belong there. The README and `docs/` are read on github.com, where those words point at nothing: write "the machine where Rebost is installed", "that machine", or "locally". Repo prose states what the software does and does not coach the reader.
 
 ## Pull requests
 
 - Open a PR against `main`. Direct pushes to `main` are for maintainers.
 - Issues tagged `good first issue` or `help wanted` are a reasonable place to start.
 - Commit messages are **prose that explains why**, not Conventional Commit prefixes. Match the existing history.
-- Include a test when you change ingest, retrieval, PII, downloads, or chat orchestration.
+- Include a test when changing ingest, retrieval, PII, downloads, or chat orchestration.
 - Do not add a CLA. A `Signed-off-by` line (DCO) is welcome and optional.
 
 ## Platform policy

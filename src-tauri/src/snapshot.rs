@@ -1,16 +1,22 @@
 //! Debug-only window snapshot for website screenshots.
 
+#[cfg(all(debug_assertions, target_os = "macos"))]
 use std::sync::mpsc;
-use tauri::{AppHandle, Manager};
 
-use crate::commands::{friendly, CmdResult};
+use tauri::AppHandle;
+#[cfg(all(debug_assertions, target_os = "macos"))]
+use tauri::Manager;
+
+#[cfg(all(debug_assertions, target_os = "macos"))]
+use crate::commands::friendly;
+use crate::commands::CmdResult;
 
 #[tauri::command]
 pub fn dev_snapshot(app: AppHandle, path: String, label: Option<String>) -> CmdResult<()> {
     #[cfg(not(all(debug_assertions, target_os = "macos")))]
     {
         let _ = (app, path, label);
-        return Err("Snapshots are only available in a debug Mac build.".into());
+        Err("Snapshots are only available in a debug Mac build.".into())
     }
     #[cfg(all(debug_assertions, target_os = "macos"))]
     {

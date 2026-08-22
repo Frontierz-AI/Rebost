@@ -76,9 +76,7 @@
   $effect(() => {
     if (openedStartSource) return;
     if (import.meta.env.VITE_START_SOURCE !== "first") return;
-    const cited = [...chatState.messages]
-      .reverse()
-      .find((message) => message.sources.length > 0);
+    const cited = [...chatState.messages].reverse().find((message) => message.sources.length > 0);
     if (!cited?.sources[0]) return;
     openedStartSource = true;
     openSource = cited.sources[0] ?? null;

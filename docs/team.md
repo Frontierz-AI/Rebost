@@ -1,18 +1,17 @@
 # How a small team uses Rebost
 
-Each person runs Rebost on their own computer, Mac or Windows. The folder the team already shares is the team feature. There is no account to create and nothing to administer.
+Each person runs Rebost on their own computer, Mac or Windows, and points a Shelf at the folder the team already shares. That shared folder is the whole team feature: there is no server to run, no account to create, and nothing to administer.
 
-1. Install Rebost on each computer. Mac or Windows. The installer is on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases).
-2. On first run, install the suggested AI. Take the suggestion. Skip the rest of Settings.
-3. Make a Shelf. Link the folder the team already shares, or drop files in.
-4. In Chat, choose that Shelf whenever the answer should come from those files. Open a citation if you want to check.
-5. Save a Recipe for anything you will ask again. Set House rules once if you want a shared tone.
-6. Leave Online off unless you decide the chat may look things up on the web.
+1. Install Rebost on each computer from [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases).
+2. Accept the AI offered on first launch. The rest of Settings can wait.
+3. Create a Shelf and link the shared folder, or drop files into it.
+4. In Chat, select that Shelf when the answer should come from those documents. Citations open the source file.
+5. Save recurring requests as Recipes, and write House rules once for a tone the whole team shares.
 
-The AI runs on each computer. The shared folder is how the work is shared. Chat stays on each person's computer.
+Every install runs its own AI, so conversations stay on the computer they were typed on. The shared folder is what the team has in common; nothing about a conversation is pooled or synchronized.
 
-A Shelf stops at 1,000 files. If the shared folder is offline, that source pauses until it is back.
+A Shelf holds up to 1,000 files. When the shared folder is offline, that source pauses until it is reachable again.
 
 Counts of personal information are counts, not a legal opinion.
 
-Rebost uses the network to search for or install an AI, and it may check for a newer version. Files you put on a Shelf are not uploaded.
+Rebost uses the network to find or install an AI and to check for a newer release. Documents on a Shelf are not uploaded, and Online stays off until it is turned on in Settings.

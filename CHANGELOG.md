@@ -6,6 +6,15 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.7] - 2026-08-22
+
+### Changed
+
+- README now opens with what the app does, then Download, then Chat, Shelves, Recipes, and House rules.
+- The README includes screenshots of Chat, a conversation with citations, Shelves, Recipes, and Settings.
+- FAQ, team, privacy, and the other user docs were rewritten to match. They name the machine where Rebost is installed, not "this computer".
+- `just check` also runs Clippy on the release build. `just gate` runs format, check, and test in one step.
+
 ## [0.8.6] - 2026-08-21
 
 ### Changed
@@ -440,6 +449,7 @@ First public release. Rebost is a desktop app: you talk to an AI on this compute
 - App data on Mac and Linux is readable only by your user account.
 - Diagnostics do not send log contents into the window.
 
+[0.8.7]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.6...v0.8.7
 [0.8.6]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.4...v0.8.5
 [0.8.4]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.3...v0.8.4

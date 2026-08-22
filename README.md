@@ -6,111 +6,114 @@ Private AI that works with your files. What happens on your computer stays on yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-The current release is **0.8.6**. Rebost runs on Mac (Apple chip and Intel) and Windows 10/11. The app is free and MIT licensed. There is no account to create.
+Rebost is a desktop application for Mac and Windows. It runs an AI on the machine where it is installed and answers questions about documents held on that machine. Questions are typed in Chat, the answer is generated locally, and the answer cites the files it drew on so every claim can be traced back to a source document.
+
+Documents reach the AI through a Shelf, a folder on the same machine that a conversation can be pointed at. Chat searches the selected Shelf, quotes what it finds, and links each citation back to the file it came from. Two other ideas sit alongside it: a Recipe is a prompt saved for reuse, and House rules are standing instructions that apply to every conversation.
+
+The first launch offers an AI sized for the machine's memory and downloads it. That download stays on disk and is what later answers are generated with. There is no account, no seat to assign, and no usage meter; the application is MIT licensed and free. Rebost uses the network to find and install an AI and to check for a newer release. Documents on a Shelf are not uploaded, and web lookups are a setting that is off until it is turned on.
 
 [![CI](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml/badge.svg)](https://github.com/Frontierz-AI/Rebost/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/Frontierz-AI/Rebost?include_prereleases)](https://github.com/Frontierz-AI/Rebost/releases)
 
-## For users
+<p align="center">
+  <img src="docs/assets/chat.webp" alt="Rebost Chat: an empty conversation ready for a question." width="880" />
+</p>
 
-Point it at the folder the work already lives in. Install Rebost, take the suggested AI, and ask in Chat. Make a Shelf from a folder you already have when the answer should come from those files.
+## Download
 
-There is nothing to sign up for. No seats, no usage meter. Each person runs Rebost on their own computer. The app is MIT. The source is public.
+The current release is **0.8.7**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
 
-### Chat, Shelves, Recipes, and House rules
-
-Chat is the home screen. Ask there. The AI answers on this computer. Attach a file, or drop files onto Chat; they stay on that conversation. Choose a Shelf when the answer should come from a folder. Citations open the source. A new conversation keeps the Shelf you last chose.
-
-A file you attach is read first. If that first look isn't enough, Chat can search again, open a named file, or read the next part of a long one. Open Thinking to see what it looked through. With no Shelf, Rebost uses what the AI already knows. What you already said in the chat still counts. Earlier conversations Chat looks up stay on the same Shelf.
-
-A Shelf is a folder you already keep work in. Create one and attach the folder, or drop files in. You can rename a Shelf; the folder on disk stays put. A new Shelf is created inside Rebost, so macOS does not ask for Documents access. A Shelf stops at 1,000 files. How Chat looks through a Shelf is Off, Light, or Deep. Light and Deep take longer.
-
-A Recipe is a question you save and reuse on any Shelf. You can edit it after you save it. Placeholders use `«…»`. When a placeholder is a document name, Chat can fill it from files on that Shelf.
-
-House rules, in Settings, set tone and language for every chat. Online lets Chat look things up on the web. It stays off until you turn it on. Your files are not sent online.
-
-Settings opens from the menu (⌘, on a Mac, Ctrl+, on Windows). Explore other AIs is there if you want something other than the suggestion. Paste a catalog page or an owner/name to go straight to that AI.
-
-After idle, the first message may say "Warming up…" while the AI gets ready. Stop works then too.
-
-When an answer contains personal information, you can copy it with those identifiers removed. Opening a file shows the text Rebost reads, plus counts of emails, IBANs, tax ids, Social Security numbers, and labeled names. Those counts are not a legal opinion.
-
-Each conversation has a face. You can rename it. Download is at the top of the thread.
-
-### Install
-
-Download the installer for your machine from [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases).
-
-| Machine | Download |
-|---------|----------|
+| Machine | Installer |
+|---------|-----------|
 | Mac with an Apple chip | Mac (Apple chip) |
 | Intel Mac | Mac (Intel) |
 | Windows 10/11 | Windows |
 | Windows on ARM | Windows (ARM) |
 
-On a Mac, open the file and drag Rebost into Applications. On Windows, run the installer.
+The Mac download is a disk image: open it and drag Rebost into Applications. The Windows download is an installer.
 
-Windows 11 already has what Rebost needs to draw its windows. On Windows 10, the installer may add a small Microsoft component ([WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)) if it is missing.
+Windows 11 already ships the component Rebost uses to draw its windows; on Windows 10 the installer adds [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) when it is missing. A regular Windows PC, meaning anything other than Windows on ARM, also needs a graphics driver with Vulkan support from NVIDIA, AMD, or Intel.
 
-On a regular Windows PC (not ARM), you need a graphics driver that supports Vulkan, from NVIDIA, AMD, or Intel.
+Once installed, Rebost checks GitHub for a newer release and shows it in the sidebar. Nothing is shown when that check fails.
 
-If you already have Rebost, a later release can show up in the sidebar when GitHub is reachable. If not, nothing is shown.
+## Chat, Shelves, Recipes, and House rules
 
-### First run
+### Chat
 
-1. Install Rebost on each computer.
-2. On first run, install the suggested AI. You can skip and do it later in Settings. Explore other AIs is there too. Install skips one this computer can't run.
-3. Make a Shelf. Link a folder, or drop files in. Rebost reads them on this computer.
-4. In Chat, choose that Shelf when the answer should come from those files. Citations open the source.
-5. Save a Recipe for anything you will ask again. Set House rules once if you want a shared tone.
-6. Leave Online off unless the chat may look things up on the web.
+Chat is the main window, and a question sent there is answered by the installed AI without leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. To answer from a folder instead, a Shelf is selected in the composer before the question is sent. Answers that used a file carry a citation, and opening the citation opens the source.
 
-The first chat may take a moment while Rebost gets ready.
+<p align="center">
+  <img src="docs/assets/conversation.webp" alt="Rebost Chat: a Shelf selected and an answer with citations." width="880" />
+</p>
 
-### For a small team
+### Shelves
 
-Each person installs Rebost. Everyone points a Shelf at the folder the team already shares. There is no account and nothing to administer. The full setup is in [docs/team.md](docs/team.md).
+A Shelf is how a folder becomes available to Chat. Creating a Shelf and linking a folder, or dropping files into it, is what lets Rebost read those documents and search them later. Linking does not move or copy the folder, and renaming a Shelf inside Rebost leaves the folder on disk untouched. How thoroughly Chat searches is configured per Shelf.
 
-### Frequently asked questions
+<p align="center">
+  <img src="docs/assets/shelves.webp" alt="Rebost Shelves: a Shelf created from a folder on disk." width="880" />
+</p>
 
-#### Is it really free?
+### Recipes
 
-Yes. The app is MIT licensed and free. There is no paid tier, and nobody assigns a seat or watches a meter.
+A Recipe is a prompt saved once and reopened later against any Shelf. Opening one starts a new conversation with that prompt already in the composer, which removes the need to retype a request that recurs. The wording remains editable after it has been saved.
 
-#### Do I need an account?
+<p align="center">
+  <img src="docs/assets/recipes.webp" alt="Rebost Recipes: saved prompts ready to reuse." width="880" />
+</p>
 
-No. There is nothing to sign up for and nobody to sign in as. Install it and ask.
+### House rules
 
-#### Do my files leave this computer?
+House rules are standing instructions kept in Settings: tone, language, and anything the AI should never promise. They are written once and applied to every conversation and every Recipe. Settings also holds Online, which allows Chat to look things up on the public web. Online is off until it is turned on, and turning it on does not send Shelf documents to the web.
 
-Files you put on a Shelf stay on this computer. Rebost uses the network to search for or install an AI and to check for a newer version, and the web only if you turn Online on.
+<p align="center">
+  <img src="docs/assets/settings.webp" alt="Rebost Settings: House rules and the installed AI." width="880" />
+</p>
 
-#### Which AI does it use?
+Settings opens from the menu, or with ⌘, on a Mac and Ctrl+, on Windows. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
 
-One you install on first run. Rebost suggests one that fits this computer and skips any it can't run. Each AI has its own license, shown before you install.
+## Getting started
 
-#### What computer do I need?
+A first session usually runs in this order.
 
-A Mac, Apple chip or Intel, or a Windows 10/11 PC. The installer takes care of the rest.
+1. Install Rebost from the release that matches the machine.
+2. Accept the AI offered on first launch, or skip it and install one later from Settings. Rebost refuses an AI the machine cannot run.
+3. Create a Shelf, then link a folder or drop files into it. Rebost reads those documents so Chat can search them.
+4. In Chat, select that Shelf and ask. Citations on the answer open the source file.
+5. Save recurring requests as Recipes, and write House rules once for a consistent tone.
 
-#### Phones? Linux?
+The first message after launch waits while the AI is loaded into memory. Later messages in the same session do not.
 
-Rebost is a desktop app for Mac and Windows. It runs on one computer you can point to.
+A team works the same way, one install per person. Each person runs Rebost on their own machine and points a Shelf at the folder the team already shares, so there is no server to run and no account to administer. [docs/team.md](docs/team.md) covers that setup.
 
-#### Can a whole team use it?
+## Questions
 
-Yes. Each person installs Rebost, and everyone points a Shelf at the folder the team already shares. [How a small team uses Rebost](docs/team.md).
+**Is it free?** Yes. Rebost is MIT licensed and free to use. There is no paid tier, no seat count, and no usage meter.
 
-### Privacy
+**Is an account required?** No. There is nothing to sign up for and no one to sign in as. The first launch sets up an AI, and Chat works from then on.
 
-Files you put on a Shelf stay on this computer. Rebost uses the network when you search for or install an AI from Hugging Face or Ollama, and it may check for a newer version on startup. If that check fails, nothing is shown. On some Windows PCs, the first chat may also download a faster way to run the AI. Online, in Settings, lets Chat look things up on the web; it stays off until you turn it on. Details: [docs/privacy.md](docs/privacy.md).
+**Do documents leave the machine?** Documents on a Shelf stay on the machine that holds them. Rebost uses the network to find or install an AI and to check for a newer release. The public web is reached only when Online is turned on in Settings, and that setting does not upload Shelf documents.
 
-The app is MIT. The AI you install has its own license, shown before you install. [docs/licensing.md](docs/licensing.md).
+**Which AI does it run?** The first launch suggests one sized for the machine's memory and hides any that will not run on it. A different AI can be installed later from Settings. Each AI carries its own license, shown before the download starts.
 
-If something looks like a leak of local files, read [SECURITY.md](SECURITY.md) before filing a public issue. For bugs, use [GitHub issues](https://github.com/Frontierz-AI/Rebost/issues). If Chat is stuck getting ready, see [docs/troubleshooting.md](docs/troubleshooting.md).
+**What hardware is needed?** A Mac with an Apple chip or an Intel processor, or a Windows 10/11 PC including Windows on ARM. Running an AI locally also needs several GB of free disk space for the download.
 
-## For developers
+**Are phones or Linux supported?** No. Rebost is a desktop application for Mac and Windows.
+
+**Can a team use it?** Yes, with one install per person and a Shelf pointed at a shared folder. There is no Rebost account and nothing to administer. See [how a small team uses Rebost](docs/team.md).
+
+## Privacy
+
+Documents on a Shelf stay on the machine that holds them, and reading, searching, and answering all happen there. Counts of personal information are counts, not a legal opinion.
+
+Rebost does reach the network in a few places. Searching for or installing an AI contacts Hugging Face or Ollama, startup may check GitHub for a newer release, and on some Windows PCs the first chat downloads a faster way to run the AI. Online, in Settings, allows Chat to look things up on the public web and is off until it is turned on. [docs/privacy.md](docs/privacy.md) lists every request.
+
+The application is MIT licensed. An installed AI carries its own license, shown before the download starts: [docs/licensing.md](docs/licensing.md).
+
+Anything that looks like local files leaking belongs in [SECURITY.md](SECURITY.md) rather than a public issue. Other bugs go to [GitHub issues](https://github.com/Frontierz-AI/Rebost/issues), and a chat stuck while the AI loads is covered in [docs/troubleshooting.md](docs/troubleshooting.md).
+
+## Develop
 
 ### Requirements
 
@@ -128,7 +131,7 @@ pnpm install
 pnpm tauri dev
 ```
 
-`pnpm tauri dev` without a prior `pnpm fetch-engine` downloads the pinned llama.cpp archive on first chat. Run `pnpm fetch-engine` once if you want that step to stay offline.
+`pnpm tauri dev` without a prior `pnpm fetch-engine` downloads the pinned llama.cpp archive on first chat. Run `pnpm fetch-engine` once so first chat can stay offline.
 
 ### Checks and installers
 
@@ -140,13 +143,13 @@ pnpm test                          # Vitest
 pnpm tauri build                   # unsigned DMG / NSIS
 ```
 
-`pnpm tauri build` writes a DMG under `src-tauri/target/release/bundle/dmg/` (Apple Silicon or Intel, matching this machine unless you pass `--target`), or an NSIS installer under `src-tauri/target/release/bundle/nsis/`. Without signing credentials the installer is unsigned, and Gatekeeper will warn on macOS. See [docs/signing.md](docs/signing.md).
+`pnpm tauri build` writes a DMG under `src-tauri/target/release/bundle/dmg/` (Apple Silicon or Intel, matching the build host unless `--target` is passed), or an NSIS installer under `src-tauri/target/release/bundle/nsis/`. Without signing credentials the installer is unsigned, and Gatekeeper will warn on macOS. See [docs/signing.md](docs/signing.md).
 
-`./scripts/reset.sh` (macOS) or `./scripts/reset.ps1` (Windows) returns the app to first-run (Shelf folders on disk are kept). Settings → Reset Rebost does the same from the running app. `cargo run --manifest-path src-tauri/Cargo.toml --example seed` loads demo data.
+`./scripts/reset.sh` (macOS) or `./scripts/reset.ps1` (Windows) returns the app to first-run state, keeping Shelf folders on disk. Settings → Reset Rebost does the same from the running app. `cargo run --manifest-path src-tauri/Cargo.toml --example seed` loads demo data.
 
 Contributing, commands, and architecture: [CONTRIBUTING.md](CONTRIBUTING.md), [docs/development.md](docs/development.md), [docs/releasing.md](docs/releasing.md), [docs/architecture.md](docs/architecture.md), [docs/engine.md](docs/engine.md).
 
-## Project docs
+## Docs
 
 - [docs/faq.md](docs/faq.md): frequently asked questions
 - [docs/team.md](docs/team.md): how a small team uses Rebost

@@ -1,29 +1,29 @@
 # Frequently asked questions
 
-## Is it really free?
+## Is it free?
 
-Yes. The app is MIT licensed and free. There is no paid tier, and nobody assigns a seat or watches a meter.
+Yes. Rebost is MIT licensed and free to use. There is no paid tier, no seat count, and no usage meter.
 
-## Do I need an account?
+## Is an account required?
 
-No. There is nothing to sign up for and nobody to sign in as. Install it and ask.
+No. There is nothing to sign up for and no one to sign in as. The first launch sets up an AI, and Chat works from then on.
 
-## Do my files leave this computer?
+## Do documents leave the machine?
 
-Files you put on a Shelf stay on this computer. Rebost uses the network to search for or install an AI and to check for a newer version, and the web only if you turn Online on.
+Documents on a Shelf stay on the machine that holds them. Rebost uses the network to find or install an AI and to check for a newer release. The public web is reached only when Online is turned on in Settings, and that setting does not upload Shelf documents.
 
-## Which AI does it use?
+## Which AI does it run?
 
-One you install on first run. Rebost suggests one that fits this computer and skips any it can't run. Each AI has its own license, shown before you install.
+The first launch suggests one sized for the machine's memory and hides any that will not run on it. A different AI can be installed later from Settings. Each AI carries its own license, shown before the download starts.
 
-## What computer do I need?
+## What hardware is needed?
 
-A Mac, Apple chip or Intel, or a Windows 10/11 PC. The installer takes care of the rest.
+A Mac with an Apple chip or an Intel processor, or a Windows 10/11 PC including Windows on ARM. Running an AI locally also needs several GB of free disk space for the download.
 
-## Phones? Linux?
+## Are phones or Linux supported?
 
-Rebost is a desktop app for Mac and Windows. It runs on one computer you can point to.
+No. Rebost is a desktop application for Mac and Windows.
 
-## Can a whole team use it?
+## Can a team use it?
 
-Yes. Each person installs Rebost, and everyone points a Shelf at the folder the team already shares. [How a small team uses Rebost](team.md).
+Yes, with one install per person and a Shelf pointed at a shared folder. There is no Rebost account and nothing to administer. See [how a small team uses Rebost](team.md).

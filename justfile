@@ -43,15 +43,23 @@ release-windows-arm:
 fetch-engine *args:
     node scripts/fetch-engine.mjs {{args}}
 
+# svelte-check, Prettier, oxlint, rustfmt, clippy (debug + release).
 check:
     pnpm check
     pnpm format:check
     pnpm lint
     cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings
+    cd src-tauri && cargo clippy --lib --tests --release -- -D warnings
 
 test:
     cd src-tauri && cargo test
     pnpm test
+
+# Format, then check and test. Skills run this before a commit or a release bump.
+gate:
+    just fmt
+    just check
+    just test
 
 test-smoke:
     cd src-tauri && cargo test --test core_smoke -- --ignored --nocapture

@@ -51,7 +51,7 @@ Extracted binaries live in `engine/<build>-<accelerator>/` (for example `b10418-
 ## First run
 
 1. If `engine/<build>-<accelerator>/llama-server` (`.exe` on Windows) exists — and CUDA’s `cudart64_12.dll` sidecar is present when that pin needs it — use it. The bundled pin also accepts the older `engine/<build>/` layout.
-2. Else if this machine matches an optional GPU pin, download that archive (and the CUDA runtime zip on NVIDIA Windows).
+2. Else if the host matches an optional GPU pin, download that archive (and the CUDA runtime zip on NVIDIA Windows).
 3. Else if `REBOST_ENGINE_ARCHIVE` is set, unpack that archive and SHA-256-verify it (tests / air-gapped). Used for the bundled pin only.
 4. Else if the installer bundled the pin, unpack it in place. Signed Mac builds re-sign Mach-O inside it for notarization, so that archive is **not** checked against the GitHub pin SHA.
 5. Else download the host pin and verify SHA-256 (`tauri dev` without a prior fetch).

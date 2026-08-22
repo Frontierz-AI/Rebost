@@ -11,15 +11,15 @@ Where there is room for a job sentence: **Point it at the folder the work alread
 Public facts, next to the official line:
 
 1. Install it, point it at the folder, ask. On first run, take the suggested AI.
-2. It runs on the computer you already use. Mac, Apple chip or Intel. Windows 10 and 11, including ARM.
+2. It runs on Mac and Windows. Apple chip or Intel. Windows 10 and 11, including ARM.
 3. There is nothing to sign up for. No seats, no usage meter.
 4. The app is MIT. The source is public.
 
-Product ideas:
+Product ideas, written as app-surface copy. In the app, "this computer" is where the reader is sitting; in the README and `docs/`, name the machine instead ("the machine where Rebost is installed", "locally").
 
-- Chat is where you ask. The AI answers on this computer.
-- A Shelf is a folder you already keep work in. Citations open the source.
-- A Recipe is a question you save and reuse on any Shelf.
+- Chat is where questions go. The AI answers on this computer.
+- A Shelf is a folder already kept for work. Citations open the source.
+- A Recipe is a saved question reused on any Shelf.
 - House rules set how the AI should answer. Set once.
 
 First run says take the suggested AI, never "brain". The web setting is Online.

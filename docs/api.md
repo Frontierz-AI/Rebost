@@ -22,7 +22,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 
 | Command | Args | Returns |
 |---------|------|---------|
-| `shelves_list` | — | `ShelfView[]` (`linkedFolders[].available` is false when that folder is not on this computer) |
+| `shelves_list` | — | `ShelfView[]` (`linkedFolders[].available` is false when that folder is not present on the machine) |
 | `shelf_create` | `name` | `ShelfView` |
 | `shelf_remove` | `shelfId` | `()` |
 | `shelf_add_linked` | `shelfId` | `AddLinkedResult \| null` (`shelf`, `queued`, `atLimit`; null if the folder picker was cancelled) |

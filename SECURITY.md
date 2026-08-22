@@ -2,19 +2,19 @@
 
 ## Supported versions
 
-The current release is **0.8.6**.
+The current release is **0.8.7**.
 
 ## What Rebost does with data
 
 The app is MIT. There is no account to create.
 
-Chat, reading your files, search, and answers run on this computer. Your files and the AI stay here.
+Chat, reading Shelf documents, search, and answers all run on the machine where Rebost is installed. Those documents and the installed AI stay on that machine.
 
-Rebost uses the network when you **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows machines a faster copy may be downloaded the first time you chat.
+Rebost uses the network to **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows machines a faster copy may be downloaded the first time Chat runs.
 
-Those requests send a query string, IP address, and a `Rebost/0.8.6` user agent. They do not include Shelf documents.
+Those requests send a query string, IP address, and a `Rebost/0.8.7` user agent. They do not include Shelf documents.
 
-With Online on in Settings, Chat can also look things up on the public web from this computer. Those lookups do not go through Rebost. Chat is asked not to put private details in them.
+With Online on in Settings, Chat can also look things up on the public web. Those lookups leave the machine directly and do not go through Rebost. Chat is asked not to put private details in them.
 
 A threat model lives in [docs/privacy.md](docs/privacy.md).
 

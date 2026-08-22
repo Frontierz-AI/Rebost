@@ -1,6 +1,6 @@
 # App vs AI vs reading licenses
 
-The app is MIT. The AI you install has its own license, shown before you install. Extra reading packs (for picture-only files) are Apache-2.0.
+The application is MIT. An installed AI carries its own license, shown before the download starts. Extra reading packs, used for picture-only files, are Apache-2.0.
 
 | Layer | License | Where |
 |-------|---------|--------|
