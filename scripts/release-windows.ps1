@@ -6,7 +6,10 @@
 #   pwsh scripts/release-windows.ps1 -Target aarch64-pc-windows-msvc
 
 param(
-    [string]$Target = ""
+    [string]$Target = "",
+    # ARM runners cannot run Azure SignTool (x64). Build unsigned there,
+    # then sign on windows-latest with scripts/sign-windows-nsis.ps1.
+    [switch]$SkipAuthenticode
 )
 
 $ErrorActionPreference = "Stop"
@@ -120,7 +123,10 @@ function Test-ExesAuthenticodeValid {
     return $ok
 }
 
-$wantSign = Test-AzureSigningEnv
+$wantSign = -not $SkipAuthenticode -and (Test-AzureSigningEnv)
+if ($SkipAuthenticode) {
+    Write-Host "Skipping Authenticode on this host."
+}
 if ($wantSign -and -not (Get-Command artifact-signing-cli -ErrorAction SilentlyContinue)) {
     Write-Warning "artifact-signing-cli is not installed; building unsigned NSIS."
     $wantSign = $false
