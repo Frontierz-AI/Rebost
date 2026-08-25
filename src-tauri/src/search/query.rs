@@ -511,6 +511,57 @@ impl SearchIndex {
         searcher.search(&query, &Count).unwrap_or(0) > 0
     }
 
+    /// Body of a stored passage, used to find that spot in the extracted file.
+    pub fn passage_needle(
+        &self,
+        document_id: &str,
+        page: Option<u32>,
+        section: Option<&str>,
+    ) -> Option<String> {
+        if document_id.is_empty() || (page.is_none() && section.is_none()) {
+            return None;
+        }
+        let searcher = self.reader.searcher();
+        let query = TermQuery::new(
+            Term::from_field_text(self.fields.document_id, document_id),
+            IndexRecordOption::Basic,
+        );
+        let top = searcher
+            .search(&query, &TopDocs::with_limit(600).order_by_score())
+            .ok()?;
+        let section = section.map(str::trim).filter(|s| !s.is_empty());
+        let mut by_section = None;
+        for (_score, address) in top {
+            let Ok(doc) = searcher.doc::<TantivyDocument>(address) else {
+                continue;
+            };
+            let body = doc
+                .get_first(self.fields.body)
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            if body.is_empty() {
+                continue;
+            }
+            let page_start = doc
+                .get_first(self.fields.page_start)
+                .and_then(|v| v.as_u64())
+                .map(|v| v as u32);
+            if page.is_some() && page_start == page {
+                return Some(body.to_string());
+            }
+            if by_section.is_none() {
+                let have = doc
+                    .get_first(self.fields.section)
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                if section.is_some_and(|want| have.eq_ignore_ascii_case(want)) {
+                    by_section = Some(body.to_string());
+                }
+            }
+        }
+        by_section
+    }
+
     /// Search older conversation memory, excluding the active thread.
     /// `only_threads` limits hits to those conversations (same Shelf).
     pub fn search_messages(
@@ -729,6 +780,45 @@ mod tests {
             .search_passages("which of the", "s1", 8)
             .unwrap()
             .is_empty());
+    }
+
+    #[test]
+    fn passage_needle_prefers_the_matching_page() {
+        let (_dir, search) = index();
+        let early = Passage {
+            seq: 0,
+            section: Some("Intro".into()),
+            page_start: Some(2),
+            page_end: Some(2),
+            body: "Opening hours stay as written.".into(),
+        };
+        let cited = Passage {
+            seq: 1,
+            section: Some("Indemnity".into()),
+            page_start: Some(48),
+            page_end: Some(48),
+            body: "The indemnity clause lasts ninety days.".into(),
+        };
+        search
+            .index_document(
+                &meta("d1", "s1"),
+                "",
+                &[],
+                &[early, cited],
+                Some("en"),
+                "full",
+                "Handbook",
+            )
+            .unwrap();
+        assert_eq!(
+            search.passage_needle("d1", Some(48), None).as_deref(),
+            Some("The indemnity clause lasts ninety days.")
+        );
+        assert_eq!(
+            search.passage_needle("d1", None, Some("Intro")).as_deref(),
+            Some("Opening hours stay as written.")
+        );
+        assert!(search.passage_needle("d1", None, None).is_none());
     }
 
     #[test]

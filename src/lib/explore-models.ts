@@ -1,7 +1,7 @@
 import type { ModelSearchResult } from "$lib/api";
 
 export const EXPLORE_PAGE_SIZE = 50;
-export const MODEL_BUDGET_FRACTION = 0.55;
+export const MODEL_BUDGET_FRACTION = 0.65;
 const GIB = 1024 * 1024 * 1024;
 
 const HF_NON_MODEL_ROOTS = new Set([

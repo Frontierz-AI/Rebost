@@ -148,7 +148,7 @@ describe("explore sort", () => {
   });
 
   it("sizes the budget the same way as the catalog", () => {
-    expect(modelBudgetBytes(32 * gib)).toBe(Math.floor(32 * gib * 0.55));
+    expect(modelBudgetBytes(32 * gib)).toBe(Math.floor(32 * gib * 0.65));
     expect(columnAriaSort("size", "size")).toBe("ascending");
     expect(columnAriaSort("size", "size", "desc")).toBe("descending");
     expect(columnAriaSort("downloads", "downloads")).toBe("descending");

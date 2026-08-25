@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { SourcePassage } from "$lib/api";
-  import { api } from "$lib/api";
+  import { api, type DocumentTextWindow, type SourcePassage } from "$lib/api";
   import { notifyInvokeError } from "$lib/stores.svelte";
   import CopyActions from "./CopyActions.svelte";
   import Markdown from "./Markdown.svelte";
@@ -10,26 +9,28 @@
 
   let { source, onClose }: { source: SourcePassage; onClose: () => void } = $props();
 
-  let body = $state("");
+  let excerpt = $state<DocumentTextWindow | null>(null);
   let missing = $state(false);
+  let paging = $state(false);
+  let scrollEl = $state<HTMLDivElement | null>(null);
 
   $effect(() => {
     const passage = source;
     missing = false;
-    if (passage.body) {
-      body = passage.body;
-      return;
-    }
-    body = "";
+    excerpt = null;
     if (!passage.shelfId || !passage.documentId) {
       missing = true;
       return;
     }
     let cancelled = false;
     api
-      .documentText(passage.shelfId, passage.documentId)
-      .then((text) => {
-        if (!cancelled) body = text;
+      .documentText(passage.shelfId, passage.documentId, {
+        page: passage.pageStart,
+        section: passage.section,
+        around: passage.body,
+      })
+      .then((window) => {
+        if (!cancelled) excerpt = window;
       })
       .catch(() => {
         if (!cancelled) missing = true;
@@ -51,6 +52,23 @@
     if (source.section) parts.push(source.section);
     return parts.join(" · ");
   });
+
+  const hasBefore = $derived(!!excerpt && excerpt.startChar > 0);
+  const hasAfter = $derived(!!excerpt && excerpt.endChar < excerpt.totalChars);
+  const paged = $derived(hasBefore || hasAfter);
+
+  async function loadFrom(startChar: number) {
+    if (!source.shelfId || !source.documentId || paging) return;
+    paging = true;
+    try {
+      excerpt = await api.documentText(source.shelfId, source.documentId, { startChar });
+      scrollEl?.scrollTo(0, 0);
+    } catch (error) {
+      notifyInvokeError(error);
+    } finally {
+      paging = false;
+    }
+  }
 </script>
 
 <div
@@ -84,9 +102,9 @@
         ><X size={15} /></button
       >
     </div>
-    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-      {#if body}
-        <Markdown text={body} />
+    <div bind:this={scrollEl} class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      {#if excerpt}
+        <Markdown text={excerpt.text} />
       {:else if missing}
         <p class="text-[13px] text-ink-soft">This file isn't available.</p>
       {:else}
@@ -97,7 +115,31 @@
       {/if}
     </div>
     <div class="flex flex-col gap-2 border-t border-paper-line px-3 py-2.5">
-      <CopyActions text={body} />
+      {#if paged}
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-[12px] text-ink-soft">Part of this file</p>
+          <div class="flex gap-1">
+            <button
+              type="button"
+              class="btn-ghost !py-1 !text-[11.5px]"
+              disabled={!hasBefore || paging}
+              onclick={() =>
+                excerpt && loadFrom(Math.max(0, excerpt.startChar - excerpt.windowChars))}
+            >
+              Earlier
+            </button>
+            <button
+              type="button"
+              class="btn-ghost !py-1 !text-[11.5px]"
+              disabled={!hasAfter || paging}
+              onclick={() => excerpt && loadFrom(excerpt.endChar)}
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      {/if}
+      <CopyActions text={excerpt?.text ?? ""} />
       <div class="grid grid-cols-2 gap-1.5">
         <button
           type="button"

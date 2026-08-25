@@ -17,6 +17,7 @@
 //! size changes while hashing, ingest waits and retries once.
 
 pub mod card;
+pub mod excerpt;
 pub mod extract;
 pub mod passages;
 

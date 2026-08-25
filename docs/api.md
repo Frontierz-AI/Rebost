@@ -32,7 +32,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `pick_files` | — | `string[] \| null` (null if cancelled; returned paths are allowlisted for a following `shelf_import_paths`) |
 | `shelf_documents` | `shelfId` | `DocumentMeta[]` |
 | `document_card` | `shelfId`, `docId` | `Card` |
-| `document_text` | `shelfId`, `docId` | extracted text (capped) |
+| `document_text` | `shelfId`, `docId`, `startChar?`, `page?`, `section?`, `around?` | window of extracted text (`text`, `startChar`, `endChar`, `totalChars`, `windowChars`) |
 | `document_reprocess` | `shelfId`, `docId` | `()` |
 | `shelf_retry_failed` | `shelfId` | `u32` (how many failed files were queued again) |
 | `open_original` | `path` | `()` (allowlisted Shelf paths only) |

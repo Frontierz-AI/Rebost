@@ -6,6 +6,14 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.9] - 2026-08-25
+
+### Changed
+
+- First launch offers an AI sized for the machine's memory, and the suggestion now uses more of that memory when the machine has it. The pick is Qwen3.8 27B on 32 GB or more, Ornith-1.5 9B on 16 to 24 GB, Qwen3.5 4B on 8 to 12 GB, and Qwen3.5 2B on about 6 GB.
+- Settings still shows two more suggestions that are not already installed. The first extra is a stronger smaller pick from another family. The second is the nearest other family that still fits. A machine offered Qwen3.8 27B sees Ornith-1.5 9B and Muse Glimmer; one offered Ornith-1.5 9B sees Qwen3.5 4B and Ministral 3 8B; one offered Qwen3.5 4B sees Ministral 3 3B and Phi-4 Mini.
+- Opening a citation, or View the text on a file, shows a window around that spot instead of the whole file. Earlier and Later page through the rest.
+
 ## [0.8.8] - 2026-08-22
 
 ### Added
@@ -450,7 +458,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.8...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.9...HEAD
+[0.8.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.8...v0.8.9
 [0.8.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.6...v0.8.8
 [0.8.6]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.5...v0.8.6
 [0.8.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.4...v0.8.5

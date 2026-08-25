@@ -535,18 +535,38 @@ pub fn document_card(
     crate::ingest::card::read_card(&ctx.paths.card_path(&shelf_id, &doc_id)).map_err(friendly)
 }
 
-/// Read extracted text for the drawer (capped).
+/// Read a window of extracted text for the source panel or drawer.
 #[tauri::command]
 pub fn document_text(
     ctx: State<'_, Arc<Ctx>>,
     shelf_id: String,
     doc_id: String,
-) -> CmdResult<String> {
+    start_char: Option<u32>,
+    page: Option<u32>,
+    section: Option<String>,
+    around: Option<String>,
+) -> CmdResult<crate::ingest::excerpt::DocumentExcerpt> {
     require_id(&shelf_id)?;
     require_id(&doc_id)?;
     let text = std::fs::read_to_string(ctx.paths.extracted_path(&shelf_id, &doc_id))
         .map_err(|_| "No extracted text yet.".to_string())?;
-    Ok(text.chars().take(400_000).collect())
+    let pages = crate::core::read_lock(&ctx.library)
+        .document(&shelf_id, &doc_id)
+        .and_then(|doc| doc.pages);
+    let mut around = around.filter(|s| !s.trim().is_empty());
+    if around.is_none() && start_char.is_none() {
+        around = ctx.search.passage_needle(&doc_id, page, section.as_deref());
+    }
+    Ok(crate::ingest::excerpt::from_text(
+        &text,
+        start_char,
+        &crate::ingest::excerpt::LocateHint {
+            page,
+            pages,
+            section,
+            around,
+        },
+    ))
 }
 
 /// Force a document through ingest again.

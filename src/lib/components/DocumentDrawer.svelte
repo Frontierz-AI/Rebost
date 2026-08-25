@@ -7,6 +7,7 @@
     piiLabel,
     type Card,
     type DocumentMeta,
+    type DocumentTextWindow,
   } from "$lib/api";
   import CopyActions from "$lib/components/CopyActions.svelte";
   import { notifyInvokeError } from "$lib/stores.svelte";
@@ -32,13 +33,29 @@
     return document.error ?? "Couldn't read";
   }
 
-  async function viewExtracted() {
+  let excerpt = $state<DocumentTextWindow | null>(null);
+  let paging = $state(false);
+  let scrollEl = $state<HTMLDivElement | null>(null);
+
+  $effect(() => {
+    if (extractedText === null) excerpt = null;
+  });
+
+  async function viewExtracted(startChar?: number) {
+    paging = startChar !== undefined;
     try {
-      extractedText = await api.documentText(doc.shelfId, doc.id);
+      excerpt = await api.documentText(doc.shelfId, doc.id, { startChar });
+      extractedText = excerpt.text;
+      scrollEl?.scrollTo(0, 0);
     } catch (error) {
       notifyInvokeError(error);
+    } finally {
+      paging = false;
     }
   }
+
+  const hasBefore = $derived(!!excerpt && excerpt.startChar > 0);
+  const hasAfter = $derived(!!excerpt && excerpt.endChar < excerpt.totalChars);
 </script>
 
 <div
@@ -84,9 +101,9 @@
       </div>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+    <div bind:this={scrollEl} class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
       {#if extractedText !== null}
-        <div class="mb-3 flex items-center justify-between">
+        <div class="mb-3 flex items-center justify-between gap-2">
           <span class="label">Text as Rebost reads it</span>
           <button
             type="button"
@@ -94,6 +111,30 @@
             onclick={() => (extractedText = null)}>Back to details</button
           >
         </div>
+        {#if hasBefore || hasAfter}
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <p class="text-[12px] text-ink-soft">Part of this file</p>
+            <div class="flex gap-1">
+              <button
+                type="button"
+                class="btn-ghost !py-1 !text-[11.5px]"
+                disabled={!hasBefore || paging}
+                onclick={() =>
+                  excerpt && viewExtracted(Math.max(0, excerpt.startChar - excerpt.windowChars))}
+              >
+                Earlier
+              </button>
+              <button
+                type="button"
+                class="btn-ghost !py-1 !text-[11.5px]"
+                disabled={!hasAfter || paging}
+                onclick={() => excerpt && viewExtracted(excerpt.endChar)}
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        {/if}
         <pre
           class="rounded-lg border border-paper-line bg-paper-soft p-3 text-[11.5px] leading-relaxed whitespace-pre-wrap">{extractedText}</pre>
       {:else}
@@ -201,7 +242,7 @@
           <button
             type="button"
             class="btn-outline shrink-0 !text-[12px] whitespace-nowrap"
-            onclick={viewExtracted}
+            onclick={() => viewExtracted()}
           >
             <ScanText size={13} class="shrink-0" aria-hidden="true" /> View the text
           </button>

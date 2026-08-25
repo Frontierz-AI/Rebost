@@ -32,6 +32,7 @@ enum ModelFamily {
     Granite,
     Gpt,
     Muse,
+    Phi,
     Other,
 }
 
@@ -268,7 +269,8 @@ fn native_ctx(hint: &ModelHint, family: ModelFamily, class: ModelClass) -> u32 {
             | ModelFamily::Gpt
             | ModelFamily::Granite
             | ModelFamily::Muse
-            | ModelFamily::Gemma,
+            | ModelFamily::Gemma
+            | ModelFamily::Phi,
             _,
         ) => 32768,
         (ModelFamily::Other, _) => 8192,
@@ -338,6 +340,9 @@ fn param_billions(text: &str) -> Option<f32> {
     {
         return Some(4.0);
     }
+    if lower.contains("phi-4-mini") || lower.contains("phi4-mini") || lower.contains("phi4_mini") {
+        return Some(4.0);
+    }
     let bytes = lower.as_bytes();
     let mut i = 0;
     while i < bytes.len() {
@@ -366,7 +371,7 @@ fn param_billions(text: &str) -> Option<f32> {
 
 fn infer_family(name: &str, file: &str) -> ModelFamily {
     let hay = format!("{name} {file}").to_ascii_lowercase();
-    if hay.contains("qwen") {
+    if hay.contains("qwen") || hay.contains("ornith") {
         ModelFamily::Qwen
     } else if hay.contains("ministral") || hay.contains("mistral") {
         ModelFamily::Mistral
@@ -378,6 +383,8 @@ fn infer_family(name: &str, file: &str) -> ModelFamily {
         ModelFamily::Gpt
     } else if hay.contains("muse") || hay.contains("glimmer") {
         ModelFamily::Muse
+    } else if hay.contains("phi") {
+        ModelFamily::Phi
     } else {
         ModelFamily::Other
     }
@@ -598,6 +605,18 @@ mod tests {
         assert_eq!(
             classify_model("gpt-oss 20B", "gpt-oss-20b.gguf", 11086 * MIB),
             ModelClass::Mid
+        );
+        assert_eq!(
+            classify_model("Ornith-1.5 9B", "Ornith-1.5-9B-Q4_K_M.gguf", 5512 * MIB),
+            ModelClass::Small
+        );
+        assert_eq!(
+            classify_model("Qwen3.5 4B", "Qwen3.5-4B-Q4_K_M.gguf", 2614 * MIB),
+            ModelClass::Small
+        );
+        assert_eq!(
+            classify_model("Phi-4 Mini", "Phi-4-mini-instruct-Q4_K_M.gguf", 2376 * MIB),
+            ModelClass::Small
         );
     }
 

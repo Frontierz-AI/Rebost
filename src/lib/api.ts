@@ -94,6 +94,14 @@ export interface SourcePassage {
   score: number;
 }
 
+export interface DocumentTextWindow {
+  text: string;
+  startChar: number;
+  endChar: number;
+  totalChars: number;
+  windowChars: number;
+}
+
 export interface ThreadMeta {
   id: string;
   title: string;
@@ -407,8 +415,19 @@ export const api = {
   shelfDocuments: (shelfId: string) => invoke<DocumentMeta[]>("shelf_documents", { shelfId }),
   documentCard: (shelfId: string, docId: string) =>
     invoke<Card>("document_card", { shelfId, docId }),
-  documentText: (shelfId: string, docId: string) =>
-    invoke<string>("document_text", { shelfId, docId }),
+  documentText: (
+    shelfId: string,
+    docId: string,
+    opts?: { startChar?: number; page?: number; section?: string; around?: string },
+  ) =>
+    invoke<DocumentTextWindow>("document_text", {
+      shelfId,
+      docId,
+      startChar: opts?.startChar ?? null,
+      page: opts?.page ?? null,
+      section: opts?.section ?? null,
+      around: opts?.around ?? null,
+    }),
   documentReprocess: (shelfId: string, docId: string) =>
     invoke<void>("document_reprocess", { shelfId, docId }),
   shelfRetryFailed: (shelfId: string) => invoke<number>("shelf_retry_failed", { shelfId }),

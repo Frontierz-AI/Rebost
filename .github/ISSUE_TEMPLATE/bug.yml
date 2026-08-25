@@ -21,7 +21,7 @@ body:
     id: version
     attributes:
       label: Version
-      placeholder: "0.8.8 / git SHA / tauri dev"
+      placeholder: "0.8.9 / git SHA / tauri dev"
     validations:
       required: true
   - type: input

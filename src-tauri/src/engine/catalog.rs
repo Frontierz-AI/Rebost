@@ -50,7 +50,7 @@ impl MachineProfile {
     /// RAM the model may use, leaving headroom for the OS, Rebost, Shelves,
     /// search and OCR.
     pub fn model_budget_bytes(&self) -> u64 {
-        (self.total_ram_bytes as f64 * 0.55) as u64
+        (self.total_ram_bytes as f64 * 0.65) as u64
     }
 }
 
@@ -76,13 +76,22 @@ pub fn runtime_need_bytes(file_bytes: u64) -> u64 {
 /// Rows are hardcoded, never fetched. They are general document models
 /// (mixed-language shelves, chat, recipes). Coding checkpoints and
 /// single-language specialists are not listed; Explore can still find them.
-/// Order is capability, highest first. The default install is the first
-/// `Documents` row that fits RAM.
+///
+/// Order is capability, highest first (`CatalogStanding::sort_key`), then
+/// smaller same-family fallbacks so lower RAM bands still have a pick.
+/// The default install is the first `Documents` row that fits RAM.
+///
+/// Missing an Artificial Analysis Intelligence Index is not a skip. A
+/// new model may sit above scored rows when published benches show a
+/// clear lead over the current pick for the bands it would take; mark
+/// that `CatalogStanding::BenchLead`. The app never fetches AA or
+/// leaderboards — this standing is chosen on the dev machine.
 pub struct CatalogEntry {
     pub name: &'static str,
     pub family: &'static str,
     pub provider: &'static str,
     pub work: CatalogWork,
+    pub standing: CatalogStanding,
     pub hf_repo: &'static str,
     pub approx_bytes: u64,
     pub license: &'static str,
@@ -98,12 +107,34 @@ pub enum CatalogWork {
     Code,
 }
 
+/// Why a catalog row sits where it does. Higher [`sort_key`](Self::sort_key)
+/// is stronger.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CatalogStanding {
+    /// Artificial Analysis Intelligence Index.
+    Scored(u8),
+    /// No Intelligence Index yet. Benches beat the scored document pick
+    /// whose index is `above`; the row sorts just above that score.
+    BenchLead { above: u8 },
+}
+
+impl CatalogStanding {
+    /// Family heads in `CATALOG` must appear in this order, descending.
+    pub const fn sort_key(self) -> u16 {
+        match self {
+            Self::Scored(score) => (score as u16) * 2,
+            Self::BenchLead { above } => (above as u16) * 2 + 1,
+        }
+    }
+}
+
 pub const CATALOG: &[CatalogEntry] = &[
     CatalogEntry {
         name: "Qwen3.8 27B",
         family: "Qwen",
         provider: "Alibaba",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(52),
         hf_repo: "unsloth/Qwen3.8-27B-GGUF",
         approx_bytes: 16314 * MIB,
         license: "Apache-2.0",
@@ -115,6 +146,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Muse",
         provider: "Meta",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(35),
         hf_repo: "unsloth/Muse-Glimmer-30B-GGUF",
         approx_bytes: 15143 * MIB,
         license: "Apache-2.0",
@@ -126,6 +158,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Gemma",
         provider: "Google",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(30),
         hf_repo: "unsloth/gemma-4-31B-it-GGUF",
         approx_bytes: 17475 * MIB,
         license: "Apache-2.0",
@@ -133,21 +166,47 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "Larger Gemma from Google. Big download.",
     },
     CatalogEntry {
+        name: "Ornith-1.5 9B",
+        family: "Ornith",
+        provider: "DeepReinforce",
+        work: CatalogWork::Documents,
+        standing: CatalogStanding::BenchLead { above: 22 },
+        hf_repo: "ornith-ai/Ornith-1.5-9B-GGUF",
+        approx_bytes: 5512 * MIB,
+        license: "MIT",
+        released: "2026-08",
+        blurb: "Many languages. Documents and everyday writing on computers with 16 GB of memory.",
+    },
+    CatalogEntry {
         name: "Gemma 4 12B",
         family: "Gemma",
         provider: "Google",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(22),
         hf_repo: "unsloth/gemma-4-12b-it-GGUF",
         approx_bytes: 6792 * MIB,
         license: "Apache-2.0",
         released: "2026-05",
-        blurb: "From Google. Documents and chat on computers with 24–32 GB of memory.",
+        blurb: "From Google. Documents and chat.",
+    },
+    CatalogEntry {
+        name: "Qwen3.5 4B",
+        family: "Qwen",
+        provider: "Alibaba",
+        work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(20),
+        hf_repo: "unsloth/Qwen3.5-4B-GGUF",
+        approx_bytes: 2614 * MIB,
+        license: "Apache-2.0",
+        released: "2026-03",
+        blurb: "Many languages. Documents and everyday writing on computers with 8 GB of memory.",
     },
     CatalogEntry {
         name: "gpt-oss 20B",
         family: "GPT",
         provider: "OpenAI",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(15),
         hf_repo: "unsloth/gpt-oss-20b-GGUF",
         approx_bytes: 11086 * MIB,
         license: "Apache-2.0",
@@ -159,17 +218,19 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Gemma",
         provider: "Google",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(12),
         hf_repo: "unsloth/gemma-4-E4B-it-GGUF",
         approx_bytes: 4747 * MIB,
         license: "Apache-2.0",
         released: "2026-03",
-        blurb: "From Google. Sized for 16 GB of memory.",
+        blurb: "From Google. A smaller Gemma for tighter memory.",
     },
     CatalogEntry {
         name: "Ministral 3 14B",
         family: "Mistral",
         provider: "Mistral",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(11),
         hf_repo: "unsloth/Ministral-3-14B-Instruct-2512-GGUF",
         approx_bytes: 7857 * MIB,
         license: "Apache-2.0",
@@ -181,6 +242,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Mistral",
         provider: "Mistral",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(9),
         hf_repo: "unsloth/Ministral-3-8B-Instruct-2512-GGUF",
         approx_bytes: 4958 * MIB,
         license: "Apache-2.0",
@@ -192,6 +254,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Mistral",
         provider: "Mistral",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(7),
         hf_repo: "unsloth/Ministral-3-3B-Instruct-2512-GGUF",
         approx_bytes: 2047 * MIB,
         license: "Apache-2.0",
@@ -203,6 +266,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Qwen",
         provider: "Alibaba",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(7),
         hf_repo: "unsloth/Qwen3.5-2B-GGUF",
         approx_bytes: 1222 * MIB,
         license: "Apache-2.0",
@@ -210,10 +274,23 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "For trying Rebost without waiting.",
     },
     CatalogEntry {
+        name: "Phi-4 Mini",
+        family: "Phi",
+        provider: "Microsoft",
+        work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(6),
+        hf_repo: "unsloth/Phi-4-mini-instruct-GGUF",
+        approx_bytes: 2376 * MIB,
+        license: "MIT",
+        released: "2024-12",
+        blurb: "From Microsoft. Careful answers in a small file.",
+    },
+    CatalogEntry {
         name: "Granite 4.1 3B",
         family: "Granite",
         provider: "IBM",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(4),
         hf_repo: "unsloth/granite-4.1-3b-GGUF",
         approx_bytes: 2002 * MIB,
         license: "Apache-2.0",
@@ -225,6 +302,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         family: "Gemma",
         provider: "Google",
         work: CatalogWork::Documents,
+        standing: CatalogStanding::Scored(1),
         hf_repo: "unsloth/gemma-3-1b-it-GGUF",
         approx_bytes: 769 * MIB,
         license: "Gemma",
@@ -291,32 +369,27 @@ fn pick_index(profile: &MachineProfile) -> usize {
 }
 
 /// Recommended model: the first document-work catalog row that fits in RAM
-/// with headroom (catalog is capability order).
+/// with headroom. Catalog order is capability (`CatalogStanding`), not a
+/// live leaderboard fetch.
 pub fn recommend(profile: &MachineProfile) -> Recommendation {
     to_recommendation(&CATALOG[pick_index(profile)])
 }
 
-/// Up to `n` smaller catalog models that also fit, each a different family.
-/// First is a bit smaller (~40–85% of the primary file); second is
-/// significantly smaller (≤40%) when one exists.
-pub fn smaller_alternatives(profile: &MachineProfile, n: usize) -> Vec<Recommendation> {
-    if n == 0 {
-        return Vec::new();
-    }
-    let primary = &CATALOG[pick_index(profile)];
-    let bit_max = primary.approx_bytes.saturating_mul(85) / 100;
-    let bit_min = primary.approx_bytes.saturating_mul(40) / 100;
-    let significant_max = primary.approx_bytes.saturating_mul(40) / 100;
-
+/// Other-family document rows that fit and are a smaller download
+/// than the primary. One sibling per family (the largest that still fits).
+fn alt_candidates<'a>(
+    profile: &'a MachineProfile,
+    primary: &'a CatalogEntry,
+) -> Vec<&'a CatalogEntry> {
     let mut by_family: Vec<&CatalogEntry> = Vec::new();
     for entry in CATALOG {
         if entry.name == primary.name || entry.family == primary.family {
             continue;
         }
-        if !is_default_work(entry) {
+        if !is_default_work(entry) || !fits(entry, profile) {
             continue;
         }
-        if !fits(entry, profile) || entry.approx_bytes > bit_max {
+        if entry.approx_bytes >= primary.approx_bytes {
             continue;
         }
         match by_family
@@ -331,28 +404,58 @@ pub fn smaller_alternatives(profile: &MachineProfile, n: usize) -> Vec<Recommend
             None => by_family.push(entry),
         }
     }
-    by_family.sort_by_key(|b| std::cmp::Reverse(b.approx_bytes));
+    by_family
+}
+
+/// Up to `n` smaller catalog models that also fit, each a different family.
+/// First is the strongest *step-down* (file ≤80% of the primary) so a
+/// near-twin like Muse does not beat Ornith next to Qwen 27B. If nothing
+/// is that much smaller, first is the strongest smaller row. Second is
+/// the remaining row whose file is closest to the primary.
+pub fn smaller_alternatives(profile: &MachineProfile, n: usize) -> Vec<Recommendation> {
+    if n == 0 {
+        return Vec::new();
+    }
+    let primary = &CATALOG[pick_index(profile)];
+    let candidates = alt_candidates(profile, primary);
+    let step_max = primary.approx_bytes.saturating_mul(80) / 100;
+    let step_downs: Vec<&CatalogEntry> = candidates
+        .iter()
+        .copied()
+        .filter(|entry| entry.approx_bytes <= step_max)
+        .collect();
+    let capable_pool = if step_downs.is_empty() {
+        candidates.as_slice()
+    } else {
+        step_downs.as_slice()
+    };
 
     let mut chosen: Vec<&CatalogEntry> = Vec::new();
-    if let Some(bit) = by_family
+    if let Some(capable) = capable_pool
         .iter()
-        .find(|entry| entry.approx_bytes >= bit_min)
+        .max_by(|a, b| {
+            a.standing
+                .sort_key()
+                .cmp(&b.standing.sort_key())
+                .then(a.approx_bytes.cmp(&b.approx_bytes))
+        })
         .copied()
-        .or_else(|| by_family.first().copied())
     {
-        chosen.push(bit);
+        chosen.push(capable);
     }
     if n >= 2 && !chosen.is_empty() {
-        if let Some(significant) = by_family
+        if let Some(near) = candidates
             .iter()
+            .filter(|entry| entry.name != chosen[0].name)
+            .min_by(|a, b| {
+                let da = a.approx_bytes.abs_diff(primary.approx_bytes);
+                let db = b.approx_bytes.abs_diff(primary.approx_bytes);
+                da.cmp(&db)
+                    .then(b.standing.sort_key().cmp(&a.standing.sort_key()))
+            })
             .copied()
-            .find(|entry| entry.name != chosen[0].name && entry.approx_bytes <= significant_max)
         {
-            chosen.push(significant);
-        } else if let Some(fallback) = by_family.last().copied() {
-            if chosen.iter().all(|picked| picked.name != fallback.name) {
-                chosen.push(fallback);
-            }
+            chosen.push(near);
         }
     }
     chosen.truncate(n);
@@ -410,36 +513,91 @@ mod tests {
             os_arch: "test".into(),
         };
         assert_eq!(recommend(&mk(48)).name, "Qwen3.8 27B");
-        assert_eq!(recommend(&mk(32)).name, "Gemma 4 12B");
-        assert_eq!(recommend(&mk(24)).name, "Gemma 4 12B");
-        assert_eq!(recommend(&mk(16)).name, "Gemma 4 E4B");
-        assert_eq!(recommend(&mk(8)).name, "Ministral 3 3B");
+        assert_eq!(recommend(&mk(32)).name, "Qwen3.8 27B");
+        assert_eq!(recommend(&mk(24)).name, "Ornith-1.5 9B");
+        assert_eq!(recommend(&mk(16)).name, "Ornith-1.5 9B");
+        assert_eq!(recommend(&mk(8)).name, "Qwen3.5 4B");
 
         let alts48: Vec<_> = smaller_alternatives(&mk(48), 2)
             .into_iter()
             .map(|r| r.name)
             .collect();
-        assert_eq!(alts48, ["gpt-oss 20B", "Granite 4.1 3B"]);
+        assert_eq!(alts48, ["Ornith-1.5 9B", "Muse Glimmer"]);
         let alts24: Vec<_> = smaller_alternatives(&mk(24), 2)
             .into_iter()
             .map(|r| r.name)
             .collect();
-        assert_eq!(alts24, ["Ministral 3 8B", "Granite 4.1 3B"]);
+        assert_eq!(alts24, ["Qwen3.5 4B", "Ministral 3 8B"]);
         assert_eq!(
             smaller_alternatives(&mk(16), 2)
                 .into_iter()
                 .map(|r| r.name)
                 .collect::<Vec<_>>(),
-            ["Ministral 3 3B", "Qwen3.5 2B"]
+            ["Qwen3.5 4B", "Ministral 3 8B"]
         );
         assert_eq!(
             smaller_alternatives(&mk(8), 2)
                 .into_iter()
                 .map(|r| r.name)
                 .collect::<Vec<_>>(),
-            ["Qwen3.5 2B", "Gemma 3 1B"]
+            ["Ministral 3 3B", "Phi-4 Mini"]
         );
         assert!(smaller_alternatives(&mk(4), 2).is_empty());
+    }
+
+    #[test]
+    fn family_heads_descend_by_standing() {
+        let mut seen = std::collections::HashSet::new();
+        let mut keys = Vec::new();
+        for entry in CATALOG {
+            if seen.insert(entry.family) {
+                keys.push((entry.family, entry.standing.sort_key()));
+            }
+        }
+        let mut sorted = keys.clone();
+        sorted.sort_by_key(|(_, key)| std::cmp::Reverse(*key));
+        assert_eq!(
+            keys, sorted,
+            "first row of each family must be capability order"
+        );
+    }
+
+    #[test]
+    fn bench_lead_sorts_just_above_the_score_it_beats() {
+        assert!(
+            CatalogStanding::BenchLead { above: 22 }.sort_key()
+                > CatalogStanding::Scored(22).sort_key()
+        );
+        assert!(
+            CatalogStanding::BenchLead { above: 22 }.sort_key()
+                < CatalogStanding::Scored(23).sort_key()
+        );
+    }
+
+    #[test]
+    fn ornith_sits_above_gemma_12b_e4b_and_gpt_oss() {
+        let standing = |name: &str| {
+            CATALOG
+                .iter()
+                .find(|entry| entry.name == name)
+                .map(|entry| entry.standing.sort_key())
+                .expect(name)
+        };
+        let ornith = standing("Ornith-1.5 9B");
+        assert!(ornith > standing("Gemma 4 12B"));
+        assert!(ornith > standing("Gemma 4 E4B"));
+        assert!(ornith > standing("gpt-oss 20B"));
+        assert!(standing("Qwen3.5 4B") < standing("Gemma 4 12B"));
+        assert!(standing("Qwen3.5 4B") > standing("gpt-oss 20B"));
+        assert_eq!(
+            CATALOG
+                .iter()
+                .position(|entry| entry.name == "Ornith-1.5 9B"),
+            CATALOG
+                .iter()
+                .position(|entry| entry.name == "Gemma 4 31B")
+                .map(|i| i + 1)
+        );
     }
 
     #[test]
@@ -468,14 +626,14 @@ mod tests {
             .into_iter()
             .map(|r| r.name)
             .collect();
-        assert_eq!(none, ["Qwen3.8 27B", "gpt-oss 20B"]);
+        assert_eq!(none, ["Qwen3.8 27B", "Ornith-1.5 9B"]);
 
         let installed = recommend(&mk(48)).reference;
         let skipped: Vec<_> = uninstalled_suggestions(&mk(48), Some(&installed), 2)
             .into_iter()
             .map(|r| r.name)
             .collect();
-        assert_eq!(skipped, ["gpt-oss 20B", "Granite 4.1 3B"]);
+        assert_eq!(skipped, ["Ornith-1.5 9B", "Muse Glimmer"]);
         assert!(uninstalled_suggestions(&mk(4), None, 2).is_empty());
     }
 
