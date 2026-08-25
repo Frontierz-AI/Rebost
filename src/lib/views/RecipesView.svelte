@@ -130,7 +130,7 @@
         class="input mb-2.5"
         placeholder="Name, like Weekly team update"
         bind:value={formName}
-        autofocus
+        autofocus={!import.meta.env.VITE_SNAPSHOT_PATH}
       />
       <label class="sr-only" for="recipe-prompt">Recipe prompt</label>
       <textarea

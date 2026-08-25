@@ -85,7 +85,10 @@
     const first = documents[0];
     if (!first) return;
     openedStartDoc = true;
-    void openFile(first);
+    // Give the table a moment to paint before the drawer (screenshot runner).
+    window.setTimeout(() => {
+      void openFile(first);
+    }, 800);
   });
 
   // Native drag & drop of files onto the shelf detail.

@@ -7,103 +7,99 @@ pub struct Avatar {
     pub name: &'static str,
 }
 
-/// Spoken name is the animal, not the filename. Numbered variants share a name.
+/// Spoken name is the food, not the filename.
 pub const AVATARS: &[Avatar] = &[
     Avatar {
-        id: "alpaca",
-        name: "Alpaca",
+        id: "apple",
+        name: "Apple",
     },
     Avatar {
-        id: "arctic-fox",
-        name: "Arctic fox",
+        id: "artichoke",
+        name: "Artichoke",
     },
     Avatar {
-        id: "bear",
-        name: "Bear",
+        id: "bread",
+        name: "Bread",
     },
     Avatar {
-        id: "cheetah",
-        name: "Cheetah",
+        id: "cheese",
+        name: "Cheese",
     },
     Avatar {
-        id: "cheetah-2",
-        name: "Cheetah",
+        id: "eggplant",
+        name: "Eggplant",
     },
     Avatar {
-        id: "chimpanzee",
-        name: "Chimpanzee",
+        id: "fig",
+        name: "Fig",
     },
     Avatar {
-        id: "dolphin",
-        name: "Dolphin",
+        id: "garlic",
+        name: "Garlic",
     },
     Avatar {
-        id: "fennec",
-        name: "Fennec",
+        id: "grape",
+        name: "Grape",
     },
     Avatar {
-        id: "gazelle",
-        name: "Gazelle",
+        id: "hazelnut",
+        name: "Hazelnut",
     },
     Avatar {
-        id: "gazelle-2",
-        name: "Gazelle",
+        id: "honey",
+        name: "Honey",
     },
     Avatar {
-        id: "giraffe",
-        name: "Giraffe",
+        id: "lemon",
+        name: "Lemon",
     },
     Avatar {
-        id: "koala",
-        name: "Koala",
+        id: "mushroom",
+        name: "Mushroom",
     },
     Avatar {
-        id: "llama",
-        name: "Llama",
+        id: "onion",
+        name: "Onion",
     },
     Avatar {
-        id: "lynx",
-        name: "Lynx",
+        id: "orange",
+        name: "Orange",
     },
     Avatar {
-        id: "panda",
-        name: "Panda",
+        id: "peach",
+        name: "Peach",
     },
     Avatar {
-        id: "raccoon",
-        name: "Raccoon",
+        id: "pear",
+        name: "Pear",
     },
     Avatar {
-        id: "red-panda",
-        name: "Red panda",
+        id: "pepper",
+        name: "Pepper",
     },
     Avatar {
-        id: "red-panda-2",
-        name: "Red panda",
+        id: "pomegranate",
+        name: "Pomegranate",
     },
     Avatar {
-        id: "retriever",
-        name: "Retriever",
+        id: "potato",
+        name: "Potato",
     },
     Avatar {
-        id: "shiba",
-        name: "Shiba",
+        id: "pumpkin",
+        name: "Pumpkin",
     },
     Avatar {
-        id: "snow-leopard",
-        name: "Snow leopard",
+        id: "quince",
+        name: "Quince",
     },
     Avatar {
-        id: "snow-leopard-2",
-        name: "Snow leopard",
+        id: "tomato",
+        name: "Tomato",
     },
     Avatar {
-        id: "tiger",
-        name: "Tiger",
-    },
-    Avatar {
-        id: "wolf",
-        name: "Wolf",
+        id: "walnut",
+        name: "Walnut",
     },
 ];
 
@@ -139,9 +135,8 @@ mod tests {
 
     #[test]
     fn names_match_catalog_ids() {
-        assert_eq!(name_for("cheetah"), Some("Cheetah"));
-        assert_eq!(name_for("cheetah-2"), Some("Cheetah"));
-        assert_eq!(name_for("arctic-fox"), Some("Arctic fox"));
+        assert_eq!(name_for("tomato"), Some("Tomato"));
+        assert_eq!(name_for("pomegranate"), Some("Pomegranate"));
         assert_eq!(name_for("nope"), None);
     }
 

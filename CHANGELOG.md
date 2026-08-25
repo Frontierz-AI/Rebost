@@ -6,6 +6,13 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.10] - 2026-08-25
+
+### Changed
+
+- Conversation faces are food instead of animals. A conversation that still had an animal face gets a food one. Chat uses that name if it introduces itself.
+- The README screenshots match the current windows.
+
 ## [0.8.9] - 2026-08-25
 
 ### Changed
@@ -458,7 +465,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.9...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.10...HEAD
+[0.8.10]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.9...v0.8.10
 [0.8.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.8...v0.8.9
 [0.8.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.6...v0.8.8
 [0.8.6]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.5...v0.8.6

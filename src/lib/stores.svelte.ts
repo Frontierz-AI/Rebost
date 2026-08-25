@@ -317,7 +317,7 @@ export async function bootstrap() {
     const startThread = Number(import.meta.env.VITE_START_THREAD ?? "0");
     const index = startThread >= 1 ? startThread - 1 : 0;
     const thread = app.threads[index] ?? app.threads[0];
-    if (thread) openThread(thread.id).catch(notifyInvokeError);
+    if (thread) await openThread(thread.id);
   } else {
     chatState.selectedShelfId = preferredShelfForNew();
   }

@@ -1,27 +1,26 @@
-import alpaca from "../assets/avatars/Alpaca.jpg";
-import arcticFox from "../assets/avatars/Arcticfox.jpg";
-import bear from "../assets/avatars/Bear.jpg";
-import cheetah from "../assets/avatars/Cheetah.jpg";
-import cheetah2 from "../assets/avatars/Cheetah2.jpg";
-import chimpanzee from "../assets/avatars/Chimpanzee.jpg";
-import dolphin from "../assets/avatars/Dolphin.jpg";
-import fennec from "../assets/avatars/Fennec.jpg";
-import gazelle from "../assets/avatars/Gazelle.jpg";
-import gazelle2 from "../assets/avatars/Gazelle2.jpg";
-import giraffe from "../assets/avatars/Giraffe.jpg";
-import koala from "../assets/avatars/Koala.jpg";
-import llama from "../assets/avatars/Llama.jpg";
-import lynx from "../assets/avatars/Lynx.jpg";
-import panda from "../assets/avatars/Panda.jpg";
-import raccoon from "../assets/avatars/Raccoon.jpg";
-import redPanda from "../assets/avatars/Redpanda.jpg";
-import redPanda2 from "../assets/avatars/Redpanda2.jpg";
-import retriever from "../assets/avatars/Retriever.jpg";
-import shiba from "../assets/avatars/Shiba.jpg";
-import snowLeopard from "../assets/avatars/Snowleopard.jpg";
-import snowLeopard2 from "../assets/avatars/Snowleopard2.jpg";
-import tiger from "../assets/avatars/Tiger.jpg";
-import wolf from "../assets/avatars/Wolf.jpg";
+import apple from "../assets/avatars/Apple.jpg";
+import artichoke from "../assets/avatars/Artichoke.jpg";
+import bread from "../assets/avatars/Bread.jpg";
+import cheese from "../assets/avatars/Cheese.jpg";
+import eggplant from "../assets/avatars/Eggplant.jpg";
+import fig from "../assets/avatars/Fig.jpg";
+import garlic from "../assets/avatars/Garlic.jpg";
+import grape from "../assets/avatars/Grape.jpg";
+import hazelnut from "../assets/avatars/Hazelnut.jpg";
+import honey from "../assets/avatars/Honey.jpg";
+import lemon from "../assets/avatars/Lemon.jpg";
+import mushroom from "../assets/avatars/Mushroom.jpg";
+import onion from "../assets/avatars/Onion.jpg";
+import orange from "../assets/avatars/Orange.jpg";
+import peach from "../assets/avatars/Peach.jpg";
+import pear from "../assets/avatars/Pear.jpg";
+import pepper from "../assets/avatars/Pepper.jpg";
+import pomegranate from "../assets/avatars/Pomegranate.jpg";
+import potato from "../assets/avatars/Potato.jpg";
+import pumpkin from "../assets/avatars/Pumpkin.jpg";
+import quince from "../assets/avatars/Quince.jpg";
+import tomato from "../assets/avatars/Tomato.jpg";
+import walnut from "../assets/avatars/Walnut.jpg";
 
 export type Avatar = {
   id: string;
@@ -30,30 +29,29 @@ export type Avatar = {
 };
 
 export const AVATARS: Avatar[] = [
-  { id: "alpaca", name: "Alpaca", src: alpaca },
-  { id: "arctic-fox", name: "Arctic fox", src: arcticFox },
-  { id: "bear", name: "Bear", src: bear },
-  { id: "cheetah", name: "Cheetah", src: cheetah },
-  { id: "cheetah-2", name: "Cheetah", src: cheetah2 },
-  { id: "chimpanzee", name: "Chimpanzee", src: chimpanzee },
-  { id: "dolphin", name: "Dolphin", src: dolphin },
-  { id: "fennec", name: "Fennec", src: fennec },
-  { id: "gazelle", name: "Gazelle", src: gazelle },
-  { id: "gazelle-2", name: "Gazelle", src: gazelle2 },
-  { id: "giraffe", name: "Giraffe", src: giraffe },
-  { id: "koala", name: "Koala", src: koala },
-  { id: "llama", name: "Llama", src: llama },
-  { id: "lynx", name: "Lynx", src: lynx },
-  { id: "panda", name: "Panda", src: panda },
-  { id: "raccoon", name: "Raccoon", src: raccoon },
-  { id: "red-panda", name: "Red panda", src: redPanda },
-  { id: "red-panda-2", name: "Red panda", src: redPanda2 },
-  { id: "retriever", name: "Retriever", src: retriever },
-  { id: "shiba", name: "Shiba", src: shiba },
-  { id: "snow-leopard", name: "Snow leopard", src: snowLeopard },
-  { id: "snow-leopard-2", name: "Snow leopard", src: snowLeopard2 },
-  { id: "tiger", name: "Tiger", src: tiger },
-  { id: "wolf", name: "Wolf", src: wolf },
+  { id: "apple", name: "Apple", src: apple },
+  { id: "artichoke", name: "Artichoke", src: artichoke },
+  { id: "bread", name: "Bread", src: bread },
+  { id: "cheese", name: "Cheese", src: cheese },
+  { id: "eggplant", name: "Eggplant", src: eggplant },
+  { id: "fig", name: "Fig", src: fig },
+  { id: "garlic", name: "Garlic", src: garlic },
+  { id: "grape", name: "Grape", src: grape },
+  { id: "hazelnut", name: "Hazelnut", src: hazelnut },
+  { id: "honey", name: "Honey", src: honey },
+  { id: "lemon", name: "Lemon", src: lemon },
+  { id: "mushroom", name: "Mushroom", src: mushroom },
+  { id: "onion", name: "Onion", src: onion },
+  { id: "orange", name: "Orange", src: orange },
+  { id: "peach", name: "Peach", src: peach },
+  { id: "pear", name: "Pear", src: pear },
+  { id: "pepper", name: "Pepper", src: pepper },
+  { id: "pomegranate", name: "Pomegranate", src: pomegranate },
+  { id: "potato", name: "Potato", src: potato },
+  { id: "pumpkin", name: "Pumpkin", src: pumpkin },
+  { id: "quince", name: "Quince", src: quince },
+  { id: "tomato", name: "Tomato", src: tomato },
+  { id: "walnut", name: "Walnut", src: walnut },
 ];
 
 const byId = new Map(AVATARS.map((avatar) => [avatar.id, avatar]));

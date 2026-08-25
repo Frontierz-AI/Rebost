@@ -1,6 +1,6 @@
 # Rebost accessibility reference
 
-Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.8.9, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
+Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.8.10, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
 
 ## Platform
 
@@ -39,7 +39,7 @@ Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the A
 
 VoiceOver rotor: form controls and buttons. Headings exist in Shelves/Settings; Chat thread list is a list of buttons.
 
-## Known gaps (0.8.9)
+## Known gaps (0.8.10)
 
 - No VoiceOver custom actions for "copy without personal information" beyond the visible button label.
 - Windows Narrator has not been verified.

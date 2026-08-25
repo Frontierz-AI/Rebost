@@ -30,7 +30,7 @@ pub struct ThreadMeta {
     pub updated_at: String,
     #[serde(default)]
     pub message_count: u32,
-    /// Animal face for this conversation. Catalog id from `avatars`.
+    /// Food face for this conversation. Catalog id from `avatars`.
     #[serde(default)]
     pub avatar_id: String,
 }
