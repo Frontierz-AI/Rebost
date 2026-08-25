@@ -145,7 +145,7 @@ pub(crate) fn open_shelf_file(tool: &ToolCtx<'_>, requested: &str) -> ToolOutcom
         ));
     }
 
-    let sid = next_open_sid(tool.sources, &file.id);
+    let sid = next_open_sid(tool.sources, &file.id, tool.cited);
     let next_char = next_read_offset(&text, &body, start);
     let from_start = start == 0;
     let source = SourcePassage {

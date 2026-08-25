@@ -6,6 +6,17 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.11] - 2026-08-26
+
+### Fixed
+
+- Citations stay attached to the same files for the rest of a conversation. Opening one opens the file that answer used, not a different file from the Shelf.
+- Chat answers in the language of the question. Files it looked up on a Shelf are not treated as something the person typed or pasted.
+
+### Changed
+
+- A short follow-up still looks through the last couple of questions and the files already cited.
+
 ## [0.8.10] - 2026-08-25
 
 ### Changed
@@ -465,7 +476,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.10...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.11...HEAD
+[0.8.11]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.10...v0.8.11
 [0.8.10]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.9...v0.8.10
 [0.8.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.8...v0.8.9
 [0.8.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.6...v0.8.8

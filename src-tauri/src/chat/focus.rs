@@ -1,12 +1,14 @@
 //! How Chat spends the local-context window on a named or attached file.
 
+use std::collections::HashSet;
+
 use crate::core::Ctx;
 use crate::ingest::card;
 use crate::search::gate;
 use crate::shelf::ThinkLevel;
 use crate::types::{DocStatus, SourcePassage};
 
-use super::tools::{next_sid_number, passage_cost};
+use super::tools::{next_sid_number, passage_cost, sid_number};
 
 /// Section marker for the first `open_shelf_file` window of a long file.
 pub(crate) const OPEN_WINDOW_START: &str = "from the start";
@@ -362,14 +364,28 @@ pub(crate) fn named_files_on_shelf(
         .collect()
 }
 
-pub(crate) fn next_open_sid(sources: &[SourcePassage], document_id: &str) -> String {
+pub(crate) fn next_open_sid(
+    sources: &[SourcePassage],
+    document_id: &str,
+    cited: &[SourcePassage],
+) -> String {
     if let Some(existing) = sources
         .iter()
         .find(|s| s.document_id == document_id && is_open_window(s))
     {
         return existing.sid.clone();
     }
-    format!("S{}", next_sid_number(sources))
+    let mut n = next_sid_number(sources);
+    let taken: HashSet<u32> = sources
+        .iter()
+        .chain(cited)
+        .filter(|source| source.document_id != document_id)
+        .filter_map(|source| sid_number(&source.sid))
+        .collect();
+    while taken.contains(&n) {
+        n += 1;
+    }
+    format!("S{n}")
 }
 
 pub(crate) fn drop_sids_for_open(

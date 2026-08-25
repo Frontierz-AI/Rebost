@@ -479,7 +479,7 @@ impl SearchIndex {
         Ok((hits, named))
     }
 
-    /// Several queries fused with RRF. Named-file extras come from the first query only.
+    /// Several queries fused with RRF. Named-file extras come from every query.
     pub fn search_fused(
         &self,
         queries: &[String],
@@ -490,13 +490,19 @@ impl SearchIndex {
         let Some((first, rest)) = queries.split_first() else {
             return Ok((Vec::new(), Vec::new()));
         };
-        let (first_hits, named) = self.search_and_merge_named(first, shelf_id, files, limit)?;
+        let (first_hits, mut named) = self.search_and_merge_named(first, shelf_id, files, limit)?;
         if rest.is_empty() {
             return Ok((first_hits, named));
         }
         let mut lists = vec![first_hits];
         for query in rest {
-            lists.push(self.search_passages(query, shelf_id, limit)?);
+            let (hits, more) = self.search_and_merge_named(query, shelf_id, files, limit)?;
+            lists.push(hits);
+            for id in more {
+                if !named.contains(&id) {
+                    named.push(id);
+                }
+            }
         }
         Ok((fuse_passage_lists(lists), named))
     }

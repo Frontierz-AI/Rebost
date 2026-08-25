@@ -41,8 +41,8 @@ use crate::types::{DocStatus, DocumentMeta, SourcePassage};
 use conversations::{Conversations, StoredMessage};
 pub use prompts::guess_message_lang;
 use prompts::{
-    build_system_prompt, build_user_content, format_shelf_inventory, sanitize_citations,
-    shelf_file_labels,
+    build_system_prompt, format_citation_legend, format_retrieved_context, format_shelf_inventory,
+    sanitize_citations, shelf_file_labels,
 };
 use queries::extra_search_queries;
 
@@ -430,6 +430,7 @@ async fn generate_with_tools(
                         upload_shelf_id,
                         files: &files,
                         sources: &turn.sources,
+                        cited: &turn.cited,
                         budget: turn.budget,
                         think,
                         allowed: tools::ToolSet::new(
@@ -568,6 +569,7 @@ struct PreparedTurn {
     sources: Vec<SourcePassage>,
     stuffed: bool,
     budget: usize,
+    cited: Vec<SourcePassage>,
 }
 
 fn turn_shelf_ids<'a>(
@@ -728,6 +730,26 @@ fn prepare_turn(
         named_attachment,
         prefer_coverage,
     );
+    let history = Conversations::recent_history(
+        &ctx.paths,
+        thread_id,
+        HISTORY_MAX_MESSAGES,
+        HISTORY_MAX_CHARS,
+    );
+    let cited = cited_sources(&history);
+    let extra_queries = if named_attachment {
+        extra_queries.to_vec()
+    } else {
+        merge_search_queries(
+            prior_search_queries(&history, user_message_id, text),
+            extra_queries,
+        )
+    };
+    let extra_queries = extra_queries.as_slice();
+    let library_focus = match library_id {
+        Some(id) if !named_attachment => last_cited_document_ids(&history, id),
+        _ => Vec::new(),
+    };
 
     let upload = match upload_id {
         Some(id) if upload_budget >= 64 => retrieve_from_shelf(
@@ -749,7 +771,7 @@ fn prepare_turn(
         },
         None => Retrieved::empty(),
     };
-    let upload_sources = gate::fit_passages(upload.passages, upload_budget);
+    let upload_sources = gate::take_passages(upload.passages, upload_budget);
     let remaining = budget.saturating_sub(tools::sources_cost(&upload_sources));
     let library_extras = if named_attachment {
         &[][..]
@@ -765,7 +787,7 @@ fn prepare_turn(
                 extra_queries: library_extras,
                 think: library_think,
                 budget: remaining,
-                focus_doc_ids: &[],
+                focus_doc_ids: &library_focus,
                 prefer_coverage: false,
                 attachment: false,
             },
@@ -776,15 +798,11 @@ fn prepare_turn(
         },
         None => Retrieved::empty(),
     };
-    let library_sources = gate::fit_passages(library.passages, remaining);
+    let library_sources = gate::take_passages(library.passages, remaining);
     let stuffed = library.stuffed && upload.stuffed;
     let mut sources = upload_sources;
-    let first = tools::next_sid_number(&sources);
-    let mut library_tail = library_sources;
-    for (offset, passage) in library_tail.iter_mut().enumerate() {
-        passage.sid = format!("S{}", first + offset as u32);
-    }
-    sources.extend(library_tail);
+    sources.extend(library_sources);
+    tools::assign_sids(&mut sources, &cited);
 
     let (shelf_name, shelf_inventory) = shelf_prompt_bits(ctx, library_id, upload_id);
     let mut named_files = Vec::new();
@@ -800,6 +818,17 @@ fn prepare_turn(
     }
     if let Some(id) = library_id {
         named_files.extend(focus::named_files_on_shelf(ctx, id, text));
+        for doc_id in &library_focus {
+            if named_files
+                .iter()
+                .any(|(_, existing, _)| existing == doc_id)
+            {
+                continue;
+            }
+            if let Some(meta) = crate::core::read_lock(&ctx.library).document(id, doc_id) {
+                named_files.push((id.to_string(), doc_id.clone(), meta.file_name));
+            }
+        }
     }
     let named_notes = focus::format_named_file_notes(ctx, &named_files);
     let settings = crate::core::read_lock(&ctx.settings);
@@ -822,30 +851,112 @@ fn prepare_turn(
     );
 
     let mut messages = vec![ChatMessage::text("system", system)];
-    for previous in Conversations::recent_history(
-        &ctx.paths,
-        thread_id,
-        HISTORY_MAX_MESSAGES,
-        HISTORY_MAX_CHARS,
-    ) {
+    for previous in &history {
         if previous.id == user_message_id {
             continue;
         }
         messages.push(ChatMessage::text(
             previous.role.clone(),
-            gate::truncate_at_boundary(&previous.text, HISTORY_MESSAGE_MAX_CHARS),
+            history_message_text(previous),
         ));
     }
-    messages.push(ChatMessage::text(
-        "user",
-        build_user_content(text, &sources, &[]),
-    ));
+    let retrieved = format_retrieved_context(&sources, &[]);
+    if !retrieved.is_empty() {
+        messages.push(ChatMessage::text("system", retrieved));
+    }
+    messages.push(ChatMessage::text("user", text));
     Ok(PreparedTurn {
         messages,
         sources,
         stuffed,
         budget,
+        cited,
     })
+}
+
+fn history_message_text(message: &StoredMessage) -> String {
+    let mut text = gate::truncate_at_boundary(&message.text, HISTORY_MESSAGE_MAX_CHARS);
+    if message.role == "user" {
+        return text;
+    }
+    let legend = format_citation_legend(&message.sources);
+    if legend.is_empty() {
+        return text;
+    }
+    if !text.is_empty() {
+        text.push_str("\n\n");
+    }
+    text.push_str(&legend);
+    text
+}
+
+fn fold_query(text: &str) -> String {
+    text.to_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn prior_search_queries(
+    history: &[StoredMessage],
+    current_id: &str,
+    current_text: &str,
+) -> Vec<String> {
+    let current_fold = fold_query(current_text);
+    let users: Vec<&str> = history
+        .iter()
+        .filter(|message| message.role == "user" && message.id != current_id)
+        .map(|message| message.text.trim())
+        .filter(|text| text.chars().count() >= 3 && fold_query(text) != current_fold)
+        .collect();
+    users
+        .into_iter()
+        .rev()
+        .take(2)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .map(str::to_string)
+        .collect()
+}
+
+fn merge_search_queries(mut prior: Vec<String>, extra: &[String]) -> Vec<String> {
+    for query in extra {
+        let fold = fold_query(query);
+        if prior.iter().any(|existing| fold_query(existing) == fold) {
+            continue;
+        }
+        prior.push(query.clone());
+    }
+    prior
+}
+
+fn cited_sources(history: &[StoredMessage]) -> Vec<SourcePassage> {
+    history
+        .iter()
+        .filter(|message| message.role != "user")
+        .flat_map(|message| message.sources.iter().cloned())
+        .collect()
+}
+
+fn last_cited_document_ids(history: &[StoredMessage], shelf_id: &str) -> Vec<String> {
+    let Some(message) = history
+        .iter()
+        .rev()
+        .find(|message| message.role != "user" && !message.sources.is_empty())
+    else {
+        return Vec::new();
+    };
+    let mut ids = Vec::new();
+    for source in &message.sources {
+        if source.shelf_id == shelf_id
+            && !source.document_id.is_empty()
+            && !ids.contains(&source.document_id)
+        {
+            ids.push(source.document_id.clone());
+        }
+    }
+    ids
 }
 
 fn chat_spawn_plan(ctx: &Ctx) -> Option<crate::engine::tune::SpawnPlan> {
@@ -1303,6 +1414,65 @@ mod cancel_tests {
     }
 
     #[test]
+    fn follow_up_search_keeps_the_last_user_questions() {
+        let user = |id: &str, text: &str| StoredMessage {
+            id: id.into(),
+            role: "user".into(),
+            text: text.into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: String::new(),
+            shelf_id: None,
+            sources: Vec::new(),
+            status: "done".into(),
+        };
+        let history = vec![
+            user(
+                "m1",
+                "List the key terms from the Mac Employee Starter Guide",
+            ),
+            user("m2", "shorten to only 5 terms"),
+            user("m3", "ok do it"),
+        ];
+        assert_eq!(
+            prior_search_queries(&history, "m3", "ok do it"),
+            vec![
+                "List the key terms from the Mac Employee Starter Guide".to_string(),
+                "shorten to only 5 terms".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn history_keeps_the_citation_titles_the_user_saw() {
+        let message = StoredMessage {
+            id: "a1".into(),
+            role: "assistant".into(),
+            text: "Notice is 90 days. [S1]".into(),
+            thinking: None,
+            activity: Vec::new(),
+            ts: String::new(),
+            shelf_id: None,
+            sources: vec![SourcePassage {
+                sid: "S1".into(),
+                document_id: "d1".into(),
+                shelf_id: "s1".into(),
+                title: "Lease.pdf".into(),
+                section: None,
+                page_start: Some(4),
+                page_end: None,
+                body: String::new(),
+                path: String::new(),
+                score: 1.0,
+            }],
+            status: "done".into(),
+        };
+        let text = history_message_text(&message);
+        assert!(text.contains("Notice is 90 days. [S1]"));
+        assert!(text.contains("S1 Lease.pdf (p. 4)"));
+    }
+
+    #[test]
     fn rewind_keeps_the_prompt_and_drops_tool_turns() {
         let mut messages = vec![
             ChatMessage::text("system", "You are Rebost."),
@@ -1396,6 +1566,7 @@ mod prepare_tests {
             upload_shelf_id: None,
             files,
             sources,
+            cited: &[],
             budget,
             think: ThinkLevel::Off,
             allowed: tools::ToolSet::new(
@@ -1426,6 +1597,7 @@ mod prepare_tests {
             upload_shelf_id: None,
             files,
             sources,
+            cited: &[],
             budget,
             think: ThinkLevel::Off,
             allowed: tools::ToolSet::new(true, !sources.is_empty(), false, true, used),
@@ -1469,13 +1641,14 @@ mod prepare_tests {
             .iter()
             .find(|m| m.role == "user")
             .expect("user message");
+        assert_eq!(user.as_text(), "When is the kitchen restocked?");
         assert!(
-            user.as_text().to_lowercase().contains("tuesday")
-                || prepared
-                    .sources
-                    .iter()
-                    .any(|s| s.body.to_lowercase().contains("tuesday")),
-            "prompt should carry the handbook passage"
+            prepared
+                .messages
+                .iter()
+                .filter(|m| m.role == "system")
+                .any(|m| m.as_text().to_lowercase().contains("tuesday")),
+            "retrieved files should sit in a system message, not the question"
         );
         let system = prepared.messages[0].as_text();
         assert!(system.contains("Notes"));
@@ -1739,6 +1912,101 @@ mod prepare_tests {
             .any(|s| s.body.to_lowercase().contains("zebra")));
     }
 
+    async fn add_library_file(fixture: &Fixture, name: &str, body: &str) {
+        let dest = fixture.shelf.managed_path.join(name);
+        std::fs::write(&dest, body).unwrap();
+        crate::ingest::process_file(
+            &fixture.ctx,
+            &ProcessJob {
+                shelf_id: fixture.shelf.id.clone(),
+                source_id: crate::shelf::Shelf::IMPORTED_SOURCE.to_string(),
+                source_type: SourceType::Imported,
+                source_label: "Imported".into(),
+                abs_path: dest,
+                rel_path: name.into(),
+                force: false,
+                epoch: 0,
+            },
+        )
+        .await
+        .unwrap();
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn prepare_turn_keeps_citation_ids_on_a_short_follow_up() {
+        let mut mac = String::from("# Mac Employee Starter Guide\n\n");
+        mac.push_str("Enroll into corporate services before using the Mac.\n");
+        mac.push_str(&"Mac starter padding so the file is searched.\n".repeat(400));
+        let mut exam = String::from("# B2 First Handbook for teachers\n\n");
+        exam.push_str("Key terms for the exam and candidate answers.\n");
+        exam.push_str(&"Exam handbook padding so the file is searched.\n".repeat(400));
+        let fixture = shelf_with_file("Mac Employee Starter Guide.md", &mac).await;
+        add_library_file(&fixture, "B2 First Handbook.md", &exam).await;
+        let thread =
+            Conversations::create(&fixture.ctx.paths, Some(fixture.shelf.id.clone())).unwrap();
+        let first = prepare_turn(
+            &fixture.ctx,
+            &thread.id,
+            "List the key terms from the Mac Employee Starter Guide",
+            Some(&fixture.shelf.id),
+            None,
+            "m_first",
+            &[],
+            ThinkLevel::Off,
+            &[],
+        )
+        .unwrap();
+        let mac = first
+            .sources
+            .iter()
+            .find(|source| {
+                source.title.contains("Mac") || source.body.contains("corporate services")
+            })
+            .expect("first turn should retrieve the Mac guide");
+        let mac_id = mac.document_id.clone();
+        let mac_sid = mac.sid.clone();
+        Conversations::append(
+            &fixture.ctx.paths,
+            &thread.id,
+            &user_line("List the key terms from the Mac Employee Starter Guide"),
+        )
+        .unwrap();
+        let mut answer = user_line("Here are the terms. [S1]");
+        answer.role = "assistant".into();
+        answer.sources = first.sources.clone();
+        conversations::compact_message(&mut answer);
+        Conversations::append(&fixture.ctx.paths, &thread.id, &answer).unwrap();
+
+        let follow = prepare_turn(
+            &fixture.ctx,
+            &thread.id,
+            "shorten to only 5 terms",
+            Some(&fixture.shelf.id),
+            None,
+            "m_follow",
+            &[],
+            ThinkLevel::Off,
+            &[],
+        )
+        .unwrap();
+        let mac = follow
+            .sources
+            .iter()
+            .find(|source| source.document_id == mac_id)
+            .expect("follow-up should keep the Mac guide");
+        assert_eq!(mac.sid, mac_sid);
+        let history = follow
+            .messages
+            .iter()
+            .find(|message| message.role == "assistant")
+            .expect("history should include the previous answer");
+        assert!(
+            history.as_text().contains(&mac_sid) && history.as_text().contains("Mac"),
+            "history should name the file that [S1] referred to, got {}",
+            history.as_text()
+        );
+    }
+
     #[tokio::test(flavor = "multi_thread")]
     async fn prepare_turn_does_not_stuff_earlier_chats() {
         let fixture = shelf_with_file(
@@ -1927,6 +2195,7 @@ mod prepare_tests {
             upload_shelf_id: None,
             files: &files,
             sources: &[],
+            cited: &[],
             budget: 9_000,
             think: ThinkLevel::Off,
             allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
@@ -1958,6 +2227,7 @@ mod prepare_tests {
             upload_shelf_id: None,
             files: &files,
             sources: &[],
+            cited: &[],
             budget: 9_000,
             think: ThinkLevel::Off,
             allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),

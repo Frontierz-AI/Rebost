@@ -12,6 +12,8 @@ use crate::limits::{clip_chars, THINKING_MAX_CHARS};
 use crate::paths::Paths;
 use crate::types::SourcePassage;
 
+use super::prompts::format_citation_legend;
+
 /// Messages shown when a conversation opens, and each Read more click.
 pub const THREAD_PAGE_SIZE: usize = 50;
 
@@ -366,19 +368,12 @@ pub fn thread_markdown(title: &str, messages: &[StoredMessage]) -> String {
         };
         out.push_str(&format!("\n**{heading}**\n\n{}\n", message.text.trim()));
         if message.role != "user" && !message.sources.is_empty() {
-            out.push('\n');
-            for (index, source) in message.sources.iter().enumerate() {
-                if index > 0 {
-                    out.push_str(", ");
-                }
-                out.push_str(&source.sid);
-                out.push(' ');
-                out.push_str(&source.title);
-                if let Some(page) = source.page_start {
-                    out.push_str(&format!(" (p. {page})"));
-                }
+            let legend = format_citation_legend(&message.sources);
+            if !legend.is_empty() {
+                out.push('\n');
+                out.push_str(&legend);
+                out.push('\n');
             }
-            out.push('\n');
         }
     }
     out

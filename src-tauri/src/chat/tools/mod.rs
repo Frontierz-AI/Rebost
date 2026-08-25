@@ -340,6 +340,9 @@ pub(crate) struct ToolCtx<'a> {
     pub upload_shelf_id: Option<&'a str>,
     pub files: &'a [ShelfFile],
     pub sources: &'a [SourcePassage],
+    /// Citation ids already bound in this conversation. New excerpts reuse
+    /// them for the same file and never give them to a different file.
+    pub cited: &'a [SourcePassage],
     pub budget: usize,
     pub think: ThinkLevel,
     pub allowed: ToolSet,
@@ -577,17 +580,82 @@ pub(crate) fn remaining_budget(sources: &[SourcePassage], budget: usize) -> usiz
     budget.saturating_sub(sources_cost(sources))
 }
 
+pub(crate) fn sid_number(sid: &str) -> Option<u32> {
+    sid.strip_prefix('S')?.parse().ok().filter(|&n| n > 0)
+}
+
 pub(crate) fn next_sid_number(sources: &[SourcePassage]) -> u32 {
     sources
         .iter()
-        .filter_map(|s| s.sid.strip_prefix('S').and_then(|n| n.parse::<u32>().ok()))
+        .filter_map(|s| sid_number(&s.sid))
         .max()
         .unwrap_or(0)
         + 1
 }
 
+/// Number passages for the prompt. A document keeps ids it already had in
+/// this conversation. A new file never takes an id that names another file.
+pub(crate) fn assign_sids<'a>(
+    passages: &mut [SourcePassage],
+    known: impl IntoIterator<Item = &'a SourcePassage>,
+) {
+    let mut owner: HashMap<u32, String> = HashMap::new();
+    let mut by_doc: HashMap<String, Vec<u32>> = HashMap::new();
+    for source in known {
+        let Some(n) = sid_number(&source.sid) else {
+            continue;
+        };
+        if source.document_id.is_empty() {
+            continue;
+        }
+        match owner.get(&n) {
+            Some(id) if id != &source.document_id => continue,
+            Some(_) => {
+                let list = by_doc.entry(source.document_id.clone()).or_default();
+                if !list.contains(&n) {
+                    list.push(n);
+                }
+            }
+            None => {
+                owner.insert(n, source.document_id.clone());
+                by_doc
+                    .entry(source.document_id.clone())
+                    .or_default()
+                    .push(n);
+            }
+        }
+    }
+    let mut used = HashSet::new();
+    let mut next = owner.keys().copied().max().unwrap_or(0) + 1;
+    for passage in passages.iter_mut() {
+        let n = by_doc
+            .get(&passage.document_id)
+            .and_then(|ids| ids.iter().copied().find(|id| !used.contains(id)))
+            .unwrap_or_else(|| {
+                while used.contains(&next)
+                    || owner
+                        .get(&next)
+                        .is_some_and(|id| id != &passage.document_id)
+                {
+                    next += 1;
+                }
+                let n = next;
+                next += 1;
+                owner.insert(n, passage.document_id.clone());
+                by_doc
+                    .entry(passage.document_id.clone())
+                    .or_default()
+                    .push(n);
+                n
+            });
+        used.insert(n);
+        passage.sid = format!("S{n}");
+    }
+}
+
 pub(crate) fn format_passages(header: &str, passages: &[SourcePassage]) -> String {
     let mut out = header.to_string();
+    out.push_str(" The user did not write this.");
     for source in passages {
         out.push_str(&format!(
             "\n\n[{}] {}\n{}",
@@ -814,6 +882,51 @@ mod tests {
         assert_eq!(parse_sid("3").as_deref(), Some("S3"));
         assert_eq!(parse_sid(""), None);
         assert_eq!(parse_sid("S0"), None);
+    }
+
+    fn passage(sid: &str, doc: &str) -> SourcePassage {
+        SourcePassage {
+            sid: sid.into(),
+            document_id: doc.into(),
+            shelf_id: "s".into(),
+            title: doc.into(),
+            section: None,
+            page_start: None,
+            page_end: None,
+            body: String::new(),
+            path: format!("/{doc}"),
+            score: 1.0,
+        }
+    }
+
+    #[test]
+    fn assign_sids_starts_at_one_and_keeps_a_file_on_its_id() {
+        let known = [passage("S1", "mac"), passage("S2", "mac")];
+        let mut fresh = [passage("", "mac"), passage("", "handbook")];
+        assign_sids(&mut fresh, &known);
+        assert_eq!(fresh[0].sid, "S1");
+        assert_eq!(fresh[0].document_id, "mac");
+        assert_eq!(fresh[1].sid, "S3");
+        assert_eq!(fresh[1].document_id, "handbook");
+    }
+
+    #[test]
+    fn assign_sids_ignores_a_later_turn_that_reused_an_id() {
+        let known = [passage("S1", "mac"), passage("S1", "handbook")];
+        let mut fresh = [passage("", "handbook"), passage("", "mac")];
+        assign_sids(&mut fresh, &known);
+        assert_eq!(
+            fresh.iter().find(|s| s.document_id == "mac").unwrap().sid,
+            "S1"
+        );
+        assert_eq!(
+            fresh
+                .iter()
+                .find(|s| s.document_id == "handbook")
+                .unwrap()
+                .sid,
+            "S2"
+        );
     }
 
     #[test]
