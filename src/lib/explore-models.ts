@@ -1,8 +1,6 @@
 import type { ModelSearchResult } from "$lib/api";
 
 export const EXPLORE_PAGE_SIZE = 50;
-export const MODEL_BUDGET_FRACTION = 0.65;
-const GIB = 1024 * 1024 * 1024;
 
 const HF_NON_MODEL_ROOTS = new Set([
   "api",
@@ -129,82 +127,6 @@ export function chipSortActive(chip: ExploreSort, sort: ExploreSort, dir: Explor
   return sort === chip && dir === defaultExploreSortDir(chip);
 }
 
-export function modelBudgetBytes(totalRamBytes?: number): number | undefined {
-  if (totalRamBytes == null || totalRamBytes <= 0) return undefined;
-  return Math.floor(totalRamBytes * MODEL_BUDGET_FRACTION);
-}
-
-export function runtimeNeedBytes(fileBytes: number): number {
-  return fileBytes * 1.15 + 2 * GIB;
-}
-
-function releasedTime(released?: string): number {
-  if (!released) return Number.NaN;
-  const raw = released.length === 7 ? `${released}-01` : released;
-  return Date.parse(raw);
-}
-
-function utcDay(ms: number): number {
-  const date = new Date(ms);
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-}
-
-export function daysSinceRelease(released: string | undefined, now: number): number | null {
-  const time = releasedTime(released);
-  if (Number.isNaN(time)) return null;
-  return Math.round((utcDay(now) - utcDay(time)) / 86_400_000);
-}
-
-export function isRecentRelease(released: string | undefined, now: number): boolean {
-  const days = daysSinceRelease(released, now);
-  return days != null && days >= 0 && days <= 90;
-}
-
-function recencyScore(released: string | undefined, now: number): number {
-  const days = daysSinceRelease(released, now);
-  if (days == null || days < 0 || days > 365) return 0;
-  if (days <= 90) return 100 - Math.floor(days / 2);
-  if (days <= 180) return 42;
-  return 16;
-}
-
-function usageScore(sizeBytes: number | undefined, budgetBytes: number | undefined): number {
-  if (sizeBytes == null || budgetBytes == null || budgetBytes <= 0) return 32;
-  const need = runtimeNeedBytes(sizeBytes);
-  if (need > budgetBytes) return 0;
-  const ratio = need / budgetBytes;
-  if (ratio >= 0.45 && ratio <= 0.85) return 100;
-  if (ratio > 0.85) return 78;
-  if (ratio >= 0.3) return 68;
-  if (ratio >= 0.15) return 44;
-  return 22;
-}
-
-function downloadScore(downloads?: number): number {
-  return Math.min(48, Math.round(Math.log10((downloads ?? 0) + 1) * 8));
-}
-
-function fitScore(fits?: boolean): number {
-  if (fits === true) return 120;
-  if (fits === false) return 0;
-  return 28;
-}
-
-export function bestExploreScore(
-  result: ModelSearchResult,
-  now: number,
-  budgetBytes?: number,
-): number {
-  if (result.fits === false) return downloadScore(result.downloads);
-  return (
-    fitScore(result.fits) +
-    recencyScore(result.released, now) +
-    usageScore(result.sizeBytes, budgetBytes) +
-    (result.official ? 48 : 0) +
-    downloadScore(result.downloads)
-  );
-}
-
 function byName(a: ModelSearchResult, b: ModelSearchResult): number {
   return a.name.localeCompare(b.name);
 }
@@ -220,23 +142,15 @@ function compareOptionalNumber(
   return dir === "asc" ? left - right : right - left;
 }
 
+/** Released / size / downloads. Best keeps the catalog order from search. */
 export function sortExploreResults(
   results: ModelSearchResult[],
   sort: ExploreSort,
-  now = Date.now(),
-  budgetBytes?: number,
   dir: ExploreSortDir = defaultExploreSortDir(sort),
 ): ModelSearchResult[] {
   const copy = results.slice();
   switch (sort) {
     case "best":
-      copy.sort((a, b) => {
-        const score = bestExploreScore(b, now, budgetBytes) - bestExploreScore(a, now, budgetBytes);
-        if (score !== 0) return score;
-        const released = (b.released ?? "").localeCompare(a.released ?? "");
-        if (released !== 0) return released;
-        return byName(a, b);
-      });
       return copy;
     case "released":
       copy.sort((a, b) => {

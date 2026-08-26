@@ -10,7 +10,6 @@ use super::{friendly, CmdResult};
 use crate::core::Ctx;
 use crate::engine::models::{self, MachineProfile, ModelSearchResult, Recommendation};
 use crate::engine::{Engine, EngineStatus};
-use crate::settings::ActiveModel;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,7 +17,6 @@ pub struct MachineView {
     pub profile: MachineProfile,
     pub recommendation: Recommendation,
     pub alternatives: Vec<Recommendation>,
-    pub recommendation_fits: bool,
     /// Catalog picks that fit and are not the installed model (max two).
     pub suggestions: Vec<Recommendation>,
 }
@@ -40,21 +38,12 @@ pub fn machine_profile(ctx: State<'_, Arc<Ctx>>) -> MachineView {
         .as_ref()
         .map(|model| model.reference.clone());
     let suggestions = models::uninstalled_suggestions(&profile, installed.as_deref(), 2);
-    let fits =
-        models::runtime_need_bytes(recommendation.approx_bytes) <= profile.model_budget_bytes();
     MachineView {
         profile,
         recommendation,
         alternatives,
-        recommendation_fits: fits,
         suggestions,
     }
-}
-
-/// The installed model, if any.
-#[tauri::command]
-pub fn active_model(ctx: State<'_, Arc<Ctx>>) -> Option<ActiveModel> {
-    crate::core::read_lock(&ctx.settings).active_model.clone()
 }
 
 /// Search Hugging Face and Ollama catalogs for GGUF models.

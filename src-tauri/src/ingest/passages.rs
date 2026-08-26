@@ -64,7 +64,6 @@ impl Builder {
         }
         self.total_bytes += body_len;
         self.passages.push(Passage {
-            seq: self.passages.len() as u32,
             section: self.section.clone(),
             page_start: self.page_start,
             page_end: self.page_end,
@@ -204,9 +203,6 @@ pub fn build_passages(blocks: &[Block]) -> Vec<Passage> {
             }
         }
         merged.push(passage);
-    }
-    for (i, passage) in merged.iter_mut().enumerate() {
-        passage.seq = i as u32;
     }
     merged
 }

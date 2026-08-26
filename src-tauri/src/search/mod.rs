@@ -368,7 +368,6 @@ mod tests {
                 "",
                 &[],
                 &[Passage {
-                    seq: 0,
                     section: None,
                     page_start: None,
                     page_end: None,

@@ -22,16 +22,6 @@ pub struct DocumentExcerpt {
     pub window_chars: u32,
 }
 
-impl DocumentExcerpt {
-    pub fn has_before(&self) -> bool {
-        self.start_char > 0
-    }
-
-    pub fn has_after(&self) -> bool {
-        self.end_char < self.total_chars
-    }
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct LocateHint {
     pub page: Option<u32>,
@@ -49,7 +39,7 @@ pub fn from_text(text: &str, start_char: Option<u32>, hint: &LocateHint) -> Docu
     window(text, start, WINDOW_CHARS)
 }
 
-pub fn window(text: &str, start_char: usize, max_chars: usize) -> DocumentExcerpt {
+fn window(text: &str, start_char: usize, max_chars: usize) -> DocumentExcerpt {
     let total = text.chars().count();
     let start = start_char.min(total);
     let rest = slice_from_char(text, start);
@@ -64,7 +54,7 @@ pub fn window(text: &str, start_char: usize, max_chars: usize) -> DocumentExcerp
     }
 }
 
-pub fn locate(text: &str, hint: &LocateHint) -> usize {
+fn locate(text: &str, hint: &LocateHint) -> usize {
     if let Some(around) = hint.around.as_deref() {
         if let Some(at) = find_needle(text, around) {
             return at;
@@ -204,8 +194,6 @@ mod tests {
         assert_eq!(excerpt.start_char, 0);
         assert_eq!(excerpt.end_char, 11);
         assert_eq!(excerpt.total_chars, 11);
-        assert!(!excerpt.has_before());
-        assert!(!excerpt.has_after());
     }
 
     #[test]
@@ -214,8 +202,7 @@ mod tests {
         let excerpt = from_text(&text, None, &LocateHint::default());
         assert!(excerpt.text.chars().count() <= WINDOW_CHARS);
         assert_eq!(excerpt.start_char, 0);
-        assert!(excerpt.has_after());
-        assert!(!excerpt.has_before());
+        assert!(excerpt.end_char < excerpt.total_chars);
         assert_eq!(excerpt.total_chars, (WINDOW_CHARS + 4_000) as u32);
     }
 
@@ -226,7 +213,7 @@ mod tests {
         let next = from_text(&text, Some(first.end_char), &LocateHint::default());
         assert_eq!(next.start_char, first.end_char);
         assert!(!next.text.is_empty());
-        assert!(next.has_before());
+        assert!(next.start_char > 0);
     }
 
     #[test]

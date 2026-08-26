@@ -238,7 +238,7 @@ pub async fn shelf_create(
     watcher: State<'_, Arc<WatcherHub>>,
     name: String,
 ) -> CmdResult<ShelfView> {
-    let root = crate::core::read_lock(&ctx.settings).shelf_root(&ctx.paths);
+    let root = ctx.paths.library_dir();
     let shelf = {
         let mut library = crate::core::write_lock(&ctx.library);
         library

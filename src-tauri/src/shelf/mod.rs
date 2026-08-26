@@ -6,9 +6,7 @@ pub mod watcher;
 
 mod longpath;
 
-pub use scan::{
-    rel_is_skipped, scan_folder, scan_new_files, skip_dir_name, ScanOutcome, MAX_FILES_PER_SHELF,
-};
+pub use scan::{rel_is_skipped, scan_folder, scan_new_files, MAX_FILES_PER_SHELF};
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -55,8 +53,6 @@ pub struct ShelfConfig {
     pub name: String,
     #[serde(default)]
     pub linked_folders: Vec<LinkedFolder>,
-    #[serde(default)]
-    pub settings: BTreeMap<String, serde_json::Value>,
     /// Set when this Shelf exists only for one conversation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub thread_id: Option<String>,
@@ -732,13 +728,12 @@ fn read_shelf_config(path: &Path) -> Result<ShelfConfig> {
     Ok(serde_yaml_ng::from_str(&text)?)
 }
 
-pub fn write_shelf_config(shelf: &Shelf) -> Result<()> {
+fn write_shelf_config(shelf: &Shelf) -> Result<()> {
     let config = ShelfConfig {
         schema: ShelfConfig::SCHEMA.to_string(),
         id: shelf.id.clone(),
         name: shelf.name.clone(),
         linked_folders: shelf.linked_folders.clone(),
-        settings: BTreeMap::new(),
         thread_id: shelf.thread_id.clone(),
         think_level: shelf.think_level,
     };

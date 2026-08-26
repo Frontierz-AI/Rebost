@@ -121,7 +121,6 @@ pub struct OutlineEntry {
 /// A structure-aware passage ready for indexing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Passage {
-    pub seq: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub section: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

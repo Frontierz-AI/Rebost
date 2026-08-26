@@ -7,7 +7,6 @@
     type ModelSearchResult,
     type Recommendation,
   } from "$lib/api";
-  import { modelBudgetBytes } from "$lib/explore-models";
   import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
   import { HOUSE_RULES_MAX_CHARS, clipChars } from "$lib/text-cap";
   import { Cpu, Search, BadgeCheck, Stethoscope, Save } from "@lucide/svelte";
@@ -370,7 +369,6 @@
 {#if showExplore}
   <ExploreModelsModal
     installing={!!modelDownload}
-    budgetBytes={modelBudgetBytes(machine?.profile.totalRamBytes)}
     onClose={() => (showExplore = false)}
     onInstall={(result) => {
       installFrom(result);

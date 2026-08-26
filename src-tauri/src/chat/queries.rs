@@ -61,7 +61,7 @@ Do not repeat the question.\n"
     prompt
 }
 
-pub(crate) fn parse_search_queries(raw: &str, original: &str, count: usize) -> Vec<String> {
+fn parse_search_queries(raw: &str, original: &str, count: usize) -> Vec<String> {
     let original_fold = folded_query(original);
     let mut out = Vec::new();
     let mut seen = std::collections::HashSet::new();
@@ -98,7 +98,7 @@ fn clean_query_line(line: &str) -> String {
         .to_string()
 }
 
-fn folded_query(text: &str) -> String {
+pub(super) fn folded_query(text: &str) -> String {
     text.to_lowercase()
         .split_whitespace()
         .collect::<Vec<_>>()

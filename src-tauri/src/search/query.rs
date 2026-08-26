@@ -727,7 +727,6 @@ mod tests {
 
     fn passage(body: &str) -> Passage {
         Passage {
-            seq: 0,
             section: None,
             page_start: None,
             page_end: None,
@@ -792,14 +791,12 @@ mod tests {
     fn passage_needle_prefers_the_matching_page() {
         let (_dir, search) = index();
         let early = Passage {
-            seq: 0,
             section: Some("Intro".into()),
             page_start: Some(2),
             page_end: Some(2),
             body: "Opening hours stay as written.".into(),
         };
         let cited = Passage {
-            seq: 1,
             section: Some("Indemnity".into()),
             page_start: Some(48),
             page_end: Some(48),

@@ -600,11 +600,7 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
 
     // Page-level fallback / enrichment for sheets and slides.
     let pages = doc.pages.as_deref().unwrap_or(&[]);
-    let page_count = if !pages.is_empty() {
-        Some(pages.len() as u32)
-    } else {
-        doc.metadata.pages.as_ref().map(|_| 0).filter(|c| *c > 0)
-    };
+    let page_count = (!pages.is_empty()).then_some(pages.len() as u32);
 
     if blocks.iter().all(|b| b.text.trim().is_empty()) {
         blocks.clear();

@@ -420,7 +420,7 @@ pub(crate) fn drop_sids_for_open(
     (drop_sids, remaining)
 }
 
-fn shelf_ready_files(ctx: &Ctx, shelf_id: &str) -> Vec<(String, String)> {
+pub(super) fn shelf_ready_files(ctx: &Ctx, shelf_id: &str) -> Vec<(String, String)> {
     crate::core::read_lock(&ctx.library)
         .documents(shelf_id)
         .into_iter()

@@ -143,9 +143,7 @@ export interface EngineStatus {
 
 export interface MachineProfile {
   totalRamBytes: number;
-  availableRamBytes: number;
   cpu: string;
-  appleSilicon: boolean;
   accelerator: string;
   freeDiskBytes: number;
   processArch: string;
@@ -166,7 +164,6 @@ export interface MachineView {
   profile: MachineProfile;
   recommendation: Recommendation;
   alternatives: Recommendation[];
-  recommendationFits: boolean;
   suggestions: Recommendation[];
 }
 
@@ -196,7 +193,6 @@ export interface ModelSearchResult {
 
 export interface SettingsView {
   houseRules: string;
-  shelfRoot: string;
   onboardingDone: boolean;
   activeModel?: ActiveModel | null;
   allowOnlineResearch: boolean;

@@ -312,9 +312,6 @@ impl ToolUse {
             ToolName::SearchShelf => self.shelf_searches += 1,
             ToolName::LookAround => self.looks += 1,
             ToolName::OpenFile => match change {
-                SourceChange::ReplaceDocument(source) => {
-                    self.opened.insert(source.document_id.clone());
-                }
                 SourceChange::OpenWindow {
                     opened: source,
                     next_char,
@@ -369,8 +366,6 @@ impl ToolCtx<'_> {
 #[derive(Debug, Clone)]
 pub(crate) enum SourceChange {
     None,
-    #[allow(dead_code)]
-    ReplaceDocument(SourcePassage),
     ReplaceOne(SourcePassage),
     Append(Vec<SourcePassage>),
     /// Replace the previous open window (and optional leftover sources) without
@@ -468,10 +463,6 @@ pub(crate) async fn run_tool(call: &ToolCall, tool: &ToolCtx<'_>) -> ToolOutcome
 pub(crate) fn apply_change(sources: &mut Vec<SourcePassage>, change: SourceChange) {
     match change {
         SourceChange::None => {}
-        SourceChange::ReplaceDocument(opened) => {
-            sources.retain(|s| s.document_id != opened.document_id);
-            sources.push(opened);
-        }
         SourceChange::ReplaceOne(updated) => {
             if let Some(slot) = sources.iter_mut().find(|s| s.sid == updated.sid) {
                 *slot = updated;

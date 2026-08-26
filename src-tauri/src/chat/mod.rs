@@ -41,12 +41,11 @@ use crate::search::gate;
 use crate::shelf::ThinkLevel;
 use crate::types::{DocStatus, DocumentMeta, SourcePassage};
 use conversations::{Conversations, StoredMessage};
-pub use prompts::guess_message_lang;
 use prompts::{
     build_system_prompt, format_citation_legend, format_retrieved_context, format_shelf_inventory,
-    sanitize_citations, shelf_file_labels,
+    guess_message_lang, sanitize_citations, shelf_file_labels,
 };
-use queries::extra_search_queries;
+use queries::{extra_search_queries, folded_query};
 
 const HISTORY_MAX_MESSAGES: usize = 12;
 const HISTORY_MAX_CHARS: usize = 6_000;
@@ -661,7 +660,7 @@ fn retrieve_from_shelf(
     let relaxed = crate::core::read_lock(&ctx.library)
         .shelf(shelf_id)
         .is_some_and(|s| s.thread_id.is_some());
-    let files = shelf_files(ctx, shelf_id);
+    let files = focus::shelf_ready_files(ctx, shelf_id);
     let preserve_order = !opts.extra_queries.is_empty();
     let (hits, named) = if opts.extra_queries.is_empty() {
         ctx.search
@@ -863,7 +862,7 @@ fn prepare_turn(
         ));
     }
     messages.push(ChatMessage::text("user", text));
-    let retrieved = format_retrieved_context(&sources, &[]);
+    let retrieved = format_retrieved_context(&sources);
     if !retrieved.is_empty() {
         let call = retrieval_call(text);
         messages.push(tools::assistant_tool_message(std::slice::from_ref(&call)));
@@ -908,24 +907,17 @@ fn history_message_text(message: &StoredMessage) -> String {
     text
 }
 
-fn fold_query(text: &str) -> String {
-    text.to_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
 fn prior_search_queries(
     history: &[StoredMessage],
     current_id: &str,
     current_text: &str,
 ) -> Vec<String> {
-    let current_fold = fold_query(current_text);
+    let current_fold = folded_query(current_text);
     let users: Vec<&str> = history
         .iter()
         .filter(|message| message.role == "user" && message.id != current_id)
         .map(|message| message.text.trim())
-        .filter(|text| text.chars().count() >= 3 && fold_query(text) != current_fold)
+        .filter(|text| text.chars().count() >= 3 && folded_query(text) != current_fold)
         .collect();
     users
         .into_iter()
@@ -940,8 +932,8 @@ fn prior_search_queries(
 
 fn merge_search_queries(mut prior: Vec<String>, extra: &[String]) -> Vec<String> {
     for query in extra {
-        let fold = fold_query(query);
-        if prior.iter().any(|existing| fold_query(existing) == fold) {
+        let fold = folded_query(query);
+        if prior.iter().any(|existing| folded_query(existing) == fold) {
             continue;
         }
         prior.push(query.clone());
@@ -1234,15 +1226,6 @@ fn stuff_plan(ctx: &Ctx, shelf_id: &str, budget: usize) -> StuffPlan {
         planned.push((doc, path));
     }
     StuffPlan::Fits(planned)
-}
-
-fn shelf_files(ctx: &Ctx, shelf_id: &str) -> Vec<(String, String)> {
-    crate::core::read_lock(&ctx.library)
-        .documents(shelf_id)
-        .into_iter()
-        .filter(|d| d.status == DocStatus::Ready)
-        .map(|d| (d.id, d.file_name))
-        .collect()
 }
 
 fn shelf_inventory(ctx: &Ctx, shelf_id: &str) -> Option<(String, String)> {

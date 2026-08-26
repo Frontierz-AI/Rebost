@@ -17,7 +17,6 @@ use crate::settings::ActiveModel;
 #[serde(rename_all = "camelCase")]
 pub struct SettingsView {
     pub house_rules: String,
-    pub shelf_root: String,
     pub onboarding_done: bool,
     pub active_model: Option<ActiveModel>,
     pub allow_online_research: bool,
@@ -29,10 +28,6 @@ pub fn settings_get(ctx: State<'_, Arc<Ctx>>) -> SettingsView {
     let settings = crate::core::read_lock(&ctx.settings);
     SettingsView {
         house_rules: settings.house_rules.clone(),
-        shelf_root: settings
-            .shelf_root(&ctx.paths)
-            .to_string_lossy()
-            .to_string(),
         onboarding_done: settings.onboarding_done,
         active_model: settings.active_model.clone(),
         allow_online_research: settings.allow_online_research,

@@ -24,7 +24,6 @@ pub(crate) fn widen_hit_body(extracted: &str, body: &str, radius: usize) -> Stri
     let end = snap_end(
         extracted,
         body_end.saturating_add(radius).min(extracted.len()),
-        body_end,
     );
     extracted[start..end].trim().to_string()
 }
@@ -53,7 +52,7 @@ fn snap_start(s: &str, approx: usize, hit: usize) -> usize {
     }
 }
 
-fn snap_end(s: &str, approx: usize, _hit_end: usize) -> usize {
+fn snap_end(s: &str, approx: usize) -> usize {
     let i = floor_char(s, approx.min(s.len()));
     if i >= s.len() {
         return s.len();

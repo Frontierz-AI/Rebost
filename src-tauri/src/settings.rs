@@ -1,7 +1,7 @@
 //! `settings.json` — the small amount of durable configuration.
 
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
@@ -10,10 +10,6 @@ pub struct Settings {
     /// Never mixed with retrieved documents.
     #[serde(alias = "house_rules")]
     pub house_rules: String,
-    /// Root folder where managed Shelf folders are created.
-    /// `None` → `<app-data>/library`.
-    #[serde(alias = "shelf_root")]
-    pub shelf_root: Option<PathBuf>,
     /// The AI Chat uses. The previous file stays until a new process is Ready.
     #[serde(alias = "active_model")]
     pub active_model: Option<ActiveModel>,
@@ -95,12 +91,6 @@ impl Settings {
         crate::paths::atomic_write(path, serde_json::to_string_pretty(self)?)?;
         Ok(())
     }
-
-    pub fn shelf_root(&self, paths: &crate::paths::Paths) -> PathBuf {
-        self.shelf_root
-            .clone()
-            .unwrap_or_else(|| paths.library_dir())
-    }
 }
 
 #[cfg(test)]
@@ -160,24 +150,5 @@ mod tests {
             loaded.house_rules.chars().count(),
             crate::limits::HOUSE_RULES_MAX_CHARS
         );
-    }
-
-    #[test]
-    fn default_shelf_root_is_the_app_data_library() {
-        let dir = tempfile::tempdir().unwrap();
-        let paths = crate::paths::Paths::new(dir.path().join("appdata"));
-        assert_eq!(Settings::default().shelf_root(&paths), paths.library_dir());
-    }
-
-    #[test]
-    fn explicit_shelf_root_is_used() {
-        let dir = tempfile::tempdir().unwrap();
-        let paths = crate::paths::Paths::new(dir.path().join("appdata"));
-        let custom = dir.path().join("custom-root");
-        let settings = Settings {
-            shelf_root: Some(custom.clone()),
-            ..Default::default()
-        };
-        assert_eq!(settings.shelf_root(&paths), custom);
     }
 }

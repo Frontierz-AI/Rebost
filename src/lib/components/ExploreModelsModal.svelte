@@ -24,12 +24,10 @@
 
   let {
     installing = false,
-    budgetBytes,
     onClose,
     onInstall,
   }: {
     installing?: boolean;
-    budgetBytes?: number;
     onClose: () => void;
     onInstall: (result: ModelSearchResult) => void;
   } = $props();
@@ -43,11 +41,8 @@
   let page = $state(1);
   let info = $state<ModelSearchResult | null>(null);
   let searchGen = 0;
-  const rankedAt = Date.now();
 
-  const sorted = $derived(
-    results ? sortExploreResults(results, sort, rankedAt, budgetBytes, sortDir) : [],
-  );
+  const sorted = $derived(results ? sortExploreResults(results, sort, sortDir) : []);
   const visibleCount = $derived(visibleExploreCount(sorted.length, page));
   const visible = $derived(sorted.slice(0, visibleCount));
   const remaining = $derived(Math.max(0, sorted.length - visibleCount));

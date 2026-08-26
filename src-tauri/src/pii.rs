@@ -18,15 +18,6 @@ pub struct PiiSummary {
     pub categories: BTreeMap<String, u32>,
 }
 
-impl PiiSummary {
-    pub fn merge(&mut self, other: &PiiSummary) {
-        self.total += other.total;
-        for (k, v) in &other.categories {
-            *self.categories.entry(k.clone()).or_insert(0) += v;
-        }
-    }
-}
-
 const SCORE_THRESHOLD: f64 = 0.5;
 
 /// Map a pii-vault entity type to the Rebost category key.

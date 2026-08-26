@@ -52,8 +52,6 @@ pub struct ScanOutcome {
     pub files: Vec<PathBuf>,
     /// Stopped because another new file would pass `MAX_FILES_PER_SHELF`.
     pub hit_file_cap: bool,
-    /// Stopped after inspecting `MAX_WALK_ENTRIES` (not a product quota).
-    pub hit_walk_budget: bool,
 }
 
 pub fn skip_dir_name(name: &str) -> bool {
@@ -95,7 +93,6 @@ pub fn scan_new_files(root: &Path, max_new: usize, already: &HashSet<PathBuf>) -
         for entry in entries.flatten() {
             visits += 1;
             if visits >= MAX_WALK_ENTRIES {
-                outcome.hit_walk_budget = true;
                 outcome.files.sort();
                 return outcome;
             }
@@ -223,7 +220,6 @@ mod tests {
         let outcome = scan_new_files(root, 3, &HashSet::new());
         assert_eq!(outcome.files.len(), 3);
         assert!(outcome.hit_file_cap);
-        assert!(!outcome.hit_walk_budget);
     }
 
     #[test]

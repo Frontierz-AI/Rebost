@@ -443,12 +443,10 @@ mod tests {
     use super::*;
     use crate::engine::pin::pin_for;
 
-    fn profile(gb: u64, apple: bool, accel: &str) -> MachineProfile {
+    fn profile(gb: u64, accel: &str) -> MachineProfile {
         MachineProfile {
             total_ram_bytes: gb * GIB,
-            available_ram_bytes: gb * GIB / 2,
             cpu: "test".into(),
-            apple_silicon: apple,
             accelerator: accel.into(),
             free_disk_bytes: 200 * GIB,
             process_arch: "test".into(),
@@ -484,7 +482,7 @@ mod tests {
     #[test]
     fn m_series_max_gets_large_batches_and_8k() {
         let pin = pin_for("macos", "aarch64").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(128, true, "Metal"), pin);
+        let plan = SpawnPlan::from_profile(&profile(128, "Metal"), pin);
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 2048);
         assert_eq!((plan.batch, plan.ubatch), (2048, 2048));
@@ -495,7 +493,7 @@ mod tests {
     #[test]
     fn sixteen_gb_mac_keeps_modest_ubatch() {
         let pin = pin_for("macos", "aarch64").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(16, true, "Metal"), pin);
+        let plan = SpawnPlan::from_profile(&profile(16, "Metal"), pin);
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!((plan.batch, plan.ubatch), (1024, 512));
     }
@@ -503,7 +501,7 @@ mod tests {
     #[test]
     fn vulkan_windows_uses_no_mmap_and_q8_sized_ctx() {
         let pin = pin_for("windows", "x86_64").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(32, false, "Vulkan"), pin);
+        let plan = SpawnPlan::from_profile(&profile(32, "Vulkan"), pin);
         assert!(plan.no_mmap);
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!((plan.batch, plan.ubatch), (2048, 512));
@@ -513,7 +511,7 @@ mod tests {
     #[test]
     fn arm_cpu_stays_small() {
         let pin = pin_for("windows", "aarch64").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(16, false, "CPU"), pin);
+        let plan = SpawnPlan::from_profile(&profile(16, "CPU"), pin);
         assert_eq!(plan.context_tokens, 6144);
         assert_eq!((plan.batch, plan.ubatch), (256, 256));
         assert!(!plan.no_mmap);
@@ -525,13 +523,13 @@ mod tests {
     #[test]
     fn cpu_and_opencl_wait_longer_for_the_first_token() {
         let cpu = pin_for("windows", "aarch64").unwrap();
-        let cpu_plan = SpawnPlan::from_profile(&profile(16, false, "CPU"), cpu);
+        let cpu_plan = SpawnPlan::from_profile(&profile(16, "CPU"), cpu);
         assert_eq!(
             chat_stall_timeout(&cpu_plan),
             std::time::Duration::from_secs(180)
         );
         let vulkan = pin_for("windows", "x86_64").unwrap();
-        let vulkan_plan = SpawnPlan::from_profile(&profile(16, false, "Vulkan"), vulkan);
+        let vulkan_plan = SpawnPlan::from_profile(&profile(16, "Vulkan"), vulkan);
         assert_eq!(
             chat_stall_timeout(&vulkan_plan),
             std::time::Duration::from_secs(90)
@@ -560,7 +558,7 @@ mod tests {
     #[test]
     fn adreno_opencl_is_gentler_than_metal() {
         let pin = crate::engine::pin::optional_pin_for("windows", "aarch64", "OpenCL").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(16, false, "OpenCL"), pin);
+        let plan = SpawnPlan::from_profile(&profile(16, "OpenCL"), pin);
         assert_eq!(plan.context_tokens, 6144);
         assert_eq!((plan.batch, plan.ubatch), (1024, 512));
         assert!(!plan.no_mmap);
@@ -570,7 +568,7 @@ mod tests {
     #[test]
     fn adreno_opencl_uses_f16_kv_cache() {
         let pin = crate::engine::pin::optional_pin_for("windows", "aarch64", "OpenCL").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(16, false, "OpenCL"), pin);
+        let plan = SpawnPlan::from_profile(&profile(16, "OpenCL"), pin);
         assert_eq!(plan.cache_type, "f16");
         assert_eq!(plan.gpu_layers, 99);
         assert_eq!(plan.flash_attn, "auto");
@@ -579,7 +577,7 @@ mod tests {
     #[test]
     fn eight_gb_vulkan_drops_to_4k() {
         let pin = pin_for("windows", "x86_64").unwrap();
-        let plan = SpawnPlan::from_profile(&profile(8, false, "Vulkan"), pin);
+        let plan = SpawnPlan::from_profile(&profile(8, "Vulkan"), pin);
         assert_eq!(plan.context_tokens, 4096);
         assert_eq!((plan.batch, plan.ubatch), (1024, 256));
     }
@@ -624,7 +622,7 @@ mod tests {
     fn gemma_1b_stays_on_4k() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Gemma 3 1B", "gemma-3-1b.gguf", 769);
-        let plan = SpawnPlan::for_model(&profile(16, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(16, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 4096);
         assert_eq!(plan.answer_tokens, 768);
     }
@@ -633,7 +631,7 @@ mod tests {
     fn granite_tiny_may_use_8k_on_metal() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Granite 4.1 3B", "granite-4.1-3b.gguf", 2002);
-        let plan = SpawnPlan::for_model(&profile(16, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(16, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 768);
     }
@@ -642,7 +640,7 @@ mod tests {
     fn ministral_14b_stretches_on_32gb_metal() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Ministral 3 14B", "Ministral-3-14B.gguf", 7857);
-        let plan = SpawnPlan::for_model(&profile(32, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(32, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 16384);
         assert_eq!(plan.answer_tokens, 2048);
     }
@@ -651,7 +649,7 @@ mod tests {
     fn large_qwen_drops_to_4k_when_weights_fill_ram() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Qwen3.8 27B", "Qwen3.8-27B.gguf", 16314);
-        let plan = SpawnPlan::for_model(&profile(16, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(16, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 4096);
         assert_eq!(plan.answer_tokens, 768);
     }
@@ -660,7 +658,7 @@ mod tests {
     fn large_qwen_stretches_only_on_48gb_metal() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Qwen3.8 27B", "Qwen3.8-27B.gguf", 16314);
-        let plan = SpawnPlan::for_model(&profile(48, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(48, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 12288);
         assert_eq!(plan.answer_tokens, 2048);
     }
@@ -669,7 +667,7 @@ mod tests {
     fn gemma_e4b_does_not_stretch() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Gemma 4 E4B", "gemma-4-E4B-it.gguf", 4747);
-        let plan = SpawnPlan::for_model(&profile(32, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(32, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 1536);
     }
@@ -678,7 +676,7 @@ mod tests {
     fn small_mistral_stretches_on_24gb_metal() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Ministral 3 8B", "Ministral-3-8B.gguf", 5114);
-        let plan = SpawnPlan::for_model(&profile(24, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(24, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 16384);
         assert_eq!(plan.answer_tokens, 1536);
     }
@@ -687,7 +685,7 @@ mod tests {
     fn mid_stays_8k_on_24gb() {
         let pin = pin_for("macos", "aarch64").unwrap();
         let model = hint("Ministral 3 14B", "Ministral-3-14B.gguf", 7857);
-        let plan = SpawnPlan::for_model(&profile(24, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(24, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 2048);
     }
@@ -696,7 +694,7 @@ mod tests {
     fn large_does_not_stretch_on_vulkan() {
         let pin = pin_for("windows", "x86_64").unwrap();
         let model = hint("Qwen3.8 27B", "Qwen3.8-27B.gguf", 16314);
-        let plan = SpawnPlan::for_model(&profile(48, false, "Vulkan"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(48, "Vulkan"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 2048);
     }
@@ -705,7 +703,7 @@ mod tests {
     fn eight_gb_gpu_caps_a_mid_model() {
         let pin = pin_for("windows", "x86_64").unwrap();
         let model = hint("Ministral 3 14B", "Ministral-3-14B.gguf", 7857);
-        let plan = SpawnPlan::for_model(&profile(8, false, "Vulkan"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(8, "Vulkan"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 4096);
         assert_eq!(plan.answer_tokens, 768);
     }
@@ -721,7 +719,7 @@ mod tests {
             file_bytes: 5114 * MIB,
             gguf_path: Some(path),
         };
-        let plan = SpawnPlan::for_model(&profile(32, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(32, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 4096);
         assert_eq!(plan.answer_tokens, 768);
     }
@@ -737,7 +735,7 @@ mod tests {
             file_bytes: 5114 * MIB,
             gguf_path: Some(path),
         };
-        let plan = SpawnPlan::for_model(&profile(32, true, "Metal"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(32, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 4096);
         assert_eq!(plan.answer_tokens, 768);
         assert!(retrieval_char_budget_with(plan.context_tokens, plan.answer_tokens, 9_000) > 0);
@@ -748,7 +746,7 @@ mod tests {
     fn discrete_gpu_does_not_stretch_from_system_ram() {
         let pin = pin_for("windows", "x86_64").unwrap();
         let model = hint("Ministral 3 8B", "Ministral-3-8B.gguf", 5114);
-        let plan = SpawnPlan::for_model(&profile(32, false, "Vulkan"), pin, Some(&model));
+        let plan = SpawnPlan::for_model(&profile(32, "Vulkan"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 1536);
     }

@@ -21,8 +21,7 @@ mod think;
 pub(crate) mod tune;
 
 pub use pin::{
-    current_engine_pin, find_bundled_engine_archive, pin_for_target_triple, preferred_engine_pin,
-    EnginePin, ENGINE_BUILD, ENGINE_PINS,
+    current_engine_pin, find_bundled_engine_archive, preferred_engine_pin, ENGINE_BUILD,
 };
 
 use serde::{Deserialize, Serialize};

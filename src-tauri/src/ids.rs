@@ -57,7 +57,8 @@ pub fn require_safe_id(id: &str) -> anyhow::Result<()> {
     }
 }
 
-pub fn content_hash(bytes: &[u8]) -> String {
+#[cfg(test)]
+fn content_hash(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     let digest = hasher.finalize();

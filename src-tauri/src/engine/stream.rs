@@ -44,26 +44,6 @@ impl Engine {
             .unwrap_or(CHAT_STALL_TIMEOUT)
     }
 
-    /// Stream a chat completion. Reasoning traces (from `reasoning_content`
-    /// deltas or inline `<think>` blocks) are separated from the answer and
-    /// both are streamed through `on_event`. Returns the collected output.
-    pub async fn chat_stream(
-        self: &Arc<Self>,
-        messages: &[super::ChatMessage],
-        temperature: f32,
-        max_tokens: u32,
-        cancel: &Arc<AtomicBool>,
-        on_event: impl FnMut(StreamEvent<'_>),
-    ) -> Result<ChatOutput> {
-        self.complete(
-            messages,
-            super::ChatOptions::stream(temperature, max_tokens),
-            cancel,
-            on_event,
-        )
-        .await
-    }
-
     /// One-shot completion that must not pollute the KV cache used by Chat.
     pub async fn chat_once(
         self: &Arc<Self>,

@@ -7,9 +7,7 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct MachineProfile {
     pub total_ram_bytes: u64,
-    pub available_ram_bytes: u64,
     pub cpu: String,
-    pub apple_silicon: bool,
     pub accelerator: String,
     pub free_disk_bytes: u64,
     pub process_arch: String,
@@ -35,9 +33,7 @@ impl MachineProfile {
         let (process_arch, os_arch) = host_arch_labels();
         Self {
             total_ram_bytes: sys.total_memory(),
-            available_ram_bytes: sys.available_memory(),
             cpu,
-            apple_silicon: cfg!(all(target_os = "macos", target_arch = "aarch64")),
             accelerator: super::pin::preferred_engine_pin()
                 .map(|pin| pin.accelerator.to_string())
                 .unwrap_or_else(|_| "none".into()),
@@ -79,7 +75,7 @@ pub fn runtime_need_bytes(file_bytes: u64) -> u64 {
 ///
 /// Order is capability, highest first (`CatalogStanding::sort_key`), then
 /// smaller same-family fallbacks so lower RAM bands still have a pick.
-/// The default install is the first `Documents` row that fits RAM.
+/// The default install is the first row that fits RAM.
 ///
 /// Missing an Artificial Analysis Intelligence Index is not a skip. A
 /// new model may sit above scored rows when published benches show a
@@ -90,21 +86,12 @@ pub struct CatalogEntry {
     pub name: &'static str,
     pub family: &'static str,
     pub provider: &'static str,
-    pub work: CatalogWork,
     pub standing: CatalogStanding,
     pub hf_repo: &'static str,
     pub approx_bytes: u64,
     pub license: &'static str,
     pub released: &'static str,
     pub blurb: &'static str,
-}
-
-/// What Rebost uses the weights for. The first install is always
-/// `Documents` — reading and drafting around files, not programming.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CatalogWork {
-    Documents,
-    Code,
 }
 
 /// Why a catalog row sits where it does. Higher [`sort_key`](Self::sort_key)
@@ -133,7 +120,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Qwen3.8 27B",
         family: "Qwen",
         provider: "Alibaba",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(52),
         hf_repo: "unsloth/Qwen3.8-27B-GGUF",
         approx_bytes: 16314 * MIB,
@@ -145,7 +131,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Muse Glimmer",
         family: "Muse",
         provider: "Meta",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(35),
         hf_repo: "unsloth/Muse-Glimmer-30B-GGUF",
         approx_bytes: 15143 * MIB,
@@ -157,7 +142,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 4 31B",
         family: "Gemma",
         provider: "Google",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(30),
         hf_repo: "unsloth/gemma-4-31B-it-GGUF",
         approx_bytes: 17475 * MIB,
@@ -169,7 +153,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Ornith-1.5 9B",
         family: "Ornith",
         provider: "DeepReinforce",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::BenchLead { above: 22 },
         hf_repo: "ornith-ai/Ornith-1.5-9B-GGUF",
         approx_bytes: 5512 * MIB,
@@ -181,7 +164,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 4 12B",
         family: "Gemma",
         provider: "Google",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(22),
         hf_repo: "unsloth/gemma-4-12b-it-GGUF",
         approx_bytes: 6792 * MIB,
@@ -193,7 +175,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Qwen3.5 4B",
         family: "Qwen",
         provider: "Alibaba",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(20),
         hf_repo: "unsloth/Qwen3.5-4B-GGUF",
         approx_bytes: 2614 * MIB,
@@ -205,7 +186,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "gpt-oss 20B",
         family: "GPT",
         provider: "OpenAI",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(15),
         hf_repo: "unsloth/gpt-oss-20b-GGUF",
         approx_bytes: 11086 * MIB,
@@ -217,7 +197,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 4 E4B",
         family: "Gemma",
         provider: "Google",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(12),
         hf_repo: "unsloth/gemma-4-E4B-it-GGUF",
         approx_bytes: 4747 * MIB,
@@ -229,7 +208,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Ministral 3 14B",
         family: "Mistral",
         provider: "Mistral",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(11),
         hf_repo: "unsloth/Ministral-3-14B-Instruct-2512-GGUF",
         approx_bytes: 7857 * MIB,
@@ -241,7 +219,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Ministral 3 8B",
         family: "Mistral",
         provider: "Mistral",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(9),
         hf_repo: "unsloth/Ministral-3-8B-Instruct-2512-GGUF",
         approx_bytes: 4958 * MIB,
@@ -253,7 +230,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Ministral 3 3B",
         family: "Mistral",
         provider: "Mistral",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(7),
         hf_repo: "unsloth/Ministral-3-3B-Instruct-2512-GGUF",
         approx_bytes: 2047 * MIB,
@@ -265,7 +241,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Qwen3.5 2B",
         family: "Qwen",
         provider: "Alibaba",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(7),
         hf_repo: "unsloth/Qwen3.5-2B-GGUF",
         approx_bytes: 1222 * MIB,
@@ -277,7 +252,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Phi-4 Mini",
         family: "Phi",
         provider: "Microsoft",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(6),
         hf_repo: "unsloth/Phi-4-mini-instruct-GGUF",
         approx_bytes: 2376 * MIB,
@@ -289,7 +263,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Granite 4.1 3B",
         family: "Granite",
         provider: "IBM",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(4),
         hf_repo: "unsloth/granite-4.1-3b-GGUF",
         approx_bytes: 2002 * MIB,
@@ -301,7 +274,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 3 1B",
         family: "Gemma",
         provider: "Google",
-        work: CatalogWork::Documents,
         standing: CatalogStanding::Scored(1),
         hf_repo: "unsloth/gemma-3-1b-it-GGUF",
         approx_bytes: 769 * MIB,
@@ -339,13 +311,6 @@ fn fits(entry: &CatalogEntry, profile: &MachineProfile) -> bool {
     runtime_need_bytes(entry.approx_bytes) <= profile.model_budget_bytes()
 }
 
-fn is_default_work(entry: &CatalogEntry) -> bool {
-    match entry.work {
-        CatalogWork::Documents => true,
-        CatalogWork::Code => false,
-    }
-}
-
 fn forced_recommend_index() -> Option<usize> {
     let name = std::env::var("REBOST_FORCE_RECOMMEND").ok()?;
     let name = name.trim();
@@ -363,12 +328,11 @@ fn pick_index(profile: &MachineProfile) -> usize {
     }
     CATALOG
         .iter()
-        .position(|entry| is_default_work(entry) && fits(entry, profile))
-        .or_else(|| CATALOG.iter().rposition(is_default_work))
+        .position(|entry| fits(entry, profile))
         .unwrap_or(CATALOG.len() - 1)
 }
 
-/// Recommended model: the first document-work catalog row that fits in RAM
+/// Recommended model: the first catalog row that fits in RAM
 /// with headroom. Catalog order is capability (`CatalogStanding`), not a
 /// live leaderboard fetch.
 pub fn recommend(profile: &MachineProfile) -> Recommendation {
@@ -386,7 +350,7 @@ fn alt_candidates<'a>(
         if entry.name == primary.name || entry.family == primary.family {
             continue;
         }
-        if !is_default_work(entry) || !fits(entry, profile) {
+        if !fits(entry, profile) {
             continue;
         }
         if entry.approx_bytes >= primary.approx_bytes {
@@ -504,9 +468,7 @@ mod tests {
     fn recommendation_scales_with_ram() {
         let mk = |gb: u64| MachineProfile {
             total_ram_bytes: gb * GIB,
-            available_ram_bytes: gb * GIB / 2,
             cpu: "test".into(),
-            apple_silicon: true,
             accelerator: "Metal".into(),
             free_disk_bytes: 500 * GIB,
             process_arch: "test".into(),
@@ -601,22 +563,10 @@ mod tests {
     }
 
     #[test]
-    fn default_install_is_document_work() {
-        assert!(
-            CATALOG
-                .iter()
-                .all(|entry| entry.work == CatalogWork::Documents),
-            "coding checkpoints do not belong in the first-run catalog"
-        );
-    }
-
-    #[test]
     fn uninstalled_suggestions_skip_the_active_model() {
         let mk = |gb: u64| MachineProfile {
             total_ram_bytes: gb * GIB,
-            available_ram_bytes: gb * GIB / 2,
             cpu: "test".into(),
-            apple_silicon: true,
             accelerator: "Metal".into(),
             free_disk_bytes: 500 * GIB,
             process_arch: "test".into(),

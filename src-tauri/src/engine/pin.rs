@@ -158,7 +158,8 @@ pub fn extract_dir_name(pin: &EnginePin) -> String {
 }
 
 /// Map a Rust/Tauri target triple onto a pin (one installer per triple).
-pub fn pin_for_target_triple(triple: &str) -> Result<&'static EnginePin> {
+#[cfg(test)]
+fn pin_for_target_triple(triple: &str) -> Result<&'static EnginePin> {
     let (os, arch) = match triple {
         "aarch64-apple-darwin" => ("macos", "aarch64"),
         "x86_64-apple-darwin" => ("macos", "x86_64"),

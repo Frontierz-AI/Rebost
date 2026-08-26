@@ -10,9 +10,7 @@ use rebost::engine::models::{self, MachineProfile};
 fn profile() -> MachineProfile {
     MachineProfile {
         total_ram_bytes: 48 * 1024 * 1024 * 1024,
-        available_ram_bytes: 24 * 1024 * 1024 * 1024,
         cpu: "test".into(),
-        apple_silicon: true,
         accelerator: "Metal".into(),
         free_disk_bytes: 500 * 1024 * 1024 * 1024,
         process_arch: "test".into(),

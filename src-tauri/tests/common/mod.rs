@@ -3,7 +3,7 @@
 
 #![allow(dead_code)]
 
-use rebost::core::{Ctx, Events, NoopEvents};
+use rebost::core::{Ctx, NoopEvents};
 use rebost::ingest::extract::ExtractorSettings;
 use rebost::paths::Paths;
 use std::path::{Path, PathBuf};
@@ -12,15 +12,6 @@ use std::sync::Arc;
 pub struct TestApp {
     pub ctx: Arc<Ctx>,
     pub dir: tempfile::TempDir,
-}
-
-#[allow(dead_code)]
-pub struct CollectingEvents(pub std::sync::Mutex<Vec<(String, serde_json::Value)>>);
-
-impl Events for CollectingEvents {
-    fn emit(&self, event: &str, payload: serde_json::Value) {
-        self.0.lock().unwrap().push((event.to_string(), payload));
-    }
 }
 
 pub fn test_app() -> TestApp {

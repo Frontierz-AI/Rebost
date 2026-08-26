@@ -241,7 +241,6 @@ pub fn run() {
             commands::warm_engine,
             commands::engine_status,
             commands::machine_profile,
-            commands::active_model,
             commands::models_search,
             commands::open_model_page,
             commands::model_install,

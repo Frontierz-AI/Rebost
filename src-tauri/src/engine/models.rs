@@ -8,8 +8,8 @@ use std::collections::{HashMap, HashSet};
 use url::Url;
 
 pub use crate::engine::catalog::{
-    recommend, runtime_need_bytes, smaller_alternatives, uninstalled_suggestions, CatalogEntry,
-    MachineProfile, Recommendation, CATALOG,
+    recommend, runtime_need_bytes, smaller_alternatives, uninstalled_suggestions, MachineProfile,
+    Recommendation,
 };
 
 /// Quantization preference for automatic file selection.
@@ -696,6 +696,7 @@ fn released_newest_first(left: Option<&str>, right: Option<&str>) -> Ordering {
 }
 
 /// Default Explore order: fit, recent, good use of memory, Official, downloads.
+/// The UI keeps this order for Best. Other sorts happen in the webview.
 fn rank_search_results(results: &mut [ModelSearchResult], budget: u64) {
     rank_search_results_on(results, chrono::Utc::now().date_naive(), budget);
 }
