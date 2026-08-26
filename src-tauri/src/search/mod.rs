@@ -43,6 +43,14 @@ pub(crate) fn compact_hyphens(text: &str) -> String {
         .collect()
 }
 
+/// Lowercase and collapse whitespace so "Zebra  East" matches "zebra east".
+pub(crate) fn fold_ws(text: &str) -> String {
+    text.to_lowercase()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 pub struct SearchIndex {
     pub(crate) index: Index,
     pub(crate) reader: IndexReader,
@@ -335,6 +343,12 @@ impl Drop for SearchIndex {
 mod tests {
     use super::*;
     use crate::types::{DocStatus, DocumentMeta, Passage, SourceType};
+
+    #[test]
+    fn fold_ws_collapses_case_and_spaces() {
+        assert_eq!(fold_ws("Zebra  East Wing"), "zebra east wing");
+        assert_eq!(fold_ws("  already  folded  "), "already folded");
+    }
 
     fn sample_meta() -> DocumentMeta {
         DocumentMeta {

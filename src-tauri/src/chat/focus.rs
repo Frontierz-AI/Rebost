@@ -4,16 +4,13 @@ use std::collections::HashSet;
 
 use crate::core::Ctx;
 use crate::ingest::card;
-use crate::search::gate;
+use crate::ingest::excerpt::{OPEN_WINDOW_NEXT, OPEN_WINDOW_START};
+use crate::limits::clip_chars_ellipsis;
+use crate::search::gate::{self, passage_cost};
 use crate::shelf::ThinkLevel;
 use crate::types::{DocStatus, SourcePassage};
 
-use super::tools::{next_sid_number, passage_cost, sid_number};
-
-/// Section marker for the first `open_shelf_file` window of a long file.
-pub(crate) const OPEN_WINDOW_START: &str = "from the start";
-/// Section marker for a later window of the same file.
-pub(crate) const OPEN_WINDOW_NEXT: &str = "continued";
+use super::tools::{next_sid_number, sid_number};
 
 const COVERAGE_CHUNK_CHARS: usize = 1_400;
 const NAMED_ATTACHMENT_SHARE: f32 = 0.80;
@@ -319,7 +316,7 @@ pub(crate) fn format_named_file_notes(
         let mut block = name.clone();
         if !card.summary.is_empty() {
             block.push_str(": ");
-            block.push_str(&clip_chars(&card.summary, CARD_SUMMARY_MAX));
+            block.push_str(&clip_chars_ellipsis(&card.summary, CARD_SUMMARY_MAX));
         }
         if !card.outline.is_empty() {
             let titles: Vec<&str> = card
@@ -496,17 +493,6 @@ fn pick_coverage_indices(n: usize, max_keep: usize) -> Vec<usize> {
     idx.sort_unstable();
     idx.dedup();
     idx
-}
-
-fn clip_chars(text: &str, max: usize) -> String {
-    let n = text.chars().count();
-    if n <= max {
-        return text.to_string();
-    }
-    format!(
-        "{}…",
-        text.chars().take(max.saturating_sub(1)).collect::<String>()
-    )
 }
 
 #[cfg(test)]

@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use crate::engine::{ChatMessage, Engine};
+use crate::search::fold_ws;
 
 pub(crate) async fn extra_search_queries(
     engine: &Arc<Engine>,
@@ -62,7 +63,7 @@ Do not repeat the question.\n"
 }
 
 fn parse_search_queries(raw: &str, original: &str, count: usize) -> Vec<String> {
-    let original_fold = folded_query(original);
+    let original_fold = fold_ws(original);
     let mut out = Vec::new();
     let mut seen = std::collections::HashSet::new();
     for line in raw.lines() {
@@ -70,7 +71,7 @@ fn parse_search_queries(raw: &str, original: &str, count: usize) -> Vec<String> 
         if cleaned.chars().count() < 3 {
             continue;
         }
-        let fold = folded_query(&cleaned);
+        let fold = fold_ws(&cleaned);
         if fold == original_fold || !seen.insert(fold) {
             continue;
         }
@@ -96,13 +97,6 @@ fn clean_query_line(line: &str) -> String {
     text.trim_matches(|c| c == '"' || c == '\'' || c == '`')
         .trim()
         .to_string()
-}
-
-pub(super) fn folded_query(text: &str) -> String {
-    text.to_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
 }
 
 #[cfg(test)]

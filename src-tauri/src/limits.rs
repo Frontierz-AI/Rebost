@@ -20,6 +20,18 @@ pub fn clip_chars(text: &str, max: usize) -> String {
     }
 }
 
+/// Clip to `max` characters and end with an ellipsis when cut.
+pub fn clip_chars_ellipsis(text: &str, max: usize) -> String {
+    let count = text.chars().count();
+    if count <= max {
+        return text.to_string();
+    }
+    format!(
+        "{}…",
+        text.chars().take(max.saturating_sub(1)).collect::<String>()
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -35,5 +47,11 @@ mod tests {
         let clipped = clip_chars(&text, PROMPT_MAX_CHARS);
         assert_eq!(clipped.chars().count(), PROMPT_MAX_CHARS);
         assert!(clipped.chars().all(|c| c == 'á'));
+    }
+
+    #[test]
+    fn clip_chars_ellipsis_marks_a_cut() {
+        assert_eq!(clip_chars_ellipsis("hello", 12), "hello");
+        assert_eq!(clip_chars_ellipsis("abcdefghij", 6), "abcde…");
     }
 }

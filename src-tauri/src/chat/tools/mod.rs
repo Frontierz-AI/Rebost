@@ -554,17 +554,8 @@ pub(crate) fn clip_label(name: &str) -> String {
     }
 }
 
-pub(crate) fn passage_cost(source: &SourcePassage) -> usize {
-    source
-        .body
-        .chars()
-        .count()
-        .saturating_add(source.title.chars().count())
-        .saturating_add(64)
-}
-
 pub(crate) fn sources_cost(sources: &[SourcePassage]) -> usize {
-    sources.iter().map(passage_cost).sum()
+    sources.iter().map(crate::search::gate::passage_cost).sum()
 }
 
 pub(crate) fn remaining_budget(sources: &[SourcePassage], budget: usize) -> usize {

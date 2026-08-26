@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 pub const WINDOW_CHARS: usize = 8_000;
 
 /// Labels used by `open_shelf_file` windows, not real headings.
-const OPEN_WINDOW_START: &str = "from the start";
-const OPEN_WINDOW_NEXT: &str = "continued";
+pub(crate) const OPEN_WINDOW_START: &str = "from the start";
+pub(crate) const OPEN_WINDOW_NEXT: &str = "continued";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]

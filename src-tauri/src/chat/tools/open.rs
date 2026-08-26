@@ -1,11 +1,11 @@
 //! Resolve a Shelf file by name and load its extracted text.
 
-use crate::search::gate;
+use crate::ingest::excerpt::{OPEN_WINDOW_NEXT, OPEN_WINDOW_START};
+use crate::search::{fold_ws, gate};
 use crate::types::{DocStatus, SourcePassage};
 
 use super::super::focus::{
     drop_sids_for_open, next_open_sid, next_open_start, next_read_offset, slice_from_char,
-    OPEN_WINDOW_NEXT, OPEN_WINDOW_START,
 };
 use super::{clip_label, SourceChange, ToolCtx, ToolOutcome, MIN_TOOL_CHARS};
 
@@ -204,13 +204,13 @@ fn resolve_file<'a>(
     if requested.is_empty() {
         return Err(ResolveError::Empty);
     }
-    let folded = fold(&requested);
+    let folded = fold_ws(&requested);
     let exact: Vec<&ShelfFile> = files
         .iter()
         .filter(|f| {
-            fold(&f.label) == folded
-                || fold(&f.file_name) == folded
-                || fold(&f.rel_path.replace('\\', "/")) == folded
+            fold_ws(&f.label) == folded
+                || fold_ws(&f.file_name) == folded
+                || fold_ws(&f.rel_path.replace('\\', "/")) == folded
         })
         .collect();
     if exact.len() == 1 {
@@ -224,10 +224,10 @@ fn resolve_file<'a>(
     }
 
     let basename = requested.rsplit('/').next().unwrap_or(&requested);
-    let base_fold = fold(basename);
+    let base_fold = fold_ws(basename);
     let by_base: Vec<&ShelfFile> = files
         .iter()
-        .filter(|f| fold(&f.file_name) == base_fold)
+        .filter(|f| fold_ws(&f.file_name) == base_fold)
         .collect();
     if by_base.len() == 1 {
         return Ok(by_base[0]);
@@ -243,9 +243,9 @@ fn resolve_file<'a>(
         let contains: Vec<&ShelfFile> = files
             .iter()
             .filter(|f| {
-                fold(&f.label).contains(&base_fold)
-                    || fold(&f.file_name).contains(&base_fold)
-                    || fold(&f.rel_path).contains(&base_fold)
+                fold_ws(&f.label).contains(&base_fold)
+                    || fold_ws(&f.file_name).contains(&base_fold)
+                    || fold_ws(&f.rel_path).contains(&base_fold)
             })
             .collect();
         if contains.len() == 1 {
@@ -298,13 +298,6 @@ fn resolve_message(error: &ResolveError) -> String {
             )
         }
     }
-}
-
-fn fold(text: &str) -> String {
-    text.to_lowercase()
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
 }
 
 #[cfg(test)]

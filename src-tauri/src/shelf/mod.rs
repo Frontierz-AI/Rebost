@@ -6,7 +6,7 @@ pub mod watcher;
 
 mod longpath;
 
-pub use scan::{rel_is_skipped, scan_folder, scan_new_files, MAX_FILES_PER_SHELF};
+pub use scan::{rel_is_skipped, scan_new_files, MAX_FILES_PER_SHELF};
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -1091,7 +1091,12 @@ mod tests {
         );
         let traversal = format!("{}/../../secret.md", linked.display());
         assert!(!reloaded.allows_open_path(std::path::Path::new(&traversal)));
-        let scanned = crate::shelf::scan_folder(&linked);
+        let scanned = crate::shelf::scan_new_files(
+            &linked,
+            crate::shelf::MAX_FILES_PER_SHELF,
+            &HashSet::new(),
+        )
+        .files;
         assert_eq!(
             scanned.len(),
             1,

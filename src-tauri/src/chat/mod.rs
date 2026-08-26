@@ -37,7 +37,7 @@ use crate::core::Ctx;
 use crate::engine::{
     ChatMessage, ChatOptions, ChatOutput, ChatThinking, Engine, StreamEvent, ToolCall,
 };
-use crate::search::gate;
+use crate::search::{fold_ws, gate};
 use crate::shelf::ThinkLevel;
 use crate::types::{DocStatus, DocumentMeta, SourcePassage};
 use conversations::{Conversations, StoredMessage};
@@ -45,7 +45,7 @@ use prompts::{
     build_system_prompt, format_citation_legend, format_retrieved_context, format_shelf_inventory,
     guess_message_lang, sanitize_citations, shelf_file_labels,
 };
-use queries::{extra_search_queries, folded_query};
+use queries::extra_search_queries;
 
 const HISTORY_MAX_MESSAGES: usize = 12;
 const HISTORY_MAX_CHARS: usize = 6_000;
@@ -688,9 +688,9 @@ fn retrieve_from_shelf(
         plan.caps
     };
     let mut gated = if relaxed || opts.attachment {
-        gate::gate_passages_named_with(hits, &[], &named, caps, preserve_order)
+        gate::gate_passages(hits, &[], &named, caps, preserve_order)
     } else {
-        gate::gate_passages_named_with(hits, &overlap_tokens, &named, caps, preserve_order)
+        gate::gate_passages(hits, &overlap_tokens, &named, caps, preserve_order)
     };
     gated = neighbors::widen_neighbor_passages(ctx, shelf_id, gated, plan.neighbor_radius);
     if plan.expand_top > 0 && (!relaxed || opts.attachment) {
@@ -912,12 +912,12 @@ fn prior_search_queries(
     current_id: &str,
     current_text: &str,
 ) -> Vec<String> {
-    let current_fold = folded_query(current_text);
+    let current_fold = fold_ws(current_text);
     let users: Vec<&str> = history
         .iter()
         .filter(|message| message.role == "user" && message.id != current_id)
         .map(|message| message.text.trim())
-        .filter(|text| text.chars().count() >= 3 && folded_query(text) != current_fold)
+        .filter(|text| text.chars().count() >= 3 && fold_ws(text) != current_fold)
         .collect();
     users
         .into_iter()
@@ -932,8 +932,8 @@ fn prior_search_queries(
 
 fn merge_search_queries(mut prior: Vec<String>, extra: &[String]) -> Vec<String> {
     for query in extra {
-        let fold = folded_query(query);
-        if prior.iter().any(|existing| folded_query(existing) == fold) {
+        let fold = fold_ws(query);
+        if prior.iter().any(|existing| fold_ws(existing) == fold) {
             continue;
         }
         prior.push(query.clone());
@@ -1791,7 +1791,7 @@ mod prepare_tests {
             .sources
             .iter()
             .filter(|s| s.shelf_id == upload.id)
-            .map(tools::passage_cost)
+            .map(gate::passage_cost)
             .sum();
         assert!(
             upload_cost <= share,
@@ -2366,7 +2366,7 @@ mod prepare_tests {
             .map(|s| s.body.as_str())
             .collect::<Vec<_>>()
             .join("\n");
-        let tight_cost: usize = tight.iter().map(tools::passage_cost).sum();
+        let tight_cost: usize = tight.iter().map(gate::passage_cost).sum();
         assert!(
             tight_text.contains("ALPHA") && tight_text.contains("OMEGA"),
             "a small window should still keep both ends, got {tight_text:?}"
@@ -2407,7 +2407,7 @@ mod prepare_tests {
             .sources
             .iter()
             .filter(|s| s.shelf_id == upload.id)
-            .map(tools::passage_cost)
+            .map(gate::passage_cost)
             .sum();
         let upload_chars: usize = prepared
             .sources
@@ -2569,7 +2569,7 @@ mod prepare_tests {
             document_id: files[0].id.clone(),
             shelf_id: fixture.shelf.id.clone(),
             title: "encyclopedia.md".into(),
-            section: Some(super::focus::OPEN_WINDOW_START.into()),
+            section: Some(crate::ingest::excerpt::OPEN_WINDOW_START.into()),
             page_start: None,
             page_end: None,
             body: prefix,
@@ -2590,7 +2590,7 @@ mod prepare_tests {
         assert_eq!(updated.sid, "S1");
         assert_eq!(
             updated.section.as_deref(),
-            Some(super::focus::OPEN_WINDOW_NEXT)
+            Some(crate::ingest::excerpt::OPEN_WINDOW_NEXT)
         );
         assert!(!updated.body.starts_with("START unique opening."));
         assert!(updated.body.to_lowercase().contains("zebra"));
@@ -2610,7 +2610,7 @@ mod prepare_tests {
             document_id: files[0].id.clone(),
             shelf_id: fixture.shelf.id.clone(),
             title: "encyclopedia.md".into(),
-            section: Some(super::focus::OPEN_WINDOW_NEXT.into()),
+            section: Some(crate::ingest::excerpt::OPEN_WINDOW_NEXT.into()),
             page_start: None,
             page_end: None,
             body: "MIDDLE unique marker.\nThe office zebra lives in the east wing.".into(),

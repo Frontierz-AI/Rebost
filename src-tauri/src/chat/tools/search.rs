@@ -1,15 +1,14 @@
 //! Search this Shelf, widen a citation, or search earlier conversations.
 
 use crate::chat::conversations::Conversations;
-use crate::search::gate;
+use crate::ingest::excerpt::OPEN_WINDOW_NEXT;
+use crate::search::gate::{self, passage_cost};
 use crate::types::SourcePassage;
 
-use super::super::focus::{
-    attachment_caps, body_is_file_prefix, is_open_window, slice_from_char, OPEN_WINDOW_NEXT,
-};
+use super::super::focus::{attachment_caps, body_is_file_prefix, is_open_window, slice_from_char};
 use super::{
-    clip_label, format_passages, parse_sid, passage_cost, remaining_budget, SourceChange, ToolCtx,
-    ToolOutcome, MIN_TOOL_CHARS,
+    clip_label, format_passages, parse_sid, remaining_budget, SourceChange, ToolCtx, ToolOutcome,
+    MIN_TOOL_CHARS,
 };
 
 pub(super) fn search_shelf(tool: &ToolCtx<'_>, query: &str) -> ToolOutcome {
@@ -56,9 +55,9 @@ pub(super) fn search_shelf(tool: &ToolCtx<'_>, query: &str) -> ToolOutcome {
             .shelf(shelf_id)
             .is_some_and(|s| s.thread_id.is_some());
         let hits = if relaxed {
-            gate::gate_passages_named_with(hits, &[], &named, attachment_caps(tool.think), false)
+            gate::gate_passages(hits, &[], &named, attachment_caps(tool.think), false)
         } else {
-            gate::gate_passages_named_with(hits, &tokens, &named, plan.caps, false)
+            gate::gate_passages(hits, &tokens, &named, plan.caps, false)
         };
         let hits = super::super::neighbors::widen_neighbor_passages(
             tool.ctx,

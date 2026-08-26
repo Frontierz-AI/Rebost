@@ -133,14 +133,13 @@ pub fn scan_new_files(root: &Path, max_new: usize, already: &HashSet<PathBuf>) -
     outcome
 }
 
-/// Recursively list supported files under a folder (tests and simple callers).
-pub fn scan_folder(root: &Path) -> Vec<PathBuf> {
-    scan_new_files(root, MAX_FILES_PER_SHELF, &HashSet::new()).files
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn scan_all(root: &Path) -> Vec<PathBuf> {
+        scan_new_files(root, MAX_FILES_PER_SHELF, &HashSet::new()).files
+    }
 
     #[test]
     fn skip_list_covers_packages_not_library() {
@@ -182,7 +181,7 @@ mod tests {
         std::fs::create_dir_all(root.join("Library")).unwrap();
         std::fs::write(root.join("Library/notes.md"), "keep").unwrap();
         std::fs::write(root.join("brief.md"), "keep").unwrap();
-        let scanned = scan_folder(root);
+        let scanned = scan_all(root);
         let names: Vec<_> = scanned
             .iter()
             .map(|p| {
@@ -202,7 +201,7 @@ mod tests {
         std::fs::write(root.join("~$report.docx"), "lock").unwrap();
         std::fs::write(root.join("scratch.tmp"), "tmp").unwrap();
         std::fs::write(root.join("note.md"), "keep").unwrap();
-        let scanned = scan_folder(root);
+        let scanned = scan_all(root);
         let names: Vec<_> = scanned
             .iter()
             .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
@@ -248,7 +247,7 @@ mod tests {
         let inner = root.join("node_modules");
         std::fs::create_dir_all(&inner).unwrap();
         std::fs::write(inner.join("skip.md"), "no").unwrap();
-        let scanned = scan_folder(&root);
+        let scanned = scan_all(&root);
         assert_eq!(scanned.len(), 2);
         assert!(scanned.iter().all(|p| !p.starts_with(&inner)));
     }
@@ -259,7 +258,7 @@ mod tests {
         let root = dir.path().join("Caches");
         std::fs::create_dir_all(&root).unwrap();
         std::fs::write(root.join("note.md"), "explicit").unwrap();
-        let scanned = scan_folder(&root);
+        let scanned = scan_all(&root);
         assert_eq!(scanned.len(), 1);
     }
 }

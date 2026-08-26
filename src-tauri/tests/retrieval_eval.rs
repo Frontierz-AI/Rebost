@@ -51,7 +51,15 @@ fn gated(corpus: &Corpus, query: &str) -> Vec<rebost::types::SourcePassage> {
         .search
         .search_and_merge_named(query, &corpus.shelf_id, &files, 24)
         .expect("search");
-    gate::gate_passages_named(hits, &tokens, &named)
+    apply_gate(hits, &tokens, &named)
+}
+
+fn apply_gate(
+    hits: Vec<rebost::types::SourcePassage>,
+    tokens: &[String],
+    named: &[String],
+) -> Vec<rebost::types::SourcePassage> {
+    gate::gate_passages(hits, tokens, named, gate::GateCaps::default(), false)
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -130,7 +138,7 @@ async fn spanish_stemming_matches_inflections() {
         .search
         .search_passages("días de vacaciones por año", &shelf_id, 24)
         .expect("search");
-    let results = gate::gate_passages(hits, &tokens);
+    let results = apply_gate(hits, &tokens, &[]);
     assert!(
         !results.is_empty(),
         "Spanish vacation policy should be found"
@@ -240,7 +248,7 @@ async fn budget_fitting_respects_the_measured_budget() {
             24,
         )
         .unwrap();
-    let passages = gate::gate_passages(hits, &tokens);
+    let passages = apply_gate(hits, &tokens, &[]);
     let (fitted, _) = gate::fit_to_budget(passages, Vec::new(), 1200);
     let total: usize = fitted.iter().map(|p| p.body.chars().count()).sum();
     assert!(
@@ -298,7 +306,7 @@ If the lead leaves before the two-year stay period, the studio agreement applies
         named.contains(&meta.id),
         "expected the named file, got {named:?}"
     );
-    let results = gate::gate_passages_named(hits, &tokens, &named);
+    let results = apply_gate(hits, &tokens, &named);
     assert!(
         results.iter().any(|r| r.document_id == meta.id),
         "expected the named services file among gated hits"

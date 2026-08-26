@@ -98,53 +98,12 @@ fn overlaps(query_tokens: &[String], haystacks: &[&str]) -> bool {
     })
 }
 
-/// Apply the gate to raw passage hits. Returns passages in score order with
-/// their `[S1]`-style ids assigned.
-pub fn gate_passages(hits: Vec<SourcePassage>, query_tokens: &[String]) -> Vec<SourcePassage> {
-    gate_passages_inner(hits, Some(query_tokens), &[], GateCaps::default(), false)
-}
-
-/// Like [`gate_passages`], but named files may occupy more of the prompt.
-pub fn gate_passages_named(
-    hits: Vec<SourcePassage>,
-    query_tokens: &[String],
-    named_document_ids: &[String],
-) -> Vec<SourcePassage> {
-    gate_passages_inner(
-        hits,
-        Some(query_tokens),
-        named_document_ids,
-        GateCaps::default(),
-        false,
-    )
-}
-
-/// Named-file gate with look-through caps. `preserve_order` keeps RRF ranking.
-pub fn gate_passages_named_with(
-    hits: Vec<SourcePassage>,
-    query_tokens: &[String],
-    named_document_ids: &[String],
-    caps: GateCaps,
-    preserve_order: bool,
-) -> Vec<SourcePassage> {
-    gate_passages_inner(
-        hits,
-        Some(query_tokens),
-        named_document_ids,
-        caps,
-        preserve_order,
-    )
-}
-
-/// Score floor and cap only — used for conversation uploads so a prompt
-/// like "summarize this" is not dropped for missing overlap.
-pub fn gate_passages_relaxed(hits: Vec<SourcePassage>) -> Vec<SourcePassage> {
-    gate_passages_inner(hits, None, &[], GateCaps::default(), false)
-}
-
-fn gate_passages_inner(
+/// Rank, overlap-check, and cap passage hits. Empty `query_tokens` skips the
+/// overlap check (attachment / "summarize this") but still applies per-file
+/// caps. `preserve_order` keeps RRF ranking.
+pub fn gate_passages(
     mut hits: Vec<SourcePassage>,
-    query_tokens: Option<&[String]>,
+    query_tokens: &[String],
     named_document_ids: &[String],
     caps: GateCaps,
     preserve_order: bool,
@@ -165,29 +124,25 @@ fn gate_passages_inner(
         if caps.relative_floor > 0.0 && hit.score < top * caps.relative_floor {
             continue;
         }
-        if let Some(tokens) = query_tokens {
-            let haystacks = [
-                hit.title.as_str(),
-                hit.section.as_deref().unwrap_or(""),
-                hit.body.as_str(),
-                hit.path.as_str(),
-            ];
-            if !overlaps(tokens, &haystacks) {
-                continue;
-            }
+        let haystacks = [
+            hit.title.as_str(),
+            hit.section.as_deref().unwrap_or(""),
+            hit.body.as_str(),
+            hit.path.as_str(),
+        ];
+        if !overlaps(query_tokens, &haystacks) {
+            continue;
         }
-        if query_tokens.is_some() {
-            let cap = if named.contains(hit.document_id.as_str()) {
-                caps.max_per_named
-            } else {
-                caps.max_per_doc
-            };
-            let count = per_doc.entry(hit.document_id.clone()).or_insert(0);
-            if *count >= cap {
-                continue;
-            }
-            *count += 1;
+        let cap = if named.contains(hit.document_id.as_str()) {
+            caps.max_per_named
+        } else {
+            caps.max_per_doc
+        };
+        let count = per_doc.entry(hit.document_id.clone()).or_insert(0);
+        if *count >= cap {
+            continue;
         }
+        *count += 1;
         kept.push(hit);
         if kept.len() >= caps.max_passages {
             break;
@@ -228,7 +183,7 @@ pub fn gate_messages(mut hits: Vec<MemorySnippet>, query_tokens: &[String]) -> V
     kept
 }
 
-fn passage_cost(passage: &SourcePassage) -> usize {
+pub(crate) fn passage_cost(passage: &SourcePassage) -> usize {
     passage
         .body
         .chars()
@@ -335,9 +290,13 @@ mod tests {
         }
     }
 
+    fn gated(hits: Vec<SourcePassage>, token: &str) -> Vec<SourcePassage> {
+        gate_passages(hits, &[token.into()], &[], GateCaps::default(), false)
+    }
+
     #[test]
     fn empty_hits_stay_empty() {
-        let out = gate_passages(Vec::new(), &["termination".into()]);
+        let out = gated(Vec::new(), "termination");
         assert!(out.is_empty());
     }
 
@@ -348,7 +307,7 @@ mod tests {
             passage(6.0, "termination notice period"),
             passage(1.0, "unrelated catering invoice"),
         ];
-        let out = gate_passages(hits, &["termination".into()]);
+        let out = gated(hits, "termination");
         assert_eq!(out.len(), 2);
         assert_eq!(out[0].sid, "S1");
         assert_eq!(out[1].sid, "S2");
@@ -361,17 +320,17 @@ mod tests {
             // scored close but shares no literal token with the query
             passage(4.0, "wholly unrelated text"),
         ];
-        let out = gate_passages(hits, &["termination".into()]);
+        let out = gated(hits, "termination");
         assert_eq!(out.len(), 1);
     }
 
     #[test]
-    fn relaxed_gate_keeps_non_overlapping_hits() {
+    fn empty_tokens_skip_overlap_and_keep_the_per_file_cap() {
         let hits = vec![
             passage(5.0, "termination clause applies"),
             passage(4.0, "wholly unrelated text"),
         ];
-        let out = gate_passages_relaxed(hits);
+        let out = gate_passages(hits, &[], &[], GateCaps::default(), false);
         assert_eq!(out.len(), 2);
         assert_eq!(out[0].sid, "S1");
     }
@@ -379,14 +338,14 @@ mod tests {
     #[test]
     fn overlap_is_accent_insensitive() {
         let hits = vec![passage(5.0, "La rescisión del contrato se regula aquí")];
-        let out = gate_passages(hits, &["rescision".into()]);
+        let out = gated(hits, "rescision");
         assert_eq!(out.len(), 1);
     }
 
     #[test]
     fn overlap_treats_hyphens_as_optional() {
         let hits = vec![passage(5.0, "The non-compete clause applies here")];
-        let out = gate_passages(hits, &["noncompete".into()]);
+        let out = gated(hits, "noncompete");
         assert_eq!(out.len(), 1);
     }
 
@@ -411,7 +370,7 @@ mod tests {
             7.0,
             "the company treats a bad leaver departure before the permanence period",
         ));
-        let out = gate_passages(hits, &["company".into()]);
+        let out = gated(hits, "company");
         let from_parties = out.iter().filter(|p| p.document_id == "parties").count();
         let from_services = out.iter().filter(|p| p.document_id == "services").count();
         assert_eq!(from_parties, tuning::MAX_PASSAGES_PER_DOC);
@@ -429,7 +388,13 @@ mod tests {
             ));
         }
         hits.push(passage_on("other", 6.0, "services agreement parties"));
-        let out = gate_passages_named(hits, &["services".into()], &["named".into()]);
+        let out = gate_passages(
+            hits,
+            &["services".into()],
+            &["named".into()],
+            GateCaps::default(),
+            false,
+        );
         let from_named = out.iter().filter(|p| p.document_id == "named").count();
         let from_other = out.iter().filter(|p| p.document_id == "other").count();
         assert_eq!(from_named, 6);
@@ -454,7 +419,7 @@ mod tests {
             max_per_named: 8,
             relative_floor: 0.12,
         };
-        let out = gate_passages_named_with(hits, &["termination".into()], &[], caps, false);
+        let out = gate_passages(hits, &["termination".into()], &[], caps, false);
         assert_eq!(out.iter().filter(|p| p.document_id == "one").count(), 4);
         assert_eq!(out.iter().filter(|p| p.document_id == "two").count(), 1);
     }
