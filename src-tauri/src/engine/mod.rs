@@ -10,6 +10,7 @@ pub mod download;
 mod gguf;
 mod gpu;
 mod install;
+mod messages;
 pub mod models;
 mod pin;
 mod process;

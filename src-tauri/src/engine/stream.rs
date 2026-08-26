@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use super::process::is_compute_failure;
+use super::process::{is_compute_failure, is_template_failure};
 use super::think::{SplitOut, ThinkSplitter};
 use super::{ChatOutput, Engine, StreamEvent, ToolCall};
 
@@ -89,9 +89,10 @@ impl Engine {
         mut on_event: impl FnMut(StreamEvent<'_>),
     ) -> Result<ChatOutput> {
         let _slot = GenerationSlot::acquire(&self.generation_in_flight);
+        let messages = super::messages::single_leading_system(messages);
         let result = async {
             let mut body = json!({
-                "messages": messages,
+                "messages": messages.as_ref(),
                 "stream": true,
                 "temperature": options.temperature,
                 "max_tokens": options.max_tokens,
@@ -106,6 +107,7 @@ impl Engine {
                 }
             }
             let mut retried = false;
+            let mut flattened = false;
             loop {
                 if cancel.load(Ordering::Relaxed) {
                     return Ok(ChatOutput::default());
@@ -143,6 +145,16 @@ impl Engine {
                     if !retried && is_compute_failure(&text) {
                         retried = true;
                         self.recover_after_compute_failure(&text).await;
+                        continue;
+                    }
+                    if !flattened && is_template_failure(&text) {
+                        flattened = true;
+                        log::warn!(
+                            "chat template rejected the message list ({status}); \
+inlining tool turns and trying again: {text}"
+                        );
+                        body["messages"] =
+                            json!(super::messages::flatten_tool_turns(messages.as_ref()));
                         continue;
                     }
                     if !dropped_tools && options.tools.is_some() && !is_compute_failure(&text) {

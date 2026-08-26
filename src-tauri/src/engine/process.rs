@@ -22,6 +22,13 @@ pub(crate) fn is_compute_failure(text: &str) -> bool {
         || lower.contains("failed to decode")
 }
 
+/// The chat template rejected the message list itself, so the shape of the
+/// list is what has to change before trying again.
+pub(crate) fn is_template_failure(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    lower.contains("jinja") || lower.contains("chat template")
+}
+
 pub(crate) async fn pipe_to_log(reader: impl tokio::io::AsyncRead + Unpin, log_path: PathBuf) {
     use tokio::io::BufReader;
     let mut lines = BufReader::new(reader).lines();

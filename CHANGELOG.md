@@ -6,6 +6,12 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.12] - 2026-08-26
+
+### Fixed
+
+- A second question in the same conversation still looks through the Shelf. Chat answers it instead of stopping after the first look at those files.
+
 ## [0.8.11] - 2026-08-26
 
 ### Fixed
@@ -476,7 +482,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.11...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.12...HEAD
+[0.8.12]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.11...v0.8.12
 [0.8.11]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.10...v0.8.11
 [0.8.10]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.9...v0.8.10
 [0.8.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.8...v0.8.9

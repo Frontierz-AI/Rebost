@@ -34,7 +34,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 use crate::core::Ctx;
-use crate::engine::{ChatMessage, ChatOptions, ChatOutput, ChatThinking, Engine, StreamEvent};
+use crate::engine::{
+    ChatMessage, ChatOptions, ChatOutput, ChatThinking, Engine, StreamEvent, ToolCall,
+};
 use crate::search::gate;
 use crate::shelf::ThinkLevel;
 use crate::types::{DocStatus, DocumentMeta, SourcePassage};
@@ -860,11 +862,13 @@ fn prepare_turn(
             history_message_text(previous),
         ));
     }
+    messages.push(ChatMessage::text("user", text));
     let retrieved = format_retrieved_context(&sources, &[]);
     if !retrieved.is_empty() {
-        messages.push(ChatMessage::text("system", retrieved));
+        let call = retrieval_call(text);
+        messages.push(tools::assistant_tool_message(std::slice::from_ref(&call)));
+        messages.push(tools::tool_result_message(&call, retrieved));
     }
-    messages.push(ChatMessage::text("user", text));
     Ok(PreparedTurn {
         messages,
         sources,
@@ -872,6 +876,20 @@ fn prepare_turn(
         budget,
         cited,
     })
+}
+
+/// Retrieved passages arrive as a `search_shelf` result rather than a second
+/// system message. Qwen and other templates raise `System message must be at
+/// the beginning` for a system turn anywhere but index 0, and a tool result
+/// still reads as something Rebost fetched rather than something the user
+/// pasted.
+fn retrieval_call(query: &str) -> ToolCall {
+    const QUERY_MAX_CHARS: usize = 300;
+    ToolCall::function(
+        "rebost_retrieval",
+        tools::SEARCH_SHELF,
+        json!({ "query": crate::limits::clip_chars(query, QUERY_MAX_CHARS) }).to_string(),
+    )
 }
 
 fn history_message_text(message: &StoredMessage) -> String {
@@ -1551,6 +1569,16 @@ mod prepare_tests {
         }
     }
 
+    /// Qwen and friends raise `System message must be at the beginning` for a
+    /// system turn anywhere but index 0, and the request comes back a 500.
+    fn assert_no_late_system_message(messages: &[ChatMessage]) {
+        assert!(
+            !messages.iter().skip(1).any(|m| m.role == "system"),
+            "a system message after the first one is rejected by strict templates, got {:?}",
+            messages.iter().map(|m| m.role.as_str()).collect::<Vec<_>>()
+        );
+    }
+
     fn tool_ctx<'a>(
         ctx: &'a Ctx,
         thread_id: &'a str,
@@ -1646,10 +1674,11 @@ mod prepare_tests {
             prepared
                 .messages
                 .iter()
-                .filter(|m| m.role == "system")
+                .filter(|m| m.role == "tool")
                 .any(|m| m.as_text().to_lowercase().contains("tuesday")),
-            "retrieved files should sit in a system message, not the question"
+            "retrieved files should sit in a tool result, not the question"
         );
+        assert_no_late_system_message(&prepared.messages);
         let system = prepared.messages[0].as_text();
         assert!(system.contains("Notes"));
         assert_eq!(
@@ -2005,6 +2034,19 @@ mod prepare_tests {
             "history should name the file that [S1] referred to, got {}",
             history.as_text()
         );
+        assert_no_late_system_message(&follow.messages);
+        let retrieval = follow
+            .messages
+            .last()
+            .expect("follow-up should end with the retrieved passages");
+        assert_eq!(retrieval.role, "tool");
+        assert!(retrieval.as_text().contains("corporate services"));
+        let call = follow.messages[follow.messages.len() - 2]
+            .tool_calls
+            .as_ref()
+            .expect("a tool result needs the call that produced it");
+        assert_eq!(call[0].function.name, tools::SEARCH_SHELF);
+        assert_eq!(retrieval.tool_call_id.as_deref(), Some(call[0].id.as_str()));
     }
 
     #[tokio::test(flavor = "multi_thread")]

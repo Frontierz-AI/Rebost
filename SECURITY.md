@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-The current release is **0.8.11**.
+The current release is **0.8.12**.
 
 ## What Rebost does with data
 
@@ -12,7 +12,7 @@ Chat, reading Shelf documents, search, and answers all run on the machine where 
 
 Rebost uses the network to **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows machines a faster copy may be downloaded the first time Chat runs.
 
-Those requests send a query string, IP address, and the user agent `Rebost/0.8.11 (local-first open-source desktop AI; https://github.com/Frontierz-AI/Rebost)`. They do not include Shelf documents.
+Those requests send a query string, IP address, and the user agent `Rebost/0.8.12 (local-first open-source desktop AI; https://github.com/Frontierz-AI/Rebost)`. They do not include Shelf documents.
 
 With Online on in Settings, Chat can also look things up on the public web. Those lookups leave the machine directly and do not go through Rebost, and they carry a user agent naming the project and a contact address. Chat is asked not to put private details in them.
 
