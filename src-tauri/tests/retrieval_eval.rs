@@ -249,7 +249,7 @@ async fn budget_fitting_respects_the_measured_budget() {
         )
         .unwrap();
     let passages = apply_gate(hits, &tokens, &[]);
-    let (fitted, _) = gate::fit_to_budget(passages, Vec::new(), 1200);
+    let fitted = gate::take_passages(passages, 1200);
     let total: usize = fitted.iter().map(|p| p.body.chars().count()).sum();
     assert!(
         total <= 1400,

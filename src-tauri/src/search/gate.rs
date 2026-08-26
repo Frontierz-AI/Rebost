@@ -1,14 +1,14 @@
 //! The Retrieval Gate.
 //!
 //! Tantivy always returns *something*; the gate decides what is actually
-//! relevant enough to hand to the model, and fits it into the machine's
-//! measured prompt-processing budget. Deterministic and explainable:
+//! relevant enough to hand to the model. Chat then fits those passages
+//! into the machine's measured prompt-processing budget. Deterministic
+//! and explainable:
 //!
 //! 1. relative score cut against the best hit,
 //! 2. lexical-overlap check (at least one meaningful query token must
 //!    literally appear in the passage — fuzzy-only matches don't clear),
-//! 3. per-file cap so one document cannot fill every slot, then a hard
-//!    cap, then greedy budget fitting in score order.
+//! 3. per-file cap so one document cannot fill every slot, then a hard cap.
 
 use std::collections::{HashMap, HashSet};
 
@@ -213,11 +213,6 @@ pub fn take_passages(passages: Vec<SourcePassage>, budget_chars: usize) -> Vec<S
     kept
 }
 
-/// Fit passages into the budget and number them S1, S2, …
-pub fn fit_passages(passages: Vec<SourcePassage>, budget_chars: usize) -> Vec<SourcePassage> {
-    assign_sids(take_passages(passages, budget_chars))
-}
-
 /// Fit older-conversation snippets into a char budget.
 pub fn fit_memory(memory: Vec<MemorySnippet>, budget_chars: usize) -> Vec<MemorySnippet> {
     let mut kept = Vec::new();
@@ -235,21 +230,6 @@ pub fn fit_memory(memory: Vec<MemorySnippet>, budget_chars: usize) -> Vec<Memory
         kept.push(snippet);
     }
     kept
-}
-
-/// Fit gated context into the machine's measured budget, favouring document
-/// passages; memory gets a bounded share. Passages keep score order.
-pub fn fit_to_budget(
-    passages: Vec<SourcePassage>,
-    memory: Vec<MemorySnippet>,
-    budget_chars: usize,
-) -> (Vec<SourcePassage>, Vec<MemorySnippet>) {
-    let memory_budget = (budget_chars as f32 * tuning::MEMORY_BUDGET_SHARE) as usize;
-    let doc_budget = budget_chars.saturating_sub(if memory.is_empty() { 0 } else { memory_budget });
-    (
-        fit_passages(passages, doc_budget),
-        fit_memory(memory, memory_budget),
-    )
 }
 
 /// Cut at a sentence or word boundary, never mid-word.
@@ -428,7 +408,7 @@ mod tests {
     fn budget_fitting_truncates_first_long_passage() {
         let long_body = "word ".repeat(4000);
         let hits = vec![passage(5.0, &long_body)];
-        let (docs, _) = fit_to_budget(hits, Vec::new(), 2000);
+        let docs = take_passages(hits, 2000);
         assert_eq!(docs.len(), 1);
         assert!(docs[0].body.chars().count() < 2000);
     }

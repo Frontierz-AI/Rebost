@@ -43,11 +43,9 @@ xberg = { version = "1.0.14", default-features = false, features = [
     "html",
     "xml",
     "language-detection",
-    "quality",
     "keywords",
     "keywords-yake",
     "summarization",
-    "heuristics",
     "ocr",
     "bundle-tessdata-eng",
 ] }
