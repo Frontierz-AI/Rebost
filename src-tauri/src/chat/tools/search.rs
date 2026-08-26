@@ -221,19 +221,16 @@ pub(super) fn search_chats(tool: &ToolCtx<'_>, query: &str) -> ToolOutcome {
     if query.chars().count() < 2 {
         return ToolOutcome::reply("Write a search query for earlier conversations.");
     }
-    let Some(shelf_id) = tool.shelf_id.filter(|id| !id.is_empty()) else {
-        return ToolOutcome::reply("No Shelf is selected.");
-    };
-    let only_threads = Conversations::other_ids_on_shelf(&tool.ctx.paths, tool.thread_id, shelf_id);
+    let only_threads =
+        Conversations::searchable_thread_ids(&tool.ctx.paths, tool.thread_id, tool.shelf_id);
     if only_threads.is_empty() {
-        return ToolOutcome::reply(
-            "No earlier conversations on this Shelf matched that. This conversation is not included.",
-        );
+        return ToolOutcome::reply("Nothing earlier matched that.");
     }
     let hits = match tool.ctx.search.search_messages(
         query,
-        Some(tool.thread_id),
+        None,
         Some(only_threads.as_slice()),
+        tool.exclude_message_ids,
         12,
     ) {
         Ok(hits) => hits,
@@ -254,9 +251,7 @@ pub(super) fn search_chats(tool: &ToolCtx<'_>, query: &str) -> ToolOutcome {
     }
     let kept = gate::fit_memory(gated, cap);
     if kept.is_empty() {
-        return ToolOutcome::reply(
-            "No earlier conversations on this Shelf matched that. This conversation is not included.",
-        );
+        return ToolOutcome::reply("Nothing earlier matched that.");
     }
     let notes = super::super::prompts::format_memory_notes(&kept);
     ToolOutcome::reply(format!(

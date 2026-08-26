@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! user message
-//!   → attached / named files first (Deep), then the selected Shelf
+//!   → attached / named files first, then the selected Shelf
 //!     whole extracted files when they fit the local-context budget,
 //!     otherwise search; hits include nearby text
 //!     Light / Deep: extra search queries fused in
@@ -11,7 +11,8 @@
 //!   → Retrieval Gate
 //!   → local AI (house rules · shelf file index · original message · recent context · gated sources)
 //!     The AI may search the Shelf again, read more around a citation,
-//!     open a named file (one window at a time), or search earlier conversations
+//!     open a named file (one window at a time), or search earlier turns
+//!     of this conversation and others on the same Shelf
 //!   → streamed answer with citations
 //! ```
 //!
@@ -181,12 +182,7 @@ impl ChatService {
             Conversations::get(&ctx.paths, thread_id).and_then(|t| t.upload_shelf_id);
         let (library_id, upload_id) = turn_shelf_ids(shelf_id.as_deref(), upload_owned.as_deref());
         let library_think = shelf_think_level(ctx, library_id);
-        let upload_think = if upload_id.is_some() {
-            ThinkLevel::Deep
-        } else {
-            ThinkLevel::Off
-        };
-        let think = library_think.max(upload_think);
+        let think = library_think;
         let focus_docs = focus::focus_upload_docs(ctx, upload_id, &text);
         let named_attachment = !focus_docs.is_empty();
         let prefer_coverage = named_attachment && focus::whole_document_intent(&text);
@@ -332,13 +328,18 @@ async fn generate_with_tools(
         catalog_for_turn(ctx, shelf_id, upload_shelf_id)
     };
     let shelf_ok = !files.is_empty();
-    let chats_ok = shelf_id
-        .is_some_and(|shelf| Conversations::has_other_shelf_messages(&ctx.paths, thread_id, shelf));
+    let chats_ok = Conversations::chats_worth_searching(
+        &ctx.paths,
+        thread_id,
+        shelf_id,
+        turn.history_ids.len(),
+    );
     let mut used = tools::ToolUse::default();
     let mut collected = ChatOutput::default();
     let mut rounds = 0usize;
     let mut answer_only = false;
     let mut did_answer_retry = false;
+    let mut continued_once = false;
     let prompt_len = turn.messages.len();
     let mut thinking = match think {
         ThinkLevel::Deep => ChatThinking::Deep,
@@ -398,7 +399,11 @@ async fn generate_with_tools(
 
         let hidden = holdback.take_hidden();
         if cancel.load(Ordering::Relaxed) {
-            collected.answer = holdback.visible_answer(&hidden, &output.answer);
+            take_visible_answer(
+                &mut collected,
+                holdback.visible_answer(&hidden, &output.answer),
+                continued_once,
+            );
             collected.finish_reason = output.finish_reason;
             break;
         }
@@ -443,6 +448,7 @@ async fn generate_with_tools(
                         ),
                         cancel: cancel.as_ref(),
                         open_next: used.open_next.clone(),
+                        exclude_message_ids: &turn.history_ids,
                     },
                 )
                 .await;
@@ -463,7 +469,11 @@ async fn generate_with_tools(
                     .push(tools::tool_result_message(call, outcome.message));
             }
             if cancel.load(Ordering::Relaxed) {
-                collected.answer = holdback.visible_answer(&hidden, &output.answer);
+                take_visible_answer(
+                    &mut collected,
+                    holdback.visible_answer(&hidden, &output.answer),
+                    continued_once,
+                );
                 collected.finish_reason = output.finish_reason;
                 break;
             }
@@ -498,7 +508,20 @@ async fn generate_with_tools(
             emit("status", json!({ "stage": "thinking" }));
             continue;
         }
-        collected.answer = answer;
+        if is_length_finish(output.finish_reason.as_deref())
+            && !continued_once
+            && !answer.trim().is_empty()
+        {
+            continued_once = true;
+            take_visible_answer(&mut collected, answer, false);
+            collected.finish_reason = output.finish_reason;
+            slim_messages_for_continue(&mut turn.messages, &collected.answer);
+            answer_only = true;
+            thinking = ChatThinking::Off;
+            emit("status", json!({ "stage": "thinking" }));
+            continue;
+        }
+        take_visible_answer(&mut collected, answer, continued_once);
         collected.finish_reason = output.finish_reason;
         break;
     }
@@ -510,6 +533,37 @@ async fn generate_with_tools(
 
 fn should_fail_empty_answer(answer: &str, cancelled: bool) -> bool {
     !cancelled && answer.trim().is_empty()
+}
+
+fn is_length_finish(reason: Option<&str>) -> bool {
+    reason.is_some_and(|value| value.eq_ignore_ascii_case("length"))
+}
+
+fn take_visible_answer(collected: &mut ChatOutput, piece: String, append: bool) {
+    if append {
+        collected.answer.push_str(&piece);
+    } else {
+        collected.answer = piece;
+    }
+}
+
+/// One more generation after `n_predict` cut the answer off. Slim enough
+/// for a 4k window: system, the last user turn, the partial answer.
+fn slim_messages_for_continue(messages: &mut Vec<ChatMessage>, partial: &str) {
+    let system = messages.first().filter(|m| m.role == "system").cloned();
+    let user = messages.iter().rev().find(|m| m.role == "user").cloned();
+    messages.clear();
+    if let Some(system) = system {
+        messages.push(system);
+    }
+    if let Some(user) = user {
+        messages.push(user);
+    }
+    messages.push(ChatMessage::text("assistant", partial));
+    messages.push(ChatMessage::text(
+        "user",
+        "Continue from the last sentence. Do not repeat.",
+    ));
 }
 
 /// A blank follow-up after `search_chats` (or any tool) stays blank if we
@@ -571,6 +625,8 @@ struct PreparedTurn {
     stuffed: bool,
     budget: usize,
     cited: Vec<SourcePassage>,
+    /// Message ids already in the standing prompt (including this user turn).
+    history_ids: Vec<String>,
 }
 
 fn turn_shelf_ids<'a>(
@@ -721,7 +777,19 @@ fn prepare_turn(
     focus_docs: &[String],
 ) -> Result<PreparedTurn> {
     let requested = ctx.context_budget();
-    let budget = retrieval_budget(ctx, requested);
+    let house_rules = {
+        let settings = crate::core::read_lock(&ctx.settings);
+        crate::limits::clip_chars(&settings.house_rules, crate::limits::HOUSE_RULES_MAX_CHARS)
+    };
+    let fit = prompt_fit_for(
+        ctx,
+        requested,
+        house_rules.chars().count(),
+        text.chars().count(),
+    );
+    let budget = fit.retrieval_chars;
+    let text = crate::limits::clip_chars(text, fit.user_chars.max(1));
+    let text = text.as_str();
     let (library_id, upload_id) = turn_shelf_ids(shelf_id, upload_shelf_id);
     let named_attachment = !focus_docs.is_empty();
     let prefer_coverage = named_attachment && focus::whole_document_intent(text);
@@ -735,8 +803,9 @@ fn prepare_turn(
         &ctx.paths,
         thread_id,
         HISTORY_MAX_MESSAGES,
-        HISTORY_MAX_CHARS,
+        fit.history_chars,
     );
+    let history_ids: Vec<String> = history.iter().map(|message| message.id.clone()).collect();
     let cited = cited_sources(&history);
     let extra_queries = if named_attachment {
         extra_queries.to_vec()
@@ -832,11 +901,7 @@ fn prepare_turn(
         }
     }
     let named_notes = focus::format_named_file_notes(ctx, &named_files);
-    let settings = crate::core::read_lock(&ctx.settings);
-    let house_rules =
-        crate::limits::clip_chars(&settings.house_rules, crate::limits::HOUSE_RULES_MAX_CHARS);
-    let online = settings.allow_online_research;
-    drop(settings);
+    let online = crate::core::read_lock(&ctx.settings).allow_online_research;
     let avatar_name = Conversations::get(&ctx.paths, thread_id)
         .and_then(|thread| avatars::name_for(&thread.avatar_id).map(str::to_string))
         .unwrap_or_else(|| "Rebost".into());
@@ -874,6 +939,7 @@ fn prepare_turn(
         stuffed,
         budget,
         cited,
+        history_ids,
     })
 }
 
@@ -988,15 +1054,35 @@ fn answer_token_budget(ctx: &Ctx) -> u32 {
         .unwrap_or_else(|| crate::engine::tune::max_answer_tokens(4096))
 }
 
-fn retrieval_budget(ctx: &Ctx, requested: usize) -> usize {
+fn prompt_fit_for(
+    ctx: &Ctx,
+    requested: usize,
+    house_rules_chars: usize,
+    user_chars: usize,
+) -> crate::engine::tune::PromptBudget {
     match chat_spawn_plan(ctx) {
-        Some(plan) => crate::engine::tune::retrieval_char_budget_with(
+        Some(plan) => crate::engine::tune::prompt_budget(
             plan.context_tokens,
             plan.answer_tokens,
             requested,
+            house_rules_chars,
+            user_chars,
         ),
-        None => requested,
+        None => crate::engine::tune::PromptBudget {
+            user_chars,
+            history_chars: HISTORY_MAX_CHARS,
+            retrieval_chars: requested,
+        },
     }
+}
+
+fn retrieval_budget_for_turn(ctx: &Ctx, requested: usize, text: &str) -> usize {
+    let house = crate::core::read_lock(&ctx.settings)
+        .house_rules
+        .chars()
+        .count()
+        .min(crate::limits::HOUSE_RULES_MAX_CHARS);
+    prompt_fit_for(ctx, requested, house, text.chars().count()).retrieval_chars
 }
 
 fn stuffed_file_cost(title: &str, bytes: u64) -> usize {
@@ -1073,7 +1159,7 @@ async fn extra_search_for_turn(
     if count == 0 || cancel.load(Ordering::Relaxed) {
         return Vec::new();
     }
-    let budget = retrieval_budget(ctx, ctx.context_budget());
+    let budget = retrieval_budget_for_turn(ctx, ctx.context_budget(), text);
     let upload_needs = upload_id.is_some_and(|id| {
         !prefer_coverage && matches!(stuff_plan(ctx, id, budget), StuffPlan::Search)
     });

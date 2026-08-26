@@ -192,7 +192,7 @@ async fn shelf_scoping_is_strict() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn conversation_memory_is_searchable_and_excludes_current_thread() {
+async fn conversation_memory_is_searchable_and_skips_prompt_turns() {
     let app = test_app();
     let now = chrono::Utc::now();
     app.ctx
@@ -218,16 +218,18 @@ async fn conversation_memory_is_searchable_and_excludes_current_thread() {
         )
         .unwrap();
 
+    let skip = vec!["m_2".to_string()];
     let hits = app
         .ctx
         .search
-        .search_messages("office move budget", Some("t_current"), None, 8)
+        .search_messages("office move budget", None, None, &skip, 8)
         .unwrap();
     assert!(!hits.is_empty());
     assert!(
-        hits.iter().all(|h| h.thread_id != "t_current"),
-        "current thread must be excluded from memory"
+        hits.iter().all(|h| h.message_id != "m_2"),
+        "turns already in the prompt must be skipped"
     );
+    assert!(hits.iter().any(|h| h.thread_id == "t_old"));
 }
 
 #[tokio::test(flavor = "multi_thread")]

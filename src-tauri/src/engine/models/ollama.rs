@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use serde::Deserialize;
 
 use super::{is_hidden_catalog_name, normalize_model_key, ModelSearchResult};
-use crate::engine::catalog::{runtime_need_bytes, MachineProfile};
+use crate::engine::catalog::MachineProfile;
 
 #[derive(Deserialize)]
 struct OllamaManifest {
@@ -121,7 +121,7 @@ pub(super) async fn search_ollama(
         }
         match ollama_manifest(client, &name).await {
             Ok((layer, license)) => {
-                let fits = layer.size.map(|s| runtime_need_bytes(s) <= budget);
+                let fits = layer.size.map(|s| profile.runtime_need_bytes(s) <= budget);
                 results.push(ModelSearchResult {
                     id: normalize_model_key(&name),
                     name: name.replace(['-', '_'], " "),

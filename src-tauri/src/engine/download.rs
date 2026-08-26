@@ -81,13 +81,6 @@ pub async fn download(
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let part = dest.with_extension("part");
-    if part_is_untrusted(&part, known_size) {
-        log::warn!("discarding incomplete download {}", part.display());
-        let _ = tokio::fs::remove_file(&part).await;
-        remove_parallel_sidecars(&part);
-    }
-
     let emit_progress =
         |received: u64, total: Option<u64>, done: bool, error: Option<&str>, phase: &str| {
             events.emit(
@@ -104,6 +97,59 @@ pub async fn download(
                 }),
             );
         };
+    if dest.is_file() {
+        if let Some(expected) = expected_sha256 {
+            emit_progress(
+                dest.metadata().map(|m| m.len()).unwrap_or(0),
+                known_size,
+                false,
+                None,
+                "verifying",
+            );
+            match verify_sha256(
+                dest,
+                expected,
+                known_size,
+                &emit_progress,
+                &control.cancel,
+                &control.skip_verify,
+            )
+            .await
+            {
+                Ok(()) => {
+                    let received = dest.metadata().map(|m| m.len()).unwrap_or(0);
+                    emit_progress(
+                        received,
+                        known_size.or(Some(received)),
+                        true,
+                        None,
+                        "downloading",
+                    );
+                    return Ok(());
+                }
+                Err(error) if error.to_string() == "cancelled" => return Err(error),
+                Err(_) => {
+                    let _ = tokio::fs::remove_file(dest).await;
+                }
+            }
+        } else {
+            let received = dest.metadata().map(|m| m.len()).unwrap_or(0);
+            emit_progress(
+                received,
+                known_size.or(Some(received)),
+                true,
+                None,
+                "downloading",
+            );
+            return Ok(());
+        }
+    }
+    let part = dest.with_extension("part");
+    if part_is_untrusted(&part, known_size) {
+        log::warn!("discarding incomplete download {}", part.display());
+        let _ = tokio::fs::remove_file(&part).await;
+        remove_parallel_sidecars(&part);
+    }
 
     let mut attempt = 0;
     loop {

@@ -568,13 +568,15 @@ impl SearchIndex {
         by_section
     }
 
-    /// Search older conversation memory, excluding the active thread.
-    /// `only_threads` limits hits to those conversations (same Shelf).
+    /// Search older conversation memory.
+    /// `only_threads` limits hits to those conversations.
+    /// `exclude_message_ids` skips turns already in the standing prompt.
     pub fn search_messages(
         &self,
         message: &str,
         exclude_thread: Option<&str>,
         only_threads: Option<&[String]>,
+        exclude_message_ids: &[String],
         limit: usize,
     ) -> Result<Vec<MemorySnippet>> {
         let tokens = self.content_tokens(message);
@@ -618,6 +620,18 @@ impl SearchIndex {
                 Occur::MustNot,
                 Box::new(TermQuery::new(
                     Term::from_field_text(self.fields.thread_id, thread),
+                    IndexRecordOption::Basic,
+                )),
+            ));
+        }
+        for message_id in exclude_message_ids {
+            if message_id.is_empty() {
+                continue;
+            }
+            clauses.push((
+                Occur::MustNot,
+                Box::new(TermQuery::new(
+                    Term::from_field_text(self.fields.message_id, message_id),
                     IndexRecordOption::Basic,
                 )),
             ));
@@ -1122,12 +1136,17 @@ mod tests {
             .unwrap();
         let kitchen = vec!["t_kitchen".to_string()];
         let hits = search
-            .search_messages("office move budget", Some("t_now"), Some(&kitchen), 8)
+            .search_messages("office move budget", Some("t_now"), Some(&kitchen), &[], 8)
             .unwrap();
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].thread_id, "t_kitchen");
         assert!(search
-            .search_messages("office move budget", Some("t_now"), Some(&[]), 8)
+            .search_messages("office move budget", Some("t_now"), Some(&[]), &[], 8)
+            .unwrap()
+            .is_empty());
+        let skip = vec!["m1".to_string()];
+        assert!(search
+            .search_messages("office move budget", None, Some(&kitchen), &skip, 8)
             .unwrap()
             .is_empty());
     }

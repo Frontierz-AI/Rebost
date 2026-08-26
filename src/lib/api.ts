@@ -311,11 +311,13 @@ export function userFacingError(error: unknown): string {
   if (lower.includes("switch-failed")) {
     return "That AI didn't start. You're still using the previous one.";
   }
+  if (lower.includes("warmup-failed")) {
+    return "That AI didn't start. Try again, or pick a smaller one.";
+  }
   if (lower.includes("incompatible-format")) {
     return "This AI uses a format Rebost can't run. Pick another.";
   }
   if (
-    lower.includes("warmup-failed") ||
     lower.includes("llama-server") ||
     lower.includes("health timeout") ||
     lower.includes("no free port") ||
@@ -618,7 +620,7 @@ export function downloadErrorMessage(error: string): string | null {
     case "switch-failed":
       return "That AI didn't start. You're still using the previous one.";
     case "warmup-failed":
-      return "Rebost isn't ready yet. Try again in a moment.";
+      return "That AI didn't start. Try again, or pick a smaller one.";
     case "incompatible-format":
       return "This AI uses a format Rebost can't run. Pick another.";
     default:

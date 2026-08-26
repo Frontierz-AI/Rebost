@@ -48,6 +48,12 @@ impl MachineProfile {
     pub fn model_budget_bytes(&self) -> u64 {
         (self.total_ram_bytes as f64 * 0.65) as u64
     }
+
+    /// Estimated runtime need for a file of `file_bytes` on this machine.
+    /// Vulkan and CUDA copy weights off mmap, so they need roughly two copies.
+    pub fn runtime_need_bytes(&self, file_bytes: u64) -> u64 {
+        runtime_need_bytes_for(file_bytes, &self.accelerator)
+    }
 }
 
 fn host_arch_labels() -> (String, String) {
@@ -64,8 +70,18 @@ const MIB: u64 = 1024 * 1024;
 const GIB: u64 = 1024 * 1024 * 1024;
 
 /// Estimated runtime need for a GGUF of `file_bytes` (weights + KV/overhead).
+/// Metal, CPU, and OpenCL keep mmap. Vulkan and CUDA copy the weights.
 pub fn runtime_need_bytes(file_bytes: u64) -> u64 {
-    (file_bytes as f64 * 1.15) as u64 + 2 * GIB
+    runtime_need_bytes_for(file_bytes, "")
+}
+
+fn runtime_need_bytes_for(file_bytes: u64, accelerator: &str) -> u64 {
+    let copies = if matches!(accelerator, "Vulkan" | "CUDA") {
+        2.0
+    } else {
+        1.15
+    };
+    (file_bytes as f64 * copies) as u64 + 2 * GIB
 }
 
 /// A curated, ordered catalog used for the first-run recommendation.
@@ -308,7 +324,7 @@ fn to_recommendation(entry: &CatalogEntry) -> Recommendation {
 }
 
 fn fits(entry: &CatalogEntry, profile: &MachineProfile) -> bool {
-    runtime_need_bytes(entry.approx_bytes) <= profile.model_budget_bytes()
+    profile.runtime_need_bytes(entry.approx_bytes) <= profile.model_budget_bytes()
 }
 
 fn forced_recommend_index() -> Option<usize> {
@@ -599,5 +615,24 @@ mod tests {
                 assert_eq!(entry.license, "Gemma", "{}", entry.name);
             }
         }
+    }
+
+    #[test]
+    fn vulkan_counts_two_copies_of_the_weights() {
+        let mk = |accel: &str| MachineProfile {
+            total_ram_bytes: 16 * GIB,
+            cpu: "test".into(),
+            accelerator: accel.into(),
+            free_disk_bytes: 500 * GIB,
+            process_arch: "test".into(),
+            os_arch: "test".into(),
+        };
+        let file = 5 * GIB;
+        let metal = mk("Metal");
+        let vulkan = mk("Vulkan");
+        assert_eq!(vulkan.runtime_need_bytes(file), 12 * GIB);
+        assert!(metal.runtime_need_bytes(file) < vulkan.runtime_need_bytes(file));
+        assert!(metal.runtime_need_bytes(file) <= metal.model_budget_bytes());
+        assert!(vulkan.runtime_need_bytes(file) > vulkan.model_budget_bytes());
     }
 }

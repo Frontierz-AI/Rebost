@@ -26,6 +26,7 @@ pub mod shelf;
 pub mod snapshot;
 pub mod types;
 pub mod updater;
+pub mod window;
 
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
@@ -114,6 +115,8 @@ pub fn run() {
                 // offline) are not operator errors.
                 .level_for("tantivy", log::LevelFilter::Warn)
                 .level_for("tauri_plugin_updater", log::LevelFilter::Off)
+                .max_file_size(80_000)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
                 .targets([
                     tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
                     tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
@@ -202,6 +205,10 @@ pub fn run() {
             app.manage(chat);
             app.manage(ingestor);
             app.manage(watcher);
+
+            if let Some(main) = app.get_webview_window("main") {
+                crate::window::place_main_window(&main);
+            }
 
             let updater_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {

@@ -10,7 +10,7 @@ use super::{
     display_name_from_repo, is_hidden_catalog_name, keep_explore_hit, normalize_model_key,
     pick_gguf, released_newest_first, validate_reference, ModelSearchResult, HF_SIZE_CAP,
 };
-use crate::engine::catalog::{runtime_need_bytes, MachineProfile};
+use crate::engine::catalog::MachineProfile;
 
 #[derive(Deserialize)]
 pub(super) struct HfModel {
@@ -682,7 +682,7 @@ pub(super) async fn search_huggingface(
     .await;
     for (result, size_bytes) in results.iter_mut().zip(sizes) {
         result.size_bytes = size_bytes;
-        result.fits = size_bytes.map(|size| runtime_need_bytes(size) <= budget);
+        result.fits = size_bytes.map(|size| profile.runtime_need_bytes(size) <= budget);
     }
     Ok(results)
 }

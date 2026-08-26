@@ -6,6 +6,17 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Changed
+
+- Chat can look up earlier turns in the same conversation, not only other conversations on that Shelf. When a reply hits the length cap, Chat continues once from the last sentence.
+- Attaching a file no longer switches the conversation to Deep. Extra search queries and how many times Chat may look through files still follow the library Shelf setting. A first-run AI that does not start is not kept as the active one, and first run finishes when that AI is ready. Explore will not install an AI marked too large for the machine.
+- Logs stay short. After a restore, the main window is moved onto the visible display, and the minimum size shrinks when the work area is smaller than the usual frame.
+
+### Fixed
+
+- A long question plus House rules no longer spends the rest of a small window on file excerpts.
+- Windows install estimates include the extra memory that path needs, so a file that will not load is not offered as a fit.
+
 ## [0.8.12] - 2026-08-26
 
 ### Fixed

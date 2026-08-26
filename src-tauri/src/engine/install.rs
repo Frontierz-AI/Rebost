@@ -159,6 +159,7 @@ impl Engine {
                     }
                     Err(anyhow!("switch-failed"))
                 } else {
+                    clear_failed_first_install(self);
                     Err(anyhow!("warmup-failed"))
                 }
             }
@@ -202,6 +203,19 @@ fn restore_previous(engine: &Engine, previous: PreviousAi) {
         settings.context_budget_chars = previous.context_budget_chars;
     }
     engine.ctx.save_settings();
+}
+
+/// First-install warmup failed: keep the file, forget it as the active AI
+/// so the next launch does not retry a load that already died.
+fn clear_failed_first_install(engine: &Engine) {
+    {
+        let mut settings = crate::core::write_lock(&engine.ctx.settings);
+        settings.active_model = None;
+        settings.benchmark = None;
+        settings.context_budget_chars = None;
+    }
+    engine.ctx.save_settings();
+    engine.set_status(EngineState::NoModel, None);
 }
 
 /// If the live AI already uses this file name, write beside it so the

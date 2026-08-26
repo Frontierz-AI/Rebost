@@ -147,6 +147,43 @@ impl Conversations {
             .find(|t| t.id == thread_id)
     }
 
+    /// Threads `search_chats` may read: this conversation, plus others on
+    /// the same Shelf. No-Shelf searches this conversation only.
+    pub fn searchable_thread_ids(
+        paths: &Paths,
+        thread_id: &str,
+        shelf_id: Option<&str>,
+    ) -> Vec<String> {
+        let mut ids = vec![thread_id.to_string()];
+        if let Some(shelf) = shelf_id.filter(|id| !id.is_empty()) {
+            for other in Self::other_ids_on_shelf(paths, thread_id, shelf) {
+                if !ids.contains(&other) {
+                    ids.push(other);
+                }
+            }
+        }
+        ids
+    }
+
+    /// True when this thread has turns outside the prompt window, or another
+    /// conversation on the same Shelf already has messages.
+    pub fn chats_worth_searching(
+        paths: &Paths,
+        thread_id: &str,
+        shelf_id: Option<&str>,
+        prompt_messages: usize,
+    ) -> bool {
+        let total = Self::get(paths, thread_id)
+            .map(|thread| thread.message_count as usize)
+            .unwrap_or(0);
+        if total > prompt_messages {
+            return true;
+        }
+        shelf_id
+            .filter(|id| !id.is_empty())
+            .is_some_and(|shelf| Self::has_other_shelf_messages(paths, thread_id, shelf))
+    }
+
     /// Other conversations on this Shelf that already have messages
     /// `search_chats` could return. No-Shelf threads are never listed.
     pub fn other_ids_on_shelf(paths: &Paths, thread_id: &str, shelf_id: &str) -> Vec<String> {
@@ -596,6 +633,29 @@ mod tests {
         assert!(
             !Conversations::other_ids_on_shelf(&paths, &office.id, "s_kitchen")
                 .contains(&office.id)
+        );
+        assert!(Conversations::chats_worth_searching(
+            &paths,
+            &kitchen_now.id,
+            Some("s_kitchen"),
+            12
+        ));
+        assert!(!Conversations::chats_worth_searching(
+            &paths,
+            &kitchen.id,
+            Some("s_kitchen"),
+            1
+        ));
+        assert!(Conversations::chats_worth_searching(
+            &paths, &loose.id, None, 0
+        ));
+        assert_eq!(
+            Conversations::searchable_thread_ids(&paths, &kitchen_now.id, Some("s_kitchen")),
+            vec![kitchen_now.id.clone(), kitchen.id.clone()]
+        );
+        assert_eq!(
+            Conversations::searchable_thread_ids(&paths, &loose.id, None),
+            vec![loose.id.clone()]
         );
     }
 

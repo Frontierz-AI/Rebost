@@ -238,7 +238,7 @@ impl ToolSet {
                 "type": "function",
                 "function": {
                     "name": SEARCH_CHATS,
-                    "description": "Search earlier conversations on this Shelf, not this one. Use only when the question refers to something said there. Skip it for a new request. Use what you find in the answer; do not cite those notes as [S1].",
+                    "description": "Search earlier turns of this conversation, and other conversations on this Shelf. Use when the question refers to something said before the recent turns. Skip it for a new request. Use what you find in the answer; do not cite those notes as [S1].",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -346,6 +346,8 @@ pub(crate) struct ToolCtx<'a> {
     pub cancel: &'a AtomicBool,
     /// Next unread character per document, copied from `ToolUse` for this call.
     pub open_next: HashMap<String, usize>,
+    /// Message ids already in the standing prompt. `search_chats` skips them.
+    pub exclude_message_ids: &'a [String],
 }
 
 impl ToolCtx<'_> {
@@ -790,7 +792,7 @@ mod tests {
         assert_eq!(spec.as_array().unwrap().len(), 1);
         assert_eq!(spec[0]["function"]["name"], SEARCH_CHATS);
         let chats = spec[0]["function"]["description"].as_str().unwrap();
-        assert!(chats.contains("earlier conversations"));
+        assert!(chats.contains("this conversation"));
         assert!(chats.contains("this Shelf"));
         assert!(chats.contains("Skip it for a new request"));
 

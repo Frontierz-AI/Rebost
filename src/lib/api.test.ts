@@ -50,6 +50,9 @@ describe("userFacingError", () => {
     expect(userFacingError("empty generation")).toBe(
       "Rebost couldn't finish that answer. Try again.",
     );
+    expect(userFacingError("warmup-failed")).toBe(
+      "That AI didn't start. Try again, or pick a smaller one.",
+    );
   });
 
   it("keeps quiet product copy and hides leftover pins", () => {
@@ -67,6 +70,10 @@ describe("downloadErrorMessage", () => {
 
   it("keeps the previous AI when the new one does not start", () => {
     expect(downloadErrorMessage("switch-failed")).toContain("previous");
+  });
+
+  it("asks to retry or pick a smaller AI when the first one does not start", () => {
+    expect(downloadErrorMessage("warmup-failed")).toContain("smaller");
   });
 
   it("names an incompatible AI without the file format", () => {

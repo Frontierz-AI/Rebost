@@ -92,6 +92,7 @@ fn tool_ctx<'a>(
         ),
         cancel: idle_cancel(),
         open_next: HashMap::new(),
+        exclude_message_ids: &[],
     }
 }
 
@@ -117,6 +118,7 @@ fn tool_ctx_used<'a>(
         allowed: tools::ToolSet::new(true, !sources.is_empty(), false, true, used),
         cancel: idle_cancel(),
         open_next: used.open_next.clone(),
+        exclude_message_ids: &[],
     }
 }
 
@@ -284,7 +286,11 @@ async fn prepare_turn_keeps_the_upload_to_its_share() {
         &[],
     )
     .unwrap();
-    let budget = retrieval_budget(&fixture.ctx, fixture.ctx.context_budget());
+    let budget = retrieval_budget_for_turn(
+        &fixture.ctx,
+        fixture.ctx.context_budget(),
+        "Where does the office zebra live, and when is the kitchen restocked?",
+    );
     let share = focus::upload_budget_chars(budget, true, false, false);
     let upload_cost: usize = prepared
         .sources
@@ -724,6 +730,7 @@ async fn search_chats_returns_notes_from_other_threads_on_the_same_shelf() {
         allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
         cancel: idle_cancel(),
         open_next: HashMap::new(),
+        exclude_message_ids: &[],
     };
     let call = ToolCall::function(
         "c1",
@@ -738,14 +745,34 @@ async fn search_chats_returns_notes_from_other_threads_on_the_same_shelf() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn search_chats_without_a_shelf_does_not_run() {
+async fn search_chats_finds_earlier_turns_of_this_thread() {
     let dir = tempfile::tempdir().unwrap();
     let paths = Paths::new(dir.path().join("appdata"));
     let ctx = Ctx::new(paths, Arc::new(NoopEvents), ExtractorSettings::default()).unwrap();
+    let current = Conversations::create(&ctx.paths, None).unwrap();
+    let now = chrono::Utc::now();
+    let old = user_line("The office move budget is twelve thousand euros.");
+    Conversations::append(&ctx.paths, &current.id, &old).unwrap();
+    ctx.search
+        .index_message(&current.id, &old.id, "user", &old.text, Some("en"), now)
+        .unwrap();
+    let recent = user_line("The office move budget is ninety thousand euros.");
+    Conversations::append(&ctx.paths, &current.id, &recent).unwrap();
+    ctx.search
+        .index_message(
+            &current.id,
+            &recent.id,
+            "user",
+            &recent.text,
+            Some("en"),
+            now,
+        )
+        .unwrap();
     let files: Vec<tools::ShelfFile> = Vec::new();
+    let skip = vec![recent.id.clone()];
     let tool = tools::ToolCtx {
         ctx: ctx.as_ref(),
-        thread_id: "current",
+        thread_id: &current.id,
         shelf_id: None,
         upload_shelf_id: None,
         files: &files,
@@ -756,6 +783,7 @@ async fn search_chats_without_a_shelf_does_not_run() {
         allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
         cancel: idle_cancel(),
         open_next: HashMap::new(),
+        exclude_message_ids: &skip,
     };
     let call = ToolCall::function(
         "c1",
@@ -763,7 +791,8 @@ async fn search_chats_without_a_shelf_does_not_run() {
         serde_json::json!({ "query": "office move budget" }).to_string(),
     );
     let outcome = tools::run_tool(&call, &tool).await;
-    assert!(outcome.message.contains("No Shelf is selected"));
+    assert!(outcome.message.to_lowercase().contains("twelve thousand"));
+    assert!(!outcome.message.to_lowercase().contains("ninety"));
 }
 
 async fn add_upload_file(
@@ -894,7 +923,11 @@ async fn prepare_turn_covers_a_named_attached_file() {
         upload_text.contains("OMEGA"),
         "coverage should keep the end, got {upload_text:?}"
     );
-    let budget = retrieval_budget(&fixture.ctx, fixture.ctx.context_budget());
+    let budget = retrieval_budget_for_turn(
+        &fixture.ctx,
+        fixture.ctx.context_budget(),
+        "Summarize this doc: encyclopedia.md",
+    );
     let upload_cost: usize = prepared
         .sources
         .iter()
@@ -1139,4 +1172,22 @@ async fn look_around_does_not_rewind_a_continued_window() {
             || updated.body.contains("END unique"),
         "should read onward from the current window"
     );
+}
+
+#[test]
+fn slim_continue_keeps_system_user_and_the_partial_answer() {
+    let mut messages = vec![
+        ChatMessage::text("system", "You are Rebost."),
+        ChatMessage::text("user", "older"),
+        ChatMessage::text("assistant", "ack"),
+        ChatMessage::text("user", "Write a long brief."),
+        ChatMessage::text("assistant", "tool call"),
+        ChatMessage::text("tool", "excerpts"),
+    ];
+    slim_messages_for_continue(&mut messages, "First half of the brief.");
+    assert_eq!(messages.len(), 4);
+    assert_eq!(messages[0].role, "system");
+    assert_eq!(messages[1].as_text(), "Write a long brief.");
+    assert_eq!(messages[2].as_text(), "First half of the brief.");
+    assert!(messages[3].as_text().contains("Continue"));
 }

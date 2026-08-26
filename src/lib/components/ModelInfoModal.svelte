@@ -109,7 +109,12 @@
         More on {catalogHostLabel(result.source)}
       </button>
       <button type="button" class="btn-outline" onclick={onClose}>Close</button>
-      <button type="button" class="btn-primary" onclick={onInstall} disabled={installing}>
+      <button
+        type="button"
+        class="btn-primary"
+        onclick={onInstall}
+        disabled={installing || result.fits === false}
+      >
         <Download size={13.5} aria-hidden="true" /> Install
       </button>
     </div>

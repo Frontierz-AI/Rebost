@@ -417,7 +417,7 @@
                       type="button"
                       class="btn-outline !py-1.5 !pr-2.5 !pl-1.5 !text-[12px] whitespace-nowrap"
                       onclick={() => onInstall(result)}
-                      disabled={installing}
+                      disabled={installing || fit === "no"}
                     >
                       <Download size={12.5} aria-hidden="true" />
                       Install

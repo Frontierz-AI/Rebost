@@ -10,8 +10,11 @@ use crate::settings::ActiveModel;
 const GIB: u64 = 1024 * 1024 * 1024;
 const MIB: u64 = 1024 * 1024;
 const CHARS_PER_TOKEN: f64 = 3.6;
-/// History cap + standing system prompt (house rules, shelf inventory).
-const PROMPT_OVERHEAD_CHARS: usize = 6_000 + 2_500;
+/// Recent-history cap used when the window still has room.
+const HISTORY_OVERHEAD_CHARS: usize = 6_000;
+/// Standing system prompt (boilerplate, shelf inventory). House rules and
+/// the current user text are counted separately in [`prompt_budget`].
+const SYSTEM_BASE_CHARS: usize = 2_500;
 const CTX_PADDING_TOKENS: u32 = 512;
 /// KV plus OS headroom after the weight file is mapped.
 const LEFTOVER_FOR_WIDE_CTX: u64 = (5 * GIB) / 2;
@@ -426,16 +429,49 @@ fn batch_for(profile: &MachineProfile, pin: &EnginePin) -> (u32, u32) {
     }
 }
 
+/// Characters left for the prompt after the answer slot and padding.
+pub fn prompt_room_chars(context_tokens: u32, answer_tokens: u32) -> usize {
+    let prompt_tokens = context_tokens.saturating_sub(answer_tokens + CTX_PADDING_TOKENS);
+    (prompt_tokens as f64 * CHARS_PER_TOKEN) as usize
+}
+
+/// How a turn spends the prompt window: user first, then history, then files.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PromptBudget {
+    pub user_chars: usize,
+    pub history_chars: usize,
+    pub retrieval_chars: usize,
+}
+
+/// Fit house rules, the current question, recent turns, and retrieval into `-c`.
+pub fn prompt_budget(
+    context_tokens: u32,
+    answer_tokens: u32,
+    requested_retrieval: usize,
+    house_rules_chars: usize,
+    user_chars: usize,
+) -> PromptBudget {
+    let mut left = prompt_room_chars(context_tokens, answer_tokens)
+        .saturating_sub(SYSTEM_BASE_CHARS.saturating_add(house_rules_chars));
+    let user = user_chars.min(left);
+    left = left.saturating_sub(user);
+    let history = HISTORY_OVERHEAD_CHARS.min(left);
+    left = left.saturating_sub(history);
+    PromptBudget {
+        user_chars: user,
+        history_chars: history,
+        retrieval_chars: requested_retrieval.min(left),
+    }
+}
+
 /// Cap retrieval so the prompt plus the answer still fit in `-c`.
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn retrieval_char_budget_with(
     context_tokens: u32,
     answer_tokens: u32,
     requested: usize,
 ) -> usize {
-    let prompt_tokens = context_tokens.saturating_sub(answer_tokens + CTX_PADDING_TOKENS);
-    let prompt_chars = (prompt_tokens as f64 * CHARS_PER_TOKEN) as usize;
-    let room = prompt_chars.saturating_sub(PROMPT_OVERHEAD_CHARS);
-    requested.min(room)
+    prompt_budget(context_tokens, answer_tokens, requested, 0, 0).retrieval_chars
 }
 
 #[cfg(test)]
@@ -756,5 +792,16 @@ mod tests {
         let small = retrieval_char_budget_with(8192, 1536, 26_000);
         let mid = retrieval_char_budget_with(8192, 2048, 26_000);
         assert!(small > mid);
+    }
+
+    #[test]
+    fn long_question_and_house_rules_take_file_room_on_a_4k_window() {
+        let roomy = prompt_budget(4096, 768, 9_000, 0, 0);
+        assert!(roomy.retrieval_chars > 0);
+        let tight = prompt_budget(4096, 768, 9_000, 4_000, 12_000);
+        assert_eq!(tight.retrieval_chars, 0);
+        assert!(tight.user_chars < 12_000);
+        assert_eq!(tight.history_chars, 0);
+        assert!(tight.user_chars > 0);
     }
 }

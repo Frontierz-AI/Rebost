@@ -37,6 +37,7 @@
     ),
   );
   const modelDone = $derived(!!app.settings?.activeModel);
+  const engineReady = $derived(app.engine.state === "ready");
   const busy = $derived(!!download || installing);
   const failedDownload = $derived.by(() => {
     if (download || modelDone) return undefined;
@@ -89,7 +90,17 @@
   });
 
   $effect(() => {
-    if (installing && modelDone && !download) {
+    if (
+      installing &&
+      (app.engine.state === "error" || app.engine.state === "no-model") &&
+      !download
+    ) {
+      installing = false;
+    }
+  });
+
+  $effect(() => {
+    if (installing && engineReady && !download) {
       finish();
     }
   });

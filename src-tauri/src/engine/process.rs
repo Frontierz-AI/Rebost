@@ -29,9 +29,34 @@ pub(crate) fn is_template_failure(text: &str) -> bool {
     lower.contains("jinja") || lower.contains("chat template")
 }
 
+pub(crate) const ENGINE_LOG_MAX_LINES: usize = 1_000;
+const ENGINE_LOG_TRIM_EVERY: usize = 200;
+
+pub(crate) fn trim_log_file(path: &Path, max_lines: usize) {
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return;
+    };
+    let count = text.lines().count();
+    if count <= max_lines {
+        return;
+    }
+    let keep: String = text
+        .lines()
+        .rev()
+        .take(max_lines)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .flat_map(|line| [line, "\n"])
+        .collect();
+    let _ = crate::paths::atomic_write(path, keep);
+}
+
 pub(crate) async fn pipe_to_log(reader: impl tokio::io::AsyncRead + Unpin, log_path: PathBuf) {
     use tokio::io::BufReader;
+    trim_log_file(&log_path, ENGINE_LOG_MAX_LINES);
     let mut lines = BufReader::new(reader).lines();
+    let mut since_trim = 0usize;
     while let Ok(Some(line)) = lines.next_line().await {
         echo_engine_line(&line);
         if let Ok(mut file) = std::fs::OpenOptions::new()
@@ -41,6 +66,11 @@ pub(crate) async fn pipe_to_log(reader: impl tokio::io::AsyncRead + Unpin, log_p
         {
             use std::io::Write;
             let _ = writeln!(file, "{line}");
+        }
+        since_trim += 1;
+        if since_trim >= ENGINE_LOG_TRIM_EVERY {
+            trim_log_file(&log_path, ENGINE_LOG_MAX_LINES);
+            since_trim = 0;
         }
     }
 }
@@ -331,6 +361,21 @@ mod tests {
     fn compute_failure_detects_known_strings() {
         assert!(is_compute_failure("Compute error: failed to decode"));
         assert!(!is_compute_failure("ok"));
+    }
+
+    #[test]
+    fn trim_log_keeps_the_last_lines() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("engine.log");
+        let body: String = (0..20).map(|i| format!("line {i}\n")).collect();
+        std::fs::write(&path, body).unwrap();
+        trim_log_file(&path, 5);
+        let kept = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(kept.lines().count(), 5);
+        assert!(kept.contains("line 19"));
+        assert!(!kept.contains("line 0"));
+        trim_log_file(&path, 5);
+        assert_eq!(std::fs::read_to_string(&path).unwrap().lines().count(), 5);
     }
 
     fn write_targz(path: &Path, files: &[(&str, &[u8])]) {

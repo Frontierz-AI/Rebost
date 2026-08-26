@@ -289,6 +289,7 @@ impl Engine {
 
         let log_path = self.ctx.paths.engine_log_path();
         let _ = std::fs::create_dir_all(self.ctx.paths.logs_dir());
+        super::process::trim_log_file(&log_path, super::process::ENGINE_LOG_MAX_LINES);
 
         let mut command = Command::new(binary);
         if let Some(home) = binary.parent() {
