@@ -76,12 +76,12 @@
 
 <div
   class="flex h-full min-h-0 shrink-0 overflow-hidden transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none {open
-    ? 'w-[15.75rem]'
+    ? 'w-[16.5rem]'
     : 'w-0'}"
   aria-hidden={!open}
 >
   <aside
-    class="mt-1 mb-2 ml-3 flex w-60 shrink-0 flex-col overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none dark:shadow-none dark:ring-white/5 {open
+    class="mt-1 mr-3 mb-2 ml-3 flex w-60 shrink-0 flex-col overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none dark:shadow-none dark:ring-white/5 {open
       ? 'translate-x-0'
       : '-translate-x-full'}"
     inert={!open}
@@ -168,9 +168,9 @@
       {/each}
     </div>
     <div
-      class="mx-3 mb-3 flex items-start gap-2.5 rounded-xl border border-navy-200 bg-navy-50 px-3 py-2.5"
+      class="mx-3 mb-3 flex items-start gap-2.5 rounded-xl border border-navy-200 bg-navy-50 px-3 py-2.5 dark:border-white/10 dark:bg-white/8"
     >
-      <Lock size={13} class="mt-0.5 shrink-0 text-navy-700" />
+      <Lock size={13} class="mt-0.5 shrink-0 text-navy-700 dark:text-navy-200" />
       <p class="text-[11px] leading-snug text-ink-soft">What happens here stays here.</p>
     </div>
   </aside>

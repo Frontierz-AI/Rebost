@@ -453,7 +453,7 @@
   <div class="relative flex h-full min-h-0 flex-col overflow-hidden">
     {#if dropActive && documents.length > 0}
       <div
-        class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50"
+        class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50 dark:bg-white/10"
       >
         <p class="rounded-xl bg-navy-900 px-4 py-2 text-[13.5px] font-medium text-white shadow-pop">
           Drop files to add them to {shelf.name}
@@ -530,7 +530,7 @@
       <div class="flex min-h-0 flex-1 flex-col px-8 pb-4">
         <div
           class="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 rounded-xl border-2 border-dashed px-8 py-10 text-center {dropActive
-            ? 'border-navy-500 bg-navy-100/50'
+            ? 'border-navy-500 bg-navy-100/50 dark:bg-white/10'
             : 'border-paper-line bg-paper-soft/40'}"
           role="region"
           aria-label="Empty Shelf"

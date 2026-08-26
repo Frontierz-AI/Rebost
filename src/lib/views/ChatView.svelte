@@ -321,7 +321,7 @@
 <div class="relative flex h-full min-h-0">
   {#if dropActive}
     <div
-      class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50"
+      class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50 dark:bg-white/10"
     >
       <p class="rounded-xl bg-navy-900 px-4 py-2 text-[13.5px] font-medium text-white shadow-pop">
         {dropHint}
@@ -411,7 +411,7 @@
                         {#each message.sources as source (source.sid)}
                           <button
                             type="button"
-                            class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-navy-500 hover:bg-navy-200/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100"
+                            class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-navy-500 hover:bg-navy-200/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100 dark:hover:border-navy-400 dark:hover:bg-white/12"
                             onclick={() => (openSource = source)}
                           >
                             <span class="font-bold">{source.sid}</span>

@@ -83,7 +83,7 @@ Do not square a button. Do not put a second mint button next to the first; the n
 | Chat composer | card, `!rounded-2xl` | Lives in [`ChatComposer.svelte`](../src/lib/components/ChatComposer.svelte) |
 | User bubble | `rounded-2xl rounded-br-md` | `navy-900`, white type |
 | Assistant bubble | `rounded-2xl rounded-tl-md` | Surface card + shadow |
-| Thread list pane | `rounded-2xl` | 15.75rem when open |
+| Thread list pane | `rounded-2xl` | 16.5rem when open |
 | Menus / typeahead | `rounded-xl` | Surface + `shadow-pop` |
 | Dialog / drawer | `.card` | Overlay `navy-950/25` (dark: `black/50`) |
 | Onboarding pane | `rounded-3xl` | On `navy-950`; type is white |

@@ -135,7 +135,7 @@
       <button
         type="button"
         id="composer-needs-ai"
-        class="group mb-2 flex w-full items-center justify-between rounded-lg border border-navy-500/50 bg-navy-100 px-3 py-2 text-[12.5px] text-ink hover:border-navy-500 hover:bg-navy-200/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
+        class="group mb-2 flex w-full items-center justify-between rounded-lg border border-navy-500/50 bg-navy-100 px-3 py-2 text-[12.5px] text-ink hover:border-navy-500 hover:bg-navy-200/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800 dark:border-white/15 dark:bg-white/8 dark:hover:border-navy-400 dark:hover:bg-white/12 dark:focus-visible:outline-navy-400"
         onclick={() => (app.view = "settings")}
       >
         <span>To start using Rebost you need to download an AI.</span>
