@@ -2040,7 +2040,11 @@ mod prepare_tests {
             .last()
             .expect("follow-up should end with the retrieved passages");
         assert_eq!(retrieval.role, "tool");
-        assert!(retrieval.as_text().contains("corporate services"));
+        assert!(
+            retrieval.as_text().contains(&mac.sid) && retrieval.as_text().contains(&mac.body),
+            "the tool result should carry the Mac excerpt that stayed in sources, got {}",
+            retrieval.as_text()
+        );
         let call = follow.messages[follow.messages.len() - 2]
             .tool_calls
             .as_ref()
