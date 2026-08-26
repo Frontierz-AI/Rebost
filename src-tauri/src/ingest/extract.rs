@@ -346,6 +346,133 @@ fn tidy(text: &str, max: usize) -> String {
     }
 }
 
+const STRUCTURED_SUMMARY_MAX: usize = 720;
+const RANK_SUMMARY_MAX: usize = 360;
+
+fn char_len(text: &str) -> usize {
+    text.chars().count()
+}
+
+fn clip_summary_piece(text: &str, max: usize) -> String {
+    if char_len(text) <= max {
+        return text.to_string();
+    }
+    let cut: String = text.chars().take(max).collect();
+    if let Some(at) = cut.rfind(['.', '!', '?']) {
+        if at >= max / 3 {
+            return cut[..=at].trim_end().to_string();
+        }
+    }
+    if let Some(at) = cut.rfind(char::is_whitespace) {
+        if at >= max / 3 {
+            return format!("{}…", cut[..at].trim_end());
+        }
+    }
+    format!("{}…", cut.trim_end())
+}
+
+fn push_summary_piece(out: &mut String, piece: &str, max: usize) -> bool {
+    let piece = piece.trim_end();
+    if piece.is_empty() {
+        return true;
+    }
+    let extra = if out.is_empty() { 0 } else { 2 };
+    let next_len = char_len(out) + extra + char_len(piece);
+    if !out.is_empty() && next_len > max {
+        return false;
+    }
+    if !out.is_empty() {
+        out.push_str("\n\n");
+    }
+    if out.is_empty() && char_len(piece) > max {
+        out.push_str(&clip_summary_piece(piece, max));
+        return false;
+    }
+    out.push_str(piece);
+    char_len(out) < max
+}
+
+/// Markdown preview from headings and the paragraphs under them.
+fn summary_from_blocks(blocks: &[Block], max: usize) -> Option<String> {
+    let structured = blocks.iter().any(|block| {
+        matches!(
+            block.kind,
+            BlockKind::Heading { .. } | BlockKind::SheetStart { .. } | BlockKind::SlideStart { .. }
+        )
+    });
+    if !structured {
+        return None;
+    }
+
+    let mut out = String::new();
+    for block in blocks {
+        let piece = match &block.kind {
+            BlockKind::Heading { level } => {
+                let text = block.text.trim();
+                if text.is_empty() {
+                    continue;
+                }
+                let hashes = "#".repeat((*level).clamp(1, 6) as usize);
+                format!("{hashes} {text}")
+            }
+            BlockKind::SheetStart { name } => {
+                let name = name.trim();
+                if name.is_empty() {
+                    continue;
+                }
+                format!("## {name}")
+            }
+            BlockKind::SlideStart { number, title } => {
+                let label = title
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|text| !text.is_empty())
+                    .map(str::to_string)
+                    .unwrap_or_else(|| format!("Slide {number}"));
+                format!("## {label}")
+            }
+            BlockKind::Paragraph => {
+                let text = block.text.trim();
+                if text.is_empty() {
+                    continue;
+                }
+                text.to_string()
+            }
+            BlockKind::Table => continue,
+        };
+        if !push_summary_piece(&mut out, &piece, max) {
+            break;
+        }
+    }
+
+    let trimmed = out.trim().to_string();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed)
+    }
+}
+
+fn prose_for_summary(content: &str, blocks: &[Block]) -> String {
+    let from_blocks = blocks
+        .iter()
+        .filter_map(|block| match block.kind {
+            BlockKind::Paragraph | BlockKind::Table => Some(block.text.as_str()),
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    if !from_blocks.trim().is_empty() {
+        return from_blocks;
+    }
+    content
+        .lines()
+        .map(|line| line.trim_start_matches('#').trim())
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Run Xberg on one file and shape the result for the pipeline.
 pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<Extraction> {
     ensure_tessdata(settings);
@@ -556,13 +683,25 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
         .map(|t| tidy(&t, 120))
         .unwrap_or_else(|| title_from_filename(path));
 
-    // Summary: Xberg TextRank with the document's own language.
+    // Structured files keep headings; the rest uses TextRank on prose.
     let summary = if content.is_empty() {
         String::new()
     } else {
-        xberg::text::summarization::textrank::summarize(&content, language.or(Some("en")), Some(80))
-            .map(|s| tidy(&s, 360))
-            .unwrap_or_default()
+        summary_from_blocks(&blocks, STRUCTURED_SUMMARY_MAX)
+            .filter(|text| !text.is_empty())
+            .unwrap_or_else(|| {
+                let prose = prose_for_summary(&content, &blocks);
+                if prose.trim().is_empty() {
+                    return String::new();
+                }
+                xberg::text::summarization::textrank::summarize(
+                    &prose,
+                    language.or(Some("en")),
+                    Some(80),
+                )
+                .map(|s| tidy(&s, RANK_SUMMARY_MAX))
+                .unwrap_or_default()
+            })
     };
 
     // Keywords: Xberg YAKE with the document's own language.
@@ -717,5 +856,70 @@ mod tests {
         let out = limit_extracted(input);
         assert!(out.len() <= EXTRACTED_MAX);
         assert!(out.contains("hello world paragraph"));
+    }
+
+    fn block(kind: BlockKind, text: &str) -> Block {
+        Block {
+            kind,
+            text: text.to_string(),
+            page: None,
+            page_end: None,
+        }
+    }
+
+    #[test]
+    fn structured_summary_keeps_markdown_headings() {
+        let summary = summary_from_blocks(
+            &[
+                block(BlockKind::Heading { level: 1 }, "Chapter one"),
+                block(BlockKind::Heading { level: 2 }, "Opening"),
+                block(BlockKind::Paragraph, "The clause lasts ninety days."),
+                block(BlockKind::Heading { level: 2 }, "Next"),
+                block(BlockKind::Paragraph, "A later section follows."),
+            ],
+            720,
+        )
+        .expect("structured summary");
+        assert_eq!(
+            summary,
+            "# Chapter one\n\n## Opening\n\nThe clause lasts ninety days.\n\n## Next\n\nA later section follows."
+        );
+    }
+
+    #[test]
+    fn structured_summary_stops_at_a_block() {
+        let first = "## Opening\n\nThe clause lasts ninety days. Notice is written.";
+        let summary = summary_from_blocks(
+            &[
+                block(BlockKind::Heading { level: 2 }, "Opening"),
+                block(
+                    BlockKind::Paragraph,
+                    "The clause lasts ninety days. Notice is written.",
+                ),
+                block(BlockKind::Heading { level: 2 }, "Later"),
+                block(
+                    BlockKind::Paragraph,
+                    "This paragraph is far too long to fit in a short summary budget.",
+                ),
+            ],
+            first.chars().count() + 4,
+        )
+        .expect("structured summary");
+        assert_eq!(summary, first);
+        assert!(!summary.contains("Later"));
+    }
+
+    #[test]
+    fn prose_summary_skips_heading_lines() {
+        let prose = prose_for_summary(
+            "# Chapter one\n\n## Opening\n\nThe clause lasts ninety days.",
+            &[
+                block(BlockKind::Heading { level: 1 }, "Chapter one"),
+                block(BlockKind::Heading { level: 2 }, "Opening"),
+                block(BlockKind::Paragraph, "The clause lasts ninety days."),
+            ],
+        );
+        assert_eq!(prose, "The clause lasts ninety days.");
+        assert!(!prose.contains('#'));
     }
 }

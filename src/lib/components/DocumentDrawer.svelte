@@ -10,6 +10,8 @@
     type DocumentTextWindow,
   } from "$lib/api";
   import CopyActions from "$lib/components/CopyActions.svelte";
+  import Markdown from "$lib/components/Markdown.svelte";
+  import { formatCardSummary } from "$lib/markdown";
   import { notifyInvokeError } from "$lib/stores.svelte";
   import { drawerPanel, overlay } from "$lib/motion";
   import { focusTrap } from "$lib/focus-trap";
@@ -179,7 +181,13 @@
         {#if card}
           {#if card.summary}
             <h3 class="label mt-5 mb-1.5">Summary</h3>
-            <p class="text-[13px] leading-relaxed text-ink">{card.summary}</p>
+            <Markdown
+              text={formatCardSummary(
+                card.summary,
+                card.outline.map((entry) => entry.title),
+              )}
+              compact
+            />
           {/if}
           {#if card.keywords.length > 0}
             <h3 class="label mt-4 mb-1.5">Keywords</h3>

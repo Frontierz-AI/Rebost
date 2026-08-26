@@ -262,6 +262,24 @@ textarea,
 .md-body h3 {
   font-size: 1.02em;
 }
+.md-body.md-compact {
+  font-size: 13px;
+  line-height: 1.55;
+}
+.md-body.md-compact p {
+  margin: 0.4em 0;
+}
+.md-body.md-compact h1,
+.md-body.md-compact h2,
+.md-body.md-compact h3 {
+  margin: 0.85em 0 0.25em;
+}
+.md-body.md-compact h1 {
+  font-size: 1.12em;
+}
+.md-body.md-compact h2 {
+  font-size: 1.02em;
+}
 .md-body ul,
 .md-body ol {
   padding-left: 1.35em;

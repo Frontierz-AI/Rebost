@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { describe, expect, it } from "vitest";
-import { isSafeHref, renderMarkdown } from "./markdown";
+import { formatCardSummary, isSafeHref, renderMarkdown } from "./markdown";
 import type { SourcePassage } from "./api";
 
 const source: SourcePassage = {
@@ -49,6 +49,30 @@ describe("renderMarkdown", () => {
       '<button class="cite-chip" data-sid="S1">S1</button><button>steal</button>',
     );
     expect(html).not.toContain(">steal<");
+  });
+});
+
+describe("formatCardSummary", () => {
+  it("reopens flattened ATX headings and splits outline titles from body", () => {
+    const text = formatCardSummary(
+      "# Chapter one ## Opening The clause lasts ninety days. Notice is written. ## Next A later section follows. ## Open A few items remain.",
+      ["Chapter one", "Opening", "Next", "Open"],
+    );
+    expect(text).toContain("# Chapter one\n\n");
+    expect(text).toContain("## Opening\n\nThe clause lasts ninety days.");
+    expect(text).toContain("## Next\n\nA later section follows.");
+    expect(text).toContain("## Open\n\nA few items remain.");
+
+    const html = renderMarkdown(text);
+    expect(html).toMatch(/<h1[^>]*>Chapter one<\/h1>/);
+    expect(html).toMatch(/<h2[^>]*>Opening<\/h2>/);
+    expect(html).toContain("The clause lasts ninety days.");
+    expect(html).not.toContain("# Chapter");
+  });
+
+  it("leaves already-broken markdown alone", () => {
+    const source = "# Chapter one\n\n## Opening\n\nThe clause lasts ninety days.";
+    expect(formatCardSummary(source, ["Chapter one", "Opening"])).toBe(source);
   });
 });
 

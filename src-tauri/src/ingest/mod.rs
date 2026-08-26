@@ -730,12 +730,23 @@ pub async fn process_file(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
         return Ok(());
     }
 
-    // Counts only. Nothing leaves the machine.
-    let privacy = {
+    // Counts only. The card keeps placeholders, never the matched values.
+    let (privacy, summary, keywords) = {
         let content = extraction.content.clone();
+        let summary = extraction.summary.clone();
+        let keywords = extraction.keywords.clone();
         let pii = &ctx.pii;
         // pii scan is CPU-bound regex work — keep it off the async threads.
-        tokio::task::block_in_place(|| pii.summarize(&content))
+        tokio::task::block_in_place(|| {
+            (
+                pii.summarize(&content),
+                pii.redact(&summary),
+                keywords
+                    .into_iter()
+                    .map(|word| pii.redact(&word))
+                    .collect::<Vec<_>>(),
+            )
+        })
     };
 
     // Card + extracted-text cache for the drawer.
@@ -747,8 +758,8 @@ pub async fn process_file(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
         title: &extraction.title,
         format: &meta.format,
         language: extraction.language_tag.as_deref(),
-        summary: &extraction.summary,
-        keywords: &extraction.keywords,
+        summary: &summary,
+        keywords: &keywords,
         outline: &extraction.outline,
         ocr_used: extraction.ocr_used,
         privacy: &privacy,
@@ -771,8 +782,8 @@ pub async fn process_file(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
     {
         let ctx2 = ctx.clone();
         let meta2 = meta.clone();
-        let summary = extraction.summary.clone();
-        let keywords = extraction.keywords.clone();
+        let summary = summary.clone();
+        let keywords = keywords.clone();
         let title = extraction.title.clone();
         let language = extraction.language;
         let quality = if extraction.ocr_used { "ocr" } else { "full" };

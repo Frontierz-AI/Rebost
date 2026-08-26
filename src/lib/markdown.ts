@@ -78,6 +78,33 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
+/** Reopen ATX headings that ingest flattened onto one line. */
+export function formatCardSummary(summary: string, outlineTitles: string[] = []): string {
+  const reopened = summary.replace(/[^\S\n]+(?=#{1,6} )/g, "\n\n").trim();
+  const titles = outlineTitles
+    .map((title) => title.trim())
+    .filter((title) => title.length > 0)
+    .sort((a, b) => b.length - a.length);
+  if (titles.length === 0) return reopened;
+
+  return reopened
+    .split("\n")
+    .map((line) => {
+      const heading = /^(#{1,6}) (.+)$/.exec(line);
+      const hashes = heading?.[1];
+      const rest = heading?.[2];
+      if (!hashes || !rest) return line;
+      const title = titles.find(
+        (candidate) => rest === candidate || rest.startsWith(`${candidate} `),
+      );
+      if (!title || rest === title) return line;
+      const after = rest.slice(title.length).trim();
+      if (!after) return line;
+      return `${hashes} ${title}\n\n${after}`;
+    })
+    .join("\n");
+}
+
 /** Markdown → sanitized HTML. Citation chips are only emitted for provided ids. */
 export function renderMarkdown(text: string, sources: SourcePassage[] = []): string {
   let rendered = marked.parse(text, { async: false, breaks: true }) as string;

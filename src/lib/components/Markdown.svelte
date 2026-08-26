@@ -6,11 +6,13 @@
     text,
     sources = [],
     streaming = false,
+    compact = false,
     onCite,
   }: {
     text: string;
     sources?: SourcePassage[];
     streaming?: boolean;
+    compact?: boolean;
     onCite?: (source: SourcePassage) => void;
   } = $props();
 
@@ -34,6 +36,6 @@
   }
 </script>
 
-<div class="md-body {streaming ? 'stream-caret' : ''}" use:citeClicks>
+<div class="md-body {streaming ? 'stream-caret' : ''} {compact ? 'md-compact' : ''}" use:citeClicks>
   {@html html}
 </div>
