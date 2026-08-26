@@ -6,10 +6,13 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.13] - 2026-08-27
+
 ### Changed
 
 - Chat can look up earlier turns in the same conversation, not only other conversations on that Shelf. When a reply hits the length cap, Chat continues once from the last sentence.
 - Attaching a file no longer switches the conversation to Deep. Extra search queries and how many times Chat may look through files still follow the library Shelf setting. A first-run AI that does not start is not kept as the active one, and first run finishes when that AI is ready. Explore will not install an AI marked too large for the machine.
+- A Shelf file summary keeps its headings. Chat notices stay readable in dark mode, and the Conversations pane is a little wider.
 - Logs stay short. After a restore, the main window is moved onto the visible display, and the minimum size shrinks when the work area is smaller than the usual frame.
 
 ### Fixed
@@ -493,7 +496,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.12...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.13...HEAD
+[0.8.13]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.12...v0.8.13
 [0.8.12]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.11...v0.8.12
 [0.8.11]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.10...v0.8.11
 [0.8.10]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.9...v0.8.10
