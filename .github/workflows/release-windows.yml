@@ -115,7 +115,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install artifact-signing-cli
         run: cargo install artifact-signing-cli
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         if: ${{ inputs.sign_arm_from_run == '' }}
         with:
           name: rebost-windows-arm64-unsigned
