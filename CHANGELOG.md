@@ -6,6 +6,20 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.8.14] - 2026-08-28
+
+### Added
+
+- Settings has Text size, with Default, Large, and Larger. Large and Larger make the text on the window bigger. The View menu, ⌘+ and ⌘- on a Mac, and Ctrl+ and Ctrl- on Windows move between those steps. The size is remembered.
+
+### Fixed
+
+- Citations that open the same page of the same file are listed once under the answer. Separate sections on that page still get their own chip.
+
+### Changed
+
+- The accessibility notes list the text-size shortcuts.
+
 ## [0.8.13] - 2026-08-27
 
 ### Changed
@@ -496,7 +510,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.13...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.14...HEAD
+[0.8.14]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.13...v0.8.14
 [0.8.13]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.12...v0.8.13
 [0.8.12]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.11...v0.8.12
 [0.8.11]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.10...v0.8.11

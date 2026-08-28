@@ -13,6 +13,7 @@
     refreshThreads,
   } from "$lib/stores.svelte";
   import { clipChars, PROMPT_MAX_CHARS } from "$lib/text-cap";
+  import { groupSourceChips, sourceChipLabel } from "$lib/source-chips";
   import {
     isOutboundPlaceholder,
     outboundPlaceholderId,
@@ -408,17 +409,25 @@
                     />
                     {#if message.sources.length > 0}
                       <div class="mt-2.5 flex flex-wrap gap-1.5 border-t border-paper-line pt-2.5">
-                        {#each message.sources as source (source.sid)}
+                        {#each groupSourceChips(message.sources) as chip (chip.key)}
                           <button
                             type="button"
                             class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-navy-500 hover:bg-navy-200/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100 dark:hover:border-navy-400 dark:hover:bg-white/12"
-                            onclick={() => (openSource = source)}
+                            aria-label={sourceChipLabel(chip)}
+                            onclick={() => (openSource = chip.source)}
                           >
-                            <span class="font-bold">{source.sid}</span>
-                            <span class="max-w-[220px] truncate font-normal">{source.title}</span>
-                            {#if source.pageStart}<span class="text-navy-400 dark:text-navy-300"
-                                >p. {source.pageStart}</span
-                              >{/if}
+                            <span class="font-bold">{chip.sids.join(" · ")}</span>
+                            <span class="max-w-[220px] truncate font-normal"
+                              >{chip.source.title}</span
+                            >
+                            {#if chip.showSection && chip.source.section}
+                              <span class="max-w-[140px] truncate text-navy-400 dark:text-navy-300"
+                                >{chip.source.section}</span
+                              >
+                            {/if}
+                            {#if chip.page}
+                              <span class="text-navy-400 dark:text-navy-300">{chip.page}</span>
+                            {/if}
                           </button>
                         {/each}
                       </div>

@@ -5,6 +5,7 @@ import App from "./App.svelte";
 import AboutWindow from "./lib/views/AboutWindow.svelte";
 import UpdateWindow from "./lib/views/UpdateWindow.svelte";
 import { applyColorSchemeFromSystem, watchWindowTheme } from "./lib/appearance";
+import { restoreTextSize } from "./lib/text-size";
 import { suppressWebviewBeep } from "./lib/keys";
 import { installNativeContextMenus } from "./lib/native-menu";
 import { osFamily } from "./lib/platform";
@@ -44,6 +45,7 @@ switch (kind) {
     app = mount(UpdateWindow, { target });
     break;
   case null:
+    restoreTextSize();
     app = mount(App, { target });
     break;
   default: {

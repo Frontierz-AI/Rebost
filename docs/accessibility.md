@@ -1,6 +1,6 @@
 # Rebost accessibility reference
 
-Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.8.13, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
+Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.8.14, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
 
 ## Platform
 
@@ -32,6 +32,7 @@ Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the A
 | New conversation | `⌘N` (Windows: `Ctrl+N`) |
 | Chat / Shelves / Recipes | `⌘1` / `⌘2` / `⌘3` (Windows: `Ctrl+1`–`3`) |
 | Settings | `⌘,` (Windows: `Ctrl+,`) |
+| Larger / smaller text | `⌘+` / `⌘-` (Windows: `Ctrl+` / `Ctrl-`). Three steps: Default, Large, Larger |
 | Fill a «placeholder» from Shelf files | `↑` `↓` then `Return` or `Tab` (composer, when a list is shown). `Shift+Return` still inserts a newline |
 | Close drawers, source panel, Reset dialog, Explore other AIs, AI More info, Update window | `Escape` |
 | Open citation | `Return` on a citation chip inside the answer |
@@ -39,7 +40,7 @@ Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the A
 
 VoiceOver rotor: form controls and buttons. Headings exist in Shelves/Settings; Chat thread list is a list of buttons.
 
-## Known gaps (0.8.13)
+## Known gaps (0.8.14)
 
 - No VoiceOver custom actions for "copy without personal information" beyond the visible button label.
 - Windows Narrator has not been verified.
@@ -48,4 +49,4 @@ Form fields on Shelves, Recipes, Settings, and Chat (composer, Shelf picker, Res
 
 ## Settings relevant to AT
 
-House rules and Diagnostics are ordinary text. Increasing the OS font size scales the webview with the OS.
+House rules and Diagnostics are ordinary text. Settings → Text size has three steps (Default, Large, Larger). `⌘+` and `⌘-` (Windows: `Ctrl+` / `Ctrl-`) move between them. Increasing the OS font size also scales the webview.

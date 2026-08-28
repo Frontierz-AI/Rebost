@@ -5,8 +5,26 @@ export function isModKey(event: KeyboardEvent): boolean {
   return isMac() ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
 }
 
+function textSizeAction(event: KeyboardEvent): MenuAction | null {
+  switch (event.key) {
+    case "+":
+    case "=":
+    case "Add":
+      return "text-larger";
+    case "-":
+    case "_":
+    case "Subtract":
+      return "text-smaller";
+    default:
+      return null;
+  }
+}
+
 export function shortcutAction(event: KeyboardEvent): MenuAction | null {
-  if (!isModKey(event) || event.altKey || event.shiftKey || event.repeat) return null;
+  if (!isModKey(event) || event.altKey || event.repeat) return null;
+  const sizeAction = textSizeAction(event);
+  if (sizeAction) return sizeAction;
+  if (event.shiftKey) return null;
   switch (event.key) {
     case "n":
     case "N":
@@ -31,6 +49,8 @@ export function parseMenuAction(action: string): MenuAction | null {
     case "view-shelves":
     case "view-recipes":
     case "view-settings":
+    case "text-larger":
+    case "text-smaller":
       return action;
     default:
       return null;

@@ -1,4 +1,4 @@
-//! App menu: About, Settings, new conversation, and view shortcuts.
+//! App menu: About, Settings, new conversation, view shortcuts, and text size.
 
 use serde::Serialize;
 #[cfg(target_os = "macos")]
@@ -12,6 +12,8 @@ const NEW_CONVERSATION: &str = "new-conversation";
 const VIEW_CHAT: &str = "view-chat";
 const VIEW_SHELVES: &str = "view-shelves";
 const VIEW_RECIPES: &str = "view-recipes";
+const TEXT_LARGER: &str = "text-larger";
+const TEXT_SMALLER: &str = "text-smaller";
 
 #[derive(Clone, Serialize)]
 struct MenuAction {
@@ -39,6 +41,20 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let chat = MenuItem::with_id(handle, VIEW_CHAT, "Chat", true, Some("CmdOrCtrl+1"))?;
     let shelves = MenuItem::with_id(handle, VIEW_SHELVES, "Shelves", true, Some("CmdOrCtrl+2"))?;
     let recipes = MenuItem::with_id(handle, VIEW_RECIPES, "Recipes", true, Some("CmdOrCtrl+3"))?;
+    let text_larger = MenuItem::with_id(
+        handle,
+        TEXT_LARGER,
+        "Larger Text",
+        true,
+        Some("CmdOrCtrl+Plus"),
+    )?;
+    let text_smaller = MenuItem::with_id(
+        handle,
+        TEXT_SMALLER,
+        "Smaller Text",
+        true,
+        Some("CmdOrCtrl+Minus"),
+    )?;
 
     let window_menu = Submenu::with_id_and_items(
         handle,
@@ -107,6 +123,9 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
                     &shelves,
                     &recipes,
                     &PredefinedMenuItem::separator(handle)?,
+                    &text_larger,
+                    &text_smaller,
+                    &PredefinedMenuItem::separator(handle)?,
                     &PredefinedMenuItem::fullscreen(handle, None)?,
                 ],
             )?,
@@ -135,6 +154,20 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let chat = MenuItem::with_id(handle, VIEW_CHAT, "&Chat", true, Some("CmdOrCtrl+1"))?;
     let shelves = MenuItem::with_id(handle, VIEW_SHELVES, "&Shelves", true, Some("CmdOrCtrl+2"))?;
     let recipes = MenuItem::with_id(handle, VIEW_RECIPES, "&Recipes", true, Some("CmdOrCtrl+3"))?;
+    let text_larger = MenuItem::with_id(
+        handle,
+        TEXT_LARGER,
+        "&Larger text",
+        true,
+        Some("CmdOrCtrl+Plus"),
+    )?;
+    let text_smaller = MenuItem::with_id(
+        handle,
+        TEXT_SMALLER,
+        "&Smaller text",
+        true,
+        Some("CmdOrCtrl+Minus"),
+    )?;
     Menu::with_items(
         handle,
         &[
@@ -153,7 +186,19 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
                     &PredefinedMenuItem::select_all(handle, None)?,
                 ],
             )?,
-            &Submenu::with_items(handle, "&View", true, &[&chat, &shelves, &recipes])?,
+            &Submenu::with_items(
+                handle,
+                "&View",
+                true,
+                &[
+                    &chat,
+                    &shelves,
+                    &recipes,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &text_larger,
+                    &text_smaller,
+                ],
+            )?,
             &Submenu::with_items(handle, "&Help", true, &[&about])?,
         ],
     )
@@ -180,6 +225,10 @@ pub fn on_menu_event(app: &AppHandle, event: &MenuEvent) {
         "view-recipes"
     } else if event.id() == VIEW_SETTINGS {
         "view-settings"
+    } else if event.id() == TEXT_LARGER {
+        "text-larger"
+    } else if event.id() == TEXT_SMALLER {
+        "text-smaller"
     } else {
         return;
     };

@@ -96,7 +96,7 @@ Drop targets: dashed `navy-500` border, `navy-100/50` wash, `rounded-2xl`.
 
 ## Type
 
-System UI only (`ui-sans-serif`, then the OS stack). Mono for Diagnostics and confirm-`DELETE`.
+System UI only (`ui-sans-serif`, then the OS stack). Mono for Diagnostics and confirm-`DELETE`. Settings → Text size scales the window in three steps (default, 1.15, 1.3) via `html[data-text-size]`.
 
 | Role | Size | Weight |
 |------|------|--------|

@@ -11,7 +11,7 @@ use crate::core::Ctx;
 use crate::engine::models::MachineProfile;
 use crate::engine::{Engine, EngineStatus};
 use crate::paths::Paths;
-use crate::settings::ActiveModel;
+use crate::settings::{ActiveModel, TextSize};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,6 +20,7 @@ pub struct SettingsView {
     pub onboarding_done: bool,
     pub active_model: Option<ActiveModel>,
     pub allow_online_research: bool,
+    pub text_size: TextSize,
 }
 
 /// Return the settings the UI needs.
@@ -31,6 +32,7 @@ pub fn settings_get(ctx: State<'_, Arc<Ctx>>) -> SettingsView {
         onboarding_done: settings.onboarding_done,
         active_model: settings.active_model.clone(),
         allow_online_research: settings.allow_online_research,
+        text_size: settings.text_size,
     }
 }
 
@@ -46,6 +48,13 @@ pub fn settings_set_house_rules(ctx: State<'_, Arc<Ctx>>, text: String) {
 #[tauri::command]
 pub fn settings_set_allow_online_research(ctx: State<'_, Arc<Ctx>>, enabled: bool) {
     crate::core::write_lock(&ctx.settings).allow_online_research = enabled;
+    ctx.save_settings();
+}
+
+/// Window type size: default, or one of the two larger steps.
+#[tauri::command]
+pub fn settings_set_text_size(ctx: State<'_, Arc<Ctx>>, size: TextSize) {
+    crate::core::write_lock(&ctx.settings).text_size = size;
     ctx.save_settings();
 }
 

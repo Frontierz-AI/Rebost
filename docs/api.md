@@ -14,7 +14,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `rebost://shelf-stats` | `{ shelfId, stats }` (`waiting` is files accepted but not yet being read) |
 | `rebost://shelves` | empty object (reload list) |
 | `rebost://chat` | stream machine (`queued` … `done` / `error`) |
-| `rebost://menu` | `{ action }` (`new-conversation` \| `view-chat` \| `view-shelves` \| `view-recipes` \| `view-settings`) |
+| `rebost://menu` | `{ action }` (`new-conversation` \| `view-chat` \| `view-shelves` \| `view-recipes` \| `view-settings` \| `text-larger` \| `text-smaller`) |
 | `rebost://update` | `{ version, currentVersion, notes? }` when a newer release exists |
 | `rebost://update-progress` | `{ event: started \| progress \| finished }` while installing |
 
@@ -57,6 +57,8 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `download_skip_verify` | `id` | `()` (model downloads only; finishes install without hashing) |
 | `settings_get` | — | `SettingsView` |
 | `settings_set_house_rules` | `text` | `()` |
+| `settings_set_allow_online_research` | `enabled` | `()` |
+| `settings_set_text_size` | `size` (`default` \| `large` \| `larger`) | `()` |
 | `settings_finish_onboarding` | — | `()` |
 | `settings_reset_workspace` | `confirmation` (`DELETE`) | `()` (writes a marker, stops the engine, restarts; wipe runs on next launch before the window is created) |
 | `redact_text` | `text` | redacted string |

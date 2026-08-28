@@ -21,6 +21,8 @@ describe("parseMenuAction", () => {
     expect(parseMenuAction("new-conversation")).toBe("new-conversation");
     expect(parseMenuAction("view-chat")).toBe("view-chat");
     expect(parseMenuAction("view-settings")).toBe("view-settings");
+    expect(parseMenuAction("text-larger")).toBe("text-larger");
+    expect(parseMenuAction("text-smaller")).toBe("text-smaller");
     expect(parseMenuAction("nope")).toBeNull();
   });
 });
@@ -33,6 +35,9 @@ describe("shortcutAction", () => {
     expect(shortcutAction(key("2", mod))).toBe("view-shelves");
     expect(shortcutAction(key("3", mod))).toBe("view-recipes");
     expect(shortcutAction(key(",", mod))).toBe("view-settings");
+    expect(shortcutAction(key("=", mod))).toBe("text-larger");
+    expect(shortcutAction(key("+", { ...mod, shift: true }))).toBe("text-larger");
+    expect(shortcutAction(key("-", mod))).toBe("text-smaller");
     expect(shortcutAction(key("n"))).toBeNull();
     expect(shortcutAction(key("n", { ...mod, alt: true }))).toBeNull();
   });

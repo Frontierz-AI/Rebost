@@ -256,6 +256,7 @@ pub fn run() {
             commands::settings_get,
             commands::settings_set_house_rules,
             commands::settings_set_allow_online_research,
+            commands::settings_set_text_size,
             commands::settings_finish_onboarding,
             commands::settings_reset_workspace,
             commands::redact_text,

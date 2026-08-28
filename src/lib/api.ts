@@ -191,11 +191,14 @@ export interface ModelSearchResult {
   fits?: boolean;
 }
 
+export type TextSize = "default" | "large" | "larger";
+
 export interface SettingsView {
   houseRules: string;
   onboardingDone: boolean;
   activeModel?: ActiveModel | null;
   allowOnlineResearch: boolean;
+  textSize: TextSize;
 }
 
 export interface ImportResult {
@@ -463,6 +466,7 @@ export const api = {
   setHouseRules: (text: string) => invoke<void>("settings_set_house_rules", { text }),
   setAllowOnlineResearch: (enabled: boolean) =>
     invoke<void>("settings_set_allow_online_research", { enabled }),
+  setTextSize: (size: TextSize) => invoke<void>("settings_set_text_size", { size }),
   finishOnboarding: () => invoke<void>("settings_finish_onboarding"),
   resetWorkspace: (confirmation: string) =>
     invoke<void>("settings_reset_workspace", { confirmation }),
@@ -541,7 +545,13 @@ export function onEvent<T>(name: string, handler: (payload: T) => void): Promise
 }
 
 export type MenuAction =
-  "new-conversation" | "view-chat" | "view-shelves" | "view-recipes" | "view-settings";
+  | "new-conversation"
+  | "view-chat"
+  | "view-shelves"
+  | "view-recipes"
+  | "view-settings"
+  | "text-larger"
+  | "text-smaller";
 
 export interface MenuEvent {
   action: MenuAction;

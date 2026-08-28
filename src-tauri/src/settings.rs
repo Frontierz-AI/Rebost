@@ -1,7 +1,27 @@
 //! `settings.json` — the small amount of durable configuration.
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::path::Path;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TextSize {
+    #[default]
+    Default,
+    Large,
+    Larger,
+}
+
+impl<'de> Deserialize<'de> for TextSize {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = String::deserialize(deserializer)?;
+        Ok(match raw.as_str() {
+            "large" => Self::Large,
+            "larger" => Self::Larger,
+            _ => Self::Default,
+        })
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
@@ -25,6 +45,9 @@ pub struct Settings {
     /// When true, Chat may look up public web pages from this computer.
     #[serde(alias = "allow_online_research")]
     pub allow_online_research: bool,
+    /// Window type size: the current default, then two larger steps.
+    #[serde(alias = "text_size")]
+    pub text_size: TextSize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -137,6 +160,33 @@ mod tests {
         settings.save(&path).unwrap();
         let loaded = Settings::load(&path);
         assert!(loaded.allow_online_research);
+    }
+
+    #[test]
+    fn text_size_roundtrips() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let settings = Settings {
+            text_size: TextSize::Larger,
+            ..Default::default()
+        };
+        settings.save(&path).unwrap();
+        let loaded = Settings::load(&path);
+        assert_eq!(loaded.text_size, TextSize::Larger);
+    }
+
+    #[test]
+    fn unknown_text_size_becomes_default() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(
+            &path,
+            r#"{"houseRules":"Keep it short.","textSize":"huge"}"#,
+        )
+        .unwrap();
+        let loaded = Settings::load(&path);
+        assert_eq!(loaded.house_rules, "Keep it short.");
+        assert_eq!(loaded.text_size, TextSize::Default);
     }
 
     #[test]

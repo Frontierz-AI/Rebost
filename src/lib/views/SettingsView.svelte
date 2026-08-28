@@ -6,8 +6,17 @@
     type MachineView,
     type ModelSearchResult,
     type Recommendation,
+    type TextSize,
   } from "$lib/api";
-  import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
+  import {
+    app,
+    beginModelInstall,
+    notifyInvokeError,
+    refreshSettings,
+    setTextSize,
+  } from "$lib/stores.svelte";
+  import { isMac } from "$lib/platform";
+  import { parseTextSize, TEXT_SIZE_LABELS, TEXT_SIZES } from "$lib/text-size";
   import { HOUSE_RULES_MAX_CHARS, clipChars } from "$lib/text-cap";
   import { Cpu, Search, BadgeCheck, Stethoscope, Save } from "@lucide/svelte";
   import DownloadProgress from "$lib/components/DownloadProgress.svelte";
@@ -19,6 +28,8 @@
   let machine = $state<MachineView | null>(null);
   let houseRules = $state(app.settings?.houseRules ?? "");
   let onlineResearch = $state(app.settings?.allowOnlineResearch ?? false);
+  let textSize = $state<TextSize>(parseTextSize(app.settings?.textSize));
+  const mac = isMac();
   let rulesSaved = $state(false);
   let diag = $state<Diagnostics | null>(null);
   let showDiag = $state(import.meta.env.VITE_START_DIAG === "1");
@@ -39,6 +50,7 @@
   $effect(() => {
     houseRules = clipChars(app.settings?.houseRules ?? "", HOUSE_RULES_MAX_CHARS);
     onlineResearch = app.settings?.allowOnlineResearch ?? false;
+    textSize = parseTextSize(app.settings?.textSize);
   });
 
   $effect(() => {
@@ -86,6 +98,11 @@
     setTimeout(() => (rulesSaved = false), 1500);
   }
 
+  function saveTextSize(next: TextSize) {
+    textSize = next;
+    void setTextSize(next);
+  }
+
   async function saveOnline() {
     const next = onlineResearch;
     try {
@@ -115,6 +132,49 @@
 
 <div class="mx-auto max-w-[760px] px-8 py-8">
   <h1 class="mb-6 text-[22px] font-semibold text-ink">Settings</h1>
+
+  <section class="card mb-6 px-6 py-5">
+    <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+      <div class="min-w-0 flex-1">
+        <h2 id="text-size-heading" class="text-[15px] font-semibold text-ink">Text size</h2>
+        <p id="text-size-help" class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
+          Default is the original size. Large and Larger make the text on this window bigger.
+          {mac ? "⌘+ and ⌘- change the size." : "Ctrl+ and Ctrl- change the size."}
+        </p>
+      </div>
+      <div
+        role="radiogroup"
+        aria-labelledby="text-size-heading"
+        aria-describedby="text-size-help"
+        class="inline-flex shrink-0 items-center rounded-full border border-paper-line bg-paper-soft p-0.5"
+      >
+        {#each TEXT_SIZES as size (size)}
+          <label
+            class="cursor-default rounded-full px-3 py-1.5 font-medium text-ink-soft
+              has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card
+              has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2
+              has-[:focus-visible]:outline-navy-800 dark:has-[:checked]:shadow-none
+              {size === 'default'
+              ? 'text-[12px]'
+              : size === 'large'
+                ? 'text-[13px]'
+                : 'text-[14px]'}"
+          >
+            <input
+              id="text-size-{size}"
+              name="text-size"
+              type="radio"
+              value={size}
+              class="sr-only"
+              checked={textSize === size}
+              onchange={() => saveTextSize(size)}
+            />
+            {TEXT_SIZE_LABELS[size]}
+          </label>
+        {/each}
+      </div>
+    </div>
+  </section>
 
   {#if hasAi}
     {@render houseRulesSection()}

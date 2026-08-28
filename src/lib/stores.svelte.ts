@@ -12,6 +12,7 @@ import {
   type MenuAction,
   type SettingsView,
   type ShelfView,
+  type TextSize,
   type StoredMessage,
   type ThinkLevel,
   type ThreadMeta,
@@ -24,6 +25,7 @@ import {
   type ShelfPreference,
 } from "./shelf-preference";
 import { clipChars, PROMPT_MAX_CHARS } from "./text-cap";
+import { applyTextSize, parseTextSize, persistTextSize, stepTextSize } from "./text-size";
 
 export type View = "chat" | "shelves" | "recipes" | "settings";
 
@@ -150,6 +152,12 @@ export function handleMenuAction(action: MenuAction) {
     case "view-settings":
       goView("settings");
       return;
+    case "text-larger":
+      bumpTextSize(1);
+      return;
+    case "text-smaller":
+      bumpTextSize(-1);
+      return;
     default: {
       const _exhaustive: never = action;
       return _exhaustive;
@@ -184,6 +192,39 @@ export async function refreshThreads() {
 
 export async function refreshSettings() {
   app.settings = await api.settingsGet();
+  paintTextSize(parseTextSize(app.settings.textSize));
+}
+
+function paintTextSize(size: TextSize) {
+  applyTextSize(size);
+  persistTextSize(size);
+}
+
+let textSizeBump = 0;
+
+function bumpTextSize(delta: 1 | -1) {
+  const generation = ++textSizeBump;
+  queueMicrotask(() => {
+    if (generation !== textSizeBump) return;
+    const next = stepTextSize(parseTextSize(app.settings?.textSize), delta);
+    if (next === parseTextSize(app.settings?.textSize)) return;
+    void setTextSize(next);
+  });
+}
+
+export async function setTextSize(next: TextSize) {
+  const previous = parseTextSize(app.settings?.textSize);
+  if (next === previous && app.settings) return;
+  paintTextSize(next);
+  if (app.settings) app.settings = { ...app.settings, textSize: next };
+  try {
+    await api.setTextSize(next);
+    await refreshSettings();
+  } catch (error) {
+    paintTextSize(previous);
+    if (app.settings) app.settings = { ...app.settings, textSize: previous };
+    notifyInvokeError(error);
+  }
 }
 
 /** Show the progress UI on the same click as Install, before the backend resolves the file. */

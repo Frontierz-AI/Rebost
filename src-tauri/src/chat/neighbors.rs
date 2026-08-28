@@ -1,4 +1,5 @@
-//! Surround a search hit with the text before and after it.
+//! Surround a search hit with the text before and after it, then drop
+//! windows that now cover the same stretch of a file.
 
 use std::collections::HashMap;
 
@@ -91,7 +92,65 @@ pub(crate) fn widen_neighbor_passages(
             passage.body = wider;
         }
     }
-    passages
+    collapse_overlapping_passages(passages)
+}
+
+/// True when two excerpts share enough text that one window already covers
+/// the other. Empty bodies do not match.
+pub(crate) fn bodies_overlap(a: &str, b: &str) -> bool {
+    let a = a.trim();
+    let b = b.trim();
+    if a.is_empty() || b.is_empty() {
+        return false;
+    }
+    if a.contains(b) || b.contains(a) {
+        return true;
+    }
+    substantial_shared_run(a, b)
+}
+
+fn substantial_shared_run(a: &str, b: &str) -> bool {
+    let (shorter, longer) = if a.chars().count() <= b.chars().count() {
+        (a, b)
+    } else {
+        (b, a)
+    };
+    let n = shorter.chars().count();
+    if n < 160 {
+        return false;
+    }
+    let needle_len = (n / 2).max(80);
+    let start = (n - needle_len) / 2;
+    let needle: String = shorter.chars().skip(start).take(needle_len).collect();
+    longer.contains(&needle)
+}
+
+/// Keep one passage when two hits from the same file overlap. Prefers the
+/// longer excerpt, then the higher score. First-seen order is otherwise kept.
+pub(crate) fn collapse_overlapping_passages(passages: Vec<SourcePassage>) -> Vec<SourcePassage> {
+    let mut kept: Vec<SourcePassage> = Vec::new();
+    for passage in passages {
+        if let Some(i) = kept.iter().position(|existing| {
+            existing.document_id == passage.document_id
+                && bodies_overlap(&existing.body, &passage.body)
+        }) {
+            if prefer_passage(&passage, &kept[i]) {
+                kept[i] = passage;
+            }
+        } else {
+            kept.push(passage);
+        }
+    }
+    kept
+}
+
+fn prefer_passage(new: &SourcePassage, old: &SourcePassage) -> bool {
+    let new_len = new.body.chars().count();
+    let old_len = old.body.chars().count();
+    if new_len != old_len {
+        return new_len > old_len;
+    }
+    new.score > old.score
 }
 
 #[cfg(test)]
@@ -113,5 +172,85 @@ mod tests {
     fn widen_returns_the_body_when_it_is_not_in_the_file() {
         let out = widen_hit_body("unrelated file", "missing passage", 80);
         assert_eq!(out, "missing passage");
+    }
+
+    fn passage(doc: &str, body: &str, score: f32) -> SourcePassage {
+        SourcePassage {
+            sid: String::new(),
+            document_id: doc.into(),
+            shelf_id: "s".into(),
+            title: "Doc".into(),
+            section: None,
+            page_start: Some(87),
+            page_end: Some(87),
+            body: body.into(),
+            path: "/tmp/doc.pdf".into(),
+            score,
+        }
+    }
+
+    #[test]
+    fn overlap_is_containment_or_a_long_shared_run() {
+        assert!(bodies_overlap("alpha beta gamma", "beta"));
+        assert!(!bodies_overlap("", "beta"));
+        let left = "word ".repeat(40);
+        let right = format!("{} extra", &left[20..]);
+        assert!(bodies_overlap(&left, &right));
+        assert!(!bodies_overlap(
+            "Fees are listed in this column of the table. ",
+            "Dates for the written papers appear below. "
+        ));
+    }
+
+    #[test]
+    fn collapse_keeps_the_longer_overlapping_window() {
+        let short = "The speaking test uses two candidates. ".repeat(8);
+        let long = format!("Before that, {short} After that, a discussion.");
+        let out = collapse_overlapping_passages(vec![
+            passage("handbook", &short, 9.0),
+            passage("handbook", &long, 4.0),
+        ]);
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].body, long);
+        assert_eq!(out[0].score, 4.0);
+    }
+
+    #[test]
+    fn collapse_keeps_distinct_excerpts_from_the_same_page() {
+        let fees = "Paper 1 fees are published each year in the centre calendar. ".repeat(6);
+        let dates = "Closing dates for the written papers are printed on page two. ".repeat(6);
+        let out = collapse_overlapping_passages(vec![
+            passage("handbook", &fees, 5.0),
+            passage("handbook", &dates, 4.0),
+        ]);
+        assert_eq!(out.len(), 2);
+    }
+
+    #[test]
+    fn collapse_does_not_merge_different_files() {
+        let body = "The speaking test uses two candidates. ".repeat(8);
+        let out = collapse_overlapping_passages(vec![
+            passage("one", &body, 5.0),
+            passage("two", &body, 4.0),
+        ]);
+        assert_eq!(out.len(), 2);
+    }
+
+    #[test]
+    fn widen_then_collapse_merges_nearby_hits() {
+        let extracted = format!(
+            "Lead-in. {} {} Tail.",
+            "Fees for each paper are listed here. ".repeat(10),
+            "Speaking uses two candidates in one room. ".repeat(10)
+        );
+        let first = "Fees for each paper are listed here. ".repeat(4);
+        let second = "Speaking uses two candidates in one room. ".repeat(4);
+        let widened = vec![
+            passage("handbook", &widen_hit_body(&extracted, &first, 400), 6.0),
+            passage("handbook", &widen_hit_body(&extracted, &second, 400), 5.0),
+        ];
+        assert!(bodies_overlap(&widened[0].body, &widened[1].body));
+        let out = collapse_overlapping_passages(widened);
+        assert_eq!(out.len(), 1);
     }
 }

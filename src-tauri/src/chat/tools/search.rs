@@ -264,7 +264,47 @@ fn already_covered(sources: &[SourcePassage], hit: &SourcePassage) -> bool {
     if body.is_empty() {
         return true;
     }
-    sources
-        .iter()
-        .any(|existing| existing.document_id == hit.document_id && existing.body.contains(body))
+    sources.iter().any(|existing| {
+        existing.document_id == hit.document_id
+            && super::super::neighbors::bodies_overlap(&existing.body, body)
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn passage(doc: &str, body: &str) -> SourcePassage {
+        SourcePassage {
+            sid: "S1".into(),
+            document_id: doc.into(),
+            shelf_id: "s".into(),
+            title: "Doc".into(),
+            section: None,
+            page_start: Some(87),
+            page_end: Some(87),
+            body: body.into(),
+            path: "/tmp/doc.pdf".into(),
+            score: 1.0,
+        }
+    }
+
+    #[test]
+    fn already_covered_treats_an_overlapping_window_as_known() {
+        let existing = "The speaking test uses two candidates. ".repeat(8);
+        let hit = existing[20..].to_string();
+        assert!(already_covered(
+            &[passage("handbook", &existing)],
+            &passage("handbook", &hit)
+        ));
+        assert!(!already_covered(
+            &[passage("handbook", &existing)],
+            &passage("other", &hit)
+        ));
+        let other = "Closing dates for the written papers are printed here. ".repeat(6);
+        assert!(!already_covered(
+            &[passage("handbook", &existing)],
+            &passage("handbook", &other)
+        ));
+    }
 }
