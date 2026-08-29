@@ -84,7 +84,7 @@ Formatters own spaces and wrapping. `just check` runs svelte-check, Prettier, ox
 
 Sentence case. Delete anything the name or types already say.
 
-**User-facing copy.** Lives in `locales/*.json`. Name the outcome, not the machinery. Prefer AI over model. Do not put GGUF, llama.cpp, or SHA-256 in the UI or in the README above Develop. Errors say what failed and what to do. Nav, View, and view titles may translate Chat, Shelves, and Recipes. In running copy those words stay English, with House rules and Online. The app is the subject, not "you". Draft catalogs (`pt`, `fr`, `ja`, `de`, `it`, `sv`, `nb`, `nl`, `cs`, `el`, `da`, `fi`) start with a `_review` note; native-speaker fixes belong in those files. See [docs/i18n.md](docs/i18n.md).
+**User-facing copy.** Lives in `locales/*.json`. Name the outcome, not the machinery. Prefer AI over model. Do not put GGUF, llama.cpp, or SHA-256 in the UI or in the README above Develop. Errors say what failed and what to do. Nav, View, and view titles translate Chat, Shelves, and Recipes. Running copy translates Shelf and Shelves with the catalog. Recipe, Chat, House rules, and Online stay English. The app is the subject, not "you". Draft catalogs (`pt`, `fr`, `ja`, `de`, `it`, `sv`, `nb`, `nl`, `cs`, `el`, `da`, `fi`) start with a `_review` note; native-speaker fixes belong in those files. See [docs/i18n.md](docs/i18n.md).
 
 **Register.** The app UI is read at the machine, so "here" and "this computer" work there. The README and `docs/` are read on github.com, so name the machine instead: "the machine where Rebost is installed", "that machine", or "locally".
 

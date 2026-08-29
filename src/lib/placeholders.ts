@@ -73,7 +73,7 @@ export function pinFileNames(draft: string, names: string[]): string {
   return /[\s\n]$/.test(draft) ? draft + extra : `${draft} ${extra}`;
 }
 
-/** Default Recipes that read a Shelf say "this Shelf" in the prompt. */
+/** Older saved Recipes that read a Shelf often say "this Shelf". */
 export function promptNeedsShelf(prompt: string): boolean {
   return /\bthis shelf\b/i.test(prompt);
 }

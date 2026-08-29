@@ -6,6 +6,18 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-29
+
+### Added
+
+- Settings has Language. The menus and the rest of the interface follow that choice. English, Spanish (Spain), and Catalan are maintained. Portuguese, French, Japanese, German, Italian, Swedish, Norwegian, Dutch, Czech, Greek, Danish, and Finnish are in the picker and still need a native speaker.
+- System uses the language of the machine. Changing the OS language while Rebost is open has no effect until the next launch, unless Settings pins a language.
+
+### Changed
+
+- Outside English, Shelf and Shelves use the word from that language. Recipe, Chat, House rules, and Online stay English.
+- UI copy in Spanish, Catalan, and the other languages in the picker was tightened.
+
 ## [0.8.14] - 2026-08-28
 
 ### Added
@@ -510,7 +522,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.14...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.14...v0.9.0
 [0.8.14]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.13...v0.8.14
 [0.8.13]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.12...v0.8.13
 [0.8.12]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.11...v0.8.12

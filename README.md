@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **0.8.14**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **0.9.0**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine | Installer |
 |---------|-----------|
@@ -65,7 +65,7 @@ A Recipe is a prompt saved once and reopened later against any Shelf. Opening on
 
 ### House rules
 
-House rules are standing instructions kept in Settings: tone, language, and anything the AI should never promise. They are written once and applied to every conversation and every Recipe. Settings also holds Online, which allows Chat to look things up on the public web. Online is off until it is turned on, and turning it on does not send Shelf documents to the web. Text size is in the same window and has three steps, Default, Large, and Larger.
+House rules are standing instructions kept in Settings: tone, language, and anything the AI should never promise. They are written once and applied to every conversation and every Recipe. Settings also holds Online, which allows Chat to look things up on the public web. Online is off until it is turned on, and turning it on does not send Shelf documents to the web. Text size (Default, Large, and Larger) and Language for the menus and the rest of the interface are in the same window.
 
 <p align="center">
   <img src="docs/assets/settings.webp" alt="Rebost Settings: House rules and the installed AI." width="880" />

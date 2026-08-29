@@ -41,19 +41,41 @@ describe("catalogs", () => {
     }
   });
 
-  it("keeps this Shelf as a whole phrase in shipped Recipe prompts", () => {
+  it("keeps this Shelf in English Recipe prompts that read a Shelf", () => {
     const needsShelf = /\bthis shelf\b/i;
     const recipes = catalogsByLocale.en.defaults.recipes;
     const shelfIds = Object.entries(recipes)
       .filter(([, rec]) => needsShelf.test(rec.prompt))
       .map(([id]) => id);
-    expect(shelfIds.length).toBeGreaterThan(0);
+    expect(shelfIds).toEqual([
+      "one-page-brief",
+      "compare-documents",
+      "document-key-terms",
+      "policy-qa",
+    ]);
+  });
+
+  it("does not leave English Shelf in translated catalogs", () => {
+    const englishShelf = /\bShelves?\b/;
     for (const locale of APP_LOCALES) {
-      const recs = catalogsByLocale[locale].defaults.recipes;
-      for (const id of shelfIds) {
-        const rec = recs[id as keyof typeof recs];
-        expect(needsShelf.test(rec.prompt), `${locale} ${id}`).toBe(true);
+      if (locale === "en") continue;
+      for (const text of catalogStrings(catalogsByLocale[locale])) {
+        expect(text, locale).not.toMatch(englishShelf);
       }
     }
+    expect(catalogsByLocale.es.nav.shelves).toBe("Estantes");
+    expect(catalogsByLocale.es.shelves.emptyTitle).toMatch(/estante/i);
+    expect(catalogsByLocale.es.shelves.emptyBody).toMatch(/estante/i);
+    expect(catalogsByLocale.es.shelves.createFirst).toMatch(/estante/i);
+    expect(catalogsByLocale.ca.nav.shelves).toBe("Estants");
+    expect(catalogsByLocale.ca.shelves.emptyTitle).toMatch(/estant/i);
   });
 });
+
+function catalogStrings(source: unknown): string[] {
+  if (typeof source === "string") return [source];
+  if (!source || typeof source !== "object") return [];
+  return Object.entries(source as Record<string, unknown>).flatMap(([key, value]) =>
+    key.startsWith("_") ? [] : catalogStrings(value),
+  );
+}
