@@ -73,7 +73,7 @@
   "settings": {
     "title": "Settings",
     "textSize": "Text size",
-    "textSizeHelp": "Default is the original size. Large and Larger make the text on this window bigger.",
+    "textSizeHelp": "Default is the original size. Large and Larger make the text in this window bigger.",
     "textSizeKeysMac": "⌘+ and ⌘- change the size.",
     "textSizeKeysWin": "Ctrl+ and Ctrl- change the size.",
     "textDefault": "Default",
@@ -115,9 +115,9 @@
     "welcome": "Welcome to Rebost",
     "lede": "Rebost is a private AI that works with your files.\nWhat happens on your computer stays on your computer.",
     "cardChatTitle": "Private by Design",
-    "cardChatBody": "Talk to your personal AI: brainstorm ideas, ask questions or put it to work on your files.",
+    "cardChatBody": "Talk to your personal AI: brainstorm ideas, ask questions, or put it to work on your files.",
     "cardShelfTitle": "One Shelf at a Time",
-    "cardShelfBody": "A Shelf can be a project, a client or an idea. Create it, attach a folder and start working on it.",
+    "cardShelfBody": "A Shelf can be a project, a client, or an idea. Create it, attach a folder, and start working on it.",
     "cardRecipesTitle": "Recipes for Everything",
     "cardRecipesBody": "Recipes are tasks you can reuse across Shelves and Chats, so you don't start from scratch every time.",
     "continue": "Continue",
@@ -332,8 +332,8 @@
     "lede": "Saved prompts. Click one and a new conversation opens with the prompt already in the box.",
     "newRecipe": "New Recipe",
     "editRecipe": "Edit Recipe",
-    "cancelEdit": "Cancel edit Recipe",
-    "cancelNew": "Cancel new Recipe",
+    "cancelEdit": "Cancel editing this Recipe",
+    "cancelNew": "Cancel the new Recipe",
     "name": "Recipe name",
     "namePlaceholder": "Name, like Weekly team update",
     "prompt": "Recipe prompt",
@@ -375,7 +375,7 @@
       },
       "translate": {
         "name": "Translate this",
-        "prompt": "Translate the text below into «language», keeping the structure and keeping names, numbers and legal references exact.\n\n«paste the text here»"
+        "prompt": "Translate the text below into «language», keeping the structure and keeping names, numbers, and legal references exact.\n\n«paste the text here»"
       },
       "policy-qa": {
         "name": "Policy Q&A",
@@ -408,7 +408,7 @@
   },
   "explore": {
     "title": "Explore other AIs",
-    "lede": "Official AIs that fit this computer, from the last few months, come first when they make good use of your memory. Only the search words leave this computer.",
+    "lede": "Recent official AIs that fit this computer and make good use of its memory come first. Only the search words leave this computer.",
     "search": "Search for an AI",
     "searchPlaceholder": "Muse, Gemma, or Qwen/Qwen3",
     "searching": "Searching…",
@@ -526,7 +526,7 @@
     "heading": "Personal information",
     "more": "More personal information",
     "filesContain": "%{count} files contain personal information",
-    "empty": "No emails, phone numbers, IBANs, tax ids, Social Security numbers, or labeled names in this file.",
+    "empty": "No emails, phone numbers, IBANs, tax IDs, Social Security numbers, or labeled names in this file.",
     "email_one": "email",
     "email_other": "emails",
     "name_one": "name",

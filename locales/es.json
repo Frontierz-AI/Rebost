@@ -112,7 +112,7 @@
     "logOnDisk": "El registro se queda en el disco y puede incluir nombres de archivos locales."
   },
   "onboarding": {
-    "welcome": "Bienvenida a Rebost",
+    "welcome": "Te damos la bienvenida a Rebost",
     "lede": "Rebost es una IA privada que trabaja con tus archivos.\nLo que ocurre en tu ordenador se queda en tu ordenador.",
     "cardChatTitle": "Privado por diseño",
     "cardChatBody": "Una IA personal para sacar ideas, hacer preguntas o trabajar con los archivos.",

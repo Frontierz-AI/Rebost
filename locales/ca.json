@@ -97,7 +97,7 @@
     "suggested": "Suggerida per a aquest ordinador",
     "suggestedLede": "Per a aquest ordinador.",
     "exploreHeading": "Explora altres IA",
-    "exploreLede": "Consulta catàlegs públics per si n'hi ha una altra IA. D'aquest ordinador només surten les paraules de cerca.",
+    "exploreLede": "Consulta catàlegs públics per si hi ha alguna altra IA. D'aquest ordinador només surten les paraules de cerca.",
     "browseAis": "Explora IA",
     "aboutHeading": "Quant a Rebost",
     "open": "Obre",
@@ -112,7 +112,7 @@
     "logOnDisk": "El registre es queda al disc i pot incloure noms de fitxers locals."
   },
   "onboarding": {
-    "welcome": "Benvinguda a Rebost",
+    "welcome": "Et donem la benvinguda a Rebost",
     "lede": "Rebost és una IA privada que treballa amb els teus fitxers.\nEl que passa al teu ordinador es queda al teu ordinador.",
     "cardChatTitle": "Privat per disseny",
     "cardChatBody": "Una IA personal per treure idees, fer preguntes o treballar amb els fitxers.",
@@ -408,7 +408,7 @@
   },
   "explore": {
     "title": "Explora altres IA",
-    "lede": "Primer surten les IA oficials dels darrers mesos que hi caben en aquest ordinador i aprofiten bé la memòria. D'aquest ordinador només surten les paraules de cerca.",
+    "lede": "Primer surten les IA oficials dels darrers mesos que caben en aquest ordinador i aprofiten bé la memòria. D'aquest ordinador només surten les paraules de cerca.",
     "search": "Cerca una IA",
     "searchPlaceholder": "Muse, Gemma o Qwen/Qwen3",
     "searching": "Cercant…",
