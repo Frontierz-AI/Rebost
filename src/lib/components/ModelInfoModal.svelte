@@ -6,6 +6,7 @@
     formatCount,
     type ModelSearchResult,
   } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { dialogPanel, overlay } from "$lib/motion";
   import { focusTrap } from "$lib/focus-trap";
   import { notifyInvokeError } from "$lib/stores.svelte";
@@ -23,37 +24,89 @@
     onInstall: () => void;
   } = $props();
 
+  type InfoField =
+    | "publisher"
+    | "catalog"
+    | "reference"
+    | "file"
+    | "size"
+    | "downloads"
+    | "released"
+    | "license"
+    | "computer";
+
   function catalogLabel(source: string): string {
-    if (source === "huggingface") return "Hugging Face";
-    if (source === "ollama") return "Ollama";
-    if (source === "huggingface+ollama") return "Hugging Face + Ollama";
-    return source.replace("+", " + ");
+    switch (source) {
+      case "huggingface":
+        return t("explore.huggingface");
+      case "ollama":
+        return t("explore.ollama");
+      case "huggingface+ollama":
+        return t("explore.hfAndOllama");
+      default:
+        return source.replace("+", " + ");
+    }
+  }
+
+  function infoFieldLabel(field: InfoField): string {
+    switch (field) {
+      case "publisher":
+        return t("explore.infoPublisher");
+      case "catalog":
+        return t("explore.infoCatalog");
+      case "reference":
+        return t("explore.infoReference");
+      case "file":
+        return t("explore.infoFile");
+      case "size":
+        return t("explore.infoSize");
+      case "downloads":
+        return t("explore.infoDownloads");
+      case "released":
+        return t("explore.infoReleased");
+      case "license":
+        return t("explore.infoLicense");
+      case "computer":
+        return t("explore.infoComputer");
+      default: {
+        const _never: never = field;
+        return _never;
+      }
+    }
+  }
+
+  function computerFit(fits?: boolean): string | null {
+    switch (fits) {
+      case true:
+        return t("explore.fitsComputer");
+      case false:
+        return t("explore.tooLargeComputer");
+      case undefined:
+        return null;
+      default: {
+        const _never: never = fits;
+        return _never;
+      }
+    }
   }
 
   const rows = $derived(
     (
       [
-        ["Publisher", result.publisher],
-        ["Catalog", catalogLabel(result.source)],
-        ["Reference", result.reference],
-        ["File", result.file],
-        ["Size", result.sizeBytes != null ? formatBytes(result.sizeBytes) : null],
+        ["publisher", result.publisher],
+        ["catalog", catalogLabel(result.source)],
+        ["reference", result.reference],
+        ["file", result.file],
+        ["size", result.sizeBytes != null ? formatBytes(result.sizeBytes) : null],
         [
-          "Downloads",
+          "downloads",
           result.downloads != null && result.downloads > 0 ? formatCount(result.downloads) : null,
         ],
-        ["Released", result.released],
-        ["License", result.license],
-        [
-          "This computer",
-          result.fits === true
-            ? "Fits this computer"
-            : result.fits === false
-              ? "Too large for this computer"
-              : null,
-        ],
-      ] satisfies [string, string | null | undefined][]
-    ).filter((row): row is [string, string] => typeof row[1] === "string" && row[1].length > 0),
+        ["released", result.released],
+        ["license", result.license],
+        ["computer", computerFit(result.fits)],
+      ] satisfies [InfoField, string | null | undefined][]
+    ).filter((row): row is [InfoField, string] => typeof row[1] === "string" && row[1].length > 0),
   );
 </script>
 
@@ -83,18 +136,23 @@
           <span
             class="mt-2 inline-flex rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800 dark:bg-white/10 dark:text-navy-100"
           >
-            Official
+            {t("explore.official")}
           </span>
         {/if}
       </div>
-      <button type="button" class="btn-ghost !p-1.5" aria-label="Close" onclick={onClose}>
+      <button
+        type="button"
+        class="btn-ghost !p-1.5"
+        aria-label={t("explore.close")}
+        onclick={onClose}
+      >
         <X size={15} aria-hidden="true" />
       </button>
     </div>
     <dl class="grid grid-cols-2 gap-x-4 gap-y-2.5 px-5 pb-4 text-[12.5px]">
-      {#each rows as [label, value] (label)}
-        <div class={label === "Reference" || label === "File" ? "col-span-2" : ""}>
-          <dt class="label">{label}</dt>
+      {#each rows as [field, value] (field)}
+        <div class={field === "reference" || field === "file" ? "col-span-2" : ""}>
+          <dt class="label">{infoFieldLabel(field)}</dt>
           <dd class="mt-0.5 break-all text-ink">{value}</dd>
         </div>
       {/each}
@@ -106,16 +164,17 @@
         onclick={() => api.openModelPage(result.source, result.reference).catch(notifyInvokeError)}
       >
         <ExternalLink size={12} aria-hidden="true" />
-        More on {catalogHostLabel(result.source)}
+        {t("explore.moreOn", { host: catalogHostLabel(result.source) })}
       </button>
-      <button type="button" class="btn-outline" onclick={onClose}>Close</button>
+      <button type="button" class="btn-outline" onclick={onClose}>{t("explore.close")}</button>
       <button
         type="button"
         class="btn-primary"
         onclick={onInstall}
         disabled={installing || result.fits === false}
       >
-        <Download size={13.5} aria-hidden="true" /> Install
+        <Download size={13.5} aria-hidden="true" />
+        {t("explore.install")}
       </button>
     </div>
   </div>

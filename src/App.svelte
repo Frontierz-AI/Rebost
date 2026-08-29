@@ -15,6 +15,7 @@
   import { parseMenuAction, shortcutAction } from "$lib/shortcuts";
   import { colorScheme, onColorSchemeChange } from "$lib/appearance";
   import { isMac } from "$lib/platform";
+  import { i18n, t } from "$lib/i18n.svelte";
   import ChatView from "$lib/views/ChatView.svelte";
   import Onboarding from "$lib/views/Onboarding.svelte";
   import { MessageCircle, LibraryBig, ChefHat, Settings, ArrowUpCircle } from "@lucide/svelte";
@@ -35,7 +36,7 @@
     bootstrap()
       .catch((error) => {
         console.error(error);
-        toast("Rebost couldn't finish starting. Try again.");
+        toast(t("bootstrap.failed"));
       })
       .finally(() => {
         const path = import.meta.env.VITE_SNAPSHOT_PATH as string | undefined;
@@ -70,11 +71,14 @@
     };
   });
 
-  const nav = [
-    { view: "chat", label: "Chat", icon: MessageCircle },
-    { view: "shelves", label: "Shelves", icon: LibraryBig },
-    { view: "recipes", label: "Recipes", icon: ChefHat },
-  ] as const;
+  const nav = $derived.by(() => {
+    void i18n.locale;
+    return [
+      { view: "chat" as const, label: t("nav.chat"), icon: MessageCircle },
+      { view: "shelves" as const, label: t("nav.shelves"), icon: LibraryBig },
+      { view: "recipes" as const, label: t("nav.recipes"), icon: ChefHat },
+    ];
+  });
 
   function pane(view: View): View {
     switch (view) {
@@ -129,7 +133,7 @@
   <div class="flex h-full bg-navy-950">
     <nav
       data-tauri-drag-region
-      aria-label="Main"
+      aria-label={t("nav.main")}
       class="flex w-[76px] shrink-0 flex-col items-center border-r border-navy-950/40 bg-navy-950 pb-4 {mac
         ? 'pt-[46px]'
         : 'pt-4'}"
@@ -157,7 +161,7 @@
       {#if app.update}
         <button
           type="button"
-          aria-label="Update available, version {app.update.version}"
+          aria-label={t("nav.updateAvailable", { version: app.update.version })}
           class="mb-1.5 flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5 text-amber-450
             hover:bg-amber-450/10 hover:text-amber-350"
           onclick={() => api.showUpdateWindow().catch(notifyInvokeError)}
@@ -169,12 +173,12 @@
               aria-hidden="true"
             ></span>
           </span>
-          <span class="text-[10px] font-medium">Update</span>
+          <span class="text-[10px] font-medium">{t("nav.update")}</span>
         </button>
       {/if}
       <button
         type="button"
-        aria-label="Settings"
+        aria-label={t("nav.settings")}
         aria-current={app.view === "settings" ? "page" : undefined}
         class="flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5
           {app.view === 'settings'
@@ -183,7 +187,7 @@
         onclick={() => (app.view = "settings")}
       >
         <Settings size={19} />
-        <span class="text-[10px] font-medium">Settings</span>
+        <span class="text-[10px] font-medium">{t("nav.settings")}</span>
       </button>
     </nav>
 
@@ -202,7 +206,7 @@
             {:else if current === "shelves"}
               {#await loadShelves()}
                 <div class="h-full min-h-0" role="status">
-                  <span class="sr-only">Loading Shelves</span>
+                  <span class="sr-only">{t("nav.loadingShelves")}</span>
                 </div>
               {:then { default: ShelvesView }}
                 <div class="h-full min-h-0 overflow-hidden"><ShelvesView /></div>
@@ -210,7 +214,7 @@
             {:else if current === "recipes"}
               {#await loadRecipes()}
                 <div class="h-full" role="status">
-                  <span class="sr-only">Loading Recipes</span>
+                  <span class="sr-only">{t("nav.loadingRecipes")}</span>
                 </div>
               {:then { default: RecipesView }}
                 <div class="h-full overflow-y-auto"><RecipesView /></div>
@@ -218,7 +222,7 @@
             {:else}
               {#await loadSettings()}
                 <div class="h-full" role="status">
-                  <span class="sr-only">Loading Settings</span>
+                  <span class="sr-only">{t("nav.loadingSettings")}</span>
                 </div>
               {:then { default: SettingsView }}
                 <div class="h-full overflow-y-auto"><SettingsView /></div>

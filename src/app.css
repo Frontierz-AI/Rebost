@@ -132,6 +132,18 @@ textarea,
   .input {
     @apply w-full rounded-lg border border-paper-line bg-surface px-3 py-2 text-[13.5px] text-ink transition-colors outline-none placeholder:text-ink-faint focus:border-navy-500 focus:ring-2 focus:ring-navy-100 dark:focus:ring-white/10;
   }
+  .select-wrap {
+    @apply inline-grid grid-cols-[1fr_--spacing(8)];
+  }
+  .select {
+    @apply col-span-full row-start-1 appearance-none pr-8;
+  }
+  .segmented {
+    @apply inline-flex h-9 shrink-0 items-stretch rounded-full border border-paper-line bg-paper-soft p-1;
+  }
+  .segmented-item {
+    @apply relative inline-flex h-full cursor-default items-center justify-center rounded-full px-2.5 leading-none font-medium whitespace-nowrap text-ink-soft select-none has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-navy-800 dark:has-[:checked]:shadow-none;
+  }
   .card {
     @apply rounded-2xl border border-paper-line bg-surface shadow-card dark:shadow-none;
   }

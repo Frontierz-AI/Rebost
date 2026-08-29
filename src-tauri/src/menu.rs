@@ -6,6 +6,22 @@ use tauri::menu::WINDOW_SUBMENU_ID;
 use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter};
 
+fn tr(key: &str) -> String {
+    rust_i18n::t!(key).into()
+}
+
+/// Windows menu accelerators. macOS does not use `&`.
+#[cfg(not(target_os = "macos"))]
+fn accel(text: String) -> String {
+    if text.contains('&') {
+        return text;
+    }
+    if let Some(ch) = text.chars().find(|c| c.is_alphabetic()) {
+        return text.replacen(ch, &format!("&{ch}"), 1);
+    }
+    text
+}
+
 const ABOUT: &str = "about";
 const VIEW_SETTINGS: &str = "view-settings";
 const NEW_CONVERSATION: &str = "new-conversation";
@@ -23,35 +39,53 @@ struct MenuAction {
 #[cfg(target_os = "macos")]
 pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let pkg_info = handle.package_info();
-    let about = MenuItem::with_id(handle, ABOUT, "About Rebost", true, None::<&str>)?;
+    let about = MenuItem::with_id(handle, ABOUT, tr("menu.about"), true, None::<&str>)?;
     let settings = MenuItem::with_id(
         handle,
         VIEW_SETTINGS,
-        "Settings…",
+        tr("menu.settings"),
         true,
         Some("CmdOrCtrl+,"),
     )?;
     let new_conversation = MenuItem::with_id(
         handle,
         NEW_CONVERSATION,
-        "New Conversation",
+        tr("menu.newConversation"),
         true,
         Some("CmdOrCtrl+N"),
     )?;
-    let chat = MenuItem::with_id(handle, VIEW_CHAT, "Chat", true, Some("CmdOrCtrl+1"))?;
-    let shelves = MenuItem::with_id(handle, VIEW_SHELVES, "Shelves", true, Some("CmdOrCtrl+2"))?;
-    let recipes = MenuItem::with_id(handle, VIEW_RECIPES, "Recipes", true, Some("CmdOrCtrl+3"))?;
+    let chat = MenuItem::with_id(
+        handle,
+        VIEW_CHAT,
+        tr("menu.chat"),
+        true,
+        Some("CmdOrCtrl+1"),
+    )?;
+    let shelves = MenuItem::with_id(
+        handle,
+        VIEW_SHELVES,
+        tr("menu.shelves"),
+        true,
+        Some("CmdOrCtrl+2"),
+    )?;
+    let recipes = MenuItem::with_id(
+        handle,
+        VIEW_RECIPES,
+        tr("menu.recipes"),
+        true,
+        Some("CmdOrCtrl+3"),
+    )?;
     let text_larger = MenuItem::with_id(
         handle,
         TEXT_LARGER,
-        "Larger Text",
+        tr("menu.largerText"),
         true,
         Some("CmdOrCtrl+Plus"),
     )?;
     let text_smaller = MenuItem::with_id(
         handle,
         TEXT_SMALLER,
-        "Smaller Text",
+        tr("menu.smallerText"),
         true,
         Some("CmdOrCtrl+Minus"),
     )?;
@@ -59,7 +93,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let window_menu = Submenu::with_id_and_items(
         handle,
         WINDOW_SUBMENU_ID,
-        "Window",
+        tr("menu.window"),
         true,
         &[
             &PredefinedMenuItem::minimize(handle, None)?,
@@ -92,7 +126,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             )?,
             &Submenu::with_items(
                 handle,
-                "File",
+                tr("menu.file"),
                 true,
                 &[
                     &new_conversation,
@@ -102,7 +136,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             )?,
             &Submenu::with_items(
                 handle,
-                "Edit",
+                tr("menu.edit"),
                 true,
                 &[
                     &PredefinedMenuItem::undo(handle, None)?,
@@ -116,7 +150,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             )?,
             &Submenu::with_items(
                 handle,
-                "View",
+                tr("menu.view"),
                 true,
                 &[
                     &chat,
@@ -136,45 +170,68 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
 
 #[cfg(not(target_os = "macos"))]
 pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
-    let about = MenuItem::with_id(handle, ABOUT, "&About Rebost", true, None::<&str>)?;
+    let about = MenuItem::with_id(handle, ABOUT, accel(tr("menu.about")), true, None::<&str>)?;
     let settings = MenuItem::with_id(
         handle,
         VIEW_SETTINGS,
-        "&Settings",
+        accel(tr("menu.settingsWin")),
         true,
         Some("CmdOrCtrl+,"),
     )?;
     let new_conversation = MenuItem::with_id(
         handle,
         NEW_CONVERSATION,
-        "&New conversation",
+        accel(tr("menu.newConversationWin")),
         true,
         Some("CmdOrCtrl+N"),
     )?;
-    let chat = MenuItem::with_id(handle, VIEW_CHAT, "&Chat", true, Some("CmdOrCtrl+1"))?;
-    let shelves = MenuItem::with_id(handle, VIEW_SHELVES, "&Shelves", true, Some("CmdOrCtrl+2"))?;
-    let recipes = MenuItem::with_id(handle, VIEW_RECIPES, "&Recipes", true, Some("CmdOrCtrl+3"))?;
+    let chat = MenuItem::with_id(
+        handle,
+        VIEW_CHAT,
+        accel(tr("menu.chat")),
+        true,
+        Some("CmdOrCtrl+1"),
+    )?;
+    let shelves = MenuItem::with_id(
+        handle,
+        VIEW_SHELVES,
+        accel(tr("menu.shelves")),
+        true,
+        Some("CmdOrCtrl+2"),
+    )?;
+    let recipes = MenuItem::with_id(
+        handle,
+        VIEW_RECIPES,
+        accel(tr("menu.recipes")),
+        true,
+        Some("CmdOrCtrl+3"),
+    )?;
     let text_larger = MenuItem::with_id(
         handle,
         TEXT_LARGER,
-        "&Larger text",
+        accel(tr("menu.largerTextWin")),
         true,
         Some("CmdOrCtrl+Plus"),
     )?;
     let text_smaller = MenuItem::with_id(
         handle,
         TEXT_SMALLER,
-        "&Smaller text",
+        accel(tr("menu.smallerTextWin")),
         true,
         Some("CmdOrCtrl+Minus"),
     )?;
     Menu::with_items(
         handle,
         &[
-            &Submenu::with_items(handle, "&File", true, &[&new_conversation, &settings])?,
             &Submenu::with_items(
                 handle,
-                "&Edit",
+                accel(tr("menu.file")),
+                true,
+                &[&new_conversation, &settings],
+            )?,
+            &Submenu::with_items(
+                handle,
+                accel(tr("menu.edit")),
                 true,
                 &[
                     &PredefinedMenuItem::undo(handle, None)?,
@@ -188,7 +245,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             )?,
             &Submenu::with_items(
                 handle,
-                "&View",
+                accel(tr("menu.view")),
                 true,
                 &[
                     &chat,
@@ -199,7 +256,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
                     &text_smaller,
                 ],
             )?,
-            &Submenu::with_items(handle, "&Help", true, &[&about])?,
+            &Submenu::with_items(handle, accel(tr("menu.help")), true, &[&about])?,
         ],
     )
 }

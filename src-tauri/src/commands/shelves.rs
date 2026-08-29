@@ -658,7 +658,7 @@ fn resolve_linked_source_id(source_id: Option<String>, path: Option<String>) -> 
     if let Some(path) = path.filter(|path| !path.is_empty()) {
         return Ok(crate::ids::source_id(&path));
     }
-    Err("Folder not found.".into())
+    Err(rust_i18n::t!("errors.folderNotFound").into())
 }
 
 #[cfg(test)]

@@ -3,13 +3,13 @@ import {
   isUploadShelf,
   shelfDisplayName,
   threadShelfSubtitle,
-  UPLOADED_FILES_LABEL,
+  uploadedFilesLabel,
 } from "./shelf-label";
 
 describe("shelfDisplayName", () => {
   it("uses Uploaded files for a conversation shelf", () => {
     expect(isUploadShelf({ threadId: "t_1" })).toBe(true);
-    expect(shelfDisplayName({ name: "Files", threadId: "t_1" })).toBe(UPLOADED_FILES_LABEL);
+    expect(shelfDisplayName({ name: "Files", threadId: "t_1" })).toBe(uploadedFilesLabel());
     expect(shelfDisplayName({ name: "Legal" })).toBe("Legal");
   });
 });
@@ -20,7 +20,7 @@ describe("threadShelfSubtitle", () => {
       threadShelfSubtitle({ shelfId: "s_up", uploadShelfId: "s_up" }, [
         { id: "s_lib", name: "Legal" },
       ]),
-    ).toBe(UPLOADED_FILES_LABEL);
+    ).toBe(uploadedFilesLabel());
     expect(
       threadShelfSubtitle({ shelfId: "s_lib", uploadShelfId: "s_up" }, [
         { id: "s_lib", name: "Legal" },
@@ -28,7 +28,7 @@ describe("threadShelfSubtitle", () => {
     ).toBe("Legal");
     expect(threadShelfSubtitle({ shelfId: null }, [])).toBeNull();
     expect(threadShelfSubtitle({ shelfId: null, uploadShelfId: "s_up" }, [])).toBe(
-      UPLOADED_FILES_LABEL,
+      uploadedFilesLabel(),
     );
   });
 });

@@ -95,6 +95,7 @@ zip = { version = "8", default-features = false, features = ["deflate"] }
 dirs = "6"
 readabilityrs = "0.1.4"
 url = "2.5.8"
+rust-i18n = "4.2.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.4"

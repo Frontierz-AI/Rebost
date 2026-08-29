@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, downloadHeadline, formatTransferBytes, type DownloadEvent } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { X } from "@lucide/svelte";
 
   let {
@@ -7,7 +8,7 @@
     cancelable = false,
     note,
     onDark = false,
-    skipVerifyLabel = "Skip the check and use the file",
+    skipVerifyLabel,
   }: {
     download: DownloadEvent;
     cancelable?: boolean;
@@ -23,6 +24,7 @@
 
   const percent = $derived(download.total ? pct(download.received, download.total) : 0);
   const determinate = $derived(!!download.total && download.total > 0);
+  const verifyLabel = $derived(skipVerifyLabel ?? t("downloads.skipVerify"));
 </script>
 
 <div class="flex flex-col gap-2">
@@ -66,7 +68,7 @@
             : ''}"
           onclick={() => api.downloadSkipVerify(download.id)}
         >
-          {skipVerifyLabel}
+          {verifyLabel}
         </button>
       {/if}
       {#if cancelable}
@@ -77,7 +79,8 @@
             : ''}"
           onclick={() => api.downloadCancel(download.id)}
         >
-          <X size={11} aria-hidden="true" /> Cancel
+          <X size={11} aria-hidden="true" />
+          {t("downloads.cancel")}
         </button>
       {/if}
     </div>

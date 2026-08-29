@@ -182,7 +182,7 @@ fn create(app: &AppHandle) -> tauri::Result<()> {
         WINDOW_LABEL,
         WebviewUrl::App("index.html?window=update".into()),
     )
-    .title("Update Rebost")
+    .title(rust_i18n::t!("update.windowTitle").to_string())
     .inner_size(400.0, 440.0)
     .min_inner_size(400.0, 440.0)
     .max_inner_size(400.0, 440.0)

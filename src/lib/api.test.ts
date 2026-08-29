@@ -3,7 +3,7 @@ import {
   catalogHostLabel,
   downloadErrorMessage,
   formatCount,
-  PII_EMPTY_HINT,
+  piiEmptyHint,
   piiLabel,
   userFacingError,
 } from "./api";
@@ -88,9 +88,9 @@ describe("downloadErrorMessage", () => {
 
 describe("Privacy Lens labels", () => {
   it("names the empty-state categories without calling the file clean", () => {
-    expect(PII_EMPTY_HINT).toMatch(/Social Security/);
-    expect(PII_EMPTY_HINT).toMatch(/labeled names/);
-    expect(PII_EMPTY_HINT.toLowerCase()).not.toContain("no personal information detected");
+    expect(piiEmptyHint()).toMatch(/Social Security/);
+    expect(piiEmptyHint()).toMatch(/labeled names/);
+    expect(piiEmptyHint().toLowerCase()).not.toContain("no personal information detected");
   });
 
   it("labels Social Security numbers", () => {

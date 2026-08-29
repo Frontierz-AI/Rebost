@@ -22,6 +22,9 @@ pub struct Recipe {
     /// Shipped with Rebost (still deletable; restorable in one click).
     #[serde(default)]
     pub builtin: bool,
+    /// This Recipe is meant to run with a Shelf. Missing on older files.
+    #[serde(default)]
+    pub needs_shelf: bool,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -29,68 +32,35 @@ struct RecipesFile {
     recipes: Vec<Recipe>,
 }
 
-/// Shipped Recipes.
-pub const DEFAULTS: &[(&str, &str, &str)] = &[
-    (
-        "reply-to-client",
-        "Reply to a client",
-        "Draft a reply to this client message in your usual voice. Keep it warm and concrete, \
-end with a clear next step, and write it in the client's language.\n\nClient message:\n«paste \
-the message here»",
-    ),
-    (
-        "one-page-brief",
-        "One-page brief",
-        "Give me a one-page brief of «document name» from this Shelf: what it is, the key \
-points, exact dates and amounts, and any risks or open questions.",
-    ),
-    (
-        "compare-documents",
-        "Compare two documents",
-        "Compare «document A» and «document B» from this Shelf. Start with a two-sentence \
-verdict, then list the differences that matter (payment, dates, obligations, prices, \
-termination) and finish with what we should double-check.",
-    ),
-    (
-        "document-key-terms",
-        "Document key terms",
-        "List the key terms of «document name» from this Shelf as a table: term, what it says, \
-the exact date or amount, and where it says so.",
-    ),
-    (
-        "minutes-actions",
-        "Minutes → action list",
-        "Turn these meeting notes into an action list with an owner and a deadline for each \
-item, then note any open questions.\n\nNotes:\n«paste the notes here»",
-    ),
-    (
-        "translate",
-        "Translate this",
-        "Translate the text below into «language», keeping the structure and keeping names, \
-numbers and legal references exact.\n\n«paste the text here»",
-    ),
-    (
-        "policy-qa",
-        "Policy Q&A",
-        "What do our documents on this Shelf say about «topic»? Answer only from those \
-documents and cite where it says so. If it isn't covered, tell me plainly.",
-    ),
-    (
-        "campaign-ideas",
-        "Five campaign ideas",
-        "Give me five ideas for «campaign, product or promotion». For each one give me a hook, \
-the channel it fits best, and an example first line.",
-    ),
+/// Shipped Recipes: id and whether the prompt is meant for a Shelf.
+pub const DEFAULTS: &[(&str, bool)] = &[
+    ("reply-to-client", false),
+    ("one-page-brief", true),
+    ("compare-documents", true),
+    ("document-key-terms", true),
+    ("minutes-actions", false),
+    ("translate", false),
+    ("policy-qa", true),
+    ("campaign-ideas", false),
 ];
 
 fn default_recipes() -> Vec<Recipe> {
+    default_recipes_in(&rust_i18n::locale())
+}
+
+fn default_recipes_in(locale: &str) -> Vec<Recipe> {
     DEFAULTS
         .iter()
-        .map(|(id, name, prompt)| Recipe {
-            id: (*id).to_string(),
-            name: (*name).to_string(),
-            prompt: (*prompt).to_string(),
-            builtin: true,
+        .map(|(id, needs_shelf)| {
+            let name_key = format!("defaults.recipes.{id}.name");
+            let prompt_key = format!("defaults.recipes.{id}.prompt");
+            Recipe {
+                id: (*id).to_string(),
+                name: rust_i18n::t!(&name_key, locale = locale).to_string(),
+                prompt: rust_i18n::t!(&prompt_key, locale = locale).to_string(),
+                builtin: true,
+                needs_shelf: *needs_shelf,
+            }
         })
         .collect()
 }
@@ -142,15 +112,13 @@ fn validated_recipe_fields(name: &str, prompt: &str) -> Result<(String, String)>
     let name = name.trim();
     let prompt = prompt.trim();
     if name.is_empty() {
-        return Err(anyhow!("Give the Recipe a name."));
+        return Err(anyhow!("{}", rust_i18n::t!("errors.recipeNeedsName")));
     }
     if prompt.is_empty() {
-        return Err(anyhow!("Write the prompt the Recipe should start with."));
+        return Err(anyhow!("{}", rust_i18n::t!("errors.recipeNeedsPrompt")));
     }
     if prompt.chars().count() > crate::limits::PROMPT_MAX_CHARS {
-        return Err(anyhow!(
-            "This Recipe is too long. Keep it to 12,000 characters."
-        ));
+        return Err(anyhow!("{}", rust_i18n::t!("errors.recipeTooLong")));
     }
     Ok((name.to_string(), prompt.to_string()))
 }
@@ -163,6 +131,7 @@ pub fn create(paths: &Paths, name: &str, prompt: &str) -> Result<Recipe> {
         name,
         prompt,
         builtin: false,
+        needs_shelf: false,
     };
     recipes.push(recipe.clone());
     write(paths, &recipes)?;
@@ -219,6 +188,10 @@ mod tests {
         assert!(recipes.iter().all(|r| r.builtin));
         assert!(recipes.iter().any(|r| r.name == "Reply to a client"));
         assert!(recipes.iter().any(|r| r.id == "document-key-terms"));
+        assert!(recipes
+            .iter()
+            .find(|r| r.id == "one-page-brief")
+            .is_some_and(|r| r.needs_shelf));
         // Persisted.
         assert!(paths.recipes_path().exists());
     }
@@ -276,6 +249,29 @@ mod tests {
         assert_eq!(
             restored.iter().find(|r| r.id == "translate").unwrap().name,
             "Translate this"
+        );
+    }
+
+    #[test]
+    fn shipped_copy_follows_locale() {
+        let ca = default_recipes_in("ca");
+        let es = default_recipes_in("es");
+        let en = default_recipes_in("en");
+        let translate = |list: &[Recipe]| {
+            list.iter()
+                .find(|r| r.id == "translate")
+                .unwrap()
+                .name
+                .clone()
+        };
+        assert_eq!(translate(&en), "Translate this");
+        assert_ne!(translate(&ca), "Translate this");
+        assert_ne!(translate(&es), "Translate this");
+        assert!(
+            ca.iter()
+                .find(|r| r.id == "one-page-brief")
+                .unwrap()
+                .needs_shelf
         );
     }
 

@@ -1,38 +1,61 @@
+import { t } from "./i18n.svelte";
 import type { ChatActivityStep, ChatPrepareStage } from "./api";
 
 /** How long a Thinking line stays up so it can be read. Answer tokens ignore this. */
 export const THINKING_STATUS_MIN_MS = 1000;
 
 export const THINKING_STATUS = {
-  fallback: "Thinking…",
-  warming: "Warming up…",
-  waiting: "Waiting for the other answer…",
-  shelf: "Looking through this Shelf…",
-  conversation: "Reading this conversation…",
-  opening: "Opening the file…",
-  around: "Reading more of this file…",
-  chats: "Reading earlier conversations…",
-  web: "Looking on the web…",
-  page: "Opening a web page…",
+  get fallback() {
+    return t("thinking.fallback");
+  },
+  get warming() {
+    return t("thinking.warming");
+  },
+  get waiting() {
+    return t("thinking.waiting");
+  },
+  get shelf() {
+    return t("thinking.shelf");
+  },
+  get conversation() {
+    return t("thinking.conversation");
+  },
+  get opening() {
+    return t("thinking.opening");
+  },
+  get around() {
+    return t("thinking.around");
+  },
+  get chats() {
+    return t("thinking.chats");
+  },
+  get web() {
+    return t("thinking.web");
+  },
+  get page() {
+    return t("thinking.page");
+  },
 } as const;
 
-function namedFileLine(verb: string, fallback: string, file?: string | null): string {
+function clipFile(file?: string | null): string {
   const name = (file ?? "").trim();
-  if (!name) return fallback;
-  const clipped = name.length > 56 ? `${name.slice(0, 55)}…` : name;
-  return `${verb} ${clipped}…`;
+  if (!name) return "";
+  return name.length > 56 ? `${name.slice(0, 55)}…` : name;
 }
 
 export function openingStatusLine(file?: string | null): string {
-  return namedFileLine("Opening", THINKING_STATUS.opening, file);
+  const name = clipFile(file);
+  return name ? t("thinking.openingNamed", { file: name }) : THINKING_STATUS.opening;
 }
 
 export function aroundStatusLine(file?: string | null): string {
-  return namedFileLine("Reading more of", THINKING_STATUS.around, file);
+  const name = clipFile(file);
+  return name ? t("thinking.aroundNamed", { file: name }) : THINKING_STATUS.around;
 }
 
 export function pageStatusLine(file?: string | null): string {
-  return namedFileLine("Opening", THINKING_STATUS.page, file);
+  const name = clipFile(file);
+  return name ? t("thinking.pageNamed", { file: name }) : THINKING_STATUS.page;
 }
 
 export type ThinkingStatusState = {
@@ -120,40 +143,38 @@ export function visibleActivity(steps?: ChatActivityStep[] | null): ChatActivity
   return out;
 }
 
-function namedFileLinePast(verb: string, fallback: string, file?: string | null): string {
-  const name = (file ?? "").trim();
-  if (!name) return fallback;
-  const clipped = name.length > 56 ? `${name.slice(0, 55)}…` : name;
-  return `${verb} ${clipped}`;
+function namedFileLinePast(keyNamed: string, keyPlain: string, file?: string | null): string {
+  const name = clipFile(file);
+  return name ? t(keyNamed, { file: name }) : t(keyPlain);
 }
 
 /** Quiet past-tense line for the Thinking log. Live current step stays present tense. */
 export function activityStepLabel(step: ChatActivityStep, live = false): string {
   switch (step.stage) {
     case "waiting":
-      return live ? "Waiting for the other answer" : "Waited for another answer";
+      return live ? t("thinking.waitingLive") : t("thinking.waitingPast");
     case "looking":
-      return live ? "Looking through your files" : "Looked through your files";
+      return live ? t("thinking.lookingLive") : t("thinking.lookingPast");
     case "reading":
-      return live ? "Reading what it found" : "Read what it found";
+      return live ? t("thinking.readingLive") : t("thinking.readingPast");
     case "opening":
       return live
-        ? namedFileLinePast("Opening", "Opening a file", step.file)
-        : namedFileLinePast("Opened", "Opened a file", step.file);
+        ? namedFileLinePast("thinking.openingNamedLive", "thinking.openingLive", step.file)
+        : namedFileLinePast("thinking.openingNamedPast", "thinking.openingPast", step.file);
     case "around":
       return live
-        ? namedFileLinePast("Reading more of", "Reading more of this file", step.file)
-        : namedFileLinePast("Read more of", "Read more of this file", step.file);
+        ? namedFileLinePast("thinking.aroundNamedLive", "thinking.aroundLive", step.file)
+        : namedFileLinePast("thinking.aroundNamedPast", "thinking.aroundPast", step.file);
     case "chats":
-      return live ? "Reading earlier conversations" : "Read earlier conversations";
+      return live ? t("thinking.chatsLive") : t("thinking.chatsPast");
     case "web":
-      return live ? "Looking on the web" : "Looked on the web";
+      return live ? t("thinking.webLive") : t("thinking.webPast");
     case "page":
       return live
-        ? namedFileLinePast("Opening", "Opening a page", step.file)
-        : namedFileLinePast("Opened", "Opened a page", step.file);
+        ? namedFileLinePast("thinking.pageNamedLive", "thinking.pageLive", step.file)
+        : namedFileLinePast("thinking.pageNamedPast", "thinking.pagePast", step.file);
     case "thinking":
-      return live ? "Thinking" : "Thought it through";
+      return live ? t("thinking.thinkingLive") : t("thinking.thinkingPast");
     default: {
       const _exhaustive: never = step.stage;
       return _exhaustive;

@@ -30,6 +30,7 @@
   import ThinkLevelSlider from "$lib/components/ThinkLevelSlider.svelte";
   import DocumentDrawer from "$lib/components/DocumentDrawer.svelte";
   import { confirmDanger } from "$lib/native-dialog";
+  import { t } from "$lib/i18n.svelte";
   import { importFeedback } from "$lib/shelf-cap";
   import { shelfListStatus, shelfListStatusClass, shelfListStatusLabel } from "$lib/shelf-status";
 
@@ -200,8 +201,8 @@
     const label = linkedFolderName(linked);
     const sourceId = linkedFolderSourceId(linked);
     const ok = await confirmDanger(
-      `Remove “${label}” from this Shelf?\n\nThis won't delete any files from your computer. Rebost will stop using this folder.`,
-      "Remove folder",
+      t("shelves.removeFolder", { name: label }),
+      t("shelves.removeFolderTitle"),
     );
     if (!ok) return;
     try {
@@ -224,8 +225,8 @@
     event.stopPropagation();
     if (deleting) return;
     const ok = await confirmDanger(
-      `Delete “${shelfView.name}”?\n\nThis won't delete any files from your computer. Rebost will stop using this Shelf.`,
-      "Delete Shelf",
+      t("shelves.deleteShelfConfirm", { name: shelfView.name }),
+      t("shelves.deleteShelfAction"),
     );
     if (!ok) return;
     deleting = true;
@@ -299,34 +300,36 @@
     <div class="mx-auto max-w-[860px] px-8 py-8">
       <div class="mb-6 flex items-end justify-between">
         <div>
-          <h1 class="text-[22px] font-semibold text-ink">Shelves</h1>
+          <h1 class="text-[22px] font-semibold text-ink">{t("shelves.title")}</h1>
           <p class="mt-0.5 text-[13px] text-ink-soft">
-            Add files you want to ask about. In Chat, choose a Shelf when the answer should come
-            from them.
+            {t("shelves.lede")}
           </p>
         </div>
         <button type="button" class="btn-primary" onclick={() => (creating = true)}>
-          <Plus size={15} /> New Shelf
+          <Plus size={15} />
+          {t("shelves.newShelf")}
         </button>
       </div>
 
       {#if creating}
         <div class="card mb-5 flex items-center gap-2 px-4 py-3">
           <LibraryBig size={16} class="text-navy-500" />
-          <label class="sr-only" for="new-shelf-name">Shelf name</label>
+          <label class="sr-only" for="new-shelf-name">{t("shelves.shelfName")}</label>
           <!-- svelte-ignore a11y_autofocus -->
           <input
             id="new-shelf-name"
             name="shelf-name"
             class="w-full cursor-text rounded-none border-none bg-transparent text-[14px] text-ink outline-none select-text placeholder:text-ink-faint"
-            placeholder="Shelf name, like Projects or Research"
+            placeholder={t("shelves.namePlaceholder")}
             bind:value={newName}
             autofocus
             onkeydown={(e) => e.key === "Enter" && createShelf()}
           />
-          <button type="button" class="btn-amber" onclick={createShelf}>Create</button>
+          <button type="button" class="btn-amber" onclick={createShelf}
+            >{t("shelves.create")}</button
+          >
           <button type="button" class="btn-ghost !py-1.5" onclick={() => (creating = false)}
-            >Cancel</button
+            >{t("shelves.cancel")}</button
           >
         </div>
       {/if}
@@ -338,13 +341,12 @@
           >
             <LibraryBig size={24} />
           </div>
-          <h2 class="text-[16px] font-semibold text-ink">You don't have a Shelf yet</h2>
+          <h2 class="text-[16px] font-semibold text-ink">{t("shelves.emptyTitle")}</h2>
           <p class="mt-1 mb-5 max-w-md text-[13px] leading-relaxed text-ink-soft">
-            A Shelf is a folder Chat answers from. Create one, add files or attach a folder you
-            already use, then choose it in Chat.
+            {t("shelves.emptyBody")}
           </p>
           <button type="button" class="btn-primary" onclick={() => (creating = true)}
-            ><Plus size={15} /> Create your first Shelf</button
+            ><Plus size={15} /> {t("shelves.createFirst")}</button
           >
         </div>
       {:else}
@@ -357,7 +359,9 @@
                   <span class="rounded-xl bg-navy-900 p-2.5 text-mint"
                     ><LibraryBig size={18} aria-hidden="true" /></span
                   >
-                  <label class="sr-only" for="rename-shelf-{shelfCard.id}">Shelf name</label>
+                  <label class="sr-only" for="rename-shelf-{shelfCard.id}"
+                    >{t("shelves.shelfName")}</label
+                  >
                   <!-- svelte-ignore a11y_autofocus -->
                   <input
                     id="rename-shelf-{shelfCard.id}"
@@ -384,7 +388,9 @@
                         >{shelfCard.name}</span
                       >
                       <span class="mt-0.5 flex flex-wrap items-center gap-2">
-                        <span class="text-[12px] text-ink-soft">{shelfCard.stats.files} files</span>
+                        <span class="text-[12px] text-ink-soft"
+                          >{t("shelves.fileCount", { count: shelfCard.stats.files })}</span
+                        >
                         {#if status}
                           <span
                             class="chip !cursor-default !px-2 !py-0.5 !text-[11px] {shelfListStatusClass(
@@ -406,7 +412,7 @@
                   {#if shelfCard.stats.pii.total > 0}
                     <p class="mt-3 flex items-center gap-1.5 text-[11.5px] text-ink-faint">
                       <ShieldCheck size={12.5} class="text-navy-500" aria-hidden="true" />
-                      {shelfCard.stats.filesWithPii} files contain personal information
+                      {t("shelves.filesWithPii", { count: shelfCard.stats.filesWithPii })}
                     </p>
                   {/if}
                 </button>
@@ -420,14 +426,14 @@
                       onclick={(e) => resumeShelf(shelfCard, e)}
                     >
                       <RefreshCw size={13} class="shrink-0" aria-hidden="true" />
-                      Resume
+                      {t("shelves.resume")}
                     </button>
                   {/if}
                   <button
                     type="button"
                     class="btn-ghost !p-1.5"
-                    aria-label="Rename Shelf"
-                    title="Rename"
+                    aria-label={t("shelves.renameShelf")}
+                    title={t("shelves.rename")}
                     onclick={(e) => beginRename(shelfCard, e)}
                   >
                     <Pencil size={14} aria-hidden="true" />
@@ -435,7 +441,7 @@
                   <button
                     type="button"
                     class="btn-ghost !p-1.5"
-                    aria-label="Delete Shelf"
+                    aria-label={t("shelves.deleteShelf")}
                     disabled={deleting}
                     onclick={(e) => requestDelete(shelfCard, e)}
                   >
@@ -456,7 +462,7 @@
         class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50 dark:bg-white/10"
       >
         <p class="rounded-xl bg-navy-900 px-4 py-2 text-[13.5px] font-medium text-white shadow-pop">
-          Drop files to add them to {shelf.name}
+          {t("shelves.dropToAdd", { name: shelf.name })}
         </p>
       </div>
     {/if}
@@ -468,13 +474,13 @@
         onclick={() => (app.openShelfId = null)}
       >
         <ChevronLeft size={16} class="-ml-0.5 shrink-0" aria-hidden="true" />
-        All Shelves
+        {t("shelves.allShelves")}
       </button>
 
       <div class="flex items-start justify-between gap-4">
         <div class="min-w-0">
           {#if renamingId === shelf.id}
-            <label class="sr-only" for="rename-shelf-detail">Shelf name</label>
+            <label class="sr-only" for="rename-shelf-detail">{t("shelves.shelfName")}</label>
             <!-- svelte-ignore a11y_autofocus -->
             <input
               id="rename-shelf-detail"
@@ -493,8 +499,8 @@
               <button
                 type="button"
                 class="btn-ghost shrink-0 !p-1.5"
-                aria-label="Rename Shelf"
-                title="Rename"
+                aria-label={t("shelves.renameShelf")}
+                title={t("shelves.rename")}
                 onclick={(e) => beginRename(shelf, e)}
               >
                 <Pencil size={14} aria-hidden="true" />
@@ -510,16 +516,16 @@
           <div class="flex shrink-0 flex-wrap items-center justify-end gap-2">
             <button type="button" class="btn-primary" onclick={addFiles}>
               <FolderInput size={14} class="shrink-0" aria-hidden="true" />
-              Add files
+              {t("shelves.addFiles")}
             </button>
             <button
               type="button"
               class="btn-outline py-2 pr-3 pl-2"
-              title="Link a folder on this computer. New files in it show up here."
+              title={t("shelves.syncFolderHint")}
               onclick={addFolder}
             >
               <FolderSymlink size={14} class="shrink-0" aria-hidden="true" />
-              Sync folder
+              {t("shelves.syncFolder")}
             </button>
           </div>
         {/if}
@@ -533,29 +539,28 @@
             ? 'border-navy-500 bg-navy-100/50 dark:bg-white/10'
             : 'border-paper-line bg-paper-soft/40'}"
           role="region"
-          aria-label="Empty Shelf"
+          aria-label={t("shelves.emptyRegion")}
         >
           <FolderPlus size={24} class="shrink-0 text-navy-500" aria-hidden="true" />
           <div class="flex flex-col items-center gap-1">
-            <p class="text-[0.9375rem] font-medium text-ink">Drop files to fill this Shelf</p>
+            <p class="text-[0.9375rem] font-medium text-ink">{t("shelves.dropToFill")}</p>
             <p class="max-w-[42ch] text-[13px] text-pretty text-ink-soft">
-              PDFs, Office documents, spreadsheets, presentations, and email. Rebost reads them on
-              this computer.
+              {t("shelves.dropTypes")}
             </p>
           </div>
           <div class="flex flex-wrap items-center justify-center gap-2">
             <button type="button" class="btn-primary" onclick={addFiles}>
               <FolderInput size={14} class="shrink-0" aria-hidden="true" />
-              Add files
+              {t("shelves.addFiles")}
             </button>
             <button
               type="button"
               class="btn-outline py-2 pr-3 pl-2"
-              title="Link a folder on this computer. New files in it show up here."
+              title={t("shelves.syncFolderHint")}
               onclick={addFolder}
             >
               <FolderSymlink size={14} class="shrink-0" aria-hidden="true" />
-              Sync folder
+              {t("shelves.syncFolder")}
             </button>
           </div>
         </div>
@@ -572,26 +577,26 @@
                 class="pointer-events-none absolute top-1/2 left-2.5 shrink-0 -translate-y-1/2 text-ink-faint"
                 aria-hidden="true"
               />
-              <label class="sr-only" for="shelf-filter-name">Filter by file name</label>
+              <label class="sr-only" for="shelf-filter-name">{t("shelves.filterByName")}</label>
               <input
                 id="shelf-filter-name"
                 name="filter-name"
                 type="text"
                 autocomplete="off"
                 class="input !w-56 !py-1.5 !pl-8 !text-[12.5px]"
-                placeholder="Filter by name"
+                placeholder={t("shelves.filterByNamePlaceholder")}
                 bind:value={searchText}
               />
             </div>
-            <label class="sr-only" for="shelf-filter-source">Filter by source</label>
-            <span class="inline-grid grid-cols-[1fr_--spacing(8)]">
+            <label class="sr-only" for="shelf-filter-source">{t("shelves.filterBySource")}</label>
+            <span class="select-wrap">
               <select
                 id="shelf-filter-source"
                 name="filter-source"
-                class="input col-span-full row-start-1 !w-auto appearance-none !py-1.5 !pr-8 !text-[12.5px]"
+                class="input select !w-auto !py-1.5 !text-[12.5px]"
                 bind:value={filterSource}
               >
-                <option value={null}>All sources</option>
+                <option value={null}>{t("shelves.allSources")}</option>
                 {#each sourceLabels as label}<option value={label}>{label}</option>{/each}
               </select>
               <svg
@@ -599,21 +604,21 @@
                 width="8"
                 height="5"
                 fill="none"
-                class="pointer-events-none col-start-2 row-start-1 place-self-center"
+                class="pointer-events-none col-start-2 row-start-1 place-self-center text-ink-faint"
                 aria-hidden="true"
               >
-                <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" />
+                <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" stroke-linecap="round" />
               </svg>
             </span>
-            <label class="sr-only" for="shelf-filter-type">Filter by type</label>
-            <span class="inline-grid grid-cols-[1fr_--spacing(8)]">
+            <label class="sr-only" for="shelf-filter-type">{t("shelves.filterByType")}</label>
+            <span class="select-wrap">
               <select
                 id="shelf-filter-type"
                 name="filter-type"
-                class="input col-span-full row-start-1 !w-auto appearance-none !py-1.5 !pr-8 !text-[12.5px]"
+                class="input select !w-auto !py-1.5 !text-[12.5px]"
                 bind:value={filterType}
               >
-                <option value={null}>All types</option>
+                <option value={null}>{t("shelves.allTypes")}</option>
                 {#each fileTypes as type}<option value={type}>{type}</option>{/each}
               </select>
               <svg
@@ -621,16 +626,16 @@
                 width="8"
                 height="5"
                 fill="none"
-                class="pointer-events-none col-start-2 row-start-1 place-self-center"
+                class="pointer-events-none col-start-2 row-start-1 place-self-center text-ink-faint"
                 aria-hidden="true"
               >
-                <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" />
+                <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" stroke-linecap="round" />
               </svg>
             </span>
             {#if filtersOn}
               <button type="button" class="btn-ghost !py-1 !text-[12px]" onclick={clearFilters}>
                 <X size={12} class="shrink-0" aria-hidden="true" />
-                Clear filters
+                {t("shelves.clearFilters")}
               </button>
             {/if}
           </div>
@@ -664,7 +669,10 @@
             class="mr-1.5 shrink-0 text-[11.5px] whitespace-nowrap text-ink-faint tabular-nums"
             aria-live="polite"
           >
-            Showing {visibleDocs.length} of {documents.length}
+            {t("shelves.showingOf", {
+              visible: visibleDocs.length,
+              total: documents.length,
+            })}
           </p>
         {/if}
         {#if shelf.stats.pii.total > 0}
@@ -679,12 +687,12 @@
       <button
         type="button"
         class="btn-ghost shrink-0 py-2 pr-3 pl-2"
-        aria-label="Delete Shelf"
+        aria-label={t("shelves.deleteShelf")}
         disabled={deleting}
         onclick={(e) => requestDelete(shelf, e)}
       >
         <Trash2 size={14} class="shrink-0" aria-hidden="true" />
-        Delete
+        {t("shelves.delete")}
       </button>
     </div>
   </div>

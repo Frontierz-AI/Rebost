@@ -11,6 +11,7 @@ pub mod chat;
 pub mod commands;
 pub mod core;
 pub mod engine;
+pub mod i18n;
 pub mod ids;
 pub mod ingest;
 pub mod instance;
@@ -27,6 +28,8 @@ pub mod snapshot;
 pub mod types;
 pub mod updater;
 pub mod window;
+
+rust_i18n::i18n!("../locales", fallback = "en");
 
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
@@ -199,6 +202,12 @@ pub fn run() {
                 });
             }
 
+            let ui_locale = crate::core::read_lock(&ctx.settings).ui_locale;
+            crate::i18n::apply(ui_locale);
+            if let Err(error) = crate::i18n::rebuild_menu(app.handle()) {
+                log::warn!("rebuild menu after locale: {error}");
+            }
+
             app.manage(crate::updater::PendingUpdate(Mutex::new(None)));
             app.manage(ctx);
             app.manage(engine);
@@ -257,6 +266,7 @@ pub fn run() {
             commands::settings_set_house_rules,
             commands::settings_set_allow_online_research,
             commands::settings_set_text_size,
+            commands::settings_set_ui_locale,
             commands::settings_finish_onboarding,
             commands::settings_reset_workspace,
             commands::redact_text,

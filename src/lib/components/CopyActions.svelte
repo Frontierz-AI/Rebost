@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, invokeError } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { notifyInvokeError } from "$lib/stores.svelte";
   import { Copy, ShieldCheck, Check } from "@lucide/svelte";
 
@@ -55,28 +56,28 @@
     type="button"
     class="btn-ghost shrink-0 !px-2 !py-1 !text-[11.5px] whitespace-nowrap"
     onclick={copyPlain}
-    title="Copy"
+    title={t("copy.copy")}
   >
     {#if copied === "plain"}<Check
         size={13}
         class="shrink-0 text-emerald-600 dark:text-emerald-400"
         aria-hidden="true"
       />{:else}<Copy size={13} class="shrink-0" aria-hidden="true" />{/if}
-    Copy
+    {t("copy.copy")}
   </button>
   {#if hasPii}
     <button
       type="button"
       class="btn-ghost shrink-0 !px-2 !py-1 !text-[11.5px] whitespace-nowrap"
       onclick={copyRedacted}
-      title="Replaces recognized identifiers before copying"
+      title={t("copy.redactTitle")}
     >
       {#if copied === "redacted"}<Check
           size={13}
           class="shrink-0 text-emerald-600 dark:text-emerald-400"
           aria-hidden="true"
         />{:else}<ShieldCheck size={13} class="shrink-0" aria-hidden="true" />{/if}
-      Copy without personal information
+      {t("copy.copyWithoutPii")}
     </button>
   {/if}
 </div>

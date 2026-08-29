@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       $lib: fileURLToPath(new URL("./src/lib", import.meta.url)),
+      $locales: fileURLToPath(new URL("./locales", import.meta.url)),
     },
   },
   clearScreen: false,

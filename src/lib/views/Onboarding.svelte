@@ -13,6 +13,7 @@
   import ModelCatalogInfo from "$lib/components/ModelCatalogInfo.svelte";
   import { accordion, installCard, motionMs } from "$lib/motion";
   import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
+  import { t } from "$lib/i18n.svelte";
   import mark from "../../assets/R.webp";
 
   let step = $state<"promise" | "model">(
@@ -122,18 +123,16 @@
         out:fade={{ duration: motionMs(200) }}
       >
         <img src={mark} alt="Rebost" class="mb-5 w-[100px] rounded-2xl" />
-        <h1 class="text-[28px] font-bold text-white">Welcome to Rebost</h1>
-        <p class="mt-2 max-w-md text-[15px] leading-relaxed text-white/65">
-          Rebost is a private AI that works with your files.<br />What happens on your computer
-          stays on your computer.
+        <h1 class="text-[28px] font-bold text-white">{t("onboarding.welcome")}</h1>
+        <p class="mt-2 max-w-md text-[15px] leading-relaxed whitespace-pre-line text-white/65">
+          {t("onboarding.lede")}
         </p>
         <div class="mt-8 grid w-full grid-cols-3 gap-3">
           <div class="onboard-card rounded-xl bg-white/6 px-4 py-4 text-left">
             <MessageCircle size={17} class="mb-2 text-mint" />
-            <p class="text-[14px] font-semibold text-white">Private by Design</p>
+            <p class="text-[14px] font-semibold text-white">{t("onboarding.cardChatTitle")}</p>
             <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
-              Talk to your personal AI: brainstorm ideas, ask questions or put it to work on your
-              files.
+              {t("onboarding.cardChatBody")}
             </p>
           </div>
           <div
@@ -141,10 +140,9 @@
             style="animation-delay: 60ms"
           >
             <LibraryBig size={17} class="mb-2 text-mint" />
-            <p class="text-[14px] font-semibold text-white">One Shelf at a Time</p>
+            <p class="text-[14px] font-semibold text-white">{t("onboarding.cardShelfTitle")}</p>
             <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
-              A Shelf can be a project, a client or an idea. Create it, attach a folder and start
-              working on it.
+              {t("onboarding.cardShelfBody")}
             </p>
           </div>
           <div
@@ -152,10 +150,9 @@
             style="animation-delay: 120ms"
           >
             <ChefHat size={17} class="mb-2 text-mint" />
-            <p class="text-[14px] font-semibold text-white">Recipes for Everything</p>
+            <p class="text-[14px] font-semibold text-white">{t("onboarding.cardRecipesTitle")}</p>
             <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
-              Recipes are tasks you can reuse across Shelves and Chats, so you don't start from
-              scratch every time.
+              {t("onboarding.cardRecipesBody")}
             </p>
           </div>
         </div>
@@ -164,7 +161,7 @@
           class="btn-amber mt-9 !px-7 !py-2.5 !text-[14px]"
           onclick={() => (step = "model")}
         >
-          Continue
+          {t("onboarding.continue")}
         </button>
       </div>
     {:else}
@@ -184,7 +181,7 @@
               class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
               aria-hidden="true"
             ></span>
-            Skip and download it later
+            {t("onboarding.skipLater")}
           </button>
         {/snippet}
         <h1
@@ -193,10 +190,10 @@
           tabindex="-1"
           class="max-w-md text-[28px] font-bold text-balance text-white outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
         >
-          Install the suggested AI.
+          {t("onboarding.installHeading")}
         </h1>
         <p class="mt-2 max-w-md text-[15px] leading-relaxed text-white/65">
-          That's the AI that answers you on this computer. It can take a few minutes.
+          {t("onboarding.installLede")}
         </p>
 
         {#if download}
@@ -206,10 +203,10 @@
                 {download}
                 cancelable={download.phase !== "verifying"}
                 onDark
-                skipVerifyLabel="Skip the check and continue"
+                skipVerifyLabel={t("onboarding.skipVerify")}
                 note={download.phase === "verifying"
-                  ? "Making sure the file arrived intact."
-                  : "Rebost will be ready when it finishes."}
+                  ? t("onboarding.verifyingNote")
+                  : t("onboarding.installingNote")}
               />
             </div>
             {#if download.phase !== "verifying"}
@@ -221,16 +218,16 @@
         {:else if modelDone}
           <p class="mt-8 flex items-baseline gap-2 text-[15px] font-medium text-mint">
             <Check size={16} class="size-4 h-lh shrink-0" aria-hidden="true" />
-            The AI is installed.
+            {t("onboarding.installed")}
           </p>
           <button type="button" class="btn-amber mt-9 !px-7 !py-2.5 !text-[14px]" onclick={finish}>
-            Start using Rebost
+            {t("onboarding.startUsing")}
           </button>
         {:else}
           <div class="mt-8 flex w-full flex-col gap-3">
             {#if machine}
               <p class="text-[15px] leading-relaxed text-white/55">
-                There are several free AIs. Rebost picked one that should run well here.
+                {t("onboarding.severalFree")}
               </p>
               <div
                 class="onboard-card flex items-start gap-4 rounded-xl bg-white/10 px-4 py-4 text-left"
@@ -238,14 +235,16 @@
                 <Download size={17} class="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
                 <div class="flex min-w-0 flex-1 flex-col gap-1">
                   <p class="text-[12.5px] font-semibold text-white">
-                    {failedDownload ? "Couldn't install" : "Chosen for this computer"}
+                    {failedDownload ? t("onboarding.couldntInstall") : t("onboarding.chosen")}
                   </p>
                   <p class="flex min-w-0 items-center gap-1 text-[15px] font-semibold text-white">
                     <span class="min-w-0 truncate">{(lastRec ?? machine.recommendation).name}</span>
                     <ModelCatalogInfo rec={lastRec ?? machine.recommendation} onDark />
                   </p>
                   <p class="text-[11.5px] leading-snug text-white/55 tabular-nums">
-                    About {formatBytes((lastRec ?? machine.recommendation).approxBytes)} to download.
+                    {t("onboarding.aboutDownload", {
+                      size: formatBytes((lastRec ?? machine.recommendation).approxBytes),
+                    })}
                   </p>
                   {#if failedMessage}
                     <p class="mt-1 text-[11.5px] leading-snug text-red-300" role="alert">
@@ -259,7 +258,7 @@
                     class="btn-amber shrink-0"
                     onclick={() => machine && installRec(lastRec ?? machine.recommendation)}
                   >
-                    Try again
+                    {t("onboarding.tryAgain")}
                   </button>
                 {:else if !busy}
                   <button
@@ -267,7 +266,7 @@
                     class="btn-amber shrink-0"
                     onclick={() => machine && installRec(machine.recommendation)}
                   >
-                    Install
+                    {t("onboarding.install")}
                   </button>
                 {/if}
               </div>
@@ -285,7 +284,7 @@
                       class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
                       aria-hidden="true"
                     ></span>
-                    Choose a different AI
+                    {t("onboarding.chooseDifferent")}
                     <ChevronDown
                       size={16}
                       class="size-4 h-lh shrink-0 {showMore ? 'rotate-180' : ''}"
@@ -314,7 +313,7 @@
                           <ModelCatalogInfo rec={alt} onDark />
                         </p>
                         <p class="text-[11.5px] leading-snug text-white/55 tabular-nums">
-                          About {formatBytes(alt.approxBytes)} to download.
+                          {t("onboarding.aboutDownload", { size: formatBytes(alt.approxBytes) })}
                         </p>
                       </div>
                       <button
@@ -323,7 +322,7 @@
                         onclick={() => installRec(alt)}
                         disabled={busy}
                       >
-                        Install
+                        {t("onboarding.install")}
                       </button>
                     </li>
                   {/each}

@@ -1,6 +1,7 @@
 /** Typed surface over the Tauri commands and events. */
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { dateLocale, t } from "./i18n.svelte";
 
 /** Types mirroring the Rust structs. */
 
@@ -193,12 +194,32 @@ export interface ModelSearchResult {
 
 export type TextSize = "default" | "large" | "larger";
 
+export type AppLocale =
+  | "en"
+  | "es"
+  | "ca"
+  | "pt"
+  | "fr"
+  | "ja"
+  | "de"
+  | "it"
+  | "sv"
+  | "nb"
+  | "nl"
+  | "cs"
+  | "el"
+  | "da"
+  | "fi";
+export type LocalePref = "system" | AppLocale;
+
 export interface SettingsView {
   houseRules: string;
   onboardingDone: boolean;
   activeModel?: ActiveModel | null;
   allowOnlineResearch: boolean;
   textSize: TextSize;
+  uiLocale: LocalePref;
+  resolvedLocale: AppLocale;
 }
 
 export interface ImportResult {
@@ -220,6 +241,7 @@ export interface Recipe {
   name: string;
   prompt: string;
   builtin: boolean;
+  needsShelf?: boolean;
 }
 
 export type ExternalLink = "repository";
@@ -267,7 +289,7 @@ export function invokeError(error: unknown): string {
   return String(error);
 }
 
-const USER_ERROR_FALLBACK = "Something went wrong. Try again.";
+const USER_ERROR_FALLBACK = () => t("errors.fallback");
 
 const BANNED_ERROR_TERMS = [
   "gguf",
@@ -289,12 +311,12 @@ const BANNED_ERROR_TERMS = [
 /** Two-beat toast copy. Pins stay behind Diagnostics. */
 export function userFacingError(error: unknown): string {
   const trimmed = invokeError(error).trim();
-  if (!trimmed) return USER_ERROR_FALLBACK;
+  if (!trimmed) return USER_ERROR_FALLBACK();
   const lower = trimmed.toLowerCase();
 
-  if (lower.includes("invalid id")) return "That request was not valid.";
+  if (lower.includes("invalid id")) return t("errors.invalidId");
   if (lower.includes("not in a shelf") || lower.includes("not allowed")) {
-    return "That file is not in a Shelf Rebost knows.";
+    return t("errors.notInShelf");
   }
   if (
     lower.includes("shelf not found") ||
@@ -302,23 +324,23 @@ export function userFacingError(error: unknown): string {
     lower.includes("thread not found") ||
     lower.includes("recipe not found")
   ) {
-    return "That item is no longer available.";
+    return t("errors.notAvailable");
   }
   if (
     lower.includes("no ai model") ||
     lower.includes("no model installed") ||
     lower.includes("model file missing")
   ) {
-    return "Rebost needs an AI before it can answer.";
+    return t("errors.needsAi");
   }
   if (lower.includes("switch-failed")) {
-    return "That AI didn't start. You're still using the previous one.";
+    return t("errors.switchFailed");
   }
   if (lower.includes("warmup-failed")) {
-    return "That AI didn't start. Try again, or pick a smaller one.";
+    return t("errors.warmupFailed");
   }
   if (lower.includes("incompatible-format")) {
-    return "This AI uses a format Rebost can't run. Pick another.";
+    return t("errors.incompatible");
   }
   if (
     lower.includes("llama-server") ||
@@ -327,7 +349,7 @@ export function userFacingError(error: unknown): string {
     lower.includes("engine archive") ||
     lower.includes("engine binary")
   ) {
-    return "Rebost isn't ready yet. Try again in a moment.";
+    return t("errors.notReady");
   }
   if (
     lower.includes("verification failed") ||
@@ -335,7 +357,7 @@ export function userFacingError(error: unknown): string {
     lower.includes("sha256") ||
     lower.includes("checksum")
   ) {
-    return "The download couldn't be verified. Try again.";
+    return t("errors.verifyFailed");
   }
   if (
     lower.includes("generation failed") ||
@@ -343,13 +365,13 @@ export function userFacingError(error: unknown): string {
     lower.includes("empty generation") ||
     lower.includes("chat stream")
   ) {
-    return "Rebost couldn't finish that answer. Try again.";
+    return t("errors.generationFailed");
   }
   if (lower.includes("stalled")) {
-    return "The download stalled. Check your connection and try again.";
+    return t("errors.downloadStalled");
   }
   if (lower.includes("rate-limited") || lower.includes("rate limited")) {
-    return "The download was rate-limited. Wait a moment and try again.";
+    return t("errors.rateLimited");
   }
   if (
     lower.includes("download failed") ||
@@ -357,7 +379,7 @@ export function userFacingError(error: unknown): string {
     lower.includes("range wrote") ||
     lower.includes("server ignored range")
   ) {
-    return "The download didn't finish. Try again.";
+    return t("errors.downloadFailed");
   }
   if (
     lower.includes(".gguf") ||
@@ -367,20 +389,20 @@ export function userFacingError(error: unknown): string {
     lower.includes("no usable model") ||
     lower.includes("no model layer")
   ) {
-    return "That AI isn't available. Try another.";
+    return t("errors.aiUnavailable");
   }
   if (lower.includes("couldn't read any text")) {
-    return "Rebost couldn't read any text in this file.";
+    return t("errors.noText");
   }
   if (lower.includes("unsupported format")) {
-    return "This file type isn't supported.";
+    return t("errors.unsupportedType");
   }
   if (lower.includes("invalid file name")) {
-    return "That file couldn't be added. Try again.";
+    return t("errors.badFileName");
   }
 
   if (alreadyQuietError(trimmed, lower)) return trimmed;
-  return USER_ERROR_FALLBACK;
+  return USER_ERROR_FALLBACK();
 }
 
 function alreadyQuietError(text: string, lower: string): boolean {
@@ -467,6 +489,7 @@ export const api = {
   setAllowOnlineResearch: (enabled: boolean) =>
     invoke<void>("settings_set_allow_online_research", { enabled }),
   setTextSize: (size: TextSize) => invoke<void>("settings_set_text_size", { size }),
+  setUiLocale: (locale: LocalePref) => invoke<SettingsView>("settings_set_ui_locale", { locale }),
   finishOnboarding: () => invoke<void>("settings_finish_onboarding"),
   resetWorkspace: (confirmation: string) =>
     invoke<void>("settings_reset_workspace", { confirmation }),
@@ -609,9 +632,11 @@ export function downloadHeadline(download: DownloadEvent): string {
   const phase: DownloadPhase = download.phase ?? "downloading";
   switch (phase) {
     case "verifying":
-      return "Checking the download…";
+      return t("downloads.checking");
     case "downloading":
-      return download.kind === "engine" ? "Preparing the AI…" : `Downloading ${download.name}…`;
+      return download.kind === "engine"
+        ? t("downloads.preparing")
+        : t("downloads.downloading", { name: download.name });
     default: {
       const _exhaustive: never = phase;
       return _exhaustive;
@@ -624,33 +649,33 @@ export function downloadErrorMessage(error: string): string | null {
   if (error === "cancelled") return null;
   switch (error) {
     case "verification failed":
-      return "The download couldn't be verified. Try again.";
+      return t("errors.verifyFailed");
     case "stalled":
-      return "The download stalled. Check your connection and try again.";
+      return t("errors.downloadStalled");
     case "switch-failed":
-      return "That AI didn't start. You're still using the previous one.";
+      return t("errors.switchFailed");
     case "warmup-failed":
-      return "That AI didn't start. Try again, or pick a smaller one.";
+      return t("errors.warmupFailed");
     case "incompatible-format":
-      return "This AI uses a format Rebost can't run. Pick another.";
+      return t("errors.incompatible");
     default:
-      return "The download didn't finish. Try again.";
+      return t("errors.downloadFailed");
   }
 }
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+const MONTH_KEYS = [
+  "january",
+  "february",
+  "march",
+  "april",
+  "may",
+  "june",
+  "july",
+  "august",
+  "september",
+  "october",
+  "november",
+  "december",
 ] as const;
 
 /** Catalog the AI is downloaded from. Hugging Face wins when both list it. */
@@ -658,11 +683,11 @@ export function catalogHostLabel(source: string): string {
   switch (source) {
     case "huggingface":
     case "huggingface+ollama":
-      return "Hugging Face";
+      return t("explore.huggingface");
     case "ollama":
-      return "Ollama";
+      return t("explore.ollama");
     default:
-      return "the catalog";
+      return t("explore.theCatalog");
   }
 }
 
@@ -671,7 +696,9 @@ export function formatReleased(ym: string): string {
   const [year, month] = ym.split("-");
   const idx = Number(month) - 1;
   if (!year || Number.isNaN(idx) || idx < 0 || idx > 11) return ym;
-  return `${MONTHS[idx]} ${year}`;
+  const monthKey = MONTH_KEYS[idx];
+  if (!monthKey) return ym;
+  return `${t(`calendar.${monthKey}`)} ${year}`;
 }
 
 export function formatWhen(iso: string): string {
@@ -680,23 +707,11 @@ export function formatWhen(iso: string): string {
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const days = Math.round((startOfDay(now) - startOfDay(then)) / 86_400_000);
-  if (days <= 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return `${days} days ago`;
-  return then.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  if (days <= 0) return t("when.today");
+  if (days === 1) return t("when.yesterday");
+  if (days < 7) return t("when.daysAgo", { count: days });
+  return then.toLocaleDateString(dateLocale(), { day: "numeric", month: "short", year: "numeric" });
 }
-
-export const PII_LABELS: Record<string, [string, string]> = {
-  email: ["email", "emails"],
-  name: ["name", "names"],
-  ssn: ["Social Security number", "Social Security numbers"],
-  phone: ["phone number", "phone numbers"],
-  iban: ["IBAN", "IBANs"],
-  nif: ["NIF / NIE", "NIF / NIE"],
-  nie: ["NIE", "NIE"],
-  credit_card: ["credit-card number", "credit-card numbers"],
-  ip_address: ["IP address", "IP addresses"],
-};
 
 export const PII_CATEGORY_ORDER = [
   "email",
@@ -711,12 +726,18 @@ export const PII_CATEGORY_ORDER = [
 ] as const;
 
 /** Empty Privacy Lens: name the categories; do not call the file clean. */
-export const PII_EMPTY_HINT =
-  "No emails, phone numbers, IBANs, tax ids, Social Security numbers, or labeled names in this file.";
+export function piiEmptyHint(): string {
+  return t("pii.empty");
+}
+
+/** @deprecated Use piiEmptyHint(). Kept for tests that read the English string. */
+export const PII_EMPTY_HINT = piiEmptyHint;
 
 export function piiLabel(category: string, count: number): string {
-  const pair = PII_LABELS[category] ?? [category, category];
-  return count === 1 ? pair[0] : pair[1];
+  const kind = count === 1 ? "one" : "other";
+  const key = `pii.${category}_${kind}`;
+  const label = t(key);
+  return label === key ? category : label;
 }
 
 export function fileTypeLabel(doc: DocumentMeta): string {

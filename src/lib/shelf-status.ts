@@ -1,3 +1,4 @@
+import { t } from "./i18n.svelte";
 import type { ShelfStats } from "./api";
 
 export type ShelfListStatus = "ready" | "processing" | "syncing" | "error";
@@ -18,13 +19,13 @@ export function shelfListStatus(stats: StatusStats): ShelfListStatus | null {
 export function shelfListStatusLabel(status: ShelfListStatus): string {
   switch (status) {
     case "ready":
-      return "Ready";
+      return t("shelves.statusReady");
     case "processing":
-      return "Processing";
+      return t("shelves.statusProcessing");
     case "syncing":
-      return "Syncing";
+      return t("shelves.statusSyncing");
     case "error":
-      return "Sync error";
+      return t("shelves.statusError");
     default: {
       const _exhaustive: never = status;
       return _exhaustive;

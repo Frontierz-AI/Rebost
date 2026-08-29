@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ThinkLevel } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { setShelfThinkLevel } from "$lib/stores.svelte";
   import {
     THINK_LABELS,
@@ -29,7 +30,7 @@
 
 <div class="flex w-full min-w-[220px] flex-col gap-2">
   <label class="text-[12px] font-medium text-ink" for={inputId}>
-    How Chat looks through this Shelf
+    {t("shelves.lookThrough")}
   </label>
   <input
     id={inputId}
@@ -61,5 +62,5 @@
       </button>
     {/each}
   </div>
-  <p id={hintId} class="text-[11.5px] text-ink-faint">Light and Deep take longer.</p>
+  <p id={hintId} class="text-[11.5px] text-ink-faint">{t("shelves.thinkHint")}</p>
 </div>

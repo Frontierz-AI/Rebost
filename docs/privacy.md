@@ -1,6 +1,6 @@
 # Privacy
 
-Documents on a Shelf stay on the machine where Rebost is installed, and reading, search, and answers all run there. Rebost uses the network to search for or install an AI, to fetch the runtime when the installer did not include it, and to check for a newer release. Settings → Online, when on, also looks things up on the public web. Counts of personal information are counts, not a legal opinion.
+Documents on a Shelf stay on the machine where Rebost is installed, and reading, search, and answers all run there. Rebost uses the network to search for or install an AI, to fetch the runtime when the installer did not include it, and to check for a newer release. Settings → Online, when on, also looks things up on the public web. The language of the menus is read from that machine (or from a Settings choice) and is not sent anywhere. Counts of personal information are counts, not a legal opinion.
 
 ## Claims
 

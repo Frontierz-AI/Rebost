@@ -319,7 +319,32 @@ fn to_recommendation(entry: &CatalogEntry) -> Recommendation {
         approx_bytes: entry.approx_bytes,
         license: entry.license.to_string(),
         released: entry.released.to_string(),
-        blurb: entry.blurb.to_string(),
+        blurb: localized_blurb(entry),
+    }
+}
+
+fn blurb_slug(name: &str) -> String {
+    let mut out = String::new();
+    for ch in name.chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+        } else if !out.is_empty() && !out.ends_with('_') {
+            out.push('_');
+        }
+    }
+    while out.ends_with('_') {
+        out.pop();
+    }
+    out
+}
+
+fn localized_blurb(entry: &CatalogEntry) -> String {
+    let key = format!("catalog.blurbs.{}", blurb_slug(entry.name));
+    let text = rust_i18n::t!(&key).to_string();
+    if text.is_empty() || text == key {
+        entry.blurb.to_string()
+    } else {
+        text
     }
 }
 
@@ -634,5 +659,21 @@ mod tests {
         assert!(metal.runtime_need_bytes(file) < vulkan.runtime_need_bytes(file));
         assert!(metal.runtime_need_bytes(file) <= metal.model_budget_bytes());
         assert!(vulkan.runtime_need_bytes(file) > vulkan.model_budget_bytes());
+    }
+
+    #[test]
+    fn blurb_slug_matches_catalog_keys() {
+        assert_eq!(blurb_slug("Qwen3.8 27B"), "qwen3_8_27b");
+        assert_eq!(blurb_slug("gpt-oss 20B"), "gpt_oss_20b");
+        assert_eq!(blurb_slug("Gemma 4 E4B"), "gemma_4_e4b");
+        assert_eq!(blurb_slug("Muse Glimmer"), "muse_glimmer");
+        assert_eq!(blurb_slug("Phi-4 Mini"), "phi_4_mini");
+        assert_eq!(blurb_slug("Granite 4.1 3B"), "granite_4_1_3b");
+    }
+
+    #[test]
+    fn english_blurb_matches_catalog_source() {
+        let rec = to_recommendation(&CATALOG[0]);
+        assert_eq!(rec.blurb, CATALOG[0].blurb);
     }
 }

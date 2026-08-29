@@ -1,11 +1,33 @@
+import { t } from "./i18n.svelte";
 import type { TextSize } from "./api";
 
 export const TEXT_SIZES = ["default", "large", "larger"] as const satisfies readonly TextSize[];
 
+export function textSizeLabel(size: TextSize): string {
+  switch (size) {
+    case "default":
+      return t("settings.textDefault");
+    case "large":
+      return t("settings.textLarge");
+    case "larger":
+      return t("settings.textLarger");
+    default: {
+      const _exhaustive: never = size;
+      return _exhaustive;
+    }
+  }
+}
+
 export const TEXT_SIZE_LABELS: Record<TextSize, string> = {
-  default: "Default",
-  large: "Large",
-  larger: "Larger",
+  get default() {
+    return textSizeLabel("default");
+  },
+  get large() {
+    return textSizeLabel("large");
+  },
+  get larger() {
+    return textSizeLabel("larger");
+  },
 };
 
 export const TEXT_SIZE_KEY = "rebost.textSize";

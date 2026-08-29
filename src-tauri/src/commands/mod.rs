@@ -26,7 +26,9 @@ pub(crate) fn require_optional_id(id: Option<&str>) -> CmdResult<()> {
     }
 }
 
-const USER_ERROR_FALLBACK: &str = "Something went wrong. Try again.";
+fn user_error_fallback() -> String {
+    rust_i18n::t!("errors.fallback").into()
+}
 
 pub(crate) fn friendly<E: std::fmt::Display>(error: E) -> String {
     let text = error.to_string();
@@ -38,34 +40,34 @@ pub(crate) fn friendly<E: std::fmt::Display>(error: E) -> String {
 pub(crate) fn map_user_error(text: &str) -> String {
     let trimmed = text.trim();
     if trimmed.is_empty() {
-        return USER_ERROR_FALLBACK.into();
+        return user_error_fallback();
     }
     let lower = trimmed.to_lowercase();
 
     if lower.contains("invalid id") {
-        return "That request was not valid.".into();
+        return rust_i18n::t!("errors.invalidId").into();
     }
     if lower.contains("not in a shelf") || lower.contains("not allowed") {
-        return "That file is not in a Shelf Rebost knows.".into();
+        return rust_i18n::t!("errors.notInShelf").into();
     }
     if lower.contains("shelf not found")
         || lower.contains("file not found")
         || lower.contains("thread not found")
         || lower.contains("recipe not found")
     {
-        return "That item is no longer available.".into();
+        return rust_i18n::t!("errors.notAvailable").into();
     }
     if lower.contains("no ai model")
         || lower.contains("no model installed")
         || lower.contains("model file missing")
     {
-        return "Rebost needs an AI before it can answer.".into();
+        return rust_i18n::t!("errors.needsAi").into();
     }
     if lower.contains("switch-failed") {
-        return "That AI didn't start. You're still using the previous one.".into();
+        return rust_i18n::t!("errors.switchFailed").into();
     }
     if lower.contains("incompatible-format") {
-        return "This AI uses a format Rebost can't run. Pick another.".into();
+        return rust_i18n::t!("errors.incompatible").into();
     }
     if lower.contains("warmup-failed")
         || lower.contains("llama-server")
@@ -74,34 +76,34 @@ pub(crate) fn map_user_error(text: &str) -> String {
         || lower.contains("engine archive")
         || lower.contains("engine binary")
     {
-        return "Rebost isn't ready yet. Try again in a moment.".into();
+        return rust_i18n::t!("errors.notReady").into();
     }
     if lower.contains("verification failed")
         || lower.contains("sha-256")
         || lower.contains("sha256")
         || lower.contains("checksum")
     {
-        return "The download couldn't be verified. Try again.".into();
+        return rust_i18n::t!("errors.verifyFailed").into();
     }
     if lower.contains("generation failed")
         || lower.contains("generation stalled")
         || lower.contains("empty generation")
         || lower.contains("chat stream")
     {
-        return "Rebost couldn't finish that answer. Try again.".into();
+        return rust_i18n::t!("errors.generationFailed").into();
     }
     if lower.contains("stalled") {
-        return "The download stalled. Check your connection and try again.".into();
+        return rust_i18n::t!("errors.downloadStalled").into();
     }
     if lower.contains("rate-limited") || lower.contains("rate limited") {
-        return "The download was rate-limited. Wait a moment and try again.".into();
+        return rust_i18n::t!("errors.rateLimited").into();
     }
     if lower.contains("download failed")
         || lower.contains("incomplete range")
         || lower.contains("range wrote")
         || lower.contains("server ignored range")
     {
-        return "The download didn't finish. Try again.".into();
+        return rust_i18n::t!("errors.downloadFailed").into();
     }
     if lower.contains(".gguf")
         || lower.contains("gguf")
@@ -110,22 +112,22 @@ pub(crate) fn map_user_error(text: &str) -> String {
         || lower.contains("no usable model")
         || lower.contains("no model layer")
     {
-        return "That AI isn't available. Try another.".into();
+        return rust_i18n::t!("errors.aiUnavailable").into();
     }
     if lower.contains("couldn't read any text") {
-        return "Rebost couldn't read any text in this file.".into();
+        return rust_i18n::t!("errors.noText").into();
     }
     if lower.contains("unsupported format") {
-        return "This file type isn't supported.".into();
+        return rust_i18n::t!("errors.unsupportedType").into();
     }
     if lower.contains("invalid file name") {
-        return "That file couldn't be added. Try again.".into();
+        return rust_i18n::t!("errors.badFileName").into();
     }
 
     if already_quiet(trimmed, &lower) {
         return trimmed.to_string();
     }
-    USER_ERROR_FALLBACK.into()
+    user_error_fallback()
 }
 
 fn already_quiet(text: &str, lower: &str) -> bool {

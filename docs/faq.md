@@ -27,3 +27,7 @@ No. Rebost is a desktop application for Mac and Windows.
 ## Can a team use it?
 
 Yes, with one install per person and a Shelf pointed at a shared folder. There is no Rebost account and nothing to administer. See [how a small team uses Rebost](team.md).
+
+## Which languages does the interface use?
+
+The menus and the rest of the interface follow the language in Settings. English, Spanish (Spain), and Catalan are maintained. Portuguese, French, Japanese, German, Italian, Swedish, Norwegian, Dutch, Czech, Greek, Danish, and Finnish are in the same picker and still need a native speaker: they were written from the English and Spanish catalogs. System uses the language of the machine where Rebost is installed. How a catalog is added is in [i18n.md](i18n.md).

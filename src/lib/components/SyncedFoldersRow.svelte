@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { LinkedView } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { linkedFolderName, linkedFolderSourceId } from "$lib/files";
   import { focusTrap } from "$lib/focus-trap";
   import { countFittingChips, visibleSyncedFolders } from "$lib/synced-folders";
@@ -94,9 +95,7 @@
       type="button"
       class="inline-flex min-w-0 items-center gap-1 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
       aria-pressed={selected}
-      title={linked.available === false
-        ? "This folder isn't here right now. Files stay on the Shelf."
-        : linked.path}
+      title={linked.available === false ? t("shelves.folderMissing") : linked.path}
       onclick={() => toggleFilter(linked)}
     >
       <FolderSymlink
@@ -107,15 +106,15 @@
       <span class="max-w-[160px] truncate">{name}</span>
       {#if linked.available === false}
         <span class="shrink-0 font-medium {selected ? 'text-white/80' : 'text-ink-faint'}"
-          >Unavailable</span
+          >{t("shelves.unavailable")}</span
         >
       {/if}
     </button>
     <button
       type="button"
       class="rounded p-0.5 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-400/10 dark:hover:text-red-400"
-      aria-label="Remove synced folder from this Shelf"
-      title="Remove from this Shelf (files stay on disk)"
+      aria-label={t("shelves.removeSynced")}
+      title={t("shelves.removeSyncedHint")}
       onclick={() => unlink(linked)}
     >
       <X size={11} aria-hidden="true" />
@@ -125,7 +124,9 @@
 
 <div class="relative min-w-0 flex-1">
   <div bind:this={rowEl} class="flex min-w-0 flex-nowrap items-center justify-end gap-1.5">
-    <p data-synced-label class="label shrink-0 !text-[10px] whitespace-nowrap">Synced folders</p>
+    <p data-synced-label class="label shrink-0 !text-[10px] whitespace-nowrap">
+      {t("shelves.syncedFolders")}
+    </p>
     {#each visibleFolders as linked (linked.path || linked.sourceId)}
       {@render folderChip(linked)}
     {/each}
@@ -134,7 +135,7 @@
         <button
           type="button"
           class="chip shrink-0 border border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70 dark:hover:bg-white/8"
-          aria-label="More synced folders"
+          aria-label={t("shelves.moreSynced")}
           aria-haspopup="dialog"
           aria-expanded={moreOpen}
           aria-controls="synced-folders-menu"
@@ -152,12 +153,12 @@
             id="synced-folders-menu"
             class="absolute top-full right-0 z-30 mt-1.5 max-h-64 min-w-[240px] overflow-y-auto rounded-xl border border-paper-line bg-surface p-2 shadow-pop dark:shadow-none"
             role="dialog"
-            aria-label="Synced folders"
+            aria-label={t("shelves.syncedFolders")}
             tabindex="-1"
             use:focusTrap
             onkeydown={(event) => event.key === "Escape" && (moreOpen = false)}
           >
-            <p class="label px-1 pb-1.5 !text-[10px]">Synced folders</p>
+            <p class="label px-1 pb-1.5 !text-[10px]">{t("shelves.syncedFolders")}</p>
             <ul class="flex flex-col gap-1.5">
               {#each folders as linked (linked.path || linked.sourceId)}
                 <li class="min-w-0">{@render folderChip(linked)}</li>
@@ -175,7 +176,9 @@
     inert
     aria-hidden="true"
   >
-    <p data-synced-label class="label shrink-0 !text-[10px] whitespace-nowrap">Synced folders</p>
+    <p data-synced-label class="label shrink-0 !text-[10px] whitespace-nowrap">
+      {t("shelves.syncedFolders")}
+    </p>
     {#each folders as linked (linked.path || linked.sourceId)}
       {@render folderChip(linked)}
     {/each}

@@ -7,6 +7,7 @@ import {
   placeholderAt,
   previewParts,
   promptNeedsShelf,
+  recipeNeedsShelf,
   replacePlaceholder,
 } from "./placeholders";
 
@@ -101,6 +102,14 @@ describe("promptNeedsShelf", () => {
     expect(promptNeedsShelf("Give me a brief of «document name» from this Shelf.")).toBe(true);
     expect(promptNeedsShelf("What do our documents on this Shelf say about «topic»?")).toBe(true);
     expect(promptNeedsShelf("Translate the text below into «language».")).toBe(false);
+  });
+});
+
+describe("recipeNeedsShelf", () => {
+  it("uses the stored flag before the English prompt heuristic", () => {
+    expect(recipeNeedsShelf({ prompt: "Hola", needsShelf: true })).toBe(true);
+    expect(recipeNeedsShelf({ prompt: "from this Shelf", needsShelf: false })).toBe(true);
+    expect(recipeNeedsShelf({ prompt: "Translate this" })).toBe(false);
   });
 });
 

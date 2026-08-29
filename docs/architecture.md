@@ -29,6 +29,8 @@ Chat / Shelves / Recipes / Settings
 
 **House rules.** How the AI should answer. Set once; injected into the system prompt on every message. Never mixed into retrieved excerpts.
 
+**Languages.** Shared JSON catalogs under `locales/` feed rust-i18n and a thin Svelte `t()`. The OS language is the default; Settings can pin a shipped catalog. English, Spanish, and Catalan are maintained; the others are drafts marked for review. See [i18n.md](i18n.md).
+
 **Engine.** A pinned llama.cpp `llama-server` archive is bundled in the installer, unpacked into app data, and spawned on `127.0.0.1`. Not a Tauri `externalBin` sidecar. GitHub downloads are SHA-256 verified. Signed Mac copies are re-signed for notarization, so they skip the GitHub pin SHA; see [engine.md](engine.md). Switching AIs keeps the previous file until the new process is Ready; Chat can use the current AI while the next file downloads. Context and answer length follow the loaded AI and the host machine (about 768 tokens out on a 4k window, 1,536–2,048 on a wider one; the window stays 4k–16k). Short replies still stop when the AI is done.
 
 ## Data on disk

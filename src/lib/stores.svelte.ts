@@ -26,6 +26,7 @@ import {
 } from "./shelf-preference";
 import { clipChars, PROMPT_MAX_CHARS } from "./text-cap";
 import { applyTextSize, parseTextSize, persistTextSize, stepTextSize } from "./text-size";
+import { applyLocale, parseAppLocale, parseLocalePref, type LocalePref } from "./i18n.svelte";
 
 export type View = "chat" | "shelves" | "recipes" | "settings";
 
@@ -193,6 +194,7 @@ export async function refreshThreads() {
 export async function refreshSettings() {
   app.settings = await api.settingsGet();
   paintTextSize(parseTextSize(app.settings.textSize));
+  applyLocale(parseAppLocale(app.settings.resolvedLocale));
 }
 
 function paintTextSize(size: TextSize) {
@@ -223,6 +225,22 @@ export async function setTextSize(next: TextSize) {
   } catch (error) {
     paintTextSize(previous);
     if (app.settings) app.settings = { ...app.settings, textSize: previous };
+    notifyInvokeError(error);
+  }
+}
+
+export async function setUiLocale(next: LocalePref) {
+  const previousPref = parseLocalePref(app.settings?.uiLocale);
+  const previousResolved = parseAppLocale(app.settings?.resolvedLocale);
+  if (next === previousPref && app.settings) return;
+  if (app.settings) app.settings = { ...app.settings, uiLocale: next };
+  try {
+    const view = await api.setUiLocale(next);
+    app.settings = view;
+    applyLocale(parseAppLocale(view.resolvedLocale));
+  } catch (error) {
+    if (app.settings) app.settings = { ...app.settings, uiLocale: previousPref };
+    applyLocale(previousResolved);
     notifyInvokeError(error);
   }
 }

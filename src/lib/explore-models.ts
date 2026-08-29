@@ -1,4 +1,5 @@
 import type { ModelSearchResult } from "$lib/api";
+import { t } from "$lib/i18n.svelte";
 
 export const EXPLORE_PAGE_SIZE = 50;
 
@@ -88,12 +89,29 @@ export type ExploreSort = "best" | "released" | "size" | "downloads";
 export type ExploreSortDir = "asc" | "desc";
 export type ExploreColumn = "released" | "size" | "downloads";
 
-export const EXPLORE_SORTS: { id: ExploreSort; label: string }[] = [
-  { id: "best", label: "Best for this computer" },
-  { id: "released", label: "Newest" },
-  { id: "size", label: "Smallest download" },
-  { id: "downloads", label: "Most downloaded" },
+export const EXPLORE_SORTS: { id: ExploreSort }[] = [
+  { id: "best" },
+  { id: "released" },
+  { id: "size" },
+  { id: "downloads" },
 ];
+
+export function exploreSortLabel(sort: ExploreSort): string {
+  switch (sort) {
+    case "best":
+      return t("explore.sortBest");
+    case "released":
+      return t("explore.sortNewest");
+    case "size":
+      return t("explore.sortSmallest");
+    case "downloads":
+      return t("explore.sortDownloads");
+    default: {
+      const _never: never = sort;
+      return _never;
+    }
+  }
+}
 
 export function defaultExploreSortDir(sort: ExploreSort): ExploreSortDir {
   switch (sort) {

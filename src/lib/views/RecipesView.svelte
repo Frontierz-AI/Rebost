@@ -13,6 +13,7 @@
     Pencil,
   } from "@lucide/svelte";
   import { confirmDanger } from "$lib/native-dialog";
+  import { t } from "$lib/i18n.svelte";
 
   let recipes = $state<Recipe[]>([]);
   let formOpen = $state(import.meta.env.VITE_START_RECIPE === "new");
@@ -56,7 +57,10 @@
 
   async function remove(recipe: Recipe, event: MouseEvent) {
     event.stopPropagation();
-    const ok = await confirmDanger(`Delete the “${recipe.name}” Recipe?`, "Delete");
+    const ok = await confirmDanger(
+      t("recipes.deleteConfirm", { name: recipe.name }),
+      t("chat.delete"),
+    );
     if (!ok) return;
     try {
       await api.recipeDelete(recipe.id);
@@ -82,10 +86,7 @@
   }
 
   async function restoreDefaults() {
-    const ok = await confirmDanger(
-      "Replace all Recipes with the defaults? Recipes you added or changed will be removed.",
-      "Restore",
-    );
+    const ok = await confirmDanger(t("recipes.restoreConfirm"), t("recipes.restoreAction"));
     if (!ok) return;
     try {
       recipes = await api.recipesRestoreDefaults();
@@ -99,13 +100,14 @@
 <div class="mx-auto max-w-[860px] px-8 py-8">
   <div class="mb-6 flex items-end justify-between">
     <div>
-      <h1 class="text-[22px] font-semibold text-ink">Recipes</h1>
+      <h1 class="text-[22px] font-semibold text-ink">{t("recipes.title")}</h1>
       <p class="mt-0.5 text-[13px] text-ink-soft">
-        Saved prompts. Click one and a new conversation opens with the prompt already in the box.
+        {t("recipes.lede")}
       </p>
     </div>
     <button type="button" class="btn-primary" onclick={beginCreate}>
-      <BookmarkPlus size={15} aria-hidden="true" /> New Recipe
+      <BookmarkPlus size={15} aria-hidden="true" />
+      {t("recipes.newRecipe")}
     </button>
   </div>
 
@@ -113,42 +115,42 @@
     <div class="card mb-5 px-5 py-4">
       <div class="mb-3 flex items-center justify-between">
         <span class="text-[13.5px] font-semibold text-ink"
-          >{editingId ? "Edit Recipe" : "New Recipe"}</span
+          >{editingId ? t("recipes.editRecipe") : t("recipes.newRecipe")}</span
         >
         <button
           type="button"
           class="btn-ghost !p-1.5"
-          aria-label={editingId ? "Cancel edit Recipe" : "Cancel new Recipe"}
+          aria-label={editingId ? t("recipes.cancelEdit") : t("recipes.cancelNew")}
           onclick={cancelForm}><X size={14} aria-hidden="true" /></button
         >
       </div>
-      <label class="sr-only" for="recipe-name">Recipe name</label>
+      <label class="sr-only" for="recipe-name">{t("recipes.name")}</label>
       <!-- svelte-ignore a11y_autofocus -->
       <input
         id="recipe-name"
         name="recipe-name"
         class="input mb-2.5"
-        placeholder="Name, like Weekly team update"
+        placeholder={t("recipes.namePlaceholder")}
         bind:value={formName}
         autofocus={!import.meta.env.VITE_SNAPSHOT_PATH}
       />
-      <label class="sr-only" for="recipe-prompt">Recipe prompt</label>
+      <label class="sr-only" for="recipe-prompt">{t("recipes.prompt")}</label>
       <textarea
         id="recipe-prompt"
         name="recipe-prompt"
         class="input min-h-28 cursor-text resize-y select-text"
-        placeholder={"The prompt this Recipe starts with. Use «angle quotes» for the bits that change each time, e.g.\nSummarize what changed for «client name» this month and draft a short update email."}
+        placeholder={t("recipes.promptPlaceholder")}
         maxlength={PROMPT_MAX_CHARS}
         bind:value={formPrompt}></textarea>
       <div class="mt-2.5 flex justify-end gap-2">
-        <button type="button" class="btn-ghost" onclick={cancelForm}>Cancel</button>
+        <button type="button" class="btn-ghost" onclick={cancelForm}>{t("recipes.cancel")}</button>
         <button
           type="button"
           class="btn-amber"
           onclick={save}
           disabled={!formName.trim() || !formPrompt.trim()}
         >
-          Save Recipe
+          {t("recipes.save")}
         </button>
       </div>
     </div>
@@ -169,15 +171,18 @@
               ><ChefHat size={14} aria-hidden="true" /></span
             >
             <span class="flex-1 truncate text-[14px] font-semibold text-ink">{recipe.name}</span>
-            <span class="rounded-md p-1.5 text-navy-600 dark:text-navy-300" title="Use this Recipe">
+            <span
+              class="rounded-md p-1.5 text-navy-600 dark:text-navy-300"
+              title={t("recipes.use")}
+            >
               <ArrowUpRight size={14} aria-hidden="true" />
             </span>
           </button>
           <button
             type="button"
             class="rounded-md p-1.5 text-ink-faint hover:bg-navy-50 hover:text-ink dark:hover:bg-white/6"
-            aria-label="Edit Recipe"
-            title="Edit Recipe"
+            aria-label={t("recipes.edit")}
+            title={t("recipes.edit")}
             onclick={(e) => beginEdit(recipe, e)}
           >
             <Pencil size={13} aria-hidden="true" />
@@ -185,8 +190,8 @@
           <button
             type="button"
             class="rounded-md p-1.5 text-ink-faint hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-400/10 dark:hover:text-red-400"
-            aria-label="Delete Recipe"
-            title="Delete Recipe"
+            aria-label={t("recipes.delete")}
+            title={t("recipes.delete")}
             onclick={(e) => remove(recipe, e)}
           >
             <Trash2 size={13} aria-hidden="true" />
@@ -195,7 +200,7 @@
         <button
           type="button"
           class="line-clamp-3 text-left text-[12px] leading-relaxed text-ink-soft"
-          aria-label="Use {recipe.name}"
+          aria-label={t("recipes.useNamed", { name: recipe.name })}
           onclick={() => use(recipe)}
         >
           {#each previewParts(recipe.prompt) as part}
@@ -209,9 +214,9 @@
     {:else}
       <div class="card col-span-2 flex flex-col items-center px-8 py-12 text-center">
         <ChefHat size={22} class="mb-2 text-ink-faint" aria-hidden="true" />
-        <p class="text-[13.5px] font-medium text-ink">No Recipes yet</p>
+        <p class="text-[13.5px] font-medium text-ink">{t("recipes.emptyTitle")}</p>
         <p class="mt-1 text-[12.5px] text-ink-soft">
-          Save a question you will ask again. You can reuse it on any Shelf.
+          {t("recipes.emptyBody")}
         </p>
       </div>
     {/each}
@@ -219,7 +224,8 @@
 
   <div class="mt-5 flex justify-center">
     <button type="button" class="btn-ghost !px-3 !py-1.5 !text-[12px]" onclick={restoreDefaults}>
-      <RotateCcw size={12.5} aria-hidden="true" /> Restore default Recipes
+      <RotateCcw size={12.5} aria-hidden="true" />
+      {t("recipes.restore")}
     </button>
   </div>
 </div>

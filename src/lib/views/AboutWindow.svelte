@@ -5,12 +5,13 @@
   import { api, invokeError, type AboutInfo, type ExternalLink } from "$lib/api";
   import { isMac } from "$lib/platform";
   import icon from "../../assets/rebost-icon.png";
+  import { t } from "$lib/i18n.svelte";
 
   let info = $state<AboutInfo | null>(null);
   const mac = isMac();
 
   onMount(() => {
-    document.title = "About Rebost";
+    document.title = t("about.windowTitle");
     api
       .aboutInfo()
       .then((value) => (info = value))
@@ -85,21 +86,26 @@
     />
     <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">Rebost</h1>
     <p class="mt-1 min-h-[1.2em] text-[11.5px] font-medium tracking-wide text-navy-500">
-      {#if info}Version {info.version}{/if}
+      {#if info}{t("about.version", { version: info.version })}{/if}
     </p>
     <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
-      Private AI that works with your files. What happens on your computer stays on your computer.
+      {t("officialLine")}
     </p>
   </header>
 
   <nav
     data-tauri-drag-region="false"
-    aria-label="Credits"
+    aria-label={t("about.credits")}
     class="about-reveal mt-5"
     style="animation-delay: 80ms"
   >
     {#if info?.repositoryUrl}
-      {@render credit("Source", info.repositoryUrl, "repository", sourceLabel(info.repositoryUrl))}
+      {@render credit(
+        t("about.source"),
+        info.repositoryUrl,
+        "repository",
+        sourceLabel(info.repositoryUrl),
+      )}
     {/if}
   </nav>
 </main>

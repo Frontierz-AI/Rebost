@@ -1,5 +1,6 @@
 <script lang="ts">
   import { formatBytes, formatReleased, type Recommendation } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { Download } from "@lucide/svelte";
 
   let {
@@ -31,7 +32,7 @@
             <div class="flex flex-col gap-1">
               {#if featured}
                 <p class="text-[0.6875rem] font-medium text-navy-700 dark:text-navy-300">
-                  Best fit
+                  {t("explore.bestFit")}
                 </p>
               {/if}
               <p class="text-[0.9375rem] font-semibold text-ink">{rec.name}</p>
@@ -39,17 +40,17 @@
             </div>
             <dl class="grid grid-cols-3 gap-x-3 text-[0.6875rem]">
               <div>
-                <dt class="font-medium text-ink">From</dt>
+                <dt class="font-medium text-ink">{t("explore.from")}</dt>
                 <dd class="mt-0.5 text-ink-soft">{rec.provider}</dd>
               </div>
               <div>
-                <dt class="font-medium text-ink">Download</dt>
+                <dt class="font-medium text-ink">{t("explore.download")}</dt>
                 <dd class="mt-0.5 text-ink-soft tabular-nums">
-                  About {formatBytes(rec.approxBytes)}
+                  {t("explore.aboutSize", { size: formatBytes(rec.approxBytes) })}
                 </dd>
               </div>
               <div>
-                <dt class="font-medium text-ink">Released</dt>
+                <dt class="font-medium text-ink">{t("explore.infoReleased")}</dt>
                 <dd class="mt-0.5 text-ink-soft">{formatReleased(rec.released)}</dd>
               </div>
             </dl>
@@ -62,7 +63,7 @@
               disabled={installing}
             >
               <Download size={16} class="size-4 shrink-0" aria-hidden="true" />
-              Install
+              {t("explore.install")}
             </button>
           </div>
         </li>

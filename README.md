@@ -103,6 +103,8 @@ A team works the same way, one install per person. Each person runs Rebost on th
 
 **Can a team use it?** Yes, with one install per person and a Shelf pointed at a shared folder. There is no Rebost account and nothing to administer. See [how a small team uses Rebost](docs/team.md).
 
+**Which languages does the interface use?** The menus and the rest of the interface follow the language in Settings. English, Spanish (Spain), and Catalan are maintained. Portuguese, French, Japanese, German, Italian, Swedish, Norwegian, Dutch, Czech, Greek, Danish, and Finnish are in the same picker and still need a native speaker: they were written from the English and Spanish catalogs. System uses the language of the machine where Rebost is installed. How a catalog is added is in [docs/i18n.md](docs/i18n.md).
+
 ## Privacy
 
 Documents on a Shelf stay on the machine that holds them, and reading, searching, and answering all happen there. Counts of personal information are counts, not a legal opinion.

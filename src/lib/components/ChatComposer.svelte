@@ -4,6 +4,7 @@
   import { fileListQuery, placeholderAt, replacePlaceholder } from "$lib/placeholders";
   import { shelfDisplayName } from "$lib/shelf-label";
   import { app, chatState, fillDraft, logInvokeError, openCreateShelf } from "$lib/stores.svelte";
+  import { t } from "$lib/i18n.svelte";
   import { PROMPT_MAX_CHARS } from "$lib/text-cap";
   import { SendHorizontal, Square, ChevronDown, LibraryBig, Plus, Paperclip } from "@lucide/svelte";
 
@@ -36,7 +37,14 @@
     if (chatState.uploadShelf?.id === id) return null;
     return app.shelves.find((shelf) => shelf.id === id) ?? null;
   });
-  const selectedLabel = $derived(selectedShelf ? shelfDisplayName(selectedShelf) : "No Shelf");
+  const selectedLabel = $derived(
+    selectedShelf ? shelfDisplayName(selectedShelf) : t("chat.noShelf"),
+  );
+  const filesListLabel = $derived.by(() => {
+    if (selectedShelf && chatState.uploadShelf) return t("chat.filesOnShelfAndConversation");
+    if (chatState.uploadShelf) return t("chat.filesInConversation");
+    return t("chat.filesOnShelf");
+  });
 
   $effect(() => {
     const libraryId = selectedShelf?.id ?? null;
@@ -138,10 +146,10 @@
         class="group mb-2 flex w-full items-center justify-between rounded-lg border border-navy-500/50 bg-navy-100 px-3 py-2 text-[12.5px] text-ink hover:border-navy-500 hover:bg-navy-200/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800 dark:border-white/15 dark:bg-white/8 dark:hover:border-navy-400 dark:hover:bg-white/12 dark:focus-visible:outline-navy-400"
         onclick={() => (app.view = "settings")}
       >
-        <span>To start using Rebost you need to download an AI.</span>
+        <span>{t("chat.needsAi")}</span>
         <span
           class="font-semibold text-navy-700 group-hover:text-navy-900 dark:text-navy-200 dark:group-hover:text-white"
-          >Install</span
+          >{t("chat.install")}</span
         >
       </button>
     {/if}
@@ -151,11 +159,7 @@
           class="absolute right-0 bottom-full left-0 z-30 mb-1 max-h-56 overflow-y-auto rounded-xl border border-paper-line bg-surface py-1 shadow-pop dark:shadow-none"
           role="listbox"
           id="composer-file-list"
-          aria-label={selectedShelf && chatState.uploadShelf
-            ? "Files on this Shelf and in this conversation"
-            : chatState.uploadShelf
-              ? "Files in this conversation"
-              : "Files on this Shelf"}
+          aria-label={filesListLabel}
         >
           {#each fileMatches as name, index (name)}
             <button
@@ -190,10 +194,10 @@
         }}
         rows="1"
         maxlength={PROMPT_MAX_CHARS}
-        aria-label="Message Rebost"
+        aria-label={t("chat.messageLabel")}
         aria-describedby={!hasModel ? "composer-needs-ai" : undefined}
         aria-controls={listOpen ? "composer-file-list" : undefined}
-        placeholder={hasModel ? "Message Rebost…" : "Install an AI first…"}
+        placeholder={hasModel ? t("chat.placeholderReady") : t("chat.placeholderNeedsAi")}
         class="max-h-[180px] w-full cursor-text resize-none bg-transparent text-[13.8px] leading-relaxed outline-none select-text placeholder:text-ink-faint"
       ></textarea>
       <div class="flex items-center justify-between gap-2">
@@ -207,7 +211,7 @@
               onclick={() => (shelfMenuOpen = !shelfMenuOpen)}
               aria-haspopup="listbox"
               aria-expanded={shelfMenuOpen}
-              aria-label="Choose a Shelf"
+              aria-label={t("chat.chooseShelf")}
             >
               <LibraryBig size={12.5} aria-hidden="true" />
               {selectedLabel}
@@ -236,8 +240,10 @@
                       onChooseShelf(null);
                     }}
                   >
-                    No Shelf
-                    <span class="ml-auto text-[10.5px] text-ink-faint">general questions</span>
+                    {t("chat.noShelf")}
+                    <span class="ml-auto text-[10.5px] text-ink-faint"
+                      >{t("chat.generalQuestions")}</span
+                    >
                   </button>
                   {#each app.shelves as shelf (shelf.id)}
                     <button
@@ -254,7 +260,7 @@
                       <LibraryBig size={12.5} class="text-ink-faint" />
                       {shelfDisplayName(shelf)}
                       <span class="ml-auto text-[10.5px] text-ink-faint"
-                        >{shelf.stats.searchable} files</span
+                        >{t("chat.fileCount", { count: shelf.stats.searchable })}</span
                       >
                     </button>
                   {/each}
@@ -269,7 +275,8 @@
                         openCreateShelf();
                       }}
                     >
-                      <Plus size={13} /> New Shelf
+                      <Plus size={13} />
+                      {t("chat.newShelf")}
                     </button>
                   </div>
                 {/if}
@@ -280,8 +287,8 @@
             type="button"
             class="btn-ghost !rounded-full !p-2"
             onclick={attachFiles}
-            title="Add files to this conversation"
-            aria-label="Add files to this conversation"
+            title={t("chat.addFiles")}
+            aria-label={t("chat.addFiles")}
           >
             <Paperclip size={15} aria-hidden="true" />
           </button>
@@ -291,8 +298,8 @@
             type="button"
             class="btn-primary btn-icon"
             onclick={onStop}
-            title="Stop"
-            aria-label="Stop generating"
+            title={t("chat.stop")}
+            aria-label={t("chat.stopGenerating")}
           >
             <Square size={14} fill="currentColor" />
           </button>
@@ -302,8 +309,8 @@
             class="btn-amber btn-icon"
             onclick={onSend}
             disabled={!hasModel || !chatState.draft.trim()}
-            title={hasModel ? "Send" : "Install an AI first"}
-            aria-label={hasModel ? "Send message" : "Install an AI first"}
+            title={hasModel ? t("chat.send") : t("chat.installFirstTitle")}
+            aria-label={hasModel ? t("chat.sendMessage") : t("chat.installFirstTitle")}
             aria-describedby={!hasModel ? "composer-needs-ai" : undefined}
           >
             <SendHorizontal size={15} />

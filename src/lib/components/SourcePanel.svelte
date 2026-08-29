@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, type DocumentTextWindow, type SourcePassage } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { notifyInvokeError } from "$lib/stores.svelte";
   import CopyActions from "./CopyActions.svelte";
   import Markdown from "./Markdown.svelte";
@@ -45,8 +46,8 @@
     if (source.pageStart) {
       parts.push(
         source.pageEnd && source.pageEnd !== source.pageStart
-          ? `Page ${source.pageStart}–${source.pageEnd}`
-          : `Page ${source.pageStart}`,
+          ? t("chat.pageWordRange", { start: source.pageStart, end: source.pageEnd })
+          : t("chat.pageWord", { start: source.pageStart }),
       );
     }
     if (source.section) parts.push(source.section);
@@ -98,26 +99,29 @@
       <span class="rounded-md bg-navy-900 px-1.5 py-0.5 text-[10.5px] font-bold text-white"
         >{source.sid}</span
       >
-      <button type="button" class="btn-ghost !p-1" onclick={onClose} aria-label="Close"
-        ><X size={15} /></button
+      <button
+        type="button"
+        class="btn-ghost !p-1"
+        onclick={onClose}
+        aria-label={t("documents.close")}><X size={15} /></button
       >
     </div>
     <div bind:this={scrollEl} class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       {#if excerpt}
         <Markdown text={excerpt.text} />
       {:else if missing}
-        <p class="text-[13px] text-ink-soft">This file isn't available.</p>
+        <p class="text-[13px] text-ink-soft">{t("documents.unavailable")}</p>
       {:else}
         <p class="flex items-center gap-2 text-[13px] text-ink-soft">
           <span class="inline-block h-2 w-2 animate-pulse rounded-full bg-navy-500"></span>
-          <span class="sr-only">Loading</span>
+          <span class="sr-only">{t("documents.loading")}</span>
         </p>
       {/if}
     </div>
     <div class="flex flex-col gap-2 border-t border-paper-line px-3 py-2.5">
       {#if paged}
         <div class="flex items-center justify-between gap-2">
-          <p class="text-[12px] text-ink-soft">Part of this file</p>
+          <p class="text-[12px] text-ink-soft">{t("documents.partOfFile")}</p>
           <div class="flex gap-1">
             <button
               type="button"
@@ -126,7 +130,7 @@
               onclick={() =>
                 excerpt && loadFrom(Math.max(0, excerpt.startChar - excerpt.windowChars))}
             >
-              Earlier
+              {t("documents.earlier")}
             </button>
             <button
               type="button"
@@ -134,7 +138,7 @@
               disabled={!hasAfter || paging}
               onclick={() => excerpt && loadFrom(excerpt.endChar)}
             >
-              Later
+              {t("documents.later")}
             </button>
           </div>
         </div>
@@ -146,14 +150,16 @@
           class="btn-outline w-full !px-3 !py-1.5 !text-[12px] whitespace-nowrap"
           onclick={() => api.revealItem(source.path).catch(notifyInvokeError)}
         >
-          <FolderOpen size={13} class="shrink-0" aria-hidden="true" /> Show in folder
+          <FolderOpen size={13} class="shrink-0" aria-hidden="true" />
+          {t("documents.showInFolder")}
         </button>
         <button
           type="button"
           class="btn-outline w-full !px-3 !py-1.5 !text-[12px] whitespace-nowrap"
           onclick={() => api.openOriginal(source.path).catch(notifyInvokeError)}
         >
-          <ExternalLink size={13} class="shrink-0" aria-hidden="true" /> Open original
+          <ExternalLink size={13} class="shrink-0" aria-hidden="true" />
+          {t("documents.openOriginal")}
         </button>
       </div>
     </div>

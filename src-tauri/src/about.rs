@@ -68,7 +68,7 @@ fn create(app: &AppHandle) -> tauri::Result<()> {
         ABOUT_LABEL,
         WebviewUrl::App("index.html?window=about".into()),
     )
-    .title("About Rebost")
+    .title(rust_i18n::t!("about.windowTitle").to_string())
     .inner_size(400.0, 356.0)
     .min_inner_size(400.0, 356.0)
     .max_inner_size(400.0, 356.0)

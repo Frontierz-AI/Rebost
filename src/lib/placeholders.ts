@@ -78,6 +78,11 @@ export function promptNeedsShelf(prompt: string): boolean {
   return /\bthis shelf\b/i.test(prompt);
 }
 
+/** Prefer the stored flag; fall back to the English prompt heuristic for older files. */
+export function recipeNeedsShelf(recipe: { needsShelf?: boolean; prompt: string }): boolean {
+  return recipe.needsShelf === true || promptNeedsShelf(recipe.prompt);
+}
+
 /** Split a preview so «placeholders» can be highlighted. */
 export function previewParts(prompt: string): { text: string; ph: boolean }[] {
   const clean = prompt.replace(/\s+/g, " ").trim();

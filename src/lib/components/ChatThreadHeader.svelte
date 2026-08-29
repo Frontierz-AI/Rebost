@@ -1,5 +1,6 @@
 <script lang="ts">
   import { formatWhen, type ShelfView, type ThreadMeta } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { threadShelfSubtitle } from "$lib/shelf-label";
   import { Download } from "@lucide/svelte";
 
@@ -21,18 +22,13 @@
 
   function startedLabel(iso: string): string {
     const when = formatWhen(iso);
-    switch (when) {
-      case "Today":
-        return "Started today";
-      case "Yesterday":
-        return "Started yesterday";
-      default:
-        return `Started ${when}`;
-    }
+    if (when === t("when.today")) return t("chat.startedToday");
+    if (when === t("when.yesterday")) return t("chat.startedYesterday");
+    return t("chat.startedOn", { when });
   }
 </script>
 
-<header class="flex items-center gap-3 py-1" aria-label="Conversation details">
+<header class="flex items-center gap-3 py-1" aria-label={t("chat.details")}>
   <div
     class="h-px min-w-0 flex-1 bg-linear-to-r from-transparent to-paper-line"
     aria-hidden="true"
@@ -43,7 +39,9 @@
       {#if messageCount > 0}
         <li class="flex items-center gap-2 whitespace-nowrap tabular-nums">
           <span aria-hidden="true">·</span>
-          {messageCount === 1 ? "1 message" : `${messageCount} messages`}
+          {messageCount === 1
+            ? t("chat.oneMessage")
+            : t("chat.manyMessages", { count: messageCount })}
         </li>
       {/if}
       {#if shelf}
@@ -59,11 +57,11 @@
         type="button"
         class="relative inline-flex shrink-0 items-center gap-1.5 rounded-lg py-1 pr-2.5 pl-1.5 text-[0.75rem] text-ink-faint hover:bg-navy-900/6 hover:text-ink"
         onclick={onDownload}
-        aria-label="Download this conversation"
-        title="Download"
+        aria-label={t("chat.downloadConversation")}
+        title={t("chat.download")}
       >
         <Download size={14} class="shrink-0" aria-hidden="true" />
-        Download
+        {t("chat.download")}
         <span
           class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
           aria-hidden="true"

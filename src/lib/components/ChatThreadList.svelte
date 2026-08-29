@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ShelfView, ThreadMeta } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { threadShelfSubtitle } from "$lib/shelf-label";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
   import { Plus, Trash2, Lock, Pencil } from "@lucide/svelte";
@@ -57,18 +58,18 @@
     event.preventDefault();
     event.stopPropagation();
     const entries: NativeMenuEntry[] = [
-      { kind: "item", text: "Rename", action: () => beginRename(thread) },
+      { kind: "item", text: t("chat.rename"), action: () => beginRename(thread) },
     ];
     if (thread.messageCount > 0) {
       entries.push({
         kind: "item",
-        text: "Download",
+        text: t("chat.download"),
         action: () => onExport(thread.id),
       });
     }
     entries.push(
       { kind: "separator" },
-      { kind: "item", text: "Delete", action: () => onRemove(thread.id) },
+      { kind: "item", text: t("chat.delete"), action: () => onRemove(thread.id) },
     );
     void popupNativeMenu(entries).catch(() => {});
   }
@@ -87,14 +88,15 @@
     inert={!open}
   >
     <div data-tauri-drag-region class="flex items-center justify-between px-3 pt-3 pb-2">
-      <span class="pointer-events-none text-[11px] font-semibold text-ink-faint">Conversations</span
+      <span class="pointer-events-none text-[11px] font-semibold text-ink-faint"
+        >{t("chat.conversations")}</span
       >
       <button
         type="button"
         class="btn-ghost !p-1.5"
         onclick={onNew}
-        title="New conversation"
-        aria-label="New conversation"
+        title={t("chat.newConversation")}
+        aria-label={t("chat.newConversation")}
       >
         <Plus size={15} />
       </button>
@@ -111,7 +113,7 @@
             <ConversationFace avatarId={thread.avatarId} />
           </div>
           {#if editingId === thread.id}
-            <label class="sr-only" for="rename-{thread.id}">Conversation name</label>
+            <label class="sr-only" for="rename-{thread.id}">{t("chat.conversationName")}</label>
             <!-- svelte-ignore a11y_autofocus -->
             <input
               id="rename-{thread.id}"
@@ -145,8 +147,8 @@
               <button
                 type="button"
                 class="btn-ghost !p-1"
-                aria-label="Rename conversation"
-                title="Rename"
+                aria-label={t("chat.renameConversation")}
+                title={t("chat.rename")}
                 onclick={(e) => beginRename(thread, e)}
               >
                 <Pencil size={12.5} aria-hidden="true" />
@@ -154,7 +156,7 @@
               <button
                 type="button"
                 class="btn-ghost !p-1"
-                aria-label="Delete conversation"
+                aria-label={t("chat.deleteConversationAction")}
                 onclick={(e) => {
                   e.stopPropagation();
                   onRemove(thread.id);
@@ -171,7 +173,7 @@
       class="mx-3 mb-3 flex items-start gap-2.5 rounded-xl border border-navy-200 bg-navy-50 px-3 py-2.5 dark:border-white/10 dark:bg-white/8"
     >
       <Lock size={13} class="mt-0.5 shrink-0 text-navy-700 dark:text-navy-200" />
-      <p class="text-[11px] leading-snug text-ink-soft">What happens here stays here.</p>
+      <p class="text-[11px] leading-snug text-ink-soft">{t("privacyHere")}</p>
     </div>
   </aside>
 </div>

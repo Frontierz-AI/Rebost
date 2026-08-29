@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type Recipe } from "$lib/api";
-  import { promptNeedsShelf } from "$lib/placeholders";
+  import { recipeNeedsShelf } from "$lib/placeholders";
+  import { t } from "$lib/i18n.svelte";
   import { app, chatState, fillDraft } from "$lib/stores.svelte";
   import ConversationFace from "./ConversationFace.svelte";
   import mark from "../../assets/R.webp";
@@ -25,8 +26,8 @@
 
   const shown = $derived.by(() => {
     const hasShelf = !!chatState.selectedShelfId;
-    const withShelf = recipes.filter((recipe) => promptNeedsShelf(recipe.prompt));
-    const without = recipes.filter((recipe) => !promptNeedsShelf(recipe.prompt));
+    const withShelf = recipes.filter((recipe) => recipeNeedsShelf(recipe));
+    const without = recipes.filter((recipe) => !recipeNeedsShelf(recipe));
     const ordered = hasShelf ? [...withShelf, ...without] : without;
     return ordered.slice(0, 6);
   });
@@ -41,21 +42,21 @@
     <img src={mark} alt="Rebost" class="mb-3 w-[100px] rounded-2xl" />
   {/if}
   {#if !hasModel}
-    <h2 class="text-[19px] font-semibold text-ink">Install an AI first</h2>
+    <h2 class="text-[19px] font-semibold text-ink">{t("chat.installFirstTitle")}</h2>
     <p class="mt-1 mb-6 max-w-md text-center text-[13px] text-ink-soft">
-      Chat needs one on this computer before it can answer.
+      {t("chat.installFirstBody")}
     </p>
     <button
       type="button"
       class="btn-amber focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
       onclick={() => (app.view = "settings")}
     >
-      Install
+      {t("chat.install")}
     </button>
   {:else}
-    <h2 class="text-[19px] font-semibold text-ink">Start a conversation</h2>
+    <h2 class="text-[19px] font-semibold text-ink">{t("chat.startTitle")}</h2>
     <p class="mt-1 mb-6 max-w-md text-center text-[13px] text-ink-soft">
-      Ask a question. Choose a Shelf when the answer should come from your files.
+      {t("chat.startBody")}
     </p>
   {/if}
   {#if hasModel && shown.length > 0}
@@ -72,7 +73,7 @@
     </div>
   {:else if hasModel && recipes.length > 0 && !chatState.selectedShelfId && app.shelves.length > 0}
     <p class="max-w-md text-center text-[12.5px] text-ink-faint">
-      Choose a Shelf to see Recipes that use your files.
+      {t("chat.chooseShelfForRecipes")}
     </p>
   {/if}
 </div>

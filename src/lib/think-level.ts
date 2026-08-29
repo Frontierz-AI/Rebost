@@ -1,11 +1,33 @@
+import { t } from "./i18n.svelte";
 import type { ThinkLevel } from "./api";
 
 export const THINK_LEVELS = ["off", "light", "deep"] as const satisfies readonly ThinkLevel[];
 
+export function thinkLevelLabel(level: ThinkLevel): string {
+  switch (level) {
+    case "off":
+      return t("shelves.thinkOff");
+    case "light":
+      return t("shelves.thinkLight");
+    case "deep":
+      return t("shelves.thinkDeep");
+    default: {
+      const _exhaustive: never = level;
+      return _exhaustive;
+    }
+  }
+}
+
 export const THINK_LABELS: Record<ThinkLevel, string> = {
-  off: "Off",
-  light: "Light",
-  deep: "Deep",
+  get off() {
+    return thinkLevelLabel("off");
+  },
+  get light() {
+    return thinkLevelLabel("light");
+  },
+  get deep() {
+    return thinkLevelLabel("deep");
+  },
 };
 
 export function thinkLevelIndex(level: ThinkLevel): number {

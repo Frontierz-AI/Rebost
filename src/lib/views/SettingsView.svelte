@@ -14,10 +14,18 @@
     notifyInvokeError,
     refreshSettings,
     setTextSize,
+    setUiLocale,
   } from "$lib/stores.svelte";
   import { isMac } from "$lib/platform";
-  import { parseTextSize, TEXT_SIZE_LABELS, TEXT_SIZES } from "$lib/text-size";
+  import { parseTextSize, textSizeLabel, TEXT_SIZES } from "$lib/text-size";
   import { HOUSE_RULES_MAX_CHARS, clipChars } from "$lib/text-cap";
+  import {
+    APP_LOCALES,
+    parseAppLocale,
+    parseLocalePref,
+    t,
+    type LocalePref,
+  } from "$lib/i18n.svelte";
   import { Cpu, Search, BadgeCheck, Stethoscope, Save } from "@lucide/svelte";
   import DownloadProgress from "$lib/components/DownloadProgress.svelte";
   import ResetWorkspaceModal from "$lib/components/ResetWorkspaceModal.svelte";
@@ -29,6 +37,7 @@
   let houseRules = $state(app.settings?.houseRules ?? "");
   let onlineResearch = $state(app.settings?.allowOnlineResearch ?? false);
   let textSize = $state<TextSize>(parseTextSize(app.settings?.textSize));
+  let uiLocale = $state<LocalePref>(parseLocalePref(app.settings?.uiLocale));
   const mac = isMac();
   let rulesSaved = $state(false);
   let diag = $state<Diagnostics | null>(null);
@@ -51,6 +60,7 @@
     houseRules = clipChars(app.settings?.houseRules ?? "", HOUSE_RULES_MAX_CHARS);
     onlineResearch = app.settings?.allowOnlineResearch ?? false;
     textSize = parseTextSize(app.settings?.textSize);
+    uiLocale = parseLocalePref(app.settings?.uiLocale);
   });
 
   $effect(() => {
@@ -103,6 +113,27 @@
     void setTextSize(next);
   }
 
+  function saveUiLocale(next: LocalePref) {
+    uiLocale = next;
+    void setUiLocale(next);
+  }
+
+  const localeHelp = $derived(
+    uiLocale === "system"
+      ? t("locale.helpUsing", {
+          language: t(`locale.name_${parseAppLocale(app.settings?.resolvedLocale)}`),
+        })
+      : t("locale.help"),
+  );
+
+  const engineStatusLabel = $derived(
+    app.engine.state === "ready"
+      ? t("settings.engineReady")
+      : app.engine.state === "starting"
+        ? t("settings.engineWarming")
+        : t("settings.engineIdle"),
+  );
+
   async function saveOnline() {
     const next = onlineResearch;
     try {
@@ -131,35 +162,77 @@
 </script>
 
 <div class="mx-auto max-w-[760px] px-8 py-8">
-  <h1 class="mb-6 text-[22px] font-semibold text-ink">Settings</h1>
+  <h1 class="mb-6 text-[22px] font-semibold text-ink">{t("settings.title")}</h1>
 
   <section class="card mb-6 px-6 py-5">
-    <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
       <div class="min-w-0 flex-1">
-        <h2 id="text-size-heading" class="text-[15px] font-semibold text-ink">Text size</h2>
+        <h2 id="ui-locale-heading" class="text-[15px] font-semibold text-ink">
+          {t("locale.heading")}
+        </h2>
+        <p id="ui-locale-help" class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
+          {localeHelp}
+        </p>
+      </div>
+      <label class="sr-only" for="ui-locale">{t("locale.heading")}</label>
+      <span class="select-wrap w-auto min-w-[12rem] shrink-0">
+        <select
+          id="ui-locale"
+          name="ui-locale"
+          class="input select h-9 cursor-default py-0"
+          aria-labelledby="ui-locale-heading"
+          aria-describedby="ui-locale-help"
+          bind:value={uiLocale}
+          onchange={() => saveUiLocale(uiLocale)}
+        >
+          <option value="system">{t("locale.system")}</option>
+          {#each APP_LOCALES as code (code)}
+            <option value={code}>{t(`locale.${code}`)}</option>
+          {/each}
+        </select>
+        <svg
+          viewBox="0 0 8 5"
+          width="8"
+          height="5"
+          fill="none"
+          class="pointer-events-none col-start-2 row-start-1 place-self-center text-ink-faint"
+          aria-hidden="true"
+        >
+          <path d="M.5.5 4 4 7.5.5" stroke="currentcolor" stroke-linecap="round" />
+        </svg>
+      </span>
+    </div>
+  </section>
+
+  <section class="card mb-6 px-6 py-5">
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+      <div class="min-w-0 flex-1">
+        <h2 id="text-size-heading" class="text-[15px] font-semibold text-ink">
+          {t("settings.textSize")}
+        </h2>
         <p id="text-size-help" class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
-          Default is the original size. Large and Larger make the text on this window bigger.
-          {mac ? "⌘+ and ⌘- change the size." : "Ctrl+ and Ctrl- change the size."}
+          {t("settings.textSizeHelp")}
+          {mac ? t("settings.textSizeKeysMac") : t("settings.textSizeKeysWin")}
         </p>
       </div>
       <div
         role="radiogroup"
         aria-labelledby="text-size-heading"
         aria-describedby="text-size-help"
-        class="inline-flex shrink-0 items-center rounded-full border border-paper-line bg-paper-soft p-0.5"
+        class="segmented"
       >
         {#each TEXT_SIZES as size (size)}
           <label
-            class="cursor-default rounded-full px-3 py-1.5 font-medium text-ink-soft
-              has-[:checked]:bg-surface has-[:checked]:text-ink has-[:checked]:shadow-card
-              has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2
-              has-[:focus-visible]:outline-navy-800 dark:has-[:checked]:shadow-none
-              {size === 'default'
+            class="segmented-item {size === 'default'
               ? 'text-[12px]'
               : size === 'large'
                 ? 'text-[13px]'
                 : 'text-[14px]'}"
           >
+            <span
+              class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
+              aria-hidden="true"
+            ></span>
             <input
               id="text-size-{size}"
               name="text-size"
@@ -169,7 +242,7 @@
               checked={textSize === size}
               onchange={() => saveTextSize(size)}
             />
-            {TEXT_SIZE_LABELS[size]}
+            {textSizeLabel(size)}
           </label>
         {/each}
       </div>
@@ -188,23 +261,22 @@
 
   {#snippet houseRulesSection()}
     <section class="card mb-6 px-6 py-5">
-      <h2 class="mb-1 text-[15px] font-semibold text-ink">House rules</h2>
+      <h2 class="mb-1 text-[15px] font-semibold text-ink">{t("settings.houseRules")}</h2>
       <p class="mb-3 text-[12.5px] leading-snug text-ink-soft">
-        How the AI should answer: tone, language, what never to promise. Set this once. Rebost
-        follows it in every conversation and Recipe.
+        {t("settings.houseRulesHelp")}
       </p>
-      <label class="sr-only" for="house-rules">House rules</label>
+      <label class="sr-only" for="house-rules">{t("settings.houseRules")}</label>
       <textarea
         id="house-rules"
         name="house-rules"
         class="input min-h-32 cursor-text resize-y select-text"
-        placeholder={"Examples:\n· Answer in the language of the documents unless asked otherwise.\n· We are a furniture workshop. Use first names.\n· Never promise delivery dates; say the team will confirm."}
+        placeholder={t("settings.houseRulesPlaceholder")}
         maxlength={HOUSE_RULES_MAX_CHARS}
         bind:value={houseRules}></textarea>
       <div class="mt-2.5 flex justify-end">
         <button type="button" class="btn-primary" onclick={saveRules}>
           <Save size={13.5} />
-          {rulesSaved ? "Saved" : "Save house rules"}
+          {rulesSaved ? t("settings.saved") : t("settings.saveHouseRules")}
         </button>
       </div>
     </section>
@@ -223,10 +295,9 @@
           onchange={() => void saveOnline()}
         />
         <span>
-          <h2 class="text-[15px] font-semibold text-ink">Online</h2>
+          <h2 class="text-[15px] font-semibold text-ink">{t("settings.online")}</h2>
           <p id="online-research-help" class="mt-1 text-[12.5px] leading-snug text-ink-soft">
-            Turn this on so Chat can look things up on the public web. Your files stay on this
-            computer. The answer is still written here.
+            {t("settings.onlineHelp")}
           </p>
         </span>
       </label>
@@ -235,7 +306,7 @@
 
   {#snippet aiSection()}
     <section class="card mb-6 px-6 py-5">
-      <h2 class="mb-1 text-[15px] font-semibold text-ink">AI</h2>
+      <h2 class="mb-1 text-[15px] font-semibold text-ink">{t("settings.ai")}</h2>
       {#if machine}
         <p class="mb-4 flex items-center gap-1.5 text-[12px] text-ink-faint">
           <Cpu size={12.5} />
@@ -249,9 +320,7 @@
           <DownloadProgress
             download={modelDownload}
             cancelable
-            note={app.settings?.activeModel
-              ? "You can keep using Chat while this finishes."
-              : undefined}
+            note={app.settings?.activeModel ? t("settings.keepUsingChat") : undefined}
           />
         </div>
       {:else if engineDownload}
@@ -269,8 +338,8 @@
           <div class="min-w-0 flex-1">
             <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
             <p class="text-[11.5px] text-ink-soft">
-              {formatBytes(model.sizeBytes)}{model.license ? ` · ${model.license}` : ""} · installed on
-              this computer
+              {formatBytes(model.sizeBytes)}{model.license ? ` · ${model.license}` : ""} ·
+              {t("settings.installedHere")}
             </p>
           </div>
           <span
@@ -281,11 +350,7 @@
                 ? 'bg-amber-350/50 text-amber-550'
                 : 'bg-paper-soft text-ink-faint'}"
           >
-            {app.engine.state === "ready"
-              ? "Ready"
-              : app.engine.state === "starting"
-                ? "Warming up…"
-                : "Idle"}
+            {engineStatusLabel}
           </span>
         </div>
       {/if}
@@ -295,12 +360,10 @@
           <ModelSuggestionCards
             suggestions={machine.suggestions}
             installing={!!modelDownload}
-            heading={app.settings?.activeModel
-              ? "Other AIs that fit"
-              : "Suggested for this computer"}
+            heading={app.settings?.activeModel ? t("settings.otherAis") : t("settings.suggested")}
             lede={app.settings?.activeModel
-              ? "Other picks sized for this computer."
-              : "Sized for this computer."}
+              ? t("settings.otherAisLede")
+              : t("settings.suggestedLede")}
             onInstall={installRec}
           />
         </div>
@@ -310,9 +373,9 @@
         class="mt-5 flex items-center gap-4 border-t border-navy-950/10 pt-5 dark:border-white/10"
       >
         <div class="min-w-0 flex-1">
-          <h3 class="text-[15px] font-semibold text-ink">Explore other AIs</h3>
+          <h3 class="text-[15px] font-semibold text-ink">{t("settings.exploreHeading")}</h3>
           <p class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
-            Browse public catalogs for something else. Only the search words leave this computer.
+            {t("settings.exploreLede")}
           </p>
         </div>
         <button
@@ -324,7 +387,7 @@
           onclick={() => (showExplore = true)}
         >
           <Search size={13.5} aria-hidden="true" />
-          Browse AIs
+          {t("settings.browseAis")}
         </button>
       </div>
     </section>
@@ -334,9 +397,9 @@
     <div class="flex items-center gap-4">
       <img src={icon} alt="" class="h-12 w-12 rounded-[22%]" />
       <div class="min-w-0 flex-1">
-        <h2 class="text-[15px] font-semibold text-ink">About Rebost</h2>
+        <h2 class="text-[15px] font-semibold text-ink">{t("settings.aboutHeading")}</h2>
         <p class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
-          Private AI that works with your files.
+          {t("officialLineShort")}
         </p>
       </div>
       <button
@@ -344,7 +407,7 @@
         class="btn-outline shrink-0"
         onclick={() => api.showAboutWindow().catch(notifyInvokeError)}
       >
-        Open
+        {t("settings.open")}
       </button>
     </div>
   </section>
@@ -352,10 +415,9 @@
   <section class="card mb-6 px-6 py-5">
     <div class="flex items-center gap-4">
       <div class="min-w-0 flex-1">
-        <h2 class="text-[15px] font-semibold text-ink">Reset Rebost</h2>
+        <h2 class="text-[15px] font-semibold text-ink">{t("settings.resetHeading")}</h2>
         <p class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
-          Deletes conversations, settings, House rules, Recipes, what Rebost has read, and the AI.
-          Your own files stay on disk. Rebost forgets the Shelves that pointed at them.
+          {t("settings.resetHelp")}
         </p>
       </div>
       <button
@@ -366,7 +428,7 @@
         aria-controls={showReset ? "reset-workspace-dialog" : undefined}
         onclick={() => (showReset = true)}
       >
-        Reset
+        {t("settings.reset")}
       </button>
     </div>
   </section>
@@ -374,7 +436,7 @@
   <section class="mb-10">
     <button type="button" class="btn-ghost !text-[12px]" onclick={openDiagnostics}>
       <Stethoscope size={13} />
-      {showDiag ? "Hide diagnostics" : "Diagnostics"}
+      {showDiag ? t("settings.hideDiagnostics") : t("settings.diagnostics")}
     </button>
     {#if showDiag && diag}
       <div class="card mt-2 px-5 py-4 font-mono text-[11.5px] leading-relaxed text-ink-soft">
@@ -386,9 +448,13 @@
         </p>
         <p>data: {diag.dataDir}</p>
         <p class="mt-1 text-[10.5px] text-ink-faint">
-          The data folder path is local to this computer. Do not paste it into a public issue.
+          {t("settings.dataFolderHint")}
         </p>
-        <p>model: {diag.model ? `${diag.model.name} · ${diag.model.file}` : "none installed"}</p>
+        <p>
+          model: {diag.model
+            ? `${diag.model.name} · ${diag.model.file}`
+            : t("settings.noneInstalled")}
+        </p>
         <p>index records: {diag.indexRecords} · context budget: {diag.contextBudgetChars} chars</p>
         {#if diag.benchmark}
           <p>
@@ -411,14 +477,14 @@
             <button
               type="button"
               class="rounded-sm text-left break-all underline decoration-navy-200 underline-offset-2 hover:text-ink hover:decoration-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800"
-              aria-label="Open engine log"
+              aria-label={t("settings.openEngineLog")}
               onclick={() => api.openEngineLog().catch(notifyInvokeError)}
             >
               <code>{diag.engineLogPath}</code>
             </button>
           </p>
           <p class="mt-1 text-[10.5px] leading-relaxed text-ink-faint">
-            Log contents stay on disk (they can name local files).
+            {t("settings.logOnDisk")}
           </p>
         {/if}
       </div>

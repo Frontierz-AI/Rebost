@@ -13,7 +13,7 @@
     refreshThreads,
   } from "$lib/stores.svelte";
   import { clipChars, PROMPT_MAX_CHARS } from "$lib/text-cap";
-  import { groupSourceChips, sourceChipLabel } from "$lib/source-chips";
+  import { groupSourceChips, type SourceChip } from "$lib/source-chips";
   import {
     isOutboundPlaceholder,
     outboundPlaceholderId,
@@ -31,6 +31,7 @@
   import ThinkingPanel from "$lib/components/ThinkingPanel.svelte";
   import ConversationFace from "$lib/components/ConversationFace.svelte";
   import { confirmDanger } from "$lib/native-dialog";
+  import { t } from "$lib/i18n.svelte";
   import { tick } from "svelte";
 
   let composerEl = $state<HTMLTextAreaElement | null>(null);
@@ -94,7 +95,21 @@
     openThinking = { ...openThinking, [withThink.id]: true };
   });
 
-  const dropHint = "Drop files to use them in this conversation";
+  function citationPage(source: SourcePassage): string | null {
+    if (!source.pageStart) return null;
+    if (source.pageEnd && source.pageEnd !== source.pageStart) {
+      return t("chat.pageRange", { start: source.pageStart, end: source.pageEnd });
+    }
+    return t("chat.page", { start: source.pageStart });
+  }
+
+  function chipAriaLabel(chip: SourceChip): string {
+    const parts = [chip.sids.join(" · "), chip.source.title];
+    if (chip.showSection && chip.source.section) parts.push(chip.source.section);
+    const page = citationPage(chip.source);
+    if (page) parts.push(page);
+    return parts.filter(Boolean).join(" ");
+  }
 
   async function chooseShelf(shelfId: string | null) {
     rememberPreferredShelf(shelfId);
@@ -276,7 +291,7 @@
         ? Math.max(thread?.messageCount ?? 0, chatState.messages.length)
         : (thread?.messageCount ?? 0);
     if (count >= 5) {
-      const ok = await confirmDanger("Delete this conversation? This cannot be undone.", "Delete");
+      const ok = await confirmDanger(t("chat.deleteConversation"), t("chat.delete"));
       if (!ok) return;
     }
     try {
@@ -325,7 +340,7 @@
       class="pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-500 bg-navy-100/50 dark:bg-white/10"
     >
       <p class="rounded-xl bg-navy-900 px-4 py-2 text-[13.5px] font-medium text-white shadow-pop">
-        {dropHint}
+        {t("chat.dropHint")}
       </p>
     </div>
   {/if}
@@ -367,9 +382,9 @@
                 class="btn-outline !py-1.5 !text-[12.5px]"
                 onclick={() => void readMore()}
                 disabled={chatState.loadingOlder}
-                aria-label="Read earlier messages"
+                aria-label={t("chat.readEarlier")}
               >
-                Read more
+                {t("chat.readMore")}
               </button>
             </div>
           {/if}
@@ -410,10 +425,11 @@
                     {#if message.sources.length > 0}
                       <div class="mt-2.5 flex flex-wrap gap-1.5 border-t border-paper-line pt-2.5">
                         {#each groupSourceChips(message.sources) as chip (chip.key)}
+                          {@const page = citationPage(chip.source)}
                           <button
                             type="button"
                             class="chip border border-navy-200 bg-navy-50 text-navy-700 hover:border-navy-500 hover:bg-navy-200/60 dark:border-white/10 dark:bg-white/8 dark:text-navy-100 dark:hover:border-navy-400 dark:hover:bg-white/12"
-                            aria-label={sourceChipLabel(chip)}
+                            aria-label={chipAriaLabel(chip)}
                             onclick={() => (openSource = chip.source)}
                           >
                             <span class="font-bold">{chip.sids.join(" · ")}</span>
@@ -425,15 +441,15 @@
                                 >{chip.source.section}</span
                               >
                             {/if}
-                            {#if chip.page}
-                              <span class="text-navy-400 dark:text-navy-300">{chip.page}</span>
+                            {#if page}
+                              <span class="text-navy-400 dark:text-navy-300">{page}</span>
                             {/if}
                           </button>
                         {/each}
                       </div>
                     {/if}
                     {#if message.status === "stopped"}
-                      <p class="mt-1.5 text-[11px] text-ink-faint italic">Stopped.</p>
+                      <p class="mt-1.5 text-[11px] text-ink-faint italic">{t("chat.stopped")}</p>
                     {/if}
                   </div>
                   <CopyActions text={message.text} subtle />

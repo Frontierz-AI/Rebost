@@ -12,6 +12,7 @@
   import { focusTrap } from "$lib/focus-trap";
   import { isMac } from "$lib/platform";
   import icon from "../../assets/rebost-icon.png";
+  import { t } from "$lib/i18n.svelte";
 
   let info = $state<AppUpdate | null>(null);
   let installing = $state(false);
@@ -27,7 +28,7 @@
   const determinate = $derived(!!contentLength && contentLength > 0);
 
   onMount(() => {
-    document.title = "Update Rebost";
+    document.title = t("update.windowTitle");
     api
       .updateInfo()
       .then((value) => (info = value))
@@ -79,7 +80,7 @@
     try {
       await api.installUpdate();
     } catch {
-      error = "The update couldn't be installed. Try again.";
+      error = t("update.failed");
       installing = false;
     }
   }
@@ -99,17 +100,17 @@
       alt=""
       class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper dark:shadow-none"
     />
-    <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">Update Rebost</h1>
+    <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">{t("update.heading")}</h1>
     {#if info}
       <p class="mt-1 text-[11.5px] font-medium tracking-wide text-navy-500">
-        Version {info.version} is available
+        {t("update.available", { version: info.version })}
       </p>
       <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
-        You are on {info.currentVersion}. Updating replaces this app and restarts Rebost.
+        {t("update.youAreOn", { version: info.currentVersion })}
       </p>
     {:else}
       <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
-        You are on the latest version.
+        {t("update.latest")}
       </p>
     {/if}
   </header>
@@ -125,7 +126,7 @@
   {#if installing}
     <div class="about-reveal mx-7 mt-5">
       <div class="flex items-center justify-between text-[13px]">
-        <p class="font-medium text-ink">Downloading the update…</p>
+        <p class="font-medium text-ink">{t("update.downloading")}</p>
         <p class="text-ink-soft tabular-nums">
           {formatTransferBytes(downloaded)}{contentLength
             ? ` / ${formatTransferBytes(contentLength)}`
@@ -138,7 +139,7 @@
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={determinate ? percent : undefined}
-        aria-label="Downloading the update"
+        aria-label={t("update.downloadingLabel")}
       >
         {#if determinate}
           <div
@@ -159,10 +160,12 @@
   {/if}
 
   <div class="about-reveal mt-auto flex justify-end gap-2 px-7 py-6">
-    <button type="button" class="btn-ghost" disabled={installing} onclick={close}>Later</button>
+    <button type="button" class="btn-ghost" disabled={installing} onclick={close}
+      >{t("update.later")}</button
+    >
     {#if info}
       <button type="button" class="btn-primary" disabled={installing} onclick={install}>
-        {installing ? "Updating…" : "Update"}
+        {installing ? t("update.updating") : t("update.update")}
       </button>
     {/if}
   </div>

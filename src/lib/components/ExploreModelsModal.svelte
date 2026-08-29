@@ -6,6 +6,7 @@
     chipSortActive,
     columnAriaSort,
     defaultExploreSortDir,
+    exploreSortLabel,
     nextExploreSort,
     normalizeExploreQuery,
     parseExploreRepoQuery,
@@ -18,6 +19,7 @@
   import { focusTrap } from "$lib/focus-trap";
   import { dialogPanel, overlay } from "$lib/motion";
   import { notifyInvokeError } from "$lib/stores.svelte";
+  import { t } from "$lib/i18n.svelte";
   import { ArrowDown, ArrowUp, ArrowUpDown, Download, Info, Search, X } from "@lucide/svelte";
   import { onMount } from "svelte";
   import ModelInfoModal from "$lib/components/ModelInfoModal.svelte";
@@ -48,15 +50,17 @@
   const remaining = $derived(Math.max(0, sorted.length - visibleCount));
   const showSkeleton = $derived(searching && results === null);
   const statusText = $derived.by(() => {
-    if (showSkeleton) return "Looking up AIs that fit this computer…";
-    if (failed) return "Couldn't reach the catalogs. Check your connection and try again.";
+    if (showSkeleton) return t("explore.lookingUp");
+    if (failed) return t("explore.couldntReach");
     if (results !== null && results.length === 0) {
-      return query.trim() ? "Nothing found for that search." : "No AIs to show right now.";
+      return query.trim() ? t("explore.nothingFound") : t("explore.noneToShow");
     }
     if (results !== null) {
       return remaining > 0
-        ? `Showing ${visibleCount} of ${sorted.length}`
-        : `${sorted.length} ${sorted.length === 1 ? "AI" : "AIs"}`;
+        ? t("explore.showingOf", { visible: visibleCount, total: sorted.length })
+        : sorted.length === 1
+          ? t("explore.oneAi")
+          : t("explore.manyAis", { count: sorted.length });
     }
     return "";
   });
@@ -164,14 +168,13 @@
     <div class="relative px-5 pt-5 pb-4">
       <div class="pr-10">
         <h2 id="explore-models-title" class="text-[16px] font-semibold text-ink">
-          Explore other AIs
+          {t("explore.title")}
         </h2>
         <p
           id="explore-models-lede"
           class="mt-1 max-w-[62ch] text-[12.5px] leading-snug text-ink-soft"
         >
-          Official AIs that fit this computer, from the last few months, come first when they make
-          good use of your memory. Only the search words leave this computer.
+          {t("explore.lede")}
         </p>
       </div>
       <div class="mt-4 flex flex-col gap-3">
@@ -182,12 +185,12 @@
               class="absolute top-1/2 left-3 -translate-y-1/2 text-ink-faint"
               aria-hidden="true"
             />
-            <label class="sr-only" for="explore-model-search">Search for an AI</label>
+            <label class="sr-only" for="explore-model-search">{t("explore.search")}</label>
             <input
               id="explore-model-search"
               name="explore-model-search"
               class="input !pl-9"
-              placeholder="Muse, Gemma, or Qwen/Qwen3"
+              placeholder={t("explore.searchPlaceholder")}
               autocomplete="off"
               spellcheck="false"
               bind:value={query}
@@ -196,21 +199,21 @@
             />
           </div>
           <button type="button" class="btn-primary shrink-0" onclick={submitSearch}>
-            {searching ? "Searching…" : "Search"}
+            {searching ? t("explore.searching") : t("explore.searchAction")}
           </button>
         </div>
 
-        <div class="flex flex-wrap gap-1.5" role="group" aria-label="Sort">
+        <div class="flex flex-wrap gap-1.5" role="group" aria-label={t("explore.sort")}>
           {#each EXPLORE_SORTS as option (option.id)}
             <button
               type="button"
-              class="inline-flex cursor-default items-center rounded-full px-2.5 py-1 text-[12px] font-medium
+              class="inline-flex cursor-default items-center rounded-full px-2.5 py-1.5 text-[12px] leading-none font-medium
                 ring-1 ring-navy-950/10 aria-pressed:bg-navy-900 aria-pressed:text-white aria-pressed:ring-navy-900
                 dark:ring-white/10 dark:aria-pressed:bg-white dark:aria-pressed:text-navy-950 dark:aria-pressed:ring-white"
               aria-pressed={chipSortActive(option.id, sort, sortDir)}
               onclick={() => applyChip(option.id)}
             >
-              {option.label}
+              {exploreSortLabel(option.id)}
             </button>
           {/each}
         </div>
@@ -218,7 +221,7 @@
       <button
         type="button"
         class="btn-ghost absolute top-4 right-4 !p-1.5"
-        aria-label="Close"
+        aria-label={t("explore.close")}
         onclick={onClose}
       >
         <X size={15} aria-hidden="true" />
@@ -231,7 +234,7 @@
       {#if showSkeleton}
         <div class="px-5 py-4" aria-live="polite">
           <p class="text-[13px] font-medium text-ink">{statusText}</p>
-          <p class="mt-1 text-[12px] text-ink-soft">This only sends the search words.</p>
+          <p class="mt-1 text-[12px] text-ink-soft">{t("explore.onlySearchWords")}</p>
           <table class="mt-4 w-full" aria-hidden="true">
             <tbody class="divide-y divide-navy-950/10 dark:divide-white/10">
               {#each [1, 2, 3, 4, 5, 6, 7] as row (row)}
@@ -268,7 +271,7 @@
         </div>
       {:else if visible.length > 0}
         <table class="w-full table-fixed text-left text-[13px]">
-          <caption class="sr-only">AIs from public catalogs</caption>
+          <caption class="sr-only">{t("explore.caption")}</caption>
           <colgroup>
             <col />
             <col class="w-[7.5rem]" />
@@ -281,8 +284,12 @@
             class="sticky top-0 z-10 border-b border-navy-950/15 bg-paper-soft text-[12px] font-semibold text-ink dark:border-white/15 dark:bg-white/10"
           >
             <tr>
-              <th scope="col" class="px-5 py-3 font-semibold whitespace-nowrap">AI Name</th>
-              <th scope="col" class="px-3 py-3 font-semibold whitespace-nowrap">Publisher</th>
+              <th scope="col" class="px-5 py-3 font-semibold whitespace-nowrap"
+                >{t("explore.colName")}</th
+              >
+              <th scope="col" class="px-3 py-3 font-semibold whitespace-nowrap"
+                >{t("explore.colPublisher")}</th
+              >
               <th
                 scope="col"
                 class="px-3 py-3 font-semibold whitespace-nowrap"
@@ -294,7 +301,7 @@
                   aria-current={sort === "size"}
                   onclick={() => clickColumn("size")}
                 >
-                  Size
+                  {t("explore.colSize")}
                   {#if sort === "size" && sortDir === "asc"}
                     <ArrowUp size={11} aria-hidden="true" />
                   {:else if sort === "size"}
@@ -315,7 +322,7 @@
                   aria-current={sort === "downloads"}
                   onclick={() => clickColumn("downloads")}
                 >
-                  Downloads
+                  {t("explore.colDownloads")}
                   {#if sort === "downloads" && sortDir === "asc"}
                     <ArrowUp size={11} aria-hidden="true" />
                   {:else if sort === "downloads"}
@@ -336,7 +343,7 @@
                   aria-current={sort === "released"}
                   onclick={() => clickColumn("released")}
                 >
-                  Released
+                  {t("explore.colReleased")}
                   {#if sort === "released" && sortDir === "asc"}
                     <ArrowUp size={11} aria-hidden="true" />
                   {:else if sort === "released"}
@@ -347,7 +354,7 @@
                 </button>
               </th>
               <th scope="col" class="px-5 py-3 text-right font-semibold whitespace-nowrap">
-                <span class="sr-only">Actions</span>
+                <span class="sr-only">{t("explore.actions")}</span>
               </th>
             </tr>
           </thead>
@@ -362,20 +369,20 @@
                       <span
                         class="shrink-0 rounded-full bg-navy-100 px-2 py-0.5 text-[10px] font-semibold text-navy-800 dark:bg-white/10 dark:text-navy-100"
                       >
-                        Official
+                        {t("explore.official")}
                       </span>
                     {/if}
                     {#if fit === "ok"}
                       <span
                         class="shrink-0 rounded-full bg-ready px-2 py-0.5 text-[10px] font-semibold text-ready-ink dark:bg-navy-200/20 dark:text-navy-200"
                       >
-                        Fits this computer
+                        {t("explore.fits")}
                       </span>
                     {:else if fit === "no"}
                       <span
                         class="shrink-0 rounded-full bg-paper-soft px-2 py-0.5 text-[10px] font-semibold text-ink-faint dark:bg-white/8"
                       >
-                        Too large
+                        {t("explore.tooLarge")}
                       </span>
                     {/if}
                   </div>
@@ -411,7 +418,7 @@
                       onclick={() => (info = result)}
                     >
                       <Info size={12.5} aria-hidden="true" />
-                      More info
+                      {t("explore.moreInfo")}
                     </button>
                     <button
                       type="button"
@@ -420,7 +427,7 @@
                       disabled={installing || fit === "no"}
                     >
                       <Download size={12.5} aria-hidden="true" />
-                      Install
+                      {t("explore.install")}
                     </button>
                   </div>
                 </td>
@@ -443,8 +450,12 @@
       </p>
       {#if remaining > 0}
         <button type="button" class="btn-outline !py-1.5 !text-[12px]" onclick={() => (page += 1)}>
-          See more
-          <span class="text-ink-faint">({Math.min(remaining, EXPLORE_PAGE_SIZE)} more)</span>
+          {t("explore.seeMore")}
+          <span class="text-ink-faint"
+            >{t("explore.moreCount", {
+              count: Math.min(remaining, EXPLORE_PAGE_SIZE),
+            })}</span
+          >
         </button>
       {/if}
     </div>

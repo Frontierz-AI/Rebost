@@ -1,12 +1,19 @@
 /** Visible name for a conversation-only upload Shelf. */
-export const UPLOADED_FILES_LABEL = "Uploaded files";
+import { t } from "./i18n.svelte";
+
+export function uploadedFilesLabel(): string {
+  return t("shelves.uploadedFiles");
+}
+
+/** @deprecated Use uploadedFilesLabel(). */
+export const UPLOADED_FILES_LABEL = uploadedFilesLabel;
 
 export function isUploadShelf(shelf: { threadId?: string | null } | null | undefined): boolean {
   return Boolean(shelf?.threadId);
 }
 
 export function shelfDisplayName(shelf: { name: string; threadId?: string | null }): string {
-  return isUploadShelf(shelf) ? UPLOADED_FILES_LABEL : shelf.name;
+  return isUploadShelf(shelf) ? uploadedFilesLabel() : shelf.name;
 }
 
 export function threadShelfSubtitle(
@@ -18,6 +25,6 @@ export function threadShelfSubtitle(
   if (libraryId) {
     return shelves.find((shelf) => shelf.id === libraryId)?.name ?? null;
   }
-  if (thread.uploadShelfId) return UPLOADED_FILES_LABEL;
+  if (thread.uploadShelfId) return uploadedFilesLabel();
   return null;
 }

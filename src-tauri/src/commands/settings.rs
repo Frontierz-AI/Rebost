@@ -10,6 +10,7 @@ use super::{friendly, CmdResult};
 use crate::core::Ctx;
 use crate::engine::models::MachineProfile;
 use crate::engine::{Engine, EngineStatus};
+use crate::i18n::{AppLocale, UiLocalePref};
 use crate::paths::Paths;
 use crate::settings::{ActiveModel, TextSize};
 
@@ -21,19 +22,31 @@ pub struct SettingsView {
     pub active_model: Option<ActiveModel>,
     pub allow_online_research: bool,
     pub text_size: TextSize,
+    pub ui_locale: UiLocalePref,
+    pub resolved_locale: AppLocale,
 }
 
-/// Return the settings the UI needs.
-#[tauri::command]
-pub fn settings_get(ctx: State<'_, Arc<Ctx>>) -> SettingsView {
+fn settings_view(ctx: &Ctx) -> SettingsView {
     let settings = crate::core::read_lock(&ctx.settings);
+    let resolved_locale = crate::i18n::resolve(
+        settings.ui_locale,
+        crate::i18n::system_locale_tag().as_deref(),
+    );
     SettingsView {
         house_rules: settings.house_rules.clone(),
         onboarding_done: settings.onboarding_done,
         active_model: settings.active_model.clone(),
         allow_online_research: settings.allow_online_research,
         text_size: settings.text_size,
+        ui_locale: settings.ui_locale,
+        resolved_locale,
     }
+}
+
+/// Return the settings the UI needs.
+#[tauri::command]
+pub fn settings_get(ctx: State<'_, Arc<Ctx>>) -> SettingsView {
+    settings_view(&ctx)
 }
 
 /// Save House rules.
@@ -58,6 +71,20 @@ pub fn settings_set_text_size(ctx: State<'_, Arc<Ctx>>, size: TextSize) {
     ctx.save_settings();
 }
 
+/// Follow the computer, or pin a shipped UI catalog. Rebuilds menus.
+#[tauri::command]
+pub fn settings_set_ui_locale(
+    app: AppHandle,
+    ctx: State<'_, Arc<Ctx>>,
+    locale: UiLocalePref,
+) -> CmdResult<SettingsView> {
+    crate::core::write_lock(&ctx.settings).ui_locale = locale;
+    ctx.save_settings();
+    crate::i18n::apply(locale);
+    crate::i18n::rebuild_menu(&app).map_err(friendly)?;
+    Ok(settings_view(&ctx))
+}
+
 /// Mark first-run as done.
 #[tauri::command]
 pub fn settings_finish_onboarding(ctx: State<'_, Arc<Ctx>>) {
@@ -67,7 +94,7 @@ pub fn settings_finish_onboarding(ctx: State<'_, Arc<Ctx>>) {
 
 pub(crate) fn require_reset_confirmation(confirmation: &str) -> CmdResult<()> {
     if confirmation.trim() != crate::reset::CONFIRMATION {
-        return Err("Type DELETE to confirm.".into());
+        return Err(rust_i18n::t!("errors.typeDelete").into());
     }
     Ok(())
 }
@@ -162,7 +189,7 @@ pub fn diagnostics(
 pub(crate) fn require_engine_log(paths: &Paths) -> CmdResult<std::path::PathBuf> {
     let log_path = paths.engine_log_path();
     if !log_path.is_file() {
-        return Err("The engine log isn't on this computer yet.".into());
+        return Err(rust_i18n::t!("errors.engineLogMissing").into());
     }
     Ok(log_path)
 }

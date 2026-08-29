@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ChatActivityStep } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { visibleActivity } from "$lib/thinking-status";
   import { ChevronDown } from "@lucide/svelte";
   import type { Snippet } from "svelte";
@@ -28,16 +29,16 @@
   const hasThinking = $derived(thinkingText.length > 0);
   const hasActivity = $derived(steps.length > 0);
   const visible = $derived(hasThinking || hasActivity);
-  const label = $derived(hasThinking ? "Thinking" : "Looked through");
+  const label = $derived(hasThinking ? t("thinking.labelThinking") : t("thinking.labelLooked"));
   const panelId = $derived(`${id}-panel`);
   const compactLabel = $derived(
     open
       ? hasThinking
-        ? "Hide thinking"
-        : "Hide what it looked through"
+        ? t("thinking.hideThinking")
+        : t("thinking.hideLooked")
       : hasThinking
-        ? "Show thinking"
-        : "Show what it looked through",
+        ? t("thinking.showThinking")
+        : t("thinking.showLooked"),
   );
   const chevronClass = $derived(
     `shrink-0 transition-transform duration-150 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${open ? "" : "-rotate-90"}`,

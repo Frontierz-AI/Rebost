@@ -9,6 +9,8 @@ import { restoreTextSize } from "./lib/text-size";
 import { suppressWebviewBeep } from "./lib/keys";
 import { installNativeContextMenus } from "./lib/native-menu";
 import { osFamily } from "./lib/platform";
+import { api } from "./lib/api";
+import { applyLocale, parseAppLocale } from "./lib/i18n.svelte";
 
 document.documentElement.dataset.os = osFamily();
 applyColorSchemeFromSystem();
@@ -36,23 +38,35 @@ function extraWindow(): ExtraWindow | null {
 
 const target = document.getElementById("app")!;
 const kind = extraWindow();
-let app;
-switch (kind) {
-  case "about":
-    app = mount(AboutWindow, { target });
-    break;
-  case "update":
-    app = mount(UpdateWindow, { target });
-    break;
-  case null:
-    restoreTextSize();
-    app = mount(App, { target });
-    break;
-  default: {
-    const _exhaustive: never = kind;
-    app = mount(App, { target });
-    void _exhaustive;
+
+async function applyWindowLocale() {
+  try {
+    const settings = await api.settingsGet();
+    applyLocale(parseAppLocale(settings.resolvedLocale));
+  } catch {
+    applyLocale("en");
   }
 }
 
-export default app;
+void (async () => {
+  if (kind === "about" || kind === "update") {
+    await applyWindowLocale();
+  }
+  switch (kind) {
+    case "about":
+      mount(AboutWindow, { target });
+      break;
+    case "update":
+      mount(UpdateWindow, { target });
+      break;
+    case null:
+      restoreTextSize();
+      mount(App, { target });
+      break;
+    default: {
+      const _exhaustive: never = kind;
+      mount(App, { target });
+      void _exhaustive;
+    }
+  }
+})();

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { PII_CATEGORY_ORDER, piiLabel } from "$lib/api";
+  import { t } from "$lib/i18n.svelte";
   import { focusTrap } from "$lib/focus-trap";
   import { countFittingChips, visibleSyncedFolders } from "$lib/synced-folders";
   import { ShieldCheck } from "@lucide/svelte";
@@ -107,7 +108,7 @@
     onclick={() => toggle("any")}
   >
     <ShieldCheck size={12} class="shrink-0" aria-hidden="true" />
-    {filesWithPii} files contain personal information
+    {t("pii.filesContain", { count: filesWithPii })}
   </button>
 {/snippet}
 
@@ -122,7 +123,7 @@
         <button
           type="button"
           class="chip shrink-0 border border-paper-line bg-surface text-ink-soft hover:bg-navy-100/70 dark:hover:bg-white/8"
-          aria-label="More personal information"
+          aria-label={t("pii.more")}
           aria-haspopup="dialog"
           aria-expanded={moreOpen}
           aria-controls="pii-categories-menu"
@@ -140,12 +141,12 @@
             id="pii-categories-menu"
             class="absolute right-0 bottom-full z-30 mb-1.5 max-h-64 min-w-[220px] overflow-y-auto rounded-xl border border-paper-line bg-surface p-2 shadow-pop dark:shadow-none"
             role="dialog"
-            aria-label="Personal information"
+            aria-label={t("pii.heading")}
             tabindex="-1"
             use:focusTrap
             onkeydown={(event) => event.key === "Escape" && (moreOpen = false)}
           >
-            <p class="label px-1 pb-1.5 !text-[10px]">Personal information</p>
+            <p class="label px-1 pb-1.5 !text-[10px]">{t("pii.heading")}</p>
             <ul class="flex flex-col gap-1.5">
               {#each items as item (item.category)}
                 <li class="min-w-0">{@render categoryChip(item.category, item.count)}</li>

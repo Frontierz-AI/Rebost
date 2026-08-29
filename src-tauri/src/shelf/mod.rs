@@ -201,13 +201,16 @@ impl Library {
     pub fn create_shelf(&mut self, paths: &Paths, name: &str, root: &Path) -> Result<Shelf> {
         let name = name.trim();
         if name.is_empty() {
-            return Err(anyhow!("A Shelf needs a name."));
+            return Err(anyhow!("{}", rust_i18n::t!("errors.shelfNeedsName")));
         }
         if self
             .visible_shelves()
             .any(|s| s.name.eq_ignore_ascii_case(name))
         {
-            return Err(anyhow!("A Shelf called \"{name}\" already exists."));
+            return Err(anyhow!(
+                "{}",
+                rust_i18n::t!("errors.shelfExists", name = name)
+            ));
         }
         let folder_name = sanitize_folder_name(name);
         std::fs::create_dir_all(root)?;
@@ -304,7 +307,7 @@ impl Library {
 
     pub fn add_linked_folder(&mut self, shelf_id: &str, folder: &Path) -> Result<Shelf> {
         if !folder.is_dir() {
-            return Err(anyhow!("That folder can't be read."));
+            return Err(anyhow!("{}", rust_i18n::t!("errors.folderUnreadable")));
         }
         let shelf = self
             .shelf_mut(shelf_id)
@@ -315,7 +318,7 @@ impl Library {
         if shelf.managed_path == canonical
             || shelf.linked_folders.iter().any(|l| l.path == canonical)
         {
-            return Err(anyhow!("That folder is already part of this Shelf."));
+            return Err(anyhow!("{}", rust_i18n::t!("errors.folderAlreadyOnShelf")));
         }
         shelf.linked_folders.push(LinkedFolder { path: canonical });
         let shelf = shelf.clone();
@@ -360,19 +363,22 @@ impl Library {
     pub fn rename_shelf(&mut self, paths: &Paths, shelf_id: &str, name: &str) -> Result<Shelf> {
         let name = name.trim();
         if name.is_empty() {
-            return Err(anyhow!("A Shelf needs a name."));
+            return Err(anyhow!("{}", rust_i18n::t!("errors.shelfNeedsName")));
         }
         let shelf = self
             .shelf(shelf_id)
             .ok_or_else(|| anyhow!("Shelf not found"))?;
         if shelf.thread_id.is_some() {
-            return Err(anyhow!("That setting is only for library Shelves."));
+            return Err(anyhow!("{}", rust_i18n::t!("errors.libraryShelvesOnly")));
         }
         if self
             .visible_shelves()
             .any(|s| s.id != shelf_id && s.name.eq_ignore_ascii_case(name))
         {
-            return Err(anyhow!("A Shelf called \"{name}\" already exists."));
+            return Err(anyhow!(
+                "{}",
+                rust_i18n::t!("errors.shelfExists", name = name)
+            ));
         }
         let shelf = self
             .shelf_mut(shelf_id)
@@ -392,7 +398,7 @@ impl Library {
             .shelf_mut(shelf_id)
             .ok_or_else(|| anyhow!("Shelf not found"))?;
         if shelf.thread_id.is_some() {
-            return Err(anyhow!("That setting is only for library Shelves."));
+            return Err(anyhow!("{}", rust_i18n::t!("errors.libraryShelvesOnly")));
         }
         shelf.think_level = level;
         let snap = shelf.clone();

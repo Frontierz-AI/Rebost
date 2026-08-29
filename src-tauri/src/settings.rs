@@ -3,6 +3,8 @@
 use serde::{Deserialize, Deserializer, Serialize};
 use std::path::Path;
 
+use crate::i18n::UiLocalePref;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TextSize {
@@ -48,6 +50,9 @@ pub struct Settings {
     /// Window type size: the current default, then two larger steps.
     #[serde(alias = "text_size")]
     pub text_size: TextSize,
+    /// UI language: follow the computer, or pin a shipped catalog.
+    #[serde(alias = "ui_locale")]
+    pub ui_locale: UiLocalePref,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -187,6 +192,28 @@ mod tests {
         let loaded = Settings::load(&path);
         assert_eq!(loaded.house_rules, "Keep it short.");
         assert_eq!(loaded.text_size, TextSize::Default);
+    }
+
+    #[test]
+    fn ui_locale_roundtrips() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let settings = Settings {
+            ui_locale: UiLocalePref::Ca,
+            ..Default::default()
+        };
+        settings.save(&path).unwrap();
+        let loaded = Settings::load(&path);
+        assert_eq!(loaded.ui_locale, UiLocalePref::Ca);
+    }
+
+    #[test]
+    fn unknown_ui_locale_becomes_system() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, r#"{"uiLocale":"klingon"}"#).unwrap();
+        let loaded = Settings::load(&path);
+        assert_eq!(loaded.ui_locale, UiLocalePref::System);
     }
 
     #[test]
