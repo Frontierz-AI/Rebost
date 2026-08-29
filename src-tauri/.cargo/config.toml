@@ -6,3 +6,8 @@
 # `-fuse-ld=lld`; the user's `-fuse-ld=bfd` is passed last and wins.
 [target.x86_64-unknown-linux-gnu]
 rustflags = ["-Clinker-features=-lld", "-Clink-arg=-fuse-ld=bfd"]
+
+# MSVC link.exe can refuse a large ARM64 image with LNK1322 (an old Cortex-A53
+# erratum). Snapdragon PCs are not that chip. Skip the check so the installer links.
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/arm64hazardfree"]
