@@ -12,7 +12,7 @@ const MAX_KV: u64 = 512;
 const MAX_KEY: u64 = 256;
 const MAX_TENSORS: u64 = 8_192;
 const MAX_ARRAY: u64 = 400_000;
-/// Tensor types the pinned llama.cpp build accepts (`[0, 43)` on b10418).
+/// Tensor types the pinned llama.cpp build accepts (`[0, 43)` on 0.3.0).
 const ENGINE_GGML_TYPE_COUNT: u32 = 43;
 
 const TY_UINT8: u32 = 0;

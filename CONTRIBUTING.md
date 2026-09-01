@@ -6,7 +6,7 @@ Issues, pull requests, and discussions here are covered by the [Code of Conduct]
 
 ## First 30 minutes
 
-1. Install [Rust](https://rustup.rs/) 1.97.1 (`rust-toolchain.toml` pins this), Node 22+ (`.nvmrc`), [pnpm](https://pnpm.io) 11, and [just](https://github.com/casey/just).
+1. Install [Rust](https://rustup.rs/) 1.98.0 (`rust-toolchain.toml` pins this), Node 22+ (`.nvmrc`), [pnpm](https://pnpm.io) 11, and [just](https://github.com/casey/just).
 2. macOS: Xcode Command Line Tools. Windows: MSVC toolchain. First OCR build needs **CMake** and a C++ compiler (Xberg compiles Tesseract). Windows x64 also needs a Vulkan driver from the GPU vendor. Windows 11 includes WebView2; on Windows 10 install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`.
 3. From the repo root:
 

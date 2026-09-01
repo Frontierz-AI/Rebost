@@ -121,7 +121,7 @@ Anything that looks like local files leaking belongs in [SECURITY.md](SECURITY.m
 
 - macOS (Apple Silicon or Intel), or Windows 10/11 (x64 with Vulkan, or ARM64). Linux is not a supported platform.
 - Disk space for a GGUF model (several GB)
-- Rust 1.97.1, Node 22+, pnpm 11 (`rust-toolchain.toml` and `.nvmrc`)
+- Rust 1.98.0, Node 22+, pnpm 11 (`rust-toolchain.toml` and `.nvmrc`)
 - macOS: Xcode Command Line Tools
 - Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The NSIS installer downloads it when it is missing.
 - First OCR build: CMake and a C++ compiler (xberg compiles Tesseract)

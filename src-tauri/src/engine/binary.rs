@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use super::download;
 use super::pin::{
     current_engine_pin, extract_dir_name, llama_server_file_name, preferred_engine_pin,
-    runtime_for, EnginePin, ENGINE_BUILD,
+    runtime_for, EnginePin, ENGINE_RELEASE,
 };
 use super::process::unpack_engine_archive;
 use super::{Engine, EngineState};
@@ -30,7 +30,7 @@ impl Engine {
                 .ctx
                 .paths
                 .engine_dir()
-                .join(ENGINE_BUILD)
+                .join(ENGINE_RELEASE)
                 .join(llama_server_file_name());
             if legacy.exists() {
                 return legacy;
@@ -127,7 +127,7 @@ impl Engine {
             return Err(anyhow!("engine archive did not contain llama-server"));
         }
         log::info!(
-            "AI engine {ENGINE_BUILD} {} is ready",
+            "AI engine {ENGINE_RELEASE} {} is ready",
             pin.accelerator.to_ascii_lowercase()
         );
         Ok(binary)
@@ -147,7 +147,7 @@ impl Engine {
         let (archive, verify_pin_sha, delete_after_unpack) = if allow_local {
             if let Some(local) = resolve_local_archive(env_archive, bundled) {
                 log::info!(
-                    "unpacking AI engine {ENGINE_BUILD} from {}",
+                    "unpacking AI engine {ENGINE_RELEASE} from {}",
                     local.path.display()
                 );
                 (local.path, local.verify_pin_sha, local.delete_after_unpack)
@@ -164,7 +164,7 @@ impl Engine {
             }
         } else {
             log::info!(
-                "downloading optional {} engine {ENGINE_BUILD} ({})",
+                "downloading optional {} engine {ENGINE_RELEASE} ({})",
                 pin.accelerator,
                 pin.file_name
             );
@@ -250,7 +250,7 @@ impl Engine {
         file_name: &str,
         name: &str,
     ) -> Result<()> {
-        log::info!("downloading AI engine {ENGINE_BUILD} ({file_name})");
+        log::info!("downloading AI engine {ENGINE_RELEASE} ({file_name})");
         download::download(
             &self.download_client,
             url,

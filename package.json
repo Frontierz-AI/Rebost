@@ -26,7 +26,7 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@11.25.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -43,9 +43,9 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.34.0",
+    "@lucide/svelte": "^1.38.0",
     "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-dialog": "^2.7.3",
     "@tauri-apps/plugin-os": "^2.3.2",
     "dompurify": "^3.4.14",
     "marked": "^18.0.11",
@@ -61,7 +61,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-svelte": "^4.1.1",
     "prettier-plugin-tailwindcss": "^0.8.1",
-    "svelte": "^5.56.10",
+    "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",

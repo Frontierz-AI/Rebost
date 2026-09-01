@@ -173,7 +173,7 @@ pub fn diagnostics(
     Diagnostics {
         version: app.package_info().version.to_string(),
         data_dir: ctx.paths.base().to_string_lossy().to_string(),
-        engine_build: crate::engine::ENGINE_BUILD.to_string(),
+        engine_build: crate::engine::ENGINE_RELEASE.to_string(),
         engine_state: engine.status(),
         model: settings.active_model.clone(),
         index_records: ctx.search.num_docs(),

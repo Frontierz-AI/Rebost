@@ -14,7 +14,7 @@ use super::process::{
     write_server_pid,
 };
 use super::tune::{ModelHint, SpawnPlan};
-use super::{Engine, EngineState, Inner, ENGINE_BUILD};
+use super::{Engine, EngineState, Inner, ENGINE_RELEASE};
 use crate::settings::ActiveModel;
 
 const HEALTH_TIMEOUT: Duration = Duration::from_secs(240);
@@ -274,7 +274,7 @@ impl Engine {
         }
         log::info!(
             "starting llama-server {} {} with {} (-c {} -b {} -ub {} -ngl {} -fa {} --cache-type {}{})",
-            ENGINE_BUILD,
+            ENGINE_RELEASE,
             pin.accelerator,
             model.file,
             plan.context_tokens,

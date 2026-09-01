@@ -17,7 +17,7 @@ OCR itself is provided by the `xberg` crate (vendored Tesseract, statically link
 ### llama.cpp (`llama-server`)
 
 - Not compiled into the Rebost binary.
-- Downloaded on first need from the pinned GitHub release in `src-tauri/src/engine/pin.rs` (`ENGINE_BUILD`, URL, SHA-256).
+- Downloaded on first need from the pinned official llama.cpp release in `src-tauri/src/engine/pin.rs` (`ENGINE_RELEASE`, archive tag `ENGINE_BUILD`, URL, SHA-256).
 - License: MIT (ggml-org/llama.cpp)
 
 ## Direct Rust dependencies (high level)

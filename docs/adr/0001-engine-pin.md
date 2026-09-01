@@ -3,7 +3,7 @@
 - Status: accepted
 - Date: 2026-08
 
-Contributors should not need a llama.cpp toolchain. Rebost pins a GitHub release (`ENGINE_BUILD` + per-OS URL + SHA-256 in `engine/pin.rs`) and runs `llama-server` on loopback.
+Contributors should not need a llama.cpp toolchain. Rebost pins an official llama.cpp `v*` release (`ENGINE_RELEASE`) and fetches the OS archives from the nightly tag that release names (`ENGINE_BUILD` + per-OS URL + SHA-256 in `engine/pin.rs`). It does not follow later nightlies. `llama-server` runs on loopback.
 
 Release installers **bundle that archive** (one OS/arch per artifact) so first chat does not hit GitHub. The binary is still not compiled from source: official builds include shared libraries, so the pin is shipped as a resource and unpacked into app data, not as a single `externalBin` sidecar.
 

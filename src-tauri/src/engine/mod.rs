@@ -22,6 +22,7 @@ pub(crate) mod tune;
 
 pub use pin::{
     current_engine_pin, find_bundled_engine_archive, preferred_engine_pin, ENGINE_BUILD,
+    ENGINE_RELEASE,
 };
 
 use serde::{Deserialize, Serialize};

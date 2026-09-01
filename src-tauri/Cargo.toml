@@ -9,7 +9,7 @@ repository = "https://github.com/Frontierz-AI/Rebost"
 homepage = "https://github.com/Frontierz-AI/Rebost"
 documentation = "https://github.com/Frontierz-AI/Rebost#readme"
 readme = "../README.md"
-rust-version = "1.97"
+rust-version = "1.98"
 edition = "2021"
 
 [lib]
@@ -22,7 +22,7 @@ tauri-build = { version = "2.6.3", features = [] }
 [dependencies]
 # Desktop shell
 tauri = { version = "2.11.5", features = [] }
-tauri-plugin-dialog = "2.7.2"
+tauri-plugin-dialog = "2.7.3"
 tauri-plugin-log = "2.9.0"
 tauri-plugin-opener = "2.5.4"
 tauri-plugin-os = "2.3.2"

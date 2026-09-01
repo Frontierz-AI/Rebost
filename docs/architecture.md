@@ -44,7 +44,7 @@ search/tantivy/
 conversations/          threads.json + one JSONL per thread
                         + <thread-id>/uploads/ for chat attachments (hidden Shelf)
 models/                 GGUF files (previous file stays until the new AI is Ready)
-engine/<build>-<accel>/ llama-server (legacy engine/<build>/ still works)
+engine/<release>-<accel>/ llama-server (legacy engine/<release>/ still works)
 recipes.json
 settings.json
 instance.lock           exclusive while Rebost is open

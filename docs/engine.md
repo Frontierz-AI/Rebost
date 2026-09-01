@@ -6,9 +6,12 @@ Each installer contains **one** archive for that OS/arch. There is no universal 
 
 ## Pin
 
+Rebost follows official llama.cpp `v*` releases, not nightlies. The `v*` tag does not attach OS archives; those live on the nightly tag named in that release (0.3.0 names `b10621`).
+
 `src-tauri/src/engine/pin.rs`:
 
-- `ENGINE_BUILD` (e.g. `b10418`)
+- `ENGINE_RELEASE` (e.g. `0.3.0`) — official semver; Settings diagnostics and extract folders use this
+- `ENGINE_BUILD` (e.g. `b10621`) — GitHub tag that hosts the archives
 - `ENGINE_PINS`: one GitHub archive URL + SHA-256 per OS/arch (what the installer ships)
 - `ENGINE_OPTIONAL_PINS`: faster GPU archives downloaded at first warmup when the hardware matches. Not bundled.
 
@@ -46,11 +49,11 @@ Windows x64 needs a working Vulkan driver for the bundled pin. Windows arm64 shi
 
 Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU and the x64-on-ARM Vulkan copy use `-ngl 0`. `--no-mmap` only on discrete Vulkan and CUDA. CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
 
-Extracted binaries live in `engine/<build>-<accelerator>/` (for example `b10418-metal`, `b10418-cuda`). An older `engine/<build>/` folder is still used for the bundled pin.
+Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.3.0-metal`, `0.3.0-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
 
 ## First run
 
-1. If `engine/<build>-<accelerator>/llama-server` (`.exe` on Windows) exists, use it. CUDA pins also need the `cudart64_12.dll` sidecar present. The bundled pin also accepts the older `engine/<build>/` layout.
+1. If `engine/<release>-<accelerator>/llama-server` (`.exe` on Windows) exists, use it. CUDA pins also need the `cudart64_12.dll` sidecar present. The bundled pin also accepts the older `engine/<release>/` layout.
 2. Else if the host matches an optional GPU pin, download that archive (and the CUDA runtime zip on NVIDIA Windows).
 3. Else if `REBOST_ENGINE_ARCHIVE` is set, unpack that archive and SHA-256-verify it (tests / air-gapped). Used for the bundled pin only.
 4. Else if the installer bundled the pin, unpack it in place. Signed Mac builds re-sign Mach-O inside it for notarization, so that archive is **not** checked against the GitHub pin SHA.
