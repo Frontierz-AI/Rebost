@@ -57,6 +57,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - uses: actions/setup-dotnet@v6
+        # ARM64 is unsigned here; Authenticode runs on windows-latest in sign-arm64.
+        if: ${{ matrix.extra_args == '' }}
         with:
           # Current LTS. artifact-signing-cli wants .NET 8 or newer.
           dotnet-version: "10.0.x"
