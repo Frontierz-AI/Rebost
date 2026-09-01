@@ -16,6 +16,7 @@
   import { colorScheme, onColorSchemeChange } from "$lib/appearance";
   import { isMac } from "$lib/platform";
   import { i18n, t } from "$lib/i18n.svelte";
+  import { shot, startShotControl } from "$lib/shot-control.svelte";
   import ChatView from "$lib/views/ChatView.svelte";
   import Onboarding from "$lib/views/Onboarding.svelte";
   import { MessageCircle, LibraryBig, ChefHat, Settings, ArrowUpCircle } from "@lucide/svelte";
@@ -39,6 +40,10 @@
         toast(t("bootstrap.failed"));
       })
       .finally(() => {
+        if (import.meta.env.VITE_SHOT_CONTROL === "1") {
+          startShotControl();
+          return;
+        }
         const path = import.meta.env.VITE_SNAPSHOT_PATH as string | undefined;
         if (!path) return;
         if (import.meta.env.VITE_SNAPSHOT_LABEL === "about") return;
@@ -126,7 +131,9 @@
       <div data-tauri-drag-region class="h-[46px] shrink-0"></div>
     {/if}
     <div class="min-h-0 flex-1">
-      <Onboarding />
+      {#key shot.paneKey}
+        <Onboarding />
+      {/key}
     </div>
   </div>
 {:else}
@@ -196,7 +203,7 @@
         <div data-tauri-drag-region class="h-3 shrink-0"></div>
       {/if}
       <div class="relative min-h-0 flex-1 overflow-hidden">
-        {#key current}
+        {#key `${current}-${shot.paneKey}`}
           <div
             class="absolute inset-0 overflow-hidden"
             transition:fade={{ duration: allowViewFade ? motionMs(120) : 0 }}

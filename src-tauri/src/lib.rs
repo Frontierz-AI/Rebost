@@ -216,8 +216,17 @@ pub fn run() {
             app.manage(watcher);
 
             if let Some(main) = app.get_webview_window("main") {
-                crate::window::place_main_window(&main);
+                if crate::window::shot_park_enabled() {
+                    crate::window::park_for_shots(&main);
+                    #[cfg(target_os = "macos")]
+                    {
+                        app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+                    }
+                } else {
+                    crate::window::place_main_window(&main);
+                }
             }
+            crate::snapshot::spawn_shot_watcher(app.handle().clone());
 
             let updater_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -279,8 +288,11 @@ pub fn run() {
             commands::recipe_delete,
             commands::recipes_restore_defaults,
             snapshot::dev_snapshot,
+            snapshot::dev_shot_ready,
+            snapshot::dev_shot_fail,
             about::about_info,
             about::show_about_window,
+            about::close_about_window,
             about::open_external,
             updater::update_info,
             updater::install_update,

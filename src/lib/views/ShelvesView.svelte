@@ -31,6 +31,7 @@
   import DocumentDrawer from "$lib/components/DocumentDrawer.svelte";
   import { confirmDanger } from "$lib/native-dialog";
   import { t } from "$lib/i18n.svelte";
+  import { shot } from "$lib/shot-control.svelte";
   import { importFeedback } from "$lib/shelf-cap";
   import { shelfListStatus, shelfListStatusClass, shelfListStatusLabel } from "$lib/shelf-status";
 
@@ -82,7 +83,7 @@
 
   $effect(() => {
     if (openedStartDoc) return;
-    if (import.meta.env.VITE_START_DOC !== "first") return;
+    if (!shot.docFirst && import.meta.env.VITE_START_DOC !== "first") return;
     const first = documents[0];
     if (!first) return;
     openedStartDoc = true;

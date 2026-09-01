@@ -18,6 +18,7 @@
   } from "$lib/stores.svelte";
   import { isMac } from "$lib/platform";
   import { parseTextSize, textSizeLabel, TEXT_SIZES } from "$lib/text-size";
+  import { shot } from "$lib/shot-control.svelte";
   import { HOUSE_RULES_MAX_CHARS, clipChars } from "$lib/text-cap";
   import {
     APP_LOCALES,
@@ -43,7 +44,7 @@
   let diag = $state<Diagnostics | null>(null);
   let showDiag = $state(import.meta.env.VITE_START_DIAG === "1");
   let showReset = $state(false);
-  let showExplore = $state(import.meta.env.VITE_START_EXPLORE === "1");
+  let showExplore = $state(shot.explore || import.meta.env.VITE_START_EXPLORE === "1");
   let openedAbout = $state(false);
   let resetting = $state(false);
   const hasAi = $derived(!!app.settings?.activeModel);

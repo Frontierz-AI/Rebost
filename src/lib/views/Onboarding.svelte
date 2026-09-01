@@ -14,14 +14,17 @@
   import { accordion, installCard, motionMs } from "$lib/motion";
   import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
   import { t } from "$lib/i18n.svelte";
+  import { shot } from "$lib/shot-control.svelte";
   import mark from "../../assets/R.webp";
 
   let step = $state<"promise" | "model">(
-    import.meta.env.VITE_START_ONBOARD === "model" ? "model" : "promise",
+    shot.onboard === "model" || import.meta.env.VITE_START_ONBOARD === "model"
+      ? "model"
+      : "promise",
   );
   let machine = $state<MachineView | null>(null);
   let installing = $state(false);
-  let showMore = $state(import.meta.env.VITE_START_ONBOARD_MORE === "1");
+  let showMore = $state(shot.onboardMore || import.meta.env.VITE_START_ONBOARD_MORE === "1");
   let lastRec = $state<Recommendation | null>(null);
   let installHeading = $state<HTMLHeadingElement | null>(null);
 

@@ -2,6 +2,11 @@
 
 use tauri::{LogicalSize, PhysicalPosition, PhysicalSize, WebviewWindow};
 
+/// Screenshot runner: hang the window off the right edge instead of centering it.
+pub fn shot_park_enabled() -> bool {
+    matches!(std::env::var("REBOST_SHOT_PARK").as_deref(), Ok("1"))
+}
+
 const DESIGN_MIN_WIDTH: f64 = 1000.0;
 const DESIGN_MIN_HEIGHT: f64 = 660.0;
 const WORK_FIT: f64 = 0.92;
@@ -40,6 +45,57 @@ pub fn place_main_window(window: &WebviewWindow) {
     );
     let _ = window.set_size(PhysicalSize::new(w, h));
     let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
+/// Move a window so only a few pixels stay on the work area (right edge).
+/// Leaves size alone so marketing frames stay 1320×860 (or About's fixed size).
+pub fn park_for_shots(window: &WebviewWindow) {
+    let Ok(Some(monitor)) = window
+        .primary_monitor()
+        .or_else(|_| window.current_monitor())
+    else {
+        return;
+    };
+    let work = monitor.work_area();
+    let Ok(size) = window.outer_size() else {
+        return;
+    };
+    let sliver = shot_park_sliver();
+    let (x, y, _w, _h) = park_frame(
+        work.position.x,
+        work.position.y,
+        work.size.width,
+        work.size.height,
+        size.width,
+        size.height,
+        sliver,
+    );
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+    let _ = window.set_ignore_cursor_events(true);
+}
+
+fn shot_park_sliver() -> i32 {
+    std::env::var("REBOST_SHOT_SLIVER")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .filter(|value: &i32| *value > 0)
+        .unwrap_or(8)
+}
+
+/// Hang `w`×`h` off the right of the work area, keeping `sliver` pixels on-screen
+/// so the compositor still paints the webview.
+pub(crate) fn park_frame(
+    work_x: i32,
+    work_y: i32,
+    work_w: u32,
+    _work_h: u32,
+    w: u32,
+    h: u32,
+    sliver: i32,
+) -> (i32, i32, u32, u32) {
+    let sliver = sliver.max(1);
+    let x = work_x.saturating_add(work_w as i32).saturating_sub(sliver);
+    (x, work_y, w, h)
 }
 
 pub(crate) fn min_size_for_work(work_w: f64, work_h: f64) -> (f64, f64) {
@@ -104,5 +160,11 @@ mod tests {
         assert_eq!((x, y, w, h), (0, 0, 1320, 860));
         let (x, y, w, h) = fit_frame(0, 0, 1280, 720, 100, 100, 1600, 900);
         assert_eq!((x, y, w, h), (0, 0, 1280, 720));
+    }
+
+    #[test]
+    fn park_frame_keeps_a_sliver_on_the_right() {
+        let (x, y, w, h) = park_frame(0, 0, 2560, 1440, 1320, 860, 8);
+        assert_eq!((x, y, w, h), (2552, 0, 1320, 860));
     }
 }

@@ -32,6 +32,7 @@
   import ConversationFace from "$lib/components/ConversationFace.svelte";
   import { confirmDanger } from "$lib/native-dialog";
   import { t } from "$lib/i18n.svelte";
+  import { shot } from "$lib/shot-control.svelte";
   import { tick } from "svelte";
 
   let composerEl = $state<HTMLTextAreaElement | null>(null);
@@ -77,7 +78,7 @@
 
   $effect(() => {
     if (openedStartSource) return;
-    if (import.meta.env.VITE_START_SOURCE !== "first") return;
+    if (!shot.source && import.meta.env.VITE_START_SOURCE !== "first") return;
     const cited = [...chatState.messages].reverse().find((message) => message.sources.length > 0);
     if (!cited?.sources[0]) return;
     openedStartSource = true;
@@ -86,7 +87,7 @@
 
   $effect(() => {
     if (openedStartThinking) return;
-    if (import.meta.env.VITE_START_THINKING !== "first") return;
+    if (!shot.thinking && import.meta.env.VITE_START_THINKING !== "first") return;
     const withThink = [...chatState.messages]
       .reverse()
       .find((message) => message.thinking || (message.activity?.length ?? 0) > 0);

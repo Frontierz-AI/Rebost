@@ -251,6 +251,27 @@ export interface AboutInfo {
   repositoryUrl: string;
 }
 
+/** One marketing frame for the debug screenshot runner. */
+export interface ShotJob {
+  id: string;
+  path: string;
+  locale?: string;
+  onboarding?: boolean;
+  onboard?: "promise" | "model";
+  onboardMore?: boolean;
+  view?: "chat" | "shelves" | "recipes" | "settings";
+  thread?: number;
+  source?: boolean;
+  thinking?: boolean;
+  shelf?: string;
+  doc?: string;
+  recipe?: string;
+  explore?: boolean;
+  about?: boolean;
+  label?: string;
+  settleMs?: number;
+}
+
 export interface AppUpdate {
   version: string;
   currentVersion: string;
@@ -499,8 +520,15 @@ export const api = {
   openEngineLog: () => invoke<void>("open_engine_log"),
 
   showAboutWindow: () => invoke<void>("show_about_window"),
-  devSnapshot: (path: string, label?: string) =>
-    invoke<void>("dev_snapshot", { path, label: label ?? null }),
+  closeAboutWindow: () => invoke<void>("close_about_window"),
+  devSnapshot: (path: string, label?: string, settleMs?: number) =>
+    invoke<void>("dev_snapshot", {
+      path,
+      label: label ?? null,
+      settleMs: settleMs ?? null,
+    }),
+  devShotReady: () => invoke<void>("dev_shot_ready"),
+  devShotFail: (message: string) => invoke<void>("dev_shot_fail", { message }),
   aboutInfo: () => invoke<AboutInfo>("about_info"),
   openExternal: (link: ExternalLink) => invoke<void>("open_external", { link }),
 
@@ -590,6 +618,7 @@ export const events = {
   menu: (h: (m: MenuEvent) => void) => onEvent("rebost://menu", h),
   update: (h: (u: AppUpdate) => void) => onEvent("rebost://update", h),
   updateProgress: (h: (p: UpdateProgress) => void) => onEvent("rebost://update-progress", h),
+  shotJob: (h: (job: ShotJob) => void) => onEvent("rebost://shot-job", h),
 };
 
 // Formatting helpers

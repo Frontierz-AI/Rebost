@@ -52,17 +52,30 @@ pub fn open_external(app: AppHandle, link: ExternalLink) -> CmdResult<()> {
         .map_err(friendly)
 }
 
+/// Close About so the next locale can open a fresh window.
+#[tauri::command]
+pub fn close_about_window(app: AppHandle) {
+    if let Some(window) = app.get_webview_window(ABOUT_LABEL) {
+        let _ = window.close();
+    }
+}
+
 pub(crate) fn open(app: &AppHandle) -> CmdResult<()> {
+    let park = crate::window::shot_park_enabled();
     if let Some(existing) = app.get_webview_window(ABOUT_LABEL) {
         let _ = existing.unminimize();
         let _ = existing.show();
-        let _ = existing.set_focus();
+        if park {
+            crate::window::park_for_shots(&existing);
+        } else {
+            let _ = existing.set_focus();
+        }
         return Ok(());
     }
-    create(app).map_err(friendly)
+    create(app, park).map_err(friendly)
 }
 
-fn create(app: &AppHandle) -> tauri::Result<()> {
+fn create(app: &AppHandle, park: bool) -> tauri::Result<()> {
     let builder = WebviewWindowBuilder::new(
         app,
         ABOUT_LABEL,
@@ -77,8 +90,8 @@ fn create(app: &AppHandle) -> tauri::Result<()> {
     .minimizable(false)
     .skip_taskbar(true)
     .accept_first_mouse(true)
-    .center()
-    .focused(true);
+    .focused(!park);
+    let builder = if park { builder } else { builder.center() };
 
     #[cfg(windows)]
     let builder = builder.drag_and_drop(false);
@@ -88,6 +101,9 @@ fn create(app: &AppHandle) -> tauri::Result<()> {
         .title_bar_style(tauri::TitleBarStyle::Overlay)
         .hidden_title(true);
 
-    builder.build()?;
+    let window = builder.build()?;
+    if park {
+        crate::window::park_for_shots(&window);
+    }
     Ok(())
 }

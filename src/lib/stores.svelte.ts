@@ -101,6 +101,13 @@ function clearConversation() {
   chatState.loadingOlder = false;
 }
 
+/** Empty Chat (screenshot runner, or leaving a thread). */
+export function closeConversation() {
+  clearConversation();
+  chatState.draft = "";
+  chatState.selectedShelfId = preferredShelfForNew();
+}
+
 /** Start a fresh conversation with a Recipe prompt already in the composer. */
 export function startRecipe(prompt: string) {
   clearConversation();

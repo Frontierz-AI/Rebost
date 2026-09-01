@@ -14,9 +14,10 @@
   } from "@lucide/svelte";
   import { confirmDanger } from "$lib/native-dialog";
   import { t } from "$lib/i18n.svelte";
+  import { shot } from "$lib/shot-control.svelte";
 
   let recipes = $state<Recipe[]>([]);
-  let formOpen = $state(import.meta.env.VITE_START_RECIPE === "new");
+  let formOpen = $state(shot.recipeNew || import.meta.env.VITE_START_RECIPE === "new");
   let editingId = $state<string | null>(null);
   let formName = $state("");
   let formPrompt = $state("");
