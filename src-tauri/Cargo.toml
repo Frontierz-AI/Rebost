@@ -1,6 +1,6 @@
 [package]
 name = "rebost"
-version = "0.9.0"
+version = "0.9.1"
 description = "Private AI that works with your files."
 authors = ["Frontierz", "Pau Garcia-Mila <info-rebost-app@frontierz.com>"]
 license = "MIT"
