@@ -15,6 +15,8 @@ pub(crate) const OPEN_WINDOW_NEXT: &str = "continued";
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentExcerpt {
+    #[serde(default)]
+    pub version_changed: bool,
     pub text: String,
     pub start_char: u32,
     pub end_char: u32,
@@ -46,6 +48,7 @@ fn window(text: &str, start_char: usize, max_chars: usize) -> DocumentExcerpt {
     let taken = take_chars_snapped(rest, max_chars);
     let end = start.saturating_add(taken.chars().count());
     DocumentExcerpt {
+        version_changed: false,
         text: taken,
         start_char: start as u32,
         end_char: end as u32,

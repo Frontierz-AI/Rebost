@@ -51,24 +51,29 @@ pub fn settings_get(ctx: State<'_, Arc<Ctx>>) -> SettingsView {
 
 /// Save House rules.
 #[tauri::command]
-pub fn settings_set_house_rules(ctx: State<'_, Arc<Ctx>>, text: String) {
-    crate::core::write_lock(&ctx.settings).house_rules =
-        crate::limits::clip_chars(&text, crate::limits::HOUSE_RULES_MAX_CHARS);
-    ctx.save_settings();
+pub fn settings_set_house_rules(ctx: State<'_, Arc<Ctx>>, text: String) -> CmdResult<()> {
+    ctx.update_settings(|settings| {
+        settings.house_rules =
+            crate::limits::clip_chars(&text, crate::limits::HOUSE_RULES_MAX_CHARS)
+    })
+    .map_err(friendly)
 }
 
 /// Allow Chat to look things up on the public web from this computer.
 #[tauri::command]
-pub fn settings_set_allow_online_research(ctx: State<'_, Arc<Ctx>>, enabled: bool) {
-    crate::core::write_lock(&ctx.settings).allow_online_research = enabled;
-    ctx.save_settings();
+pub fn settings_set_allow_online_research(
+    ctx: State<'_, Arc<Ctx>>,
+    enabled: bool,
+) -> CmdResult<()> {
+    ctx.update_settings(|settings| settings.allow_online_research = enabled)
+        .map_err(friendly)
 }
 
 /// Window type size: default, or one of the two larger steps.
 #[tauri::command]
-pub fn settings_set_text_size(ctx: State<'_, Arc<Ctx>>, size: TextSize) {
-    crate::core::write_lock(&ctx.settings).text_size = size;
-    ctx.save_settings();
+pub fn settings_set_text_size(ctx: State<'_, Arc<Ctx>>, size: TextSize) -> CmdResult<()> {
+    ctx.update_settings(|settings| settings.text_size = size)
+        .map_err(friendly)
 }
 
 /// Follow the computer, or pin a shipped UI catalog. Rebuilds menus.
@@ -78,8 +83,8 @@ pub fn settings_set_ui_locale(
     ctx: State<'_, Arc<Ctx>>,
     locale: UiLocalePref,
 ) -> CmdResult<SettingsView> {
-    crate::core::write_lock(&ctx.settings).ui_locale = locale;
-    ctx.save_settings();
+    ctx.update_settings(|settings| settings.ui_locale = locale)
+        .map_err(friendly)?;
     crate::i18n::apply(locale);
     crate::i18n::rebuild_menu(&app).map_err(friendly)?;
     Ok(settings_view(&ctx))
@@ -87,9 +92,9 @@ pub fn settings_set_ui_locale(
 
 /// Mark first-run as done.
 #[tauri::command]
-pub fn settings_finish_onboarding(ctx: State<'_, Arc<Ctx>>) {
-    crate::core::write_lock(&ctx.settings).onboarding_done = true;
-    ctx.save_settings();
+pub fn settings_finish_onboarding(ctx: State<'_, Arc<Ctx>>) -> CmdResult<()> {
+    ctx.update_settings(|settings| settings.onboarding_done = true)
+        .map_err(friendly)
 }
 
 pub(crate) fn require_reset_confirmation(confirmation: &str) -> CmdResult<()> {

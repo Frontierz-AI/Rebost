@@ -286,11 +286,7 @@ async fn prepare_turn_keeps_the_upload_to_its_share() {
         &[],
     )
     .unwrap();
-    let budget = retrieval_budget_for_turn(
-        &fixture.ctx,
-        fixture.ctx.context_budget(),
-        "Where does the office zebra live, and when is the kitchen restocked?",
-    );
+    let budget = prepared.budget;
     let share = focus::upload_budget_chars(budget, true, false, false);
     let upload_cost: usize = prepared
         .sources
@@ -634,6 +630,7 @@ async fn look_around_widens_an_excerpt() {
     let fixture = shelf_with_file("encyclopedia.md", &body).await;
     let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
     let excerpt = SourcePassage {
+        anchor: None,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -966,6 +963,7 @@ async fn open_shelf_file_pages_and_keeps_other_excerpts() {
     let fixture = shelf_with_file("encyclopedia.md", &body).await;
     let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
     let mid = SourcePassage {
+        anchor: None,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -1090,6 +1088,7 @@ async fn look_around_continues_a_prefix_when_the_window_is_full() {
     .unwrap();
     let prefix = gate::truncate_at_boundary(&extracted, 400);
     let excerpt = SourcePassage {
+        anchor: None,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -1131,6 +1130,7 @@ async fn look_around_does_not_rewind_a_continued_window() {
     let fixture = shelf_with_file("encyclopedia.md", &body).await;
     let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
     let excerpt = SourcePassage {
+        anchor: None,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -1190,4 +1190,58 @@ fn slim_continue_keeps_system_user_and_the_partial_answer() {
     assert_eq!(messages[1].as_text(), "Write a long brief.");
     assert_eq!(messages[2].as_text(), "First half of the brief.");
     assert!(messages[3].as_text().contains("Continue"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn small_context_reclaims_unused_history_without_clipping_the_question() {
+    let fixture = shelf_with_file("facts.md", "# Facts\n\nThe delivery code is 7391.\n").await;
+    let question = format!(
+        "According to facts.md, what is the delivery code? {}",
+        "Please use the file. ".repeat(100)
+    );
+    let turn = prepare_turn(
+        &fixture.ctx,
+        "new",
+        &question,
+        Some(&fixture.shelf.id),
+        None,
+        "m_current",
+        &[],
+        ThinkLevel::Off,
+        &[],
+    )
+    .unwrap();
+    assert!(
+        !turn.sources.is_empty(),
+        "unused history space must remain available to retrieval"
+    );
+    assert_eq!(
+        turn.messages
+            .iter()
+            .rev()
+            .find(|m| m.role == "user")
+            .unwrap()
+            .as_text(),
+        question
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn attachment_wait_includes_the_pre_extraction_stage() {
+    let fixture = shelf_with_file("facts.md", "# Facts\n\nThe delivery code is 7391.\n").await;
+    let work = fixture.ctx.ingest_queue.begin_work(&fixture.shelf.id);
+    let ctx = fixture.ctx.clone();
+    let shelf = fixture.shelf.id.clone();
+    let waiting = tokio::spawn(async move { wait_for_uploads(&ctx, &shelf).await });
+    tokio::time::sleep(std::time::Duration::from_millis(75)).await;
+    assert!(
+        !waiting.is_finished(),
+        "the queue-to-extractor handoff is still pending"
+    );
+    drop(work);
+    tokio::time::timeout(std::time::Duration::from_secs(1), waiting)
+        .await
+        .unwrap()
+        .unwrap()
+        .unwrap();
 }

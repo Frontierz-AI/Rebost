@@ -257,6 +257,7 @@ mod tests {
 
     fn passage(score: f32, body: &str) -> SourcePassage {
         SourcePassage {
+            anchor: None,
             sid: String::new(),
             document_id: "d_x".into(),
             shelf_id: "s_x".into(),

@@ -84,3 +84,18 @@ describe("isSafeHref", () => {
     expect(isSafeHref("data:text/html,x")).toBe(false);
   });
 });
+
+it("keeps block rendering equivalent for tables, references and fenced code", async () => {
+  const { createBlockRenderer } = await import("./markdown");
+  const render = createBlockRenderer();
+  const prefix = "# Stable heading\n\nFirst paragraph.\n\n";
+  const first = render(prefix);
+  const next = render(
+    prefix +
+      "| A | B |\n|---|---|\n| 1 | 2 |\n\n```js\nconst a = 1;\n```\n\n[Site][ref]\n\n[ref]: https://example.com\n",
+  );
+  expect(next[0]).toBe(first[0]);
+  expect(next.join("")).toContain("<table>");
+  expect(next.join("")).toContain('href="https://example.com"');
+  expect(next.join("")).toContain("const a = 1;");
+});

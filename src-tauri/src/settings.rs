@@ -93,31 +93,14 @@ pub struct BenchmarkResult {
 impl Settings {
     /// Load `settings.json`, or defaults when the file is missing or unreadable.
     pub fn load(path: &Path) -> Self {
-        match std::fs::read_to_string(path) {
-            Ok(text) => match serde_json::from_str::<Self>(&text) {
-                Ok(mut settings) => {
-                    settings.house_rules = crate::limits::clip_chars(
-                        &settings.house_rules,
-                        crate::limits::HOUSE_RULES_MAX_CHARS,
-                    );
-                    settings
-                }
-                Err(error) => {
-                    log::warn!("settings.json is unreadable ({error}); using defaults");
-                    Self::default()
-                }
-            },
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Self::default(),
-            Err(error) => {
-                log::warn!("could not read settings.json ({error}); using defaults");
-                Self::default()
-            }
-        }
+        let mut settings: Self = crate::paths::read_json(path).unwrap_or_default();
+        settings.house_rules =
+            crate::limits::clip_chars(&settings.house_rules, crate::limits::HOUSE_RULES_MAX_CHARS);
+        settings
     }
 
     pub fn save(&self, path: &Path) -> anyhow::Result<()> {
-        crate::paths::atomic_write(path, serde_json::to_string_pretty(self)?)?;
-        Ok(())
+        crate::paths::write_json(path, self)
     }
 }
 

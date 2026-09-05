@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **0.9.1**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **0.9.2**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine | Installer |
 |---------|-----------|
@@ -41,7 +41,7 @@ Once installed, Rebost checks GitHub for a newer release and shows it in the sid
 
 ### Chat
 
-Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation, and opening the citation opens the source.
+Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation. Opening the citation shows the passage used for that answer and the source file.
 
 <p align="center">
   <img src="docs/assets/conversation.webp" alt="Rebost Chat: a Shelf selected and an answer with citations." width="880" />
@@ -65,7 +65,7 @@ A Recipe is a prompt saved once and reopened later against any Shelf. Opening on
 
 ### House rules
 
-House rules are standing instructions kept in Settings: tone, language, and anything the AI should never promise. They are written once and applied to every conversation and every Recipe. Settings also holds Online, which allows Chat to look things up on the public web. Online is off until it is turned on, and turning it on does not send Shelf documents to the web. Text size (Default, Large, and Larger) and Language for the menus and the rest of the interface are in the same window.
+House rules are standing instructions kept in Settings: tone, language, and anything the AI should never promise. They are written once and applied to every conversation and every Recipe. Settings also holds Online, which allows Chat to look things up on the public web. Online is off until it is turned on, and each query or address is shown for approval before it is sent. Turning it on does not send Shelf documents to the web. Text size (Default, Large, and Larger) and Language for the menus and the rest of the interface are in the same window.
 
 <p align="center">
   <img src="docs/assets/settings.webp" alt="Rebost Settings: House rules and the installed AI." width="880" />

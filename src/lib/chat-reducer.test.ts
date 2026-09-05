@@ -181,23 +181,23 @@ describe("reduceChatEvent", () => {
     expect(at(out)?.text).toBe("");
   });
 
-  it("clears pending and surfaces an engine error", () => {
+  it("retains partial text while an engine error is persisted", () => {
     const out = reduceChatEvent(
       mapOf(pending({ phase: "streaming", text: "partial" })),
       base("error", { error: "Rebost couldn't finish that answer. Try again." }),
     );
-    expect(out.pending).toEqual({});
+    expect(out.pending.t1?.text).toBe("partial");
     expect(out.append).toBeUndefined();
     expect(out.error).toBe("Rebost couldn't finish that answer. Try again.");
   });
 
-  it("treats a cancelled or failed done as no append", () => {
+  it("persists a cancelled or failed answer so it can be retried", () => {
     const stopped = reduceChatEvent(
       mapOf(pending({ phase: "streaming" })),
       base("done", { message: { ...doneMessage, status: "error" } }),
     );
     expect(stopped.pending).toEqual({});
-    expect(stopped.append).toBeUndefined();
+    expect(stopped.append?.status).toBe("error");
     expect(stopped.refreshThreads).toBe(true);
 
     const cancelled = reduceChatEvent(
@@ -324,4 +324,37 @@ describe("threadIsBusy", () => {
     expect(threadIsBusy(current, {}, "t2")).toBe(true);
     expect(threadIsBusy(current, {}, "t1")).toBe(false);
   });
+});
+
+it("keeps partial text until the interrupted answer is persisted", () => {
+  let state = reduceChatEvent({}, { kind: "queued", threadId: "t", messageId: "a" }).pending;
+  state = reduceChatEvent(state, {
+    kind: "delta",
+    threadId: "t",
+    messageId: "a",
+    text: "Partial answer",
+  }).pending;
+  const error = reduceChatEvent(state, {
+    kind: "error",
+    threadId: "t",
+    messageId: "a",
+    error: "Interrupted.",
+  });
+  expect(error.pending.t?.text).toBe("Partial answer");
+  const message: StoredMessage = {
+    id: "a",
+    role: "assistant",
+    text: "Partial answer",
+    status: "interrupted",
+    ts: "",
+    sources: [],
+  };
+  const done = reduceChatEvent(error.pending, {
+    kind: "done",
+    threadId: "t",
+    messageId: "a",
+    message,
+  });
+  expect(done.append).toEqual(message);
+  expect(done.pending.t).toBeUndefined();
 });

@@ -85,7 +85,7 @@
     "saveHouseRules": "Desa House rules",
     "saved": "Desat",
     "online": "Online",
-    "onlineHelp": "Activa-ho per cercar al web públic. Els fitxers es queden en aquest ordinador. La resposta s'escriu aquí.",
+    "onlineHelp": "Permet consultar el web públic. Cada consulta o adreça es mostra perquè l'aprovis abans d'enviar-la. Les respostes s'escriuen en aquest ordinador.",
     "ai": "IA",
     "installedHere": "instal·lada en aquest ordinador",
     "engineReady": "A punt",
@@ -184,7 +184,19 @@
     "page": "p. %{start}",
     "pageRange": "p. %{start}–%{end}",
     "pageWord": "Pàgina %{start}",
-    "pageWordRange": "Pàgina %{start}–%{end}"
+    "pageWordRange": "Pàgina %{start}–%{end}",
+    "interrupted": "La resposta s'ha interromput. La pregunta i la resposta parcial estan desades.",
+    "continuePrompt": "Continua la resposta anterior des de l'última frase. No repeteixis.",
+    "continue": "Continua",
+    "answerInProgress": "Escrivint una resposta…",
+    "preparingAnswer": "Preparant una resposta…",
+    "answerComplete": "Resposta a punt. Revisa la resposta i les fonts.",
+    "reviewOnline": "Revisa la petició en línia",
+    "queryLeaves": "Aquesta consulta exacta s'enviarà a Wikipedia, DuckDuckGo i You.com. Comprova que no contingui informació privada.",
+    "urlLeaves": "Es demanarà aquesta adreça al lloc web. Comprova que l'adreça completa no contingui informació privada.",
+    "allowOnce": "Permet un cop",
+    "keepLocal": "Fes servir només informació local",
+    "exportConversation": "Exporta la conversa"
   },
   "thinking": {
     "fallback": "Pensant…",
@@ -297,7 +309,8 @@
     "folderMissing": "Aquesta carpeta ara no hi és. Els fitxers es queden a l'estant.",
     "removeSynced": "Treu la carpeta sincronitzada d'aquest estant",
     "removeSyncedHint": "Treu-la d'aquest estant (els fitxers es queden al disc)",
-    "moreSynced": "Més carpetes sincronitzades"
+    "moreSynced": "Més carpetes sincronitzades",
+    "showAllRows": "Mostra totes les files per llegir o navegar amb el teclat"
   },
   "documents": {
     "ready": "A punt per fer servir",
@@ -325,7 +338,11 @@
     "showInFolder": "Mostra a la carpeta",
     "viewText": "Mostra el text",
     "unavailable": "Aquest fitxer no està disponible.",
-    "loading": "Carregant"
+    "loading": "Carregant",
+    "citedPassage": "Fragment utilitzat en aquesta resposta",
+    "sourceChanged": "Aquest fitxer ha canviat des de la resposta. El fragment desat correspon a la versió utilitzada aleshores.",
+    "currentContext": "Context del fitxer actual",
+    "sourceUnverified": "No s'ha pogut localitzar el fragment desat al fitxer actual."
   },
   "recipes": {
     "title": "Receptes",
@@ -520,7 +537,9 @@
     "recipeTooLong": "Aquest Recipe és massa llarg. Màxim 12.000 caràcters.",
     "typeDelete": "Escriu DELETE per confirmar.",
     "engineLogMissing": "Encara no hi ha registre en aquest ordinador.",
-    "folderNotFound": "No s'ha trobat la carpeta."
+    "folderNotFound": "No s'ha trobat la carpeta.",
+    "promptTooLong": "Aquesta pregunta i les teves instruccions superen el context d'aquesta IA. Escurça-les o tria una IA més gran.",
+    "attachmentsFailed": "No s'han pogut llegir alguns fitxers adjunts. Torna'ls a processar abans de preguntar sobre ells."
   },
   "pii": {
     "heading": "Informació personal",
@@ -583,5 +602,10 @@
       "granite_4_1_3b": "Fitxer petit, respostes curtes.",
       "gemma_3_1b": "La més petita. S'instal·la en un minut."
     }
+  },
+  "imports": {
+    "addedOne": "Afegit a aquesta conversa.",
+    "addedMany": "S'han afegit %{count} fitxers a aquesta conversa.",
+    "unsupported": "El tipus d'aquests fitxers no és compatible."
   }
 }

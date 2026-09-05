@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { renderMarkdown } from "$lib/markdown";
+  import { createBlockRenderer } from "$lib/markdown";
   import type { SourcePassage } from "$lib/api";
 
   let {
@@ -16,7 +16,8 @@
     onCite?: (source: SourcePassage) => void;
   } = $props();
 
-  const html = $derived(renderMarkdown(text, sources));
+  const renderBlocks = createBlockRenderer();
+  const blocks = $derived(renderBlocks(text, sources));
 
   function handleClick(event: MouseEvent) {
     const target = (event.target as HTMLElement).closest?.(".cite-chip") as HTMLElement | null;
@@ -37,5 +38,5 @@
 </script>
 
 <div class="md-body {streaming ? 'stream-caret' : ''} {compact ? 'md-compact' : ''}" use:citeClicks>
-  {@html html}
+  {#each blocks as html, index (index)}<div class="md-block">{@html html}</div>{/each}
 </div>

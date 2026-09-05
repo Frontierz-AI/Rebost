@@ -1,6 +1,6 @@
 # Rebost accessibility reference
 
-Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.9.1, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
+Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.9.2, Tauri 2 webview). Windows Narrator has not been verified. Gaps are listed at the end.
 
 ## Platform
 
@@ -20,7 +20,7 @@ Keyboard-first notes for VoiceOver on macOS (verified against Rebost 0.9.1, Taur
 | Chat composer | Bottom of Chat; `textarea` |
 | Document drawer | Dialog-like overlay on Shelves when a row is opened |
 
-Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the AI More info card, and the Update window trap Tab, move initial focus into the dialog, and close on Escape. Icon-only Send / Stop / New conversation / Add files / Rename / Download expose `aria-label`. Copy and delete controls are visible without hover.
+Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the AI More info card, the Update window, and the composer Shelf picker trap Tab, move initial focus into the dialog, and close on Escape. Chat announces preparing, writing, and a finished or interrupted answer through a polite live region, and it announces an Online approval when one is waiting. Icon-only Send / Stop / New conversation / Add files / Rename / Download expose `aria-label`. Copy and delete controls are visible without hover.
 
 ## Keyboard
 
@@ -33,14 +33,15 @@ Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the A
 | Chat / Shelves / Recipes | `⌘1` / `⌘2` / `⌘3` (Windows: `Ctrl+1`–`3`) |
 | Settings | `⌘,` (Windows: `Ctrl+,`) |
 | Larger / smaller text | `⌘+` / `⌘-` (Windows: `Ctrl+` / `Ctrl-`). Three steps: Default, Large, Larger |
-| Fill a «placeholder» from Shelf files | `↑` `↓` then `Return` or `Tab` (composer, when a list is shown). `Shift+Return` still inserts a newline |
-| Close drawers, source panel, Reset dialog, Explore other AIs, AI More info, Update window | `Escape` |
+| Fill a «placeholder» from Shelf files | `↑` `↓` then `Return` or `Tab` (composer, when a list is shown). `Escape` dismisses the list. `Shift+Return` still inserts a newline. During IME composition, `Return` commits the characters and does not send |
+| Close drawers, source panel, Reset dialog, Explore other AIs, AI More info, Update window, Shelf picker | `Escape` |
 | Open citation | `Return` on a citation chip inside the answer |
 | Read earlier Chat messages | `Read more` at the top of a long conversation |
+| Move in a long Shelf file table | `↑` `↓` `Home` `End` on a row. Or enable Show all rows for the full native table |
 
 VoiceOver rotor: form controls and buttons. Headings exist in Shelves/Settings; Chat thread list is a list of buttons.
 
-## Known gaps (0.9.1)
+## Known gaps (0.9.2)
 
 - No VoiceOver custom actions for "copy without personal information" beyond the visible button label.
 - Windows Narrator has not been verified.

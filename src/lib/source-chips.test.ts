@@ -51,3 +51,20 @@ describe("groupSourceChips", () => {
     expect(chips[0]?.page).toBe("p. 87–88");
   });
 });
+
+it("keeps distinct exact passages separate even on the same page", () => {
+  const chips = groupSourceChips([
+    source({
+      sid: "S1",
+      pageStart: 2,
+      anchor: { hash: "v1", startChar: 100, endChar: 110, quote: "First fact" },
+    }),
+    source({
+      sid: "S2",
+      pageStart: 2,
+      anchor: { hash: "v1", startChar: 900, endChar: 911, quote: "Second fact" },
+    }),
+  ]);
+  expect(chips).toHaveLength(2);
+  expect(chips[1]?.source.anchor?.quote).toBe("Second fact");
+});

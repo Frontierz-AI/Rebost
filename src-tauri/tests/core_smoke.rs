@@ -38,6 +38,10 @@ async fn full_loop_answers_with_citations() {
     std::fs::create_dir_all(app.ctx.paths.models_dir()).unwrap();
     #[cfg(unix)]
     std::os::unix::fs::symlink(&model_path, app.ctx.paths.models_dir().join(&model_file)).unwrap();
+    #[cfg(windows)]
+    if std::fs::hard_link(&model_path, app.ctx.paths.models_dir().join(&model_file)).is_err() {
+        std::fs::copy(&model_path, app.ctx.paths.models_dir().join(&model_file)).unwrap();
+    }
     {
         let mut settings = app.ctx.settings.write().unwrap();
         settings.active_model = Some(ActiveModel {

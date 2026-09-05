@@ -6,6 +6,9 @@ import {
   invokeError,
   userFacingError,
   type AppUpdate,
+  type DocumentMeta,
+  type IngestEvent,
+  type WebApproval,
   type ChatEvent,
   type DownloadEvent,
   type EngineStatus,
@@ -32,6 +35,9 @@ export type View = "chat" | "shelves" | "recipes" | "settings";
 
 export const app = $state({
   ready: false,
+  bootstrapError: false,
+  rulesDraft: null as string | null,
+  documents: {} as Record<string, DocumentMeta[]>,
   view: "chat" as View,
   onboarding: false,
   shelves: [] as ShelfView[],
@@ -51,6 +57,10 @@ export const app = $state({
 
 export const chatState = $state({
   activeThreadId: null as string | null,
+  navigation: 0,
+  drafts: {} as Record<string, string>,
+  imports: {} as Record<string, number>,
+  webApprovals: {} as Record<string, WebApproval>,
   messages: [] as StoredMessage[],
   /** Composer draft — lives here so Recipes can pre-fill it. */
   draft: "",
@@ -64,6 +74,7 @@ export const chatState = $state({
   pending: {} as ChatPendingMap,
   /** Threads that have sent but not yet received `queued`. */
   outbound: {} as Record<string, boolean>,
+  sentDrafts: {} as Record<string, string>,
   /** Stop pressed before the backend had a message id to cancel. */
   cancelWhenQueued: {} as Record<string, boolean>,
   /** Older messages exist above the open window. */
@@ -94,6 +105,8 @@ export function fillDraft(text: string) {
 }
 
 function clearConversation() {
+  rememberDraft();
+  chatState.navigation += 1;
   chatState.activeThreadId = null;
   chatState.messages = [];
   chatState.uploadShelf = null;
@@ -173,8 +186,11 @@ export function handleMenuAction(action: MenuAction) {
   }
 }
 
+let shelvesLoad = 0;
 export async function refreshShelves() {
-  app.shelves = await api.shelvesList();
+  const load = ++shelvesLoad;
+  const shelves = await api.shelvesList();
+  if (load === shelvesLoad) app.shelves = shelves;
 }
 
 export async function setShelfThinkLevel(shelfId: string, level: ThinkLevel) {
@@ -194,12 +210,22 @@ export async function setShelfThinkLevel(shelfId: string, level: ThinkLevel) {
   }
 }
 
+let threadsLoad = 0;
 export async function refreshThreads() {
-  app.threads = await api.threadsList();
+  const load = ++threadsLoad;
+  const threads = await api.threadsList();
+  if (load === threadsLoad) app.threads = threads;
 }
 
+let settingsLoad = 0;
+export function invalidateSettingsLoads() {
+  settingsLoad += 1;
+}
 export async function refreshSettings() {
-  app.settings = await api.settingsGet();
+  const load = ++settingsLoad;
+  const settings = await api.settingsGet();
+  if (load !== settingsLoad) return;
+  app.settings = settings;
   paintTextSize(parseTextSize(app.settings.textSize));
   applyLocale(parseAppLocale(app.settings.resolvedLocale));
 }
@@ -227,7 +253,9 @@ export async function setTextSize(next: TextSize) {
   paintTextSize(next);
   if (app.settings) app.settings = { ...app.settings, textSize: next };
   try {
+    invalidateSettingsLoads();
     await api.setTextSize(next);
+    invalidateSettingsLoads();
     await refreshSettings();
   } catch (error) {
     paintTextSize(previous);
@@ -242,7 +270,9 @@ export async function setUiLocale(next: LocalePref) {
   if (next === previousPref && app.settings) return;
   if (app.settings) app.settings = { ...app.settings, uiLocale: next };
   try {
+    invalidateSettingsLoads();
     const view = await api.setUiLocale(next);
+    invalidateSettingsLoads();
     app.settings = view;
     applyLocale(parseAppLocale(view.resolvedLocale));
   } catch (error) {
@@ -276,22 +306,55 @@ export function beginModelInstall(
   return api.modelInstall(source, reference, name, license);
 }
 
+function rememberDraft() {
+  chatState.drafts[chatState.activeThreadId ?? "new"] = chatState.draft;
+}
+
+export async function ensureActiveThread(): Promise<string> {
+  if (chatState.activeThreadId) return chatState.activeThreadId;
+  if (creatingThread) return creatingThread;
+  const navigation = chatState.navigation;
+  const shelfId = chatState.selectedShelfId;
+  creatingThread = api
+    .threadCreate(shelfId)
+    .then(async (thread) => {
+      if (chatState.navigation === navigation && !chatState.activeThreadId) {
+        chatState.activeThreadId = thread.id;
+        chatState.messages = [];
+        chatState.hasOlder = false;
+        chatState.uploadShelf = null;
+      }
+      await refreshThreads();
+      return thread.id;
+    })
+    .finally(() => {
+      creatingThread = null;
+    });
+  return creatingThread;
+}
+let creatingThread: Promise<string> | null = null;
+
 export async function openThread(threadId: string) {
+  rememberDraft();
+  const navigation = ++chatState.navigation;
   chatState.activeThreadId = threadId;
+  chatState.messages = [];
+  chatState.draft = chatState.drafts[threadId] ?? "";
+  chatState.uploadShelf = null;
   chatState.hasOlder = false;
   chatState.loadingOlder = false;
-  const page = await api.threadMessages(threadId);
-  if (chatState.activeThreadId !== threadId) return;
-  chatState.messages = page.messages;
-  chatState.hasOlder = page.hasOlder;
   const thread = app.threads.find((item) => item.id === threadId);
-  chatState.uploadShelf = null;
+  chatState.selectedShelfId = thread?.shelfId ?? null;
+  const page = await api.threadMessages(threadId);
+  if (chatState.navigation !== navigation) return;
+  // A completion can arrive while the saved window is loading.
+  const live = chatState.messages.filter((m) => !page.messages.some((saved) => saved.id === m.id));
+  chatState.messages = [...page.messages, ...live];
+  chatState.hasOlder = page.hasOlder;
   if (thread?.uploadShelfId) {
     try {
       const shelf = await api.shelfGet(thread.uploadShelfId);
-      if (chatState.activeThreadId === threadId) {
-        chatState.uploadShelf = shelf;
-      }
+      if (chatState.navigation === navigation) chatState.uploadShelf = shelf;
     } catch (error) {
       logInvokeError(error, "load uploaded files");
     }
@@ -304,13 +367,14 @@ export async function loadOlderMessages() {
   const first = chatState.messages[0];
   if (!threadId || !first || !chatState.hasOlder || chatState.loadingOlder) return;
   chatState.loadingOlder = true;
+  const navigation = chatState.navigation;
   try {
     const page = await api.threadMessages(threadId, first.id);
-    if (chatState.activeThreadId !== threadId) return;
+    if (chatState.navigation !== navigation) return;
     chatState.messages = [...page.messages, ...chatState.messages];
     chatState.hasOlder = page.hasOlder;
   } finally {
-    if (chatState.activeThreadId === threadId) {
+    if (chatState.navigation === navigation) {
       chatState.loadingOlder = false;
     }
   }
@@ -330,6 +394,33 @@ function dropFlag(map: Record<string, boolean>, key: string): Record<string, boo
 }
 
 function handleChatEvent(event: ChatEvent) {
+  if (event.kind === "queued" && event.userMessageId) {
+    if (chatState.activeThreadId === event.threadId) {
+      const local = [...chatState.messages]
+        .reverse()
+        .find((m) => m.role === "user" && m.id.startsWith("local-"));
+      if (local) {
+        const messages = chatState.messages.map((m) =>
+          m.id === local.id ? { ...m, id: event.userMessageId! } : m,
+        );
+        chatState.messages = messages.filter(
+          (m, index) => messages.findIndex((other) => other.id === m.id) === index,
+        );
+      }
+    }
+    delete chatState.sentDrafts[event.threadId];
+  }
+  if (event.kind === "error" && !event.messageId) {
+    const draft = chatState.sentDrafts[event.threadId];
+    if (draft) {
+      if (chatState.activeThreadId === event.threadId && !chatState.draft) {
+        chatState.draft = draft;
+        chatState.messages = chatState.messages.filter((m) => !m.id.startsWith("local-"));
+      } else if (chatState.activeThreadId !== event.threadId)
+        chatState.drafts[event.threadId] = draft;
+      delete chatState.sentDrafts[event.threadId];
+    }
+  }
   if (event.kind === "queued" && chatState.cancelWhenQueued[event.threadId]) {
     api.chatCancel(event.messageId).catch((error) => logInvokeError(error, "cancel queued"));
   }
@@ -340,10 +431,11 @@ function handleChatEvent(event: ChatEvent) {
   const result = reduceChatEvent(chatState.pending, event);
   chatState.pending = result.pending;
   if (result.append && chatState.activeThreadId === event.threadId) {
-    chatState.messages = [...chatState.messages, result.append];
+    if (!chatState.messages.some((m) => m.id === result.append?.id))
+      chatState.messages = [...chatState.messages, result.append];
   }
   if (result.refreshThreads) {
-    refreshThreads();
+    void refreshThreads().catch(notifyInvokeError);
   }
   if (result.error) {
     notify(userFacingError(result.error));
@@ -370,41 +462,104 @@ export function logInvokeError(error: unknown, context: string) {
   console.error(`${context}: ${invokeError(error)}`);
 }
 
-/** Wire events + initial data. Called once from App.svelte. */
-export async function bootstrap() {
-  await Promise.all([refreshShelves(), refreshThreads(), refreshSettings()]);
-  const engineStatus = await api.engineStatus();
-  app.engine = engineStatus;
-  app.onboarding = !(app.settings?.onboardingDone || app.settings?.activeModel);
+const documentLoads = new Map<string, Promise<DocumentMeta[]>>();
+const duringLoad = new Map<string, IngestEvent[]>();
+function patchDocuments(docs: DocumentMeta[], event: IngestEvent): DocumentMeta[] {
+  if (event.status === "removed") return docs.filter((d) => d.id !== event.documentId);
+  if (!event.document) return docs;
+  const index = docs.findIndex((d) => d.id === event.documentId);
+  if (index < 0) return [...docs, event.document];
+  const next = [...docs];
+  next[index] = event.document;
+  return next;
+}
+function applyDocumentDelta(event: IngestEvent) {
+  duringLoad.get(event.shelfId)?.push(event);
+  if (app.documents[event.shelfId])
+    app.documents[event.shelfId] = patchDocuments(app.documents[event.shelfId]!, event);
+}
+export async function loadShelfDocuments(
+  shelfId: string,
+  refresh = false,
+): Promise<DocumentMeta[]> {
+  const running = documentLoads.get(shelfId);
+  if (running) return running;
+  if (!refresh && app.documents[shelfId]) return app.documents[shelfId]!;
+  duringLoad.set(shelfId, []);
+  const promise = api
+    .shelfDocuments(shelfId)
+    .then((docs) => {
+      for (const event of duringLoad.get(shelfId) ?? []) docs = patchDocuments(docs, event);
+      app.documents[shelfId] = docs;
+      return docs;
+    })
+    .finally(() => {
+      documentLoads.delete(shelfId);
+      duringLoad.delete(shelfId);
+    });
+  documentLoads.set(shelfId, promise);
+  return promise;
+}
 
-  // Chat is home: reopen the most recent conversation, or a numbered one
-  // for screenshots (`VITE_START_THREAD=1` is the top of the list).
-  if (app.threads.length > 0) {
-    const startThread = Number(import.meta.env.VITE_START_THREAD ?? "0");
-    const index = startThread >= 1 ? startThread - 1 : 0;
-    const thread = app.threads[index] ?? app.threads[0];
-    if (thread) await openThread(thread.id);
-  } else {
-    chatState.selectedShelfId = preferredShelfForNew();
+let bufferedChat: ChatEvent[] = [];
+let chatTimer: ReturnType<typeof setTimeout> | undefined;
+function flushChatEvents() {
+  clearTimeout(chatTimer);
+  chatTimer = undefined;
+  const batch = bufferedChat;
+  bufferedChat = [];
+  for (const event of batch) handleChatEvent(event);
+}
+function enqueueChatEvent(event: ChatEvent) {
+  if (event.kind !== "delta" && event.kind !== "thinking") {
+    flushChatEvents();
+    handleChatEvent(event);
+    return;
   }
+  const last = bufferedChat[bufferedChat.length - 1];
+  if (
+    last?.kind === event.kind &&
+    last.messageId === event.messageId &&
+    last.threadId === event.threadId
+  )
+    last.text = (last.text ?? "") + (event.text ?? "");
+  else bufferedChat.push({ ...event });
+  chatTimer ??= setTimeout(flushChatEvents, 40);
+}
 
-  // Dev-only: land on a specific view for UI verification.
-  const startView = import.meta.env.VITE_START_VIEW as View | undefined;
-  if (startView && ["chat", "shelves", "recipes", "settings"].includes(startView)) {
-    app.view = startView;
-    if (startView === "shelves" && import.meta.env.VITE_START_SHELF === "first") {
-      app.openShelfId = app.shelves[0]?.id ?? null;
-    }
+let booting: Promise<void> | null = null;
+let unlisteners: (() => void)[] = [];
+export function bootstrap(): Promise<void> {
+  if (app.ready) return Promise.resolve();
+  booting ??= initialize().finally(() => {
+    booting = null;
+  });
+  return booting;
+}
+async function initialize() {
+  app.bootstrapError = false;
+  const queued: (() => void)[] = [];
+  let live = false;
+  const subscriptions: Promise<() => void>[] = [];
+  function subscribe<T>(
+    listen: (handler: (event: T) => void) => Promise<() => void>,
+    handler: (event: T) => void,
+  ) {
+    subscriptions.push(
+      listen((event) => {
+        if (live) handler(event);
+        else queued.push(() => handler(event));
+      }),
+    );
   }
-
-  events.engine((status) => {
+  subscribe(events.engine, (status) => {
     const previousName = app.engine.modelName;
     app.engine = status;
     if (status.modelName && status.modelName !== previousName) {
-      void refreshSettings();
+      void refreshSettings().catch(notifyInvokeError);
     }
   });
-  events.download((download) => {
+  subscribe(events.download, (download) => {
     const previous = app.downloads[download.id];
     app.downloads = {
       ...app.downloads,
@@ -417,23 +572,19 @@ export async function bootstrap() {
       },
     };
     if (download.done) {
-      refreshSettings();
+      void refreshSettings().catch(notifyInvokeError);
     }
     if (download.error) {
       const message = downloadErrorMessage(download.error);
       if (message) notify(message);
     }
   });
-  let ingestQueued = false;
-  events.ingest(() => {
-    if (ingestQueued) return;
-    ingestQueued = true;
-    setTimeout(() => {
-      ingestQueued = false;
-      app.ingestTick += 1;
-    }, 400);
+  subscribe(events.ingest, applyDocumentDelta);
+  subscribe(events.webApproval, (event) => {
+    if (event.resolved) delete chatState.webApprovals[event.threadId];
+    else chatState.webApprovals[event.threadId] = event;
   });
-  events.shelfStats((event) => {
+  subscribe(events.shelfStats, (event) => {
     const shelf = app.shelves.find((s) => s.id === event.shelfId);
     if (shelf) {
       shelf.stats = { ...event.stats, waiting: event.stats.waiting ?? 0 };
@@ -445,17 +596,58 @@ export async function bootstrap() {
       };
     }
   });
-  events.shelves(() => refreshShelves());
-  events.chat(handleChatEvent);
-  events.update((update) => {
+  subscribe<void>(
+    (handler) => events.shelves(() => handler()),
+    () => {
+      void refreshShelves().catch(notifyInvokeError);
+    },
+  );
+  subscribe(events.chat, enqueueChatEvent);
+  subscribe(events.update, (update) => {
     app.update = update;
   });
-  api
-    .updateInfo()
-    .then((update) => {
-      if (update) app.update = update;
-    })
-    .catch((error) => logInvokeError(error, "update check"));
+  try {
+    const results = await Promise.allSettled(subscriptions);
+    unlisteners = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+    if (results.some((r) => r.status === "rejected")) throw new Error("Event subscriptions failed");
+    await Promise.all([refreshShelves(), refreshThreads(), refreshSettings()]);
+    const engineStatus = await api.engineStatus();
+    app.engine = engineStatus;
+    app.onboarding = !(app.settings?.onboardingDone || app.settings?.activeModel);
 
-  app.ready = true;
+    // Chat is home: reopen the most recent conversation, or a numbered one
+    // for screenshots (`VITE_START_THREAD=1` is the top of the list).
+    if (app.threads.length > 0) {
+      const startThread = Number(import.meta.env.VITE_START_THREAD ?? "0");
+      const index = startThread >= 1 ? startThread - 1 : 0;
+      const thread = app.threads[index] ?? app.threads[0];
+      if (thread) await openThread(thread.id);
+    } else {
+      chatState.selectedShelfId = preferredShelfForNew();
+    }
+
+    // Dev-only: land on a specific view for UI verification.
+    const startView = import.meta.env.VITE_START_VIEW as View | undefined;
+    if (startView && ["chat", "shelves", "recipes", "settings"].includes(startView)) {
+      app.view = startView;
+      if (startView === "shelves" && import.meta.env.VITE_START_SHELF === "first") {
+        app.openShelfId = app.shelves[0]?.id ?? null;
+      }
+    }
+
+    for (const event of queued) event();
+    live = true;
+    app.ready = true;
+    void api
+      .updateInfo()
+      .then((update) => {
+        if (update) app.update = update;
+      })
+      .catch((error) => logInvokeError(error, "update check"));
+  } catch (error) {
+    for (const unlisten of unlisteners) unlisten();
+    unlisteners = [];
+    app.bootstrapError = true;
+    throw error;
+  }
 }

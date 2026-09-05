@@ -195,6 +195,7 @@ pub(super) fn look_around(tool: &ToolCtx<'_>, id: &str) -> ToolOutcome {
     };
     let mut updated = source.clone();
     updated.body = body;
+    updated.anchor = None;
     if continued {
         updated.section = Some(OPEN_WINDOW_NEXT.to_string());
     }
@@ -276,6 +277,7 @@ mod tests {
 
     fn passage(doc: &str, body: &str) -> SourcePassage {
         SourcePassage {
+            anchor: None,
             sid: "S1".into(),
             document_id: doc.into(),
             shelf_id: "s".into(),

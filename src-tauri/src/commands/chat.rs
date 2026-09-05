@@ -79,7 +79,7 @@ pub async fn thread_export(
     let Some(path) = app
         .dialog()
         .file()
-        .set_title("Export conversation")
+        .set_title(rust_i18n::t!("chat.exportConversation").as_ref())
         .set_file_name(&file_name)
         .add_filter("Markdown", &["md"])
         .blocking_save_file()
@@ -138,6 +138,9 @@ pub fn chat_send(
 ) -> CmdResult<()> {
     require_id(&thread_id)?;
     require_optional_id(shelf_id.as_deref())?;
+    if text.trim().is_empty() || text.chars().count() > crate::limits::PROMPT_MAX_CHARS {
+        return Err(rust_i18n::t!("errors.promptTooLong").to_string());
+    }
     let chat = chat.inner().clone();
     tauri::async_runtime::spawn(async move {
         if let Err(error) = chat.send_message(&thread_id, &text, shelf_id).await {
@@ -153,6 +156,13 @@ pub fn chat_send(
 pub fn chat_cancel(chat: State<'_, Arc<ChatService>>, message_id: String) -> CmdResult<()> {
     require_id(&message_id)?;
     chat.cancel(&message_id);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn chat_approve_web(request_id: String, allowed: bool) -> CmdResult<()> {
+    require_id(&request_id)?;
+    crate::chat::web_approval::resolve(&request_id, allowed);
     Ok(())
 }
 

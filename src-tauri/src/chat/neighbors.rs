@@ -176,6 +176,7 @@ mod tests {
 
     fn passage(doc: &str, body: &str, score: f32) -> SourcePassage {
         SourcePassage {
+            anchor: None,
             sid: String::new(),
             document_id: doc.into(),
             shelf_id: "s".into(),

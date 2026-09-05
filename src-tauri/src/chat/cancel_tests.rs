@@ -99,10 +99,16 @@ async fn cancel_while_waiting_for_the_generation_slot_skips_the_engine() {
         saw_waiting,
         "waiting status while another answer holds the slot"
     );
+    let stopped = std::time::Instant::now();
     chat.cancel(&message_id);
+    let message = tokio::time::timeout(std::time::Duration::from_millis(250), handle)
+        .await
+        .expect("Stop must not wait for the occupied generation slot")
+        .unwrap()
+        .unwrap();
+    assert!(stopped.elapsed() < std::time::Duration::from_millis(250));
     drop(guard);
-
-    let message = handle.await.unwrap().unwrap();
+    assert_eq!(chat.cancel_count(), 0);
     assert_eq!(message.status, "stopped");
     let captured = events.0.lock().unwrap();
     assert!(
@@ -193,6 +199,7 @@ fn history_keeps_the_citation_titles_the_user_saw() {
         ts: String::new(),
         shelf_id: None,
         sources: vec![SourcePassage {
+            anchor: None,
             sid: "S1".into(),
             document_id: "d1".into(),
             shelf_id: "s1".into(),
@@ -228,4 +235,29 @@ fn rewind_keeps_the_prompt_and_drops_tool_turns() {
     rewind_to_prompt(&mut messages, prompt_len);
     assert_eq!(messages.len(), 2);
     assert_eq!(messages[1].as_text(), "Hello");
+}
+
+#[test]
+fn citation_repair_cannot_change_words_numbers_or_language() {
+    let ids = vec!["S1".to_string()];
+    assert!(citation_only_revision(
+        "El codi és 7391.",
+        "El codi és 7391 [S1].",
+        &ids
+    ));
+    assert!(!citation_only_revision(
+        "El codi és 7391.",
+        "El codi és 7000 [S1].",
+        &ids
+    ));
+    assert!(!citation_only_revision(
+        "El codi és 7391.",
+        "The code is 7391 [S1].",
+        &ids
+    ));
+    assert!(!citation_only_revision(
+        "El codi és 7391.",
+        "El codi és 7391 [S2].",
+        &ids
+    ));
 }

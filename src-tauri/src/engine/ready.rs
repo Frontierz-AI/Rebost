@@ -156,8 +156,16 @@ impl Engine {
         }
 
         {
-            let mut inner = self.inner.lock().await;
-            if let Some(url) = self.live_url(&mut inner, &model).await {
+            let mut inner = tokio::select! {
+                _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+                guard = self.inner.lock() => guard,
+            };
+            let live = tokio::select! {
+                biased;
+                _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+                live = self.live_url(&mut inner, &model) => live,
+            };
+            if let Some(url) = live {
                 return Ok(url);
             }
         }
@@ -173,15 +181,26 @@ impl Engine {
             return Err(stopped_error());
         }
         {
-            let mut inner = self.inner.lock().await;
-            if let Some(url) = self.live_url(&mut inner, &model).await {
+            let mut inner = tokio::select! {
+                _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+                guard = self.inner.lock() => guard,
+            };
+            let live = tokio::select! {
+                biased;
+                _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+                live = self.live_url(&mut inner, &model) => live,
+            };
+            if let Some(url) = live {
                 return Ok(url);
             }
         }
 
         // Download llama.cpp without holding the process lock — otherwise the
         // first chat sits on "Warming up…" with no engine log for minutes.
-        let (mut binary, mut pin) = self.ensure_binary().await?;
+        let (mut binary, mut pin) = tokio::select! {
+            _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+            result = self.ensure_binary() => result?,
+        };
         if cancel.load(Ordering::Relaxed) {
             return Err(stopped_error());
         }
@@ -198,8 +217,16 @@ impl Engine {
             if cancel.load(Ordering::Relaxed) {
                 return Err(stopped_error());
             }
-            let mut inner = self.inner.lock().await;
-            if let Some(url) = self.live_url(&mut inner, &model).await {
+            let mut inner = tokio::select! {
+                _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+                guard = self.inner.lock() => guard,
+            };
+            let live = tokio::select! {
+                biased;
+                _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
+                live = self.live_url(&mut inner, &model) => live,
+            };
+            if let Some(url) = live {
                 return Ok(url);
             }
 
@@ -354,8 +381,22 @@ impl Engine {
                     error: anyhow!("llama-server exited early ({status})"),
                 });
             }
-            if self.health_ok(port).await {
-                if pin.accelerator == "OpenCL" && !self.generation_probe_ok(port).await {
+            let healthy = tokio::select! {
+                biased;
+                _ = super::wait_if_cancelled(cancel) => continue,
+                ready = self.health_ok(port) => ready,
+            };
+            if healthy {
+                let probe_ok = if pin.accelerator == "OpenCL" {
+                    tokio::select! {
+                        biased;
+                        _ = super::wait_if_cancelled(cancel) => continue,
+                        ready = self.generation_probe_ok(port) => ready,
+                    }
+                } else {
+                    true
+                };
+                if !probe_ok {
                     log::warn!("OpenCL loaded but a test reply failed; falling back to CPU");
                     if let Some(pid) = child.id() {
                         force_kill_pid(pid);
@@ -388,9 +429,15 @@ impl Engine {
                 log::info!("still loading {} ({}s)", model.name, secs);
                 last_note = std::time::Instant::now();
             }
-            tokio::time::sleep(Duration::from_millis(400)).await;
+            tokio::select! {
+                _ = super::wait_if_cancelled(cancel) => {},
+                _ = tokio::time::sleep(Duration::from_millis(400)) => {},
+            }
         }
 
+        *crate::core::write_lock(&self.ctx.runtime_plan) = Some(plan.clone());
+        inner.flatten_tools = false;
+        inner.tools_rejected = false;
         inner.child = Some(child);
         inner.port = port;
         inner.model_file = model.file.clone();
@@ -424,6 +471,7 @@ impl Engine {
                 let _ = child.kill().await;
             }
             inner.reasoning = None;
+            *crate::core::write_lock(&self.ctx.runtime_plan) = None;
             None
         }
     }
@@ -435,6 +483,7 @@ impl Engine {
             let _ = child.kill().await;
         }
         inner.reasoning = None;
+        *crate::core::write_lock(&self.ctx.runtime_plan) = None;
         drop(inner);
         let data_dir = self.ctx.paths.base().to_path_buf();
         if let Err(error) =
@@ -462,6 +511,7 @@ impl Engine {
             }
             inner.child = None;
             inner.reasoning = None;
+            *crate::core::write_lock(&self.ctx.runtime_plan) = None;
         }
         kill_stale_llama_servers(self.ctx.paths.base());
     }

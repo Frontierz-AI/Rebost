@@ -6,6 +6,35 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-09-05
+
+### Added
+
+- When Online is on, Chat shows the exact query or address and waits for approval before anything is sent. Allow once sends that one request. Keep this local skips it.
+- An interrupted answer keeps the question and any text that already arrived. Continue picks up from the last sentence.
+- Opening a citation shows the passage used for that answer. If the file has changed since, the saved passage stays visible and the current file is shown separately.
+- Files attached to a conversation appear under the composer, with status and a way to retry ones that failed.
+- A large Shelf table can show every row for reading or keyboard navigation.
+
+### Changed
+
+- Settings reports when House rules, Online, text size, or language could not be saved.
+- Attaching files stays on the conversation that started the picker, even if another conversation is opened while the picker is up.
+- Enter during Japanese composition commits the characters and does not send the question.
+- Screen readers hear when an answer is being prepared, when it is being written, and when it is ready.
+- Conversation files keep the quoted passage for each citation, so the source panel can show what was used even if the file later changes.
+- CI runs the desktop test suite on macOS and Windows.
+
+### Fixed
+
+- A question that is too long for the installed AI, together with House rules, is refused with a clear message instead of a generic failure.
+- Asking about attachments that could not be read is refused until those files are retried.
+- Damaged settings or library metadata fall back to the last valid snapshot.
+
+### Security
+
+- With Online on, no search query or page request leaves the machine until it is approved.
+
 ## [0.9.1] - 2026-09-01
 
 ### Changed
@@ -529,7 +558,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.14...v0.9.0
 [0.8.14]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.13...v0.8.14

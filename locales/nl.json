@@ -86,7 +86,7 @@
     "saveHouseRules": "House rules opslaan",
     "saved": "Opgeslagen",
     "online": "Online",
-    "onlineHelp": "Zet dit aan zodat Chat dingen kan opzoeken op het openbare web. Je bestanden blijven op deze computer. Het antwoord wordt nog steeds hier geschreven.",
+    "onlineHelp": "Sta zoeken op het openbare web toe. Elke zoekopdracht of elk adres wordt vóór verzending ter goedkeuring getoond. Antwoorden worden op deze computer geschreven.",
     "ai": "AI",
     "installedHere": "geïnstalleerd op deze computer",
     "engineReady": "Klaar",
@@ -185,7 +185,19 @@
     "page": "p. %{start}",
     "pageRange": "p. %{start}–%{end}",
     "pageWord": "Pagina %{start}",
-    "pageWordRange": "Pagina %{start}–%{end}"
+    "pageWordRange": "Pagina %{start}–%{end}",
+    "interrupted": "Het antwoord is onderbroken. Je vraag en het gedeeltelijke antwoord zijn opgeslagen.",
+    "continuePrompt": "Ga verder met het vorige antwoord vanaf de laatste zin. Herhaal niets.",
+    "continue": "Doorgaan",
+    "answerInProgress": "Antwoord schrijven…",
+    "preparingAnswer": "Antwoord voorbereiden…",
+    "answerComplete": "Antwoord klaar. Controleer het antwoord en de bronnen.",
+    "reviewOnline": "Online verzoek controleren",
+    "queryLeaves": "Deze exacte zoekopdracht wordt naar Wikipedia, DuckDuckGo en You.com gestuurd. Controleer of er geen privégegevens in staan.",
+    "urlLeaves": "Dit adres wordt bij de website opgevraagd. Controleer het volledige adres op privégegevens.",
+    "allowOnce": "Eenmalig toestaan",
+    "keepLocal": "Lokale informatie gebruiken",
+    "exportConversation": "Gesprek exporteren"
   },
   "thinking": {
     "fallback": "Nadenken…",
@@ -298,7 +310,8 @@
     "folderMissing": "Deze map is er nu even niet. De bestanden blijven op de plank.",
     "removeSynced": "Gesynchroniseerde map van deze plank halen",
     "removeSyncedHint": "Van deze plank halen (bestanden blijven op schijf)",
-    "moreSynced": "Meer gesynchroniseerde mappen"
+    "moreSynced": "Meer gesynchroniseerde mappen",
+    "showAllRows": "Alle rijen tonen om te lezen of met het toetsenbord te navigeren"
   },
   "documents": {
     "ready": "Klaar voor gebruik",
@@ -326,7 +339,11 @@
     "showInFolder": "In map tonen",
     "viewText": "Tekst bekijken",
     "unavailable": "Dit bestand is niet beschikbaar.",
-    "loading": "Laden"
+    "loading": "Laden",
+    "citedPassage": "Passage gebruikt voor dit antwoord",
+    "sourceChanged": "Dit bestand is gewijzigd sinds het antwoord. De opgeslagen passage hierboven komt uit de versie die toen is gebruikt.",
+    "currentContext": "Context in het huidige bestand",
+    "sourceUnverified": "De opgeslagen passage is niet gevonden in het huidige bestand."
   },
   "recipes": {
     "title": "Recepten",
@@ -521,7 +538,9 @@
     "recipeTooLong": "Deze Recipe is te lang. Maximaal 12.000 tekens.",
     "typeDelete": "Typ DELETE om te bevestigen.",
     "engineLogMissing": "Het logboek staat nog niet op deze computer.",
-    "folderNotFound": "Map niet gevonden."
+    "folderNotFound": "Map niet gevonden.",
+    "promptTooLong": "De vraag en je instructies overschrijden de context van deze AI. Kort ze in of kies een grotere AI.",
+    "attachmentsFailed": "Sommige bijlagen konden niet worden gelezen. Verwerk ze opnieuw voordat je er vragen over stelt."
   },
   "pii": {
     "heading": "Persoonsgegevens",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "Klein bestand, korte antwoorden.",
       "gemma_3_1b": "De kleinste keuze. Binnen een minuut geïnstalleerd."
     }
+  },
+  "imports": {
+    "addedOne": "Toegevoegd aan dit gesprek.",
+    "addedMany": "%{count} bestanden toegevoegd aan dit gesprek.",
+    "unsupported": "Deze bestandstypen worden niet ondersteund."
   }
 }

@@ -16,7 +16,9 @@ use crate::engine::ToolCall;
 use crate::shelf::ThinkLevel;
 use crate::types::SourcePassage;
 
-pub(crate) use open::{catalog, labels_for_schema, open_shelf_file, ShelfFile};
+pub(crate) use open::{
+    catalog, disambiguate_labels, labels_for_schema, open_shelf_file, ShelfFile,
+};
 pub(crate) use parse::{
     arg_string, merge_tool_calls, parse_tool_calls_from_text, requested_file_name,
 };
@@ -457,8 +459,29 @@ pub(crate) async fn run_tool(call: &ToolCall, tool: &ToolCtx<'_>) -> ToolOutcome
         ToolName::LookAround => search::look_around(tool, &id_arg(call)),
         ToolName::OpenFile => open_shelf_file(tool, &requested_file_name(call).unwrap_or_default()),
         ToolName::SearchChats => search::search_chats(tool, &query_arg(call)),
-        ToolName::SearchWeb => web::search_web(&query_arg(call), tool.cancel).await,
-        ToolName::ReadWebPage => web::read_web_page(&url_arg(call), tool.cancel).await,
+        ToolName::SearchWeb | ToolName::ReadWebPage => {
+            let value = if name == ToolName::SearchWeb {
+                query_arg(call)
+            } else {
+                url_arg(call)
+            };
+            if !super::web_approval::request(
+                tool.ctx,
+                tool.thread_id,
+                name.as_str(),
+                &value,
+                tool.cancel,
+            )
+            .await
+            {
+                return ToolOutcome::reply("Online request was not approved. Continue using local information; do not claim to have searched the web.");
+            }
+            if name == ToolName::SearchWeb {
+                web::search_web(&value, tool.cancel).await
+            } else {
+                web::read_web_page(&value, tool.cancel).await
+            }
+        }
     }
 }
 
@@ -870,6 +893,7 @@ mod tests {
 
     fn passage(sid: &str, doc: &str) -> SourcePassage {
         SourcePassage {
+            anchor: None,
             sid: sid.into(),
             document_id: doc.into(),
             shelf_id: "s".into(),

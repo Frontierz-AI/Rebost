@@ -14,6 +14,8 @@ function sidNumber(sid: string): number {
 }
 
 function locationKey(source: SourcePassage): string {
+  if (source.anchor)
+    return `${source.documentId}\0${source.anchor.hash}\0${source.anchor.startChar ?? source.sid}\0${source.anchor.endChar ?? ""}`;
   if (source.pageStart == null && !source.section) {
     return `sid:${source.sid}`;
   }

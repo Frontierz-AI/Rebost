@@ -51,11 +51,28 @@ struct QueuedFile {
 /// Jobs accepted but not yet taken by a worker. Not persisted.
 pub struct IngestQueue {
     waiting: Mutex<HashMap<String, u32>>,
+    active: Mutex<HashMap<String, u32>>,
     queued: Mutex<HashMap<(String, PathBuf), QueuedFile>>,
     last_emit: Mutex<Option<Instant>>,
     generation: AtomicU64,
     shelf_cutoff: Mutex<HashMap<String, u64>>,
     source_cutoff: Mutex<HashMap<(String, String), u64>>,
+}
+
+pub struct IngestWork<'a> {
+    queue: &'a IngestQueue,
+    shelf_id: String,
+}
+impl Drop for IngestWork<'_> {
+    fn drop(&mut self) {
+        let mut active = mutex_lock(&self.queue.active);
+        if let Some(n) = active.get_mut(&self.shelf_id) {
+            *n = n.saturating_sub(1);
+            if *n == 0 {
+                active.remove(&self.shelf_id);
+            }
+        }
+    }
 }
 
 const STATS_EMIT_GAP: Duration = Duration::from_millis(200);
@@ -70,6 +87,7 @@ impl IngestQueue {
     pub fn new() -> Self {
         Self {
             waiting: Mutex::new(HashMap::new()),
+            active: Mutex::new(HashMap::new()),
             queued: Mutex::new(HashMap::new()),
             last_emit: Mutex::new(None),
             generation: AtomicU64::new(0),
@@ -146,6 +164,23 @@ impl IngestQueue {
             .get(shelf_id)
             .copied()
             .unwrap_or(0)
+    }
+
+    pub fn begin_work(&self, shelf_id: &str) -> IngestWork<'_> {
+        *mutex_lock(&self.active)
+            .entry(shelf_id.to_string())
+            .or_default() += 1;
+        IngestWork {
+            queue: self,
+            shelf_id: shelf_id.to_string(),
+        }
+    }
+
+    pub fn pending(&self, shelf_id: &str) -> bool {
+        // Workers increment active before removing the queued job.
+        let queued = mutex_lock(&self.queued);
+        queued.keys().any(|(id, _)| id == shelf_id)
+            || mutex_lock(&self.active).get(shelf_id).copied().unwrap_or(0) > 0
     }
 
     /// How many new files this Shelf can still take, counting ones already
@@ -246,6 +281,7 @@ pub struct Ctx {
     pub events: Arc<dyn Events>,
     pub extractor: ExtractorSettings,
     pub ingest_queue: IngestQueue,
+    pub(crate) runtime_plan: RwLock<Option<crate::engine::tune::SpawnPlan>>,
 }
 
 impl Ctx {
@@ -267,14 +303,25 @@ impl Ctx {
             events,
             extractor,
             ingest_queue: IngestQueue::new(),
+            runtime_plan: RwLock::new(None),
         }))
     }
 
     pub fn save_settings(&self) {
-        let settings = read_lock(&self.settings).clone();
+        let settings = write_lock(&self.settings);
         if let Err(error) = settings.save(&self.paths.settings_path()) {
             log::error!("saving settings: {error:#}");
         }
+    }
+
+    /// Publish settings only after the same snapshot is safely on disk.
+    pub fn update_settings(&self, update: impl FnOnce(&mut Settings)) -> anyhow::Result<()> {
+        let mut settings = write_lock(&self.settings);
+        let mut next = settings.clone();
+        update(&mut next);
+        next.save(&self.paths.settings_path())?;
+        *settings = next;
+        Ok(())
     }
 
     /// Local-context budget in characters — measured by the installation
@@ -298,6 +345,20 @@ impl Ctx {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pending_includes_work_before_it_registers_a_document() {
+        let queue = IngestQueue::new();
+        let path = std::path::PathBuf::from("file.md");
+        let epoch = queue.stamp();
+        assert!(queue.try_queue("shelf", "source", path.clone(), true, epoch));
+        let work = queue.begin_work("shelf");
+        queue.start("shelf", &path, epoch);
+        assert_eq!(queue.waiting("shelf"), 0);
+        assert!(queue.pending("shelf"));
+        drop(work);
+        assert!(!queue.pending("shelf"));
+    }
 
     #[test]
     fn try_queue_dedups_the_same_path() {

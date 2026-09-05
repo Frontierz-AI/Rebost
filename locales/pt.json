@@ -86,7 +86,7 @@
     "saveHouseRules": "Guardar House rules",
     "saved": "Guardado",
     "online": "Online",
-    "onlineHelp": "Ative esta opção para o Chat poder pesquisar na web pública. Os seus ficheiros ficam neste computador. A resposta continua a ser escrita aqui.",
+    "onlineHelp": "Permita pesquisar na web pública. Cada consulta ou endereço é apresentado para aprovação antes do envio. As respostas são escritas neste computador.",
     "ai": "IA",
     "installedHere": "instalada neste computador",
     "engineReady": "Pronto",
@@ -185,7 +185,19 @@
     "page": "p. %{start}",
     "pageRange": "p. %{start}–%{end}",
     "pageWord": "Página %{start}",
-    "pageWordRange": "Página %{start}–%{end}"
+    "pageWordRange": "Página %{start}–%{end}",
+    "interrupted": "A resposta foi interrompida. A pergunta e a resposta parcial foram guardadas.",
+    "continuePrompt": "Continua a resposta anterior a partir da última frase, sem repetir.",
+    "continue": "Continuar",
+    "answerInProgress": "A escrever a resposta…",
+    "preparingAnswer": "A preparar a resposta…",
+    "answerComplete": "Resposta pronta. Reveja a resposta e as fontes.",
+    "reviewOnline": "Rever pedido online",
+    "queryLeaves": "Esta consulta exata será enviada à Wikipédia, DuckDuckGo e You.com. Verifique que não contém informações privadas.",
+    "urlLeaves": "Este endereço será pedido ao site. Verifique que o endereço completo não contém informações privadas.",
+    "allowOnce": "Permitir uma vez",
+    "keepLocal": "Usar apenas informação local",
+    "exportConversation": "Exportar conversa"
   },
   "thinking": {
     "fallback": "A pensar…",
@@ -298,7 +310,8 @@
     "folderMissing": "Esta pasta não está disponível neste momento. Os ficheiros ficam na estante.",
     "removeSynced": "Remover a pasta sincronizada desta estante",
     "removeSyncedHint": "Remover desta estante (os ficheiros ficam no disco)",
-    "moreSynced": "Mais pastas sincronizadas"
+    "moreSynced": "Mais pastas sincronizadas",
+    "showAllRows": "Mostrar todas as linhas para leitura ou navegação com o teclado"
   },
   "documents": {
     "ready": "Pronto a usar",
@@ -326,7 +339,11 @@
     "showInFolder": "Mostrar na pasta",
     "viewText": "Ver o texto",
     "unavailable": "Este ficheiro não está disponível.",
-    "loading": "A carregar"
+    "loading": "A carregar",
+    "citedPassage": "Passagem usada nesta resposta",
+    "sourceChanged": "Este ficheiro mudou desde a resposta. A passagem guardada acima corresponde à versão usada nessa altura.",
+    "currentContext": "Contexto do ficheiro atual",
+    "sourceUnverified": "Não foi possível localizar a passagem guardada no ficheiro atual."
   },
   "recipes": {
     "title": "Receitas",
@@ -521,7 +538,9 @@
     "recipeTooLong": "Este Recipe é demasiado longo. Máximo: 12.000 caracteres.",
     "typeDelete": "Escreva DELETE para confirmar.",
     "engineLogMissing": "Ainda não há registo neste computador.",
-    "folderNotFound": "Pasta não encontrada."
+    "folderNotFound": "Pasta não encontrada.",
+    "promptTooLong": "A pergunta e as suas instruções excedem o contexto desta IA. Encurte-as ou escolha uma IA maior.",
+    "attachmentsFailed": "Não foi possível ler alguns anexos. Volte a processá-los antes de perguntar sobre eles."
   },
   "pii": {
     "heading": "Informação pessoal",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "Ficheiro pequeno, respostas curtas.",
       "gemma_3_1b": "A mais pequena. Instala-se num minuto."
     }
+  },
+  "imports": {
+    "addedOne": "Adicionado a esta conversa.",
+    "addedMany": "%{count} ficheiros adicionados a esta conversa.",
+    "unsupported": "O tipo destes ficheiros não é suportado."
   }
 }

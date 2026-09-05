@@ -160,7 +160,7 @@ function reduceOne(pending: ChatPending | null, event: ChatEvent): OneResult {
     }
     case "done": {
       const message = event.message;
-      const append = message && message.status !== "error" ? message : undefined;
+      const append = message;
       return {
         pending: isThisTurn(pending, event) ? null : pending,
         append,
@@ -169,7 +169,11 @@ function reduceOne(pending: ChatPending | null, event: ChatEvent): OneResult {
     }
     case "error": {
       return {
-        pending: isThisTurn(pending, event) ? null : pending,
+        pending:
+          !event.messageId ||
+          (isThisTurn(pending, event) && pending && isOutboundPlaceholder(pending.messageId))
+            ? null
+            : pending,
         error: event.error,
       };
     }

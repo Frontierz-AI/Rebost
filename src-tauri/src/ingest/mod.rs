@@ -126,6 +126,7 @@ impl Ingestor {
                     let Some(job) = job else { break };
                     match job {
                         Job::Process(job) => {
+                            let _work = ctx.ingest_queue.begin_work(&job.shelf_id);
                             ctx.ingest_queue
                                 .start(&job.shelf_id, &job.abs_path, job.epoch);
                             if !job_still_wanted(&ctx, &job) {
@@ -370,7 +371,7 @@ impl Ingestor {
     }
 }
 
-fn emit_file_event(ctx: &Ctx, meta: &DocumentMeta) {
+pub(crate) fn emit_file_event(ctx: &Ctx, meta: &DocumentMeta) {
     ctx.events.emit(
         "rebost://ingest",
         json!({
@@ -381,6 +382,7 @@ fn emit_file_event(ctx: &Ctx, meta: &DocumentMeta) {
             "error": meta.error,
             "piiTotal": meta.pii_total,
             "passages": meta.passage_count,
+            "document": meta,
         }),
     );
 }
@@ -538,7 +540,86 @@ fn reindex_from_cache(ctx: &Ctx, meta: &DocumentMeta) -> Result<()> {
     Ok(())
 }
 
+pub(crate) fn fail_idle_reading(ctx: &Ctx, shelf_id: &str) {
+    if ctx.ingest_queue.pending(shelf_id) {
+        return;
+    }
+    let mut library = write_lock(&ctx.library);
+    let docs = library
+        .documents(shelf_id)
+        .into_iter()
+        .filter(|d| d.status == DocStatus::Reading)
+        .collect::<Vec<_>>();
+    if docs.is_empty() || ctx.ingest_queue.pending(shelf_id) {
+        return;
+    }
+    for mut doc in docs {
+        doc.status = DocStatus::Error;
+        doc.error = Some(rust_i18n::t!("documents.couldntRead").to_string());
+        library.upsert_document(doc.clone());
+        emit_file_event(ctx, &doc);
+    }
+    persist_docs(ctx, &library, shelf_id);
+    drop(library);
+    emit_shelf_stats(ctx, shelf_id);
+}
+
 pub async fn process_file(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
+    let result = process_file_inner(ctx, job).await;
+    if let Err(error) = &result {
+        if job_still_wanted(ctx, job) {
+            let id = ids::document_id(&job.shelf_id, &job.source_id, &job.rel_path);
+            let mut library = write_lock(&ctx.library);
+            if library.accepts_document(&job.shelf_id, &id) {
+                let mut meta =
+                    library
+                        .document(&job.shelf_id, &id)
+                        .unwrap_or_else(|| DocumentMeta {
+                            id,
+                            shelf_id: job.shelf_id.clone(),
+                            source_id: job.source_id.clone(),
+                            source_type: job.source_type,
+                            path: job.abs_path.to_string_lossy().to_string(),
+                            rel_path: job.rel_path.clone(),
+                            file_name: job
+                                .abs_path
+                                .file_name()
+                                .unwrap_or_default()
+                                .to_string_lossy()
+                                .to_string(),
+                            format: job
+                                .abs_path
+                                .extension()
+                                .unwrap_or_default()
+                                .to_string_lossy()
+                                .to_string(),
+                            size_bytes: 0,
+                            mtime_ms: 0,
+                            hash: String::new(),
+                            status: DocStatus::Error,
+                            error: None,
+                            passage_count: 0,
+                            pages: None,
+                            pii_total: 0,
+                            pii_categories: Default::default(),
+                            ocr: false,
+                            updated_at: chrono::Utc::now().to_rfc3339(),
+                            source_label: job.source_label.clone(),
+                        });
+                meta.status = DocStatus::Error;
+                meta.error = Some(friendly_error(error));
+                library.upsert_document(meta.clone());
+                persist_docs(ctx, &library, &job.shelf_id);
+                emit_file_event(ctx, &meta);
+            }
+            drop(library);
+            emit_shelf_stats(ctx, &job.shelf_id);
+        }
+    }
+    result
+}
+
+async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
     if std::fs::symlink_metadata(&job.abs_path)
         .map(|m| m.file_type().is_symlink())
         .unwrap_or(false)

@@ -394,6 +394,7 @@ impl SearchIndex {
                 doc.get_first(f).and_then(|v| v.as_u64()).map(|v| v as u32)
             };
             hits.push(SourcePassage {
+                anchor: None,
                 sid: String::new(),
                 document_id: get_str(self.fields.document_id),
                 shelf_id: get_str(self.fields.shelf_id),
@@ -1051,6 +1052,7 @@ mod tests {
 
     fn hit(doc: &str, score: f32, body: &str) -> crate::types::SourcePassage {
         crate::types::SourcePassage {
+            anchor: None,
             sid: String::new(),
             document_id: doc.into(),
             shelf_id: "s1".into(),

@@ -241,6 +241,7 @@ fn doc_named(ctx: &Ctx, shelf_id: &str, file_name: &str) -> Option<SourcePassage
         .trim_end_matches(".pdf")
         .to_string();
     Some(SourcePassage {
+        anchor: None,
         sid: "S1".into(),
         document_id: doc.id,
         shelf_id: doc.shelf_id,

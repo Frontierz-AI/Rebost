@@ -13,10 +13,13 @@
   let excerpt = $state<DocumentTextWindow | null>(null);
   let missing = $state(false);
   let paging = $state(false);
+  let loadId = 0;
   let scrollEl = $state<HTMLDivElement | null>(null);
 
   $effect(() => {
     const passage = source;
+    loadId += 1;
+    paging = false;
     missing = false;
     excerpt = null;
     if (!passage.shelfId || !passage.documentId) {
@@ -28,7 +31,9 @@
       .documentText(passage.shelfId, passage.documentId, {
         page: passage.pageStart,
         section: passage.section,
-        around: passage.body,
+        around: passage.anchor?.quote ?? passage.body,
+        startChar: passage.anchor?.startChar,
+        sourceHash: passage.anchor?.hash,
       })
       .then((window) => {
         if (!cancelled) excerpt = window;
@@ -38,6 +43,7 @@
       });
     return () => {
       cancelled = true;
+      loadId += 1;
     };
   });
 
@@ -60,14 +66,20 @@
 
   async function loadFrom(startChar: number) {
     if (!source.shelfId || !source.documentId || paging) return;
+    const request = ++loadId;
+    const passage = source;
     paging = true;
     try {
-      excerpt = await api.documentText(source.shelfId, source.documentId, { startChar });
+      const changed = excerpt?.versionChanged;
+      const window = await api.documentText(passage.shelfId, passage.documentId, { startChar });
+      window.versionChanged = changed;
+      if (request !== loadId) return;
+      excerpt = window;
       scrollEl?.scrollTo(0, 0);
     } catch (error) {
       notifyInvokeError(error);
     } finally {
-      paging = false;
+      if (request === loadId) paging = false;
     }
   }
 </script>
@@ -84,7 +96,7 @@
   onkeydown={(e) => e.key === "Escape" && onClose()}
 >
   <div
-    class="card z-50 flex max-h-[70vh] w-[430px] flex-col overflow-hidden shadow-pop dark:shadow-none"
+    class="card z-50 flex max-h-[70vh] w-full max-w-[520px] flex-col overflow-hidden shadow-pop dark:shadow-none"
     in:sheetPanel
   >
     <div class="flex items-start gap-3 border-b border-paper-line bg-paper-soft px-4 py-3">
@@ -107,7 +119,24 @@
       >
     </div>
     <div bind:this={scrollEl} class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      {#if source.anchor?.quote}
+        <p class="mb-1 text-xs font-medium text-ink-soft">{t("documents.citedPassage")}</p>
+        <blockquote
+          class="mb-4 border-l-2 border-navy-500 bg-navy-50 p-3 text-sm break-words whitespace-pre-wrap select-text dark:bg-white/8"
+        >
+          <mark class="bg-transparent text-inherit">{source.anchor.quote}</mark>
+        </blockquote>
+      {/if}
       {#if excerpt}
+        {#if excerpt.versionChanged}<p
+            role="status"
+            class="mb-3 text-sm text-amber-700 dark:text-amber-300"
+          >
+            {t(
+              source.anchor?.hash === "" ? "documents.sourceUnverified" : "documents.sourceChanged",
+            )}
+          </p>{/if}
+        <p class="mb-1 text-xs font-medium text-ink-soft">{t("documents.currentContext")}</p>
         <Markdown text={excerpt.text} />
       {:else if missing}
         <p class="text-[13px] text-ink-soft">{t("documents.unavailable")}</p>

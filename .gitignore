@@ -58,6 +58,7 @@ REBOST-DEFINITION-v2.md
 # Maintainer-only (not OSS)
 .cursor/
 .ai/
+.agents/
 MODEL-RECOMMENDATIONS.md
 
 # Screenshot set used to build the site and the docs images. The README uses
@@ -74,3 +75,6 @@ src-tauri/resources/engine-cache/
 src-tauri/resources/engine/*.tar.gz
 src-tauri/resources/engine/*.zip
 src-tauri/resources/engine/*.part
+
+# Local real-model quality measurements
+quality-results.json

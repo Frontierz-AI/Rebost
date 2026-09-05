@@ -153,10 +153,22 @@ pub struct PiiSummaryView {
     pub categories: BTreeMap<String, u32>,
 }
 
+/// Stable location and a bounded copy of the evidence used by an answer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceAnchor {
+    pub hash: String,
+    pub start_char: Option<u32>,
+    pub end_char: Option<u32>,
+    pub quote: String,
+}
+
 /// One retrieved document passage that cleared the gate.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SourcePassage {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub anchor: Option<SourceAnchor>,
     /// "S1", "S2"… as cited in the answer.
     pub sid: String,
     #[serde(alias = "document_id")]

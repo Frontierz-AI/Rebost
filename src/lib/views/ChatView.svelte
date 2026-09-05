@@ -1,11 +1,14 @@
 <script lang="ts">
   import { api, type SourcePassage, type StoredMessage } from "$lib/api";
   import { importIntoChat } from "$lib/chat-import";
+  import { createChatScroll, type ChatScroll } from "$lib/chat-scroll";
   import { listenFileDrop } from "$lib/files";
   import {
     app,
     chatState,
     newConversation,
+    ensureActiveThread,
+    fillDraft,
     notifyInvokeError,
     rememberPreferredShelf,
     openThread,
@@ -37,8 +40,9 @@
 
   let composerEl = $state<HTMLTextAreaElement | null>(null);
   let scrollEl = $state<HTMLDivElement | null>(null);
+  let scrollContentEl = $state<HTMLDivElement | null>(null);
+  let scrollController = $state<ChatScroll | null>(null);
   let openSource = $state<SourcePassage | null>(null);
-  let autoScroll = $state(true);
   let openThinking = $state<Record<string, boolean>>({});
   let dropActive = $state(false);
   let openedStartSource = $state(false);
@@ -181,22 +185,38 @@
   }
 
   async function send() {
-    const text = clipChars(chatState.draft.trim(), PROMPT_MAX_CHARS);
+    const text = chatState.draft.trim();
     if (!text || generating || !hasModel) return;
+    const navigation = chatState.navigation;
+    const shelfId = chatState.selectedShelfId;
+    const originalDraft = chatState.draft;
+    const optimisticId = `local-${crypto.randomUUID()}`;
     let outboundKey = chatState.activeThreadId ?? "new";
     markOutbound(outboundKey);
     if (chatState.activeThreadId) {
       setPlaceholderPending(chatState.activeThreadId);
     }
     try {
-      let threadId = chatState.activeThreadId;
+      while (
+        (chatState.imports[outboundKey] ?? 0) > 0 ||
+        (outboundKey === "new" && (chatState.imports.new ?? 0) > 0)
+      ) {
+        if (chatState.cancelWhenQueued[outboundKey]) {
+          clearOutbound(outboundKey);
+          dropPending(outboundKey);
+          clearCancelWhenQueued(outboundKey);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      let threadId = outboundKey === "new" ? null : outboundKey;
       if (!threadId) {
-        const thread = await api.threadCreate(chatState.selectedShelfId);
-        threadId = thread.id;
-        await refreshThreads();
-        chatState.activeThreadId = threadId;
-        chatState.messages = [];
-        chatState.hasOlder = false;
+        if (chatState.navigation !== navigation) {
+          clearOutbound(outboundKey);
+          clearCancelWhenQueued(outboundKey);
+          return;
+        }
+        threadId = await ensureActiveThread();
         if (chatState.outbound["new"]) {
           clearOutbound("new");
           markOutbound(threadId);
@@ -211,28 +231,45 @@
         setPlaceholderPending(threadId);
       }
       const optimistic: StoredMessage = {
-        id: `local-${Date.now()}`,
+        id: optimisticId,
         role: "user",
         text,
         ts: new Date().toISOString(),
-        shelfId: chatState.selectedShelfId,
+        shelfId,
         sources: [],
         status: "done",
       };
-      chatState.messages = [...chatState.messages, optimistic];
-      chatState.draft = "";
-      autoScroll = true;
+      if (chatState.navigation === navigation) {
+        chatState.messages = [...chatState.messages, optimistic];
+        chatState.draft = "";
+      }
+      if (chatState.navigation === navigation) scrollController?.follow();
       await tick();
       autoresize();
-      scrollToBottom();
-      await api.chatSend(threadId, text, chatState.selectedShelfId);
+      chatState.sentDrafts[threadId] = originalDraft;
+      await api.chatSend(threadId, text, shelfId);
     } catch (error) {
+      delete chatState.sentDrafts[outboundKey];
       clearOutbound(outboundKey);
       dropPending(outboundKey);
       clearCancelWhenQueued(outboundKey);
       clearCancelWhenQueued("new");
+      if (chatState.navigation === navigation) {
+        chatState.messages = chatState.messages.filter((m) => m.id !== optimisticId);
+        if (!chatState.draft) fillDraft(originalDraft);
+      } else chatState.drafts[outboundKey] = originalDraft;
       notifyInvokeError(error);
     }
+  }
+
+  function retry(message: StoredMessage) {
+    const index = chatState.messages.findIndex((m) => m.id === message.id);
+    const question = chatState.messages
+      .slice(0, index)
+      .reverse()
+      .find((m) => m.role === "user");
+    if (question) fillDraft(question.text);
+    composerEl?.focus();
   }
 
   function stop() {
@@ -251,19 +288,9 @@
     composerEl.style.height = `${Math.min(composerEl.scrollHeight, 180)}px`;
   }
 
-  function scrollToBottom() {
-    if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
-  }
-
-  function onScroll() {
-    if (!scrollEl) return;
-    autoScroll = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 60;
-  }
-
   async function readMore() {
-    const el = scrollEl;
-    const prevHeight = el?.scrollHeight ?? 0;
-    const prevTop = el?.scrollTop ?? 0;
+    const navigation = chatState.navigation;
+    const restore = scrollController?.preserveAnchor();
     try {
       await loadOlderMessages();
     } catch (error) {
@@ -271,18 +298,22 @@
       return;
     }
     await tick();
-    if (el) {
-      el.scrollTop = prevTop + (el.scrollHeight - prevHeight);
-    }
+    if (navigation === chatState.navigation) restore?.();
   }
 
   $effect(() => {
-    void activePending?.text;
-    void activePending?.thinking;
-    void chatState.messages.length;
-    if (autoScroll) {
-      tick().then(() => autoScroll && scrollToBottom());
-    }
+    if (!scrollEl || !scrollContentEl) return;
+    const controller = createChatScroll(scrollEl, scrollContentEl);
+    scrollController = controller;
+    return () => {
+      controller.destroy();
+      scrollController = null;
+    };
+  });
+
+  $effect(() => {
+    void chatState.navigation;
+    scrollController?.follow();
   });
 
   async function removeThread(threadId: string) {
@@ -358,15 +389,21 @@
   />
 
   <section class="flex min-w-0 flex-1 flex-col">
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (the scroll region supports native keyboard scrolling) -->
     <div
       bind:this={scrollEl}
-      onscroll={onScroll}
-      class="min-h-0 flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_0%,black_calc(100%-25px),transparent_100%)]"
+      tabindex="0"
+      role="region"
+      aria-label={t("nav.chat")}
+      class="chat-scroll min-h-0 flex-1 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_0%,black_calc(100%-25px),transparent_100%)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-navy-500"
     >
       {#if empty}
         <ChatEmptyState avatarId={activeThread?.avatarId} />
       {:else}
-        <div class="mx-auto flex max-w-[760px] flex-col gap-4 px-6 pt-4 pb-6">
+        <div
+          bind:this={scrollContentEl}
+          class="mx-auto flex max-w-[760px] flex-col gap-4 px-6 pt-4 pb-6"
+        >
           {#if activeThread}
             {@const thread = activeThread}
             <ChatThreadHeader
@@ -391,7 +428,7 @@
           {/if}
           {#each chatState.messages as message (message.id)}
             {#if message.role === "user"}
-              <div class="flex justify-end">
+              <div data-chat-message={message.id} class="flex justify-end">
                 <div
                   class="max-w-[85%] cursor-text rounded-2xl rounded-br-md bg-navy-900 px-4 py-2.5 text-[13.8px] leading-relaxed whitespace-pre-wrap text-white select-text"
                 >
@@ -399,7 +436,7 @@
                 </div>
               </div>
             {:else}
-              <div class="group flex items-start gap-2.5">
+              <div data-chat-message={message.id} class="group flex items-start gap-2.5">
                 {#if activeThread}
                   <ConversationFace avatarId={activeThread.avatarId} />
                 {/if}
@@ -449,8 +486,23 @@
                         {/each}
                       </div>
                     {/if}
-                    {#if message.status === "stopped"}
-                      <p class="mt-1.5 text-[11px] text-ink-faint italic">{t("chat.stopped")}</p>
+                    {#if ["stopped", "error", "interrupted"].includes(message.status)}
+                      <p class="mt-2 text-[12px] text-ink-soft">
+                        {t(message.status === "stopped" ? "chat.stopped" : "chat.interrupted")}
+                      </p>
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        <button
+                          class="btn-ghost"
+                          disabled={generating}
+                          onclick={() => retry(message)}>{t("shelves.tryAgain")}</button
+                        >
+                        {#if message.text}<button
+                            class="btn-ghost"
+                            disabled={generating}
+                            onclick={() => fillDraft(t("chat.continuePrompt"))}
+                            >{t("chat.continue")}</button
+                          >{/if}
+                      </div>
                     {/if}
                   </div>
                   <CopyActions text={message.text} subtle />
@@ -460,12 +512,7 @@
           {/each}
 
           {#if activePending}
-            <div
-              class="flex items-start gap-2.5"
-              aria-live="polite"
-              aria-atomic="false"
-              aria-busy="true"
-            >
+            <div class="flex items-start gap-2.5" aria-label={t("chat.answerInProgress")}>
               {#if activeThread}
                 <ConversationFace avatarId={activeThread.avatarId} />
               {/if}
@@ -520,6 +567,48 @@
       {/if}
     </div>
 
+    <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+      {chatState.webApprovals[chatState.activeThreadId ?? ""]
+        ? t("chat.reviewOnline")
+        : activePending
+          ? activePending.text
+            ? t("chat.answerInProgress")
+            : t("chat.preparingAnswer")
+          : chatState.messages.at(-1)?.role === "assistant"
+            ? t(
+                chatState.messages.at(-1)?.status === "done"
+                  ? "chat.answerComplete"
+                  : "chat.interrupted",
+              )
+            : ""}
+    </div>
+    {#if chatState.webApprovals[chatState.activeThreadId ?? ""]}
+      {@const request = chatState.webApprovals[chatState.activeThreadId ?? ""]!}
+      <div
+        class="mx-6 rounded-xl border border-paper-line bg-paper-soft p-3"
+        role="region"
+        aria-label={t("chat.reviewOnline")}
+      >
+        <p class="font-medium text-ink">{t("chat.reviewOnline")}</p>
+        <p class="mt-1 text-sm text-ink-soft">
+          {t(request.action === "search_web" ? "chat.queryLeaves" : "chat.urlLeaves")}
+        </p>
+        <pre
+          class="my-2 max-h-40 overflow-auto text-sm break-all whitespace-pre-wrap select-text">{request.value}</pre>
+        <div class="flex flex-wrap gap-2">
+          <button
+            class="btn-primary"
+            onclick={() => api.chatApproveWeb(request.id, true).catch(notifyInvokeError)}
+            >{t("chat.allowOnce")}</button
+          >
+          <button
+            class="btn-ghost"
+            onclick={() => api.chatApproveWeb(request.id, false).catch(notifyInvokeError)}
+            >{t("chat.keepLocal")}</button
+          >
+        </div>
+      </div>
+    {/if}
     <ChatComposer
       bind:composerEl
       {hasModel}

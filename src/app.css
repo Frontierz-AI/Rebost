@@ -111,7 +111,7 @@ textarea,
   .btn-ghost,
   .btn-outline,
   .btn-danger {
-    @apply inline-flex h-9 cursor-default items-center justify-center gap-1.5 rounded-full px-6 text-[13px] font-medium select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800 disabled:opacity-45;
+    @apply inline-flex h-9 shrink-0 cursor-default items-center justify-center gap-1.5 rounded-full px-6 text-[13px] font-medium whitespace-nowrap select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-800 disabled:opacity-45;
   }
   .btn-primary,
   .btn-amber {
@@ -153,6 +153,12 @@ textarea,
   .label {
     @apply text-[11px] font-semibold tracking-wide text-ink-faint uppercase;
   }
+}
+
+.chat-scroll {
+  overflow-anchor: none;
+  scroll-behavior: auto;
+  scrollbar-gutter: stable;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -503,4 +509,14 @@ html[data-theme="dark"] .md-body .cite-chip {
 [data-sonner-toast] [data-close-button]:focus-visible {
   outline: 2px solid var(--color-navy-500);
   outline-offset: 2px;
+}
+
+.md-block {
+  display: contents;
+}
+.md-body > .md-block:first-child > :first-child {
+  margin-top: 0;
+}
+.md-body > .md-block:last-child > :last-child {
+  margin-bottom: 0;
 }

@@ -1,9 +1,18 @@
 <script lang="ts">
-  import { api } from "$lib/api";
+  import { api, type DocumentMeta } from "$lib/api";
   import { importIntoChat } from "$lib/chat-import";
   import { fileListQuery, placeholderAt, replacePlaceholder } from "$lib/placeholders";
   import { shelfDisplayName } from "$lib/shelf-label";
-  import { app, chatState, fillDraft, logInvokeError, openCreateShelf } from "$lib/stores.svelte";
+  import {
+    app,
+    chatState,
+    fillDraft,
+    loadShelfDocuments,
+    logInvokeError,
+    notifyInvokeError,
+    openCreateShelf,
+  } from "$lib/stores.svelte";
+  import { focusTrap } from "$lib/focus-trap";
   import { t } from "$lib/i18n.svelte";
   import { PROMPT_MAX_CHARS } from "$lib/text-cap";
   import { SendHorizontal, Square, ChevronDown, LibraryBig, Plus, Paperclip } from "@lucide/svelte";
@@ -28,7 +37,7 @@
 
   let shelfMenuOpen = $state(false);
   let cursor = $state(0);
-  let fileNames = $state<string[]>([]);
+  let dismissedSlot = $state<string | null>(null);
   let highlight = $state(0);
 
   const selectedShelf = $derived.by(() => {
@@ -47,42 +56,38 @@
   });
 
   $effect(() => {
-    const libraryId = selectedShelf?.id ?? null;
-    const uploadId = chatState.uploadShelf?.id ?? null;
-    void app.ingestTick;
-    if (!libraryId && !uploadId) {
-      fileNames = [];
-      return;
+    for (const id of [selectedShelf?.id, chatState.uploadShelf?.id]) {
+      if (id) void loadShelfDocuments(id).catch((error) => logInvokeError(error, "composer files"));
     }
-    let cancelled = false;
-    Promise.all([
-      libraryId ? api.shelfDocuments(libraryId) : Promise.resolve([]),
-      uploadId && uploadId !== libraryId ? api.shelfDocuments(uploadId) : Promise.resolve([]),
-    ])
-      .then(([libraryDocs, uploadDocs]) => {
-        if (!cancelled) {
-          fileNames = [...libraryDocs, ...uploadDocs].map((doc) => doc.fileName);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) fileNames = [];
-      });
-    return () => {
-      cancelled = true;
-    };
   });
+  const files = $derived([
+    ...new Map(
+      [
+        ...(app.documents[selectedShelf?.id ?? ""] ?? []),
+        ...(app.documents[chatState.uploadShelf?.id ?? ""] ?? []),
+      ].map((doc) => [doc.id, doc]),
+    ).values(),
+  ]);
+
+  const uploadDocs = $derived(app.documents[chatState.uploadShelf?.id ?? ""] ?? []);
+  const uploadErrors = $derived(uploadDocs.filter((doc) => doc.status === "error"));
+  const uploadReading = $derived(
+    uploadDocs.filter((doc) => doc.status === "reading").length +
+      (chatState.uploadShelf?.stats?.waiting ?? 0),
+  );
 
   const activeSlot = $derived(placeholderAt(chatState.draft, cursor));
   const fileMatches = $derived.by(() => {
-    if (!activeSlot || fileNames.length === 0) return [];
+    if (!activeSlot || files.length === 0) return [];
     const query = fileListQuery(activeSlot.inner);
     if (query === null) return [];
     const matches = query
-      ? fileNames.filter((name) => name.toLowerCase().includes(query))
-      : fileNames;
+      ? files.filter((doc) => `${doc.fileName} ${doc.relPath}`.toLowerCase().includes(query))
+      : files;
     return matches.slice(0, 8);
   });
-  const listOpen = $derived(fileMatches.length > 0);
+  const slotKey = $derived(activeSlot ? `${activeSlot.start}:${activeSlot.inner}` : null);
+  const listOpen = $derived(fileMatches.length > 0 && dismissedSlot !== slotKey);
 
   $effect(() => {
     void fileMatches.length;
@@ -93,9 +98,14 @@
     if (composerEl) cursor = composerEl.selectionStart ?? 0;
   }
 
-  function pickFile(name: string) {
+  function pickFile(doc: DocumentMeta) {
+    const duplicate = files.filter((file) => file.fileName === doc.fileName).length > 1;
+    const samePath = files.filter((file) => file.relPath === doc.relPath).length > 1;
+    const name = duplicate ? (samePath ? doc.path : doc.relPath) : doc.fileName;
     if (!activeSlot) return;
     fillDraft(replacePlaceholder(chatState.draft, activeSlot, name));
+    dismissedSlot = slotKey;
+    composerEl?.focus();
   }
 
   async function attachFiles() {
@@ -103,6 +113,7 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
+    if (event.isComposing || event.keyCode === 229) return;
     if (listOpen) {
       if (event.key === "ArrowDown") {
         event.preventDefault();
@@ -116,6 +127,7 @@
       }
       if (event.key === "Escape") {
         event.preventDefault();
+        dismissedSlot = slotKey;
         const end = activeSlot?.end ?? cursor;
         cursor = end;
         composerEl?.setSelectionRange(end, end);
@@ -153,6 +165,40 @@
         >
       </button>
     {/if}
+    {#if chatState.uploadShelf && (uploadDocs.length > 0 || uploadReading > 0)}
+      <details
+        class="mb-2 rounded-lg border border-paper-line bg-paper-soft px-3 py-2 text-xs text-ink-soft"
+        open={uploadErrors.length > 0}
+      >
+        <summary class="cursor-pointer"
+          >{t("chat.filesInConversation")} · {t("chat.fileCount", {
+            count: uploadDocs.length,
+          })}{uploadReading > 0 ? ` · ${t("documents.reading")}` : ""}{uploadErrors.length > 0
+            ? ` · ${t("shelves.error")}`
+            : ""}</summary
+        >
+        <ul class="mt-2 max-h-32 overflow-auto">
+          {#each uploadDocs as doc (doc.id)}
+            <li class="flex items-center justify-between gap-2 py-1">
+              <span class="min-w-0 truncate" title={doc.relPath}>{doc.fileName}</span><span
+                >{t(
+                  doc.status === "ready"
+                    ? "shelves.ready"
+                    : doc.status === "reading"
+                      ? "documents.reading"
+                      : "shelves.error",
+                )}</span
+              >
+            </li>
+          {/each}
+        </ul>
+        {#if uploadErrors.length > 0}<button
+            class="btn-ghost mt-1"
+            onclick={() => api.shelfRetryFailed(chatState.uploadShelf!.id).catch(notifyInvokeError)}
+            >{t("shelves.tryAgain")}</button
+          >{/if}
+      </details>
+    {/if}
     <div class="card relative flex flex-col gap-1 !rounded-2xl px-3 pt-2.5 pb-2">
       {#if listOpen}
         <div
@@ -161,18 +207,24 @@
           id="composer-file-list"
           aria-label={filesListLabel}
         >
-          {#each fileMatches as name, index (name)}
+          {#each fileMatches as doc, index (doc.id)}
             <button
               type="button"
+              id={`composer-file-${doc.id}`}
+              tabindex="-1"
               role="option"
               aria-selected={index === highlight}
               class="flex w-full px-3 py-1.5 text-left text-[12.5px] {index === highlight
                 ? 'bg-navy-50 font-medium text-navy-800 dark:bg-white/8 dark:text-ink'
                 : 'text-ink hover:bg-paper-soft'}"
               onmousedown={(event) => event.preventDefault()}
-              onclick={() => pickFile(name)}
+              onclick={() => pickFile(doc)}
             >
-              {name}
+              <span class="min-w-0 truncate"
+                >{doc.fileName}<small class="block truncate font-normal text-ink-soft"
+                  >{doc.sourceLabel} · {doc.path}</small
+                ></span
+              >
             </button>
           {/each}
         </div>
@@ -181,6 +233,7 @@
         bind:this={composerEl}
         bind:value={chatState.draft}
         oninput={() => {
+          dismissedSlot = null;
           syncCursor();
           onAutoResize();
         }}
@@ -196,6 +249,8 @@
         maxlength={PROMPT_MAX_CHARS}
         aria-label={t("chat.messageLabel")}
         aria-describedby={!hasModel ? "composer-needs-ai" : undefined}
+        aria-autocomplete="list"
+        aria-activedescendant={listOpen ? `composer-file-${fileMatches[highlight]?.id}` : undefined}
         aria-controls={listOpen ? "composer-file-list" : undefined}
         placeholder={hasModel ? t("chat.placeholderReady") : t("chat.placeholderNeedsAi")}
         class="max-h-[180px] w-full cursor-text resize-none bg-transparent text-[13.8px] leading-relaxed outline-none select-text placeholder:text-ink-faint"
@@ -209,7 +264,7 @@
                 ? 'border-navy-300 bg-navy-100/70 text-navy-800 dark:border-white/15 dark:bg-white/10 dark:text-navy-100'
                 : 'border-paper-line bg-paper-soft text-ink-soft'} hover:border-navy-400"
               onclick={() => (shelfMenuOpen = !shelfMenuOpen)}
-              aria-haspopup="listbox"
+              aria-haspopup="dialog"
               aria-expanded={shelfMenuOpen}
               aria-label={t("chat.chooseShelf")}
             >
@@ -226,7 +281,16 @@
               ></div>
               <div
                 class="absolute bottom-8 left-0 z-30 w-56 overflow-hidden rounded-xl border border-paper-line bg-surface shadow-pop dark:shadow-none"
-                role="listbox"
+                use:focusTrap
+                role="dialog"
+                tabindex="-1"
+                aria-label={t("chat.chooseShelf")}
+                onkeydown={(event) => {
+                  if (event.key === "Escape") {
+                    shelfMenuOpen = false;
+                    event.stopPropagation();
+                  }
+                }}
               >
                 <div class="py-1">
                   <button

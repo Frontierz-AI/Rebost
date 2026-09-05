@@ -86,7 +86,7 @@
     "saveHouseRules": "Tallenna House rules",
     "saved": "Tallennettu",
     "online": "Online",
-    "onlineHelp": "Kun tämä on käytössä, Chat voi hakea tietoa julkisesta verkosta. Tiedostosi pysyvät tällä tietokoneella. Vastaus kirjoitetaan silti täällä.",
+    "onlineHelp": "Salli haku julkisesta verkosta. Jokainen haku tai osoite näytetään hyväksyttäväksi ennen lähettämistä. Vastaukset kirjoitetaan tällä tietokoneella.",
     "ai": "Tekoäly",
     "installedHere": "asennettu tälle tietokoneelle",
     "engineReady": "Valmis",
@@ -185,7 +185,19 @@
     "page": "s. %{start}",
     "pageRange": "s. %{start}–%{end}",
     "pageWord": "Sivu %{start}",
-    "pageWordRange": "Sivu %{start}–%{end}"
+    "pageWordRange": "Sivu %{start}–%{end}",
+    "interrupted": "Vastaus keskeytyi. Kysymys ja osittainen vastaus on tallennettu.",
+    "continuePrompt": "Jatka edellistä vastausta viimeisestä lauseesta. Älä toista.",
+    "continue": "Jatka",
+    "answerInProgress": "Kirjoitetaan vastausta…",
+    "preparingAnswer": "Valmistellaan vastausta…",
+    "answerComplete": "Vastaus on valmis. Tarkista vastaus ja sen lähteet.",
+    "reviewOnline": "Tarkista verkkopyyntö",
+    "queryLeaves": "Tämä täsmällinen haku lähetetään Wikipediaan, DuckDuckGoon ja You.comiin. Tarkista, ettei se sisällä yksityisiä tietoja.",
+    "urlLeaves": "Tämä osoite pyydetään verkkosivustolta. Tarkista koko osoite yksityisten tietojen varalta.",
+    "allowOnce": "Salli kerran",
+    "keepLocal": "Käytä paikallisia tietoja",
+    "exportConversation": "Vie keskustelu"
   },
   "thinking": {
     "fallback": "Ajatellaan…",
@@ -298,7 +310,8 @@
     "folderMissing": "Tämä kansio ei ole juuri nyt saatavilla. Tiedostot pysyvät hyllyllä.",
     "removeSynced": "Irrota synkronoitu kansio tältä hyllyltä",
     "removeSyncedHint": "Irrota tältä hyllyltä (tiedostot jäävät levylle)",
-    "moreSynced": "Lisää synkronoituja kansioita"
+    "moreSynced": "Lisää synkronoituja kansioita",
+    "showAllRows": "Näytä kaikki rivit lukemista tai näppäimistöllä siirtymistä varten"
   },
   "documents": {
     "ready": "Valmis käytettäväksi",
@@ -326,7 +339,11 @@
     "showInFolder": "Näytä kansiossa",
     "viewText": "Näytä teksti",
     "unavailable": "Tämä tiedosto ei ole käytettävissä.",
-    "loading": "Ladataan"
+    "loading": "Ladataan",
+    "citedPassage": "Vastauksessa käytetty katkelma",
+    "sourceChanged": "Tiedosto on muuttunut vastauksen jälkeen. Yllä tallennettu katkelma on tuolloin käytetystä versiosta.",
+    "currentContext": "Nykyisen tiedoston konteksti",
+    "sourceUnverified": "Tallennettua katkelmaa ei löytynyt nykyisestä tiedostosta."
   },
   "recipes": {
     "title": "Reseptit",
@@ -521,7 +538,9 @@
     "recipeTooLong": "Tämä Recipe on liian pitkä. Enintään 12 000 merkkiä.",
     "typeDelete": "Vahvista kirjoittamalla DELETE.",
     "engineLogMissing": "Lokia ei ole vielä tällä tietokoneella.",
-    "folderNotFound": "Kansiota ei löytynyt."
+    "folderNotFound": "Kansiota ei löytynyt.",
+    "promptTooLong": "Kysymys ja ohjeesi ylittävät tämän tekoälyn kontekstin. Lyhennä niitä tai valitse suurempi tekoäly.",
+    "attachmentsFailed": "Joitakin liitteitä ei voitu lukea. Käsittele ne uudelleen ennen kuin kysyt niistä."
   },
   "pii": {
     "heading": "Henkilötiedot",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "Pieni tiedosto, lyhyet vastaukset.",
       "gemma_3_1b": "Pienin valinta. Asentuu minuutissa."
     }
+  },
+  "imports": {
+    "addedOne": "Lisätty tähän keskusteluun.",
+    "addedMany": "Tähän keskusteluun lisättiin %{count} tiedostoa.",
+    "unsupported": "Näitä tiedostotyyppejä ei tueta."
   }
 }

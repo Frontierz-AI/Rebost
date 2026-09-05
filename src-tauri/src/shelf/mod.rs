@@ -749,13 +749,11 @@ fn write_shelf_config(shelf: &Shelf) -> Result<()> {
 }
 
 fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
-    let text = std::fs::read_to_string(path).ok()?;
-    serde_json::from_str(&text).ok()
+    crate::paths::read_json(path)
 }
 
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
-    crate::paths::atomic_write(path, serde_json::to_string_pretty(value)?)?;
-    Ok(())
+    crate::paths::write_json(path, value)
 }
 
 #[cfg(test)]

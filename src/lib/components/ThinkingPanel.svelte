@@ -89,7 +89,7 @@
   <div class="flex flex-col {open ? 'mb-2.5 gap-2.5' : 'mb-1'}">
     <button
       type="button"
-      class="flex items-center gap-1 text-[0.75rem] font-medium text-ink-faint hover:text-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
+      class="flex items-center gap-1 text-[0.75rem] font-medium whitespace-nowrap text-ink-faint hover:text-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
       aria-expanded={open}
       aria-controls={panelId}
       onclick={onToggle}

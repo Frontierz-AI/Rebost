@@ -47,6 +47,7 @@ jobs:
             rust:
               - "src-tauri/**"
               - "rust-toolchain.toml"
+              - "locales/**"
               - ".github/workflows/ci.yml"
 
   rust:
@@ -163,6 +164,30 @@ jobs:
       - name: Test (lib, rlib)
         working-directory: src-tauri
         run: cargo test --lib --config 'lib.crate-type=["rlib"]'
+
+  desktop_quality:
+    name: Desktop quality (${{ matrix.os }})
+    needs: rust_paths
+    if: needs.rust_paths.outputs.rust == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.98.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-directories: src-tauri/target/xberg-tesseract-cache
+      - name: Unit and integration quality checks
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked
 
   deny:
     name: cargo-deny

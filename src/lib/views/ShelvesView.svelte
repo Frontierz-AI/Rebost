@@ -5,6 +5,7 @@
     chatState,
     notify,
     notifyInvokeError,
+    loadShelfDocuments,
     rememberPreferredShelf,
     refreshShelves,
     refreshThreads,
@@ -39,7 +40,7 @@
   if (app.createShelf) app.createShelf = false;
 
   let newName = $state("");
-  let documents = $state<DocumentMeta[]>([]);
+  const documents = $derived(app.documents[app.openShelfId ?? ""] ?? []);
   let dropActive = $state(false);
   let filterPii = $state<string | null>(null);
   let filterSource = $state<string | null>(null);
@@ -64,7 +65,7 @@
 
   async function loadDocuments(shelfId: string) {
     try {
-      documents = await api.shelfDocuments(shelfId);
+      await loadShelfDocuments(shelfId, true);
     } catch (error) {
       notifyInvokeError(error);
     }
@@ -72,12 +73,9 @@
 
   // Refetch when the open shelf or ingest tick changes.
   $effect(() => {
-    void app.ingestTick;
     const id = app.openShelfId;
     if (id) {
-      void loadDocuments(id);
-    } else {
-      documents = [];
+      void loadShelfDocuments(id).catch(notifyInvokeError);
     }
   });
 
@@ -184,15 +182,18 @@
     }
   }
 
+  let fileRequest = 0;
   async function openFile(doc: DocumentMeta) {
+    const request = ++fileRequest;
     openDoc = doc;
     openCard = null;
     extractedText = null;
     if (doc.status === "ready") {
       try {
-        openCard = await api.documentCard(doc.shelfId, doc.id);
+        const card = await api.documentCard(doc.shelfId, doc.id);
+        if (request === fileRequest && openDoc?.id === doc.id) openCard = card;
       } catch {
-        openCard = null;
+        if (request === fileRequest && openDoc?.id === doc.id) openCard = null;
       }
     }
   }
@@ -210,7 +211,7 @@
       await api.shelfRemoveSource(shelfView.id, { sourceId, path });
       if (filterSource === label) filterSource = null;
       if (sourceId && openDoc?.sourceId === sourceId) openDoc = null;
-      documents = documents.filter((doc) => {
+      app.documents[shelfView.id] = (app.documents[shelfView.id] ?? []).filter((doc) => {
         if (sourceId && doc.sourceId === sourceId) return false;
         if (doc.sourceType === "linked" && doc.sourceLabel === label) return false;
         return true;
@@ -299,8 +300,8 @@
 {#if !shelf}
   <div class="h-full overflow-y-auto">
     <div class="mx-auto max-w-[860px] px-8 py-8">
-      <div class="mb-6 flex items-end justify-between">
-        <div>
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div class="min-w-0 flex-1 basis-64">
           <h1 class="text-[22px] font-semibold text-ink">{t("shelves.title")}</h1>
           <p class="mt-0.5 text-[13px] text-ink-soft">
             {t("shelves.lede")}
@@ -320,7 +321,7 @@
           <input
             id="new-shelf-name"
             name="shelf-name"
-            class="w-full cursor-text rounded-none border-none bg-transparent text-[14px] text-ink outline-none select-text placeholder:text-ink-faint"
+            class="min-w-0 flex-1 cursor-text rounded-none border-none bg-transparent text-[14px] text-ink outline-none select-text placeholder:text-ink-faint"
             placeholder={t("shelves.namePlaceholder")}
             bind:value={newName}
             autofocus
@@ -471,14 +472,14 @@
     <header class="flex shrink-0 flex-col gap-3 px-8 pt-5 pb-5">
       <button
         type="button"
-        class="inline-flex min-h-8 w-fit items-center gap-1 rounded-md text-[13px] font-medium text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
+        class="inline-flex min-h-8 w-fit items-center gap-1 rounded-md text-[13px] font-medium whitespace-nowrap text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
         onclick={() => (app.openShelfId = null)}
       >
         <ChevronLeft size={16} class="-ml-0.5 shrink-0" aria-hidden="true" />
         {t("shelves.allShelves")}
       </button>
 
-      <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0">
           {#if renamingId === shelf.id}
             <label class="sr-only" for="rename-shelf-detail">{t("shelves.shelfName")}</label>

@@ -107,7 +107,10 @@ export function formatCardSummary(summary: string, outlineTitles: string[] = [])
 
 /** Markdown → sanitized HTML. Citation chips are only emitted for provided ids. */
 export function renderMarkdown(text: string, sources: SourcePassage[] = []): string {
-  let rendered = marked.parse(text, { async: false, breaks: true }) as string;
+  return sanitizeMarkdown(marked.parse(text, { async: false, breaks: true }) as string, sources);
+}
+
+function sanitizeMarkdown(rendered: string, sources: SourcePassage[]): string {
   if (sources.length > 0) {
     rendered = rendered.replace(/\[(S\d+)\]/g, (match, sid: string) => {
       const source = sources.find((s) => s.sid === sid);
@@ -125,4 +128,32 @@ export function renderMarkdown(text: string, sources: SourcePassage[] = []): str
     ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):)/i,
     FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "img", "svg", "math"],
   });
+}
+
+/** Parse complete top-level blocks once; only the growing tail is rendered again. */
+export function createBlockRenderer() {
+  let cache: { raw: string; html: string }[] = [];
+  let dependencies = "";
+  return (text: string, sources: SourcePassage[] = []): string[] => {
+    const tokens = marked.lexer(text, { gfm: true, breaks: true });
+    const nextDependencies = JSON.stringify([
+      tokens.links,
+      sources.map((s) => [s.sid, s.title, s.pageStart]),
+    ]);
+    if (nextDependencies !== dependencies) {
+      cache = [];
+      dependencies = nextDependencies;
+    }
+    const next = tokens.map((token, index) => {
+      const previous = cache[index];
+      if (previous?.raw === token.raw) return previous;
+      const list = Object.assign([token], { links: tokens.links });
+      return {
+        raw: token.raw,
+        html: sanitizeMarkdown(marked.parser(list, { breaks: true }), sources),
+      };
+    });
+    cache = next;
+    return next.map((block) => block.html);
+  };
 }

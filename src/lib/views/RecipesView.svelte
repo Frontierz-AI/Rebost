@@ -99,8 +99,8 @@
 </script>
 
 <div class="mx-auto max-w-[860px] px-8 py-8">
-  <div class="mb-6 flex items-end justify-between">
-    <div>
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div class="min-w-0 flex-1 basis-64">
       <h1 class="text-[22px] font-semibold text-ink">{t("recipes.title")}</h1>
       <p class="mt-0.5 text-[13px] text-ink-soft">
         {t("recipes.lede")}

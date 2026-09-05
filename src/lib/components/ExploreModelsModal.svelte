@@ -207,7 +207,7 @@
           {#each EXPLORE_SORTS as option (option.id)}
             <button
               type="button"
-              class="inline-flex cursor-default items-center rounded-full px-2.5 py-1.5 text-[12px] leading-none font-medium
+              class="inline-flex shrink-0 cursor-default items-center rounded-full px-2.5 py-1.5 text-[12px] leading-none font-medium whitespace-nowrap
                 ring-1 ring-navy-950/10 aria-pressed:bg-navy-900 aria-pressed:text-white aria-pressed:ring-navy-900
                 dark:ring-white/10 dark:aria-pressed:bg-white dark:aria-pressed:text-navy-950 dark:aria-pressed:ring-white"
               aria-pressed={chipSortActive(option.id, sort, sortDir)}

@@ -86,7 +86,7 @@
     "saveHouseRules": "House rulesを保存",
     "saved": "保存しました",
     "online": "Online",
-    "onlineHelp": "オンにすると、Chatが公開ウェブで調べものができるようになります。ファイルはこのコンピュータから出ません。回答も、これまでどおりここで書かれます。",
+    "onlineHelp": "公開ウェブの検索を許可します。送信前に検索語句やアドレスを表示し、承認を求めます。回答はこのコンピューターで作成されます。",
     "ai": "AI",
     "installedHere": "このコンピュータにインストール済み",
     "engineReady": "準備完了",
@@ -185,7 +185,19 @@
     "page": "%{start}ページ",
     "pageRange": "%{start}–%{end}ページ",
     "pageWord": "%{start}ページ",
-    "pageWordRange": "%{start}–%{end}ページ"
+    "pageWordRange": "%{start}–%{end}ページ",
+    "interrupted": "回答が中断されました。質問と途中までの回答は保存されています。",
+    "continuePrompt": "前の回答を最後の文から続けてください。繰り返さないでください。",
+    "continue": "続ける",
+    "answerInProgress": "回答を作成中…",
+    "preparingAnswer": "回答を準備中…",
+    "answerComplete": "回答の準備ができました。回答と出典を確認してください。",
+    "reviewOnline": "オンラインリクエストを確認",
+    "queryLeaves": "この検索語句がそのままWikipedia、DuckDuckGo、You.comに送信されます。非公開の情報が含まれていないか確認してください。",
+    "urlLeaves": "このアドレスをウェブサイトにリクエストします。アドレス全体に非公開の情報が含まれていないか確認してください。",
+    "allowOnce": "今回のみ許可",
+    "keepLocal": "ローカル情報を使う",
+    "exportConversation": "会話をエクスポート"
   },
   "thinking": {
     "fallback": "考えています…",
@@ -298,7 +310,8 @@
     "folderMissing": "このフォルダは今見つかりません。ファイルはシェルフに残っています。",
     "removeSynced": "同期フォルダをこのシェルフから外す",
     "removeSyncedHint": "このシェルフから外します（ファイルはディスクに残ります）",
-    "moreSynced": "ほかの同期フォルダ"
+    "moreSynced": "ほかの同期フォルダ",
+    "showAllRows": "読み取りやキーボード操作のためにすべての行を表示"
   },
   "documents": {
     "ready": "利用できます",
@@ -326,7 +339,11 @@
     "showInFolder": "フォルダで表示",
     "viewText": "テキストを表示",
     "unavailable": "このファイルは利用できません。",
-    "loading": "読み込み中"
+    "loading": "読み込み中",
+    "citedPassage": "この回答で使用した箇所",
+    "sourceChanged": "回答後にこのファイルが変更されました。上に保存された引用箇所は、その時に使用した版のものです。",
+    "currentContext": "現在のファイルの内容",
+    "sourceUnverified": "保存された引用箇所が現在のファイル内で見つかりませんでした。"
   },
   "recipes": {
     "title": "レシピ",
@@ -521,7 +538,9 @@
     "recipeTooLong": "このRecipeは長すぎます。12,000文字以内にしてください。",
     "typeDelete": "確認のため、DELETEと入力してください。",
     "engineLogMissing": "このコンピュータには、まだエンジンのログがありません。",
-    "folderNotFound": "フォルダが見つかりません。"
+    "folderNotFound": "フォルダが見つかりません。",
+    "promptTooLong": "質問とカスタム指示がこのAIのコンテキスト上限を超えています。短くするか、より大きなAIを選んでください。",
+    "attachmentsFailed": "一部の添付ファイルを読み取れませんでした。質問する前に、ファイルを再処理してください。"
   },
   "pii": {
     "heading": "個人情報",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "ファイルは小さく、答えは短めです。",
       "gemma_3_1b": "いちばん小さな選択肢。1分ほどでインストールできます。"
     }
+  },
+  "imports": {
+    "addedOne": "この会話に追加しました。",
+    "addedMany": "この会話に%{count}個のファイルを追加しました。",
+    "unsupported": "これらのファイル形式はサポートされていません。"
   }
 }

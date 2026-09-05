@@ -38,6 +38,16 @@
 
   let excerpt = $state<DocumentTextWindow | null>(null);
   let paging = $state(false);
+  let request = 0;
+  $effect(() => {
+    void doc.id;
+    request += 1;
+    paging = false;
+    excerpt = null;
+    return () => {
+      request += 1;
+    };
+  });
   let scrollEl = $state<HTMLDivElement | null>(null);
 
   $effect(() => {
@@ -45,15 +55,19 @@
   });
 
   async function viewExtracted(startChar?: number) {
-    paging = startChar !== undefined;
+    const load = ++request;
+    const selected = doc;
+    paging = true;
     try {
-      excerpt = await api.documentText(doc.shelfId, doc.id, { startChar });
+      const window = await api.documentText(selected.shelfId, selected.id, { startChar });
+      if (load !== request) return;
+      excerpt = window;
       extractedText = excerpt.text;
       scrollEl?.scrollTo(0, 0);
     } catch (error) {
       notifyInvokeError(error);
     } finally {
-      paging = false;
+      if (load === request) paging = false;
     }
   }
 
@@ -73,7 +87,7 @@
   onkeydown={(e) => e.key === "Escape" && onClose()}
 >
   <div
-    class="flex h-full w-[480px] flex-col overflow-hidden bg-surface shadow-pop dark:shadow-none"
+    class="flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-surface shadow-pop dark:shadow-none"
     in:drawerPanel
   >
     <div class="border-b border-paper-line bg-paper-soft px-5 py-4">

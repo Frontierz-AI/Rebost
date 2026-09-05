@@ -11,6 +11,22 @@ use super::pin::{
 use super::process::unpack_engine_archive;
 use super::{Engine, EngineState};
 
+struct ArchiveDownload<'a> {
+    control: download::DownloadControl,
+    events: &'a std::sync::Arc<dyn crate::core::Events>,
+    finished: bool,
+}
+impl Drop for ArchiveDownload<'_> {
+    fn drop(&mut self) {
+        if !self.finished {
+            self.control.request_cancel();
+            self.events.emit("rebost://download", serde_json::json!({
+                "kind": "engine", "id": "engine", "name": "AI engine", "done": true, "error": "cancelled"
+            }));
+        }
+    }
+}
+
 impl Engine {
     fn engine_binary(&self, pin: &EnginePin) -> PathBuf {
         let tagged = self
@@ -251,7 +267,12 @@ impl Engine {
         name: &str,
     ) -> Result<()> {
         log::info!("downloading AI engine {ENGINE_RELEASE} ({file_name})");
-        download::download(
+        let mut transfer = ArchiveDownload {
+            control: download::DownloadControl::new(),
+            events: &self.ctx.events,
+            finished: false,
+        };
+        let result = download::download(
             &self.download_client,
             url,
             dest,
@@ -263,10 +284,11 @@ impl Engine {
             Some(sha256),
             None,
             &self.ctx.events.clone(),
-            &download::DownloadControl::new(),
+            &transfer.control,
         )
-        .await?;
-        Ok(())
+        .await;
+        transfer.finished = true;
+        result
     }
 }
 

@@ -121,8 +121,21 @@
     {#if mac}
       <div data-tauri-drag-region class="h-[46px] shrink-0"></div>
     {/if}
-    <div data-tauri-drag-region class="flex flex-1 items-center justify-center">
-      <img src={icon} alt="Rebost" class="h-20 w-20 animate-pulse rounded-[22%]" />
+    <div data-tauri-drag-region class="flex flex-1 flex-col items-center justify-center gap-4">
+      <img
+        src={icon}
+        alt="Rebost"
+        class="h-20 w-20 rounded-[22%]"
+        class:animate-pulse={!app.bootstrapError}
+      />
+      {#if app.bootstrapError}
+        <p role="alert" class="max-w-sm px-4 text-center text-white">{t("bootstrap.failed")}</p>
+        <button
+          class="btn-primary"
+          onclick={() => bootstrap().catch((error) => console.error(error))}
+          >{t("shelves.tryAgain")}</button
+        >
+      {/if}
     </div>
   </div>
 {:else if app.onboarding}

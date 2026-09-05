@@ -86,7 +86,7 @@
     "saveHouseRules": "Spara House rules",
     "saved": "Sparat",
     "online": "Online",
-    "onlineHelp": "Slå på det här så kan Chat slå upp saker på den öppna webben. Dina filer stannar på den här datorn. Svaret skrivs fortfarande här.",
+    "onlineHelp": "Tillåt sökningar på den offentliga webben. Varje sökning eller adress visas för godkännande innan den skickas. Svaren skrivs på den här datorn.",
     "ai": "AI",
     "installedHere": "installerad på den här datorn",
     "engineReady": "Klar",
@@ -185,7 +185,19 @@
     "page": "s. %{start}",
     "pageRange": "s. %{start}–%{end}",
     "pageWord": "Sida %{start}",
-    "pageWordRange": "Sida %{start}–%{end}"
+    "pageWordRange": "Sida %{start}–%{end}",
+    "interrupted": "Svaret avbröts. Din fråga och det påbörjade svaret har sparats.",
+    "continuePrompt": "Fortsätt föregående svar från den sista meningen. Upprepa inte.",
+    "continue": "Fortsätt",
+    "answerInProgress": "Skriver ett svar…",
+    "preparingAnswer": "Förbereder ett svar…",
+    "answerComplete": "Svaret är klart. Granska svaret och dess källor.",
+    "reviewOnline": "Granska webbförfrågan",
+    "queryLeaves": "Denna exakta sökning skickas till Wikipedia, DuckDuckGo och You.com. Kontrollera att den inte innehåller privat information.",
+    "urlLeaves": "Denna adress begärs från webbplatsen. Kontrollera hela adressen efter privat information.",
+    "allowOnce": "Tillåt en gång",
+    "keepLocal": "Använd lokal information",
+    "exportConversation": "Exportera konversation"
   },
   "thinking": {
     "fallback": "Tänker…",
@@ -298,7 +310,8 @@
     "folderMissing": "Den här mappen går inte att nå just nu. Filerna ligger kvar på den här hyllan.",
     "removeSynced": "Ta bort synkad mapp från den här hyllan",
     "removeSyncedHint": "Ta bort från den här hyllan (filerna ligger kvar på disken)",
-    "moreSynced": "Fler synkade mappar"
+    "moreSynced": "Fler synkade mappar",
+    "showAllRows": "Visa alla rader för läsning eller tangentbordsnavigering"
   },
   "documents": {
     "ready": "Redo att användas",
@@ -326,7 +339,11 @@
     "showInFolder": "Visa i mappen",
     "viewText": "Visa texten",
     "unavailable": "Den här filen är inte tillgänglig.",
-    "loading": "Läser in"
+    "loading": "Läser in",
+    "citedPassage": "Avsnitt som användes för svaret",
+    "sourceChanged": "Filen har ändrats sedan svaret. Det sparade avsnittet ovan kommer från versionen som användes då.",
+    "currentContext": "Sammanhang i den aktuella filen",
+    "sourceUnverified": "Det sparade avsnittet kunde inte hittas i den aktuella filen."
   },
   "recipes": {
     "title": "Recept",
@@ -521,7 +538,9 @@
     "recipeTooLong": "Det här Recipe är för långt. Högst 12 000 tecken.",
     "typeDelete": "Skriv DELETE för att bekräfta.",
     "engineLogMissing": "Loggen finns inte på den här datorn ännu.",
-    "folderNotFound": "Mappen hittades inte."
+    "folderNotFound": "Mappen hittades inte.",
+    "promptTooLong": "Frågan och dina instruktioner överskrider AI:ns kontext. Korta ned dem eller välj en större AI.",
+    "attachmentsFailed": "Vissa bilagor kunde inte läsas. Bearbeta dem igen innan du ställer frågor om dem."
   },
   "pii": {
     "heading": "Personuppgifter",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "Liten fil, korta svar.",
       "gemma_3_1b": "Det minsta valet. Installeras på en minut."
     }
+  },
+  "imports": {
+    "addedOne": "Tillagt i den här konversationen.",
+    "addedMany": "%{count} filer har lagts till i den här konversationen.",
+    "unsupported": "Dessa filtyper stöds inte."
   }
 }

@@ -66,22 +66,24 @@ fn default_recipes_in(locale: &str) -> Vec<Recipe> {
 }
 
 fn read(paths: &Paths) -> Option<Vec<Recipe>> {
-    let text = std::fs::read_to_string(paths.recipes_path()).ok()?;
-    serde_json::from_str::<RecipesFile>(&text)
-        .ok()
-        .map(|f| f.recipes)
+    crate::paths::read_json::<RecipesFile>(&paths.recipes_path()).map(|f| f.recipes)
 }
 
 fn write(paths: &Paths, recipes: &[Recipe]) -> Result<()> {
     let file = RecipesFile {
         recipes: recipes.to_vec(),
     };
-    crate::paths::atomic_write(&paths.recipes_path(), serde_json::to_string_pretty(&file)?)?;
-    Ok(())
+    crate::paths::write_json(&paths.recipes_path(), &file)
 }
 
 /// All recipes; seeds the defaults on first use. Edits stay until Restore.
 pub fn list(paths: &Paths) -> Vec<Recipe> {
+    let transaction = crate::paths::metadata_lock(&paths.recipes_path());
+    let _write = crate::core::mutex_lock(&transaction);
+    list_unlocked(paths)
+}
+
+fn list_unlocked(paths: &Paths) -> Vec<Recipe> {
     match read(paths) {
         Some(mut recipes) => {
             let mut changed = false;
@@ -124,8 +126,10 @@ fn validated_recipe_fields(name: &str, prompt: &str) -> Result<(String, String)>
 }
 
 pub fn create(paths: &Paths, name: &str, prompt: &str) -> Result<Recipe> {
+    let transaction = crate::paths::metadata_lock(&paths.recipes_path());
+    let _write = crate::core::mutex_lock(&transaction);
     let (name, prompt) = validated_recipe_fields(name, prompt)?;
-    let mut recipes = list(paths);
+    let mut recipes = list_unlocked(paths);
     let recipe = Recipe {
         id: format!("r_{}", uuid::Uuid::new_v4().simple()),
         name,
@@ -139,8 +143,10 @@ pub fn create(paths: &Paths, name: &str, prompt: &str) -> Result<Recipe> {
 }
 
 pub fn update(paths: &Paths, id: &str, name: &str, prompt: &str) -> Result<Recipe> {
+    let transaction = crate::paths::metadata_lock(&paths.recipes_path());
+    let _write = crate::core::mutex_lock(&transaction);
     let (name, prompt) = validated_recipe_fields(name, prompt)?;
-    let mut recipes = list(paths);
+    let mut recipes = list_unlocked(paths);
     let recipe = recipes
         .iter_mut()
         .find(|r| r.id == id)
@@ -153,7 +159,9 @@ pub fn update(paths: &Paths, id: &str, name: &str, prompt: &str) -> Result<Recip
 }
 
 pub fn delete(paths: &Paths, id: &str) -> Result<()> {
-    let mut recipes = list(paths);
+    let transaction = crate::paths::metadata_lock(&paths.recipes_path());
+    let _write = crate::core::mutex_lock(&transaction);
+    let mut recipes = list_unlocked(paths);
     let before = recipes.len();
     recipes.retain(|r| r.id != id);
     if recipes.len() == before {
@@ -164,6 +172,8 @@ pub fn delete(paths: &Paths, id: &str) -> Result<()> {
 
 /// Replace the list with the shipped defaults. Edits and extras go away.
 pub fn restore_defaults(paths: &Paths) -> Result<Vec<Recipe>> {
+    let transaction = crate::paths::metadata_lock(&paths.recipes_path());
+    let _write = crate::core::mutex_lock(&transaction);
     let defaults = default_recipes();
     write(paths, &defaults)?;
     Ok(defaults)

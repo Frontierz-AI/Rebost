@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     api,
+    userFacingError,
     formatBytes,
     type Diagnostics,
     type MachineView,
@@ -10,6 +11,7 @@
   } from "$lib/api";
   import {
     app,
+    invalidateSettingsLoads,
     beginModelInstall,
     notifyInvokeError,
     refreshSettings,
@@ -35,7 +37,10 @@
   import icon from "../../assets/rebost-icon.png";
 
   let machine = $state<MachineView | null>(null);
-  let houseRules = $state(app.settings?.houseRules ?? "");
+  let houseRules = $state(app.rulesDraft ?? app.settings?.houseRules ?? "");
+  let rulesBaseline = $state(app.settings?.houseRules ?? "");
+  let rulesError = $state("");
+  let rulesSaving = $state(false);
   let onlineResearch = $state(app.settings?.allowOnlineResearch ?? false);
   let textSize = $state<TextSize>(parseTextSize(app.settings?.textSize));
   let uiLocale = $state<LocalePref>(parseLocalePref(app.settings?.uiLocale));
@@ -51,14 +56,22 @@
 
   $effect(() => {
     void app.settings?.activeModel?.reference;
+    let cancelled = false;
     api
       .machineProfile()
-      .then((m) => (machine = m))
+      .then((m) => {
+        if (!cancelled) machine = m;
+      })
       .catch(notifyInvokeError);
+    return () => {
+      cancelled = true;
+    };
   });
 
   $effect(() => {
-    houseRules = clipChars(app.settings?.houseRules ?? "", HOUSE_RULES_MAX_CHARS);
+    const currentRules = clipChars(app.settings?.houseRules ?? "", HOUSE_RULES_MAX_CHARS);
+    if (houseRules === rulesBaseline) houseRules = currentRules;
+    rulesBaseline = currentRules;
     onlineResearch = app.settings?.allowOnlineResearch ?? false;
     textSize = parseTextSize(app.settings?.textSize);
     uiLocale = parseLocalePref(app.settings?.uiLocale);
@@ -103,10 +116,24 @@
   }
 
   async function saveRules() {
-    await api.setHouseRules(clipChars(houseRules, HOUSE_RULES_MAX_CHARS));
-    await refreshSettings();
-    rulesSaved = true;
-    setTimeout(() => (rulesSaved = false), 1500);
+    if (rulesSaving) return;
+    const saved = clipChars(houseRules, HOUSE_RULES_MAX_CHARS);
+    rulesSaving = true;
+    rulesError = "";
+    rulesSaved = false;
+    try {
+      invalidateSettingsLoads();
+      await api.setHouseRules(saved);
+      invalidateSettingsLoads();
+      rulesBaseline = saved;
+      if (app.settings) app.settings.houseRules = saved;
+      rulesSaved = houseRules === saved;
+      app.rulesDraft = rulesSaved ? null : houseRules;
+    } catch (error) {
+      rulesError = userFacingError(error);
+    } finally {
+      rulesSaving = false;
+    }
   }
 
   function saveTextSize(next: TextSize) {
@@ -138,7 +165,9 @@
   async function saveOnline() {
     const next = onlineResearch;
     try {
+      invalidateSettingsLoads();
       await api.setAllowOnlineResearch(next);
+      invalidateSettingsLoads();
       await refreshSettings();
     } catch (error) {
       onlineResearch = app.settings?.allowOnlineResearch ?? false;
@@ -273,9 +302,21 @@
         class="input min-h-32 cursor-text resize-y select-text"
         placeholder={t("settings.houseRulesPlaceholder")}
         maxlength={HOUSE_RULES_MAX_CHARS}
-        bind:value={houseRules}></textarea>
+        bind:value={houseRules}
+        oninput={(event) => {
+          app.rulesDraft = event.currentTarget.value;
+          rulesSaved = false;
+        }}
+        aria-describedby={rulesError ? "rules-error" : undefined}></textarea>
+      {#if rulesError}<p
+          id="rules-error"
+          role="alert"
+          class="mt-2 text-sm text-red-700 dark:text-red-400"
+        >
+          {rulesError}
+        </p>{/if}
       <div class="mt-2.5 flex justify-end">
-        <button type="button" class="btn-primary" onclick={saveRules}>
+        <button type="button" class="btn-primary" onclick={saveRules} disabled={rulesSaving}>
           <Save size={13.5} />
           {rulesSaved ? t("settings.saved") : t("settings.saveHouseRules")}
         </button>

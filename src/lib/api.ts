@@ -83,6 +83,7 @@ export interface Card {
 }
 
 export interface SourcePassage {
+  anchor?: { hash: string; startChar?: number; endChar?: number; quote: string };
   sid: string;
   documentId: string;
   shelfId: string;
@@ -96,6 +97,7 @@ export interface SourcePassage {
 }
 
 export interface DocumentTextWindow {
+  versionChanged?: boolean;
   text: string;
   startChar: number;
   endChar: number;
@@ -128,7 +130,7 @@ export interface StoredMessage {
   ts: string;
   shelfId?: string | null;
   sources: SourcePassage[];
-  status: "done" | "stopped" | "error";
+  status: "done" | "stopped" | "error" | "interrupted";
 }
 
 export interface ThreadPage {
@@ -333,6 +335,8 @@ const BANNED_ERROR_TERMS = [
 export function userFacingError(error: unknown): string {
   const trimmed = invokeError(error).trim();
   if (!trimmed) return USER_ERROR_FALLBACK();
+  if (["errors.promptTooLong", "errors.attachmentsFailed"].some((key) => trimmed === t(key)))
+    return trimmed;
   const lower = trimmed.toLowerCase();
 
   if (lower.includes("invalid id")) return t("errors.invalidId");
@@ -462,7 +466,13 @@ export const api = {
   documentText: (
     shelfId: string,
     docId: string,
-    opts?: { startChar?: number; page?: number; section?: string; around?: string },
+    opts?: {
+      startChar?: number;
+      page?: number;
+      section?: string;
+      around?: string;
+      sourceHash?: string;
+    },
   ) =>
     invoke<DocumentTextWindow>("document_text", {
       shelfId,
@@ -471,6 +481,7 @@ export const api = {
       page: opts?.page ?? null,
       section: opts?.section ?? null,
       around: opts?.around ?? null,
+      sourceHash: opts?.sourceHash ?? null,
     }),
   documentReprocess: (shelfId: string, docId: string) =>
     invoke<void>("document_reprocess", { shelfId, docId }),
@@ -492,6 +503,8 @@ export const api = {
   threadDelete: (threadId: string) => invoke<void>("thread_delete", { threadId }),
   chatSend: (threadId: string, text: string, shelfId?: string | null) =>
     invoke<void>("chat_send", { threadId, text, shelfId }),
+  chatApproveWeb: (requestId: string, allowed: boolean) =>
+    invoke<void>("chat_approve_web", { requestId, allowed }),
   chatCancel: (messageId: string) => invoke<void>("chat_cancel", { messageId }),
   warmEngine: () => invoke<void>("warm_engine"),
 
@@ -547,6 +560,7 @@ export const api = {
 // Events
 
 export interface IngestEvent {
+  document?: DocumentMeta;
   shelfId: string;
   documentId: string;
   fileName?: string;
@@ -608,7 +622,16 @@ export interface MenuEvent {
   action: MenuAction;
 }
 
+export interface WebApproval {
+  id: string;
+  threadId: string;
+  action?: string;
+  value?: string;
+  resolved?: boolean;
+}
+
 export const events = {
+  webApproval: (h: (event: WebApproval) => void) => onEvent("rebost://web-approval", h),
   engine: (h: (s: EngineStatus) => void) => onEvent("rebost://engine", h),
   download: (h: (d: DownloadEvent) => void) => onEvent("rebost://download", h),
   ingest: (h: (i: IngestEvent) => void) => onEvent("rebost://ingest", h),

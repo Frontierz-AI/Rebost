@@ -86,7 +86,7 @@
     "saveHouseRules": "Lagre House rules",
     "saved": "Lagret",
     "online": "Online",
-    "onlineHelp": "Slå på dette, så kan Chat slå opp ting på det åpne nettet. Filene dine blir på denne datamaskinen. Svaret skrives fortsatt her.",
+    "onlineHelp": "Tillat søk på det offentlige nettet. Hvert søk eller hver adresse vises for godkjenning før sending. Svarene skrives på denne datamaskinen.",
     "ai": "KI",
     "installedHere": "installert på denne datamaskinen",
     "engineReady": "Klar",
@@ -185,7 +185,19 @@
     "page": "s. %{start}",
     "pageRange": "s. %{start}–%{end}",
     "pageWord": "Side %{start}",
-    "pageWordRange": "Side %{start}–%{end}"
+    "pageWordRange": "Side %{start}–%{end}",
+    "interrupted": "Svaret ble avbrutt. Spørsmålet ditt og det delvise svaret er lagret.",
+    "continuePrompt": "Fortsett det forrige svaret fra siste setning. Ikke gjenta.",
+    "continue": "Fortsett",
+    "answerInProgress": "Skriver et svar…",
+    "preparingAnswer": "Forbereder et svar…",
+    "answerComplete": "Svaret er klart. Se gjennom svaret og kildene.",
+    "reviewOnline": "Se gjennom nettforespørselen",
+    "queryLeaves": "Dette nøyaktige søket sendes til Wikipedia, DuckDuckGo og You.com. Kontroller at det ikke inneholder privat informasjon.",
+    "urlLeaves": "Denne adressen forespørres fra nettstedet. Kontroller hele adressen for privat informasjon.",
+    "allowOnce": "Tillat én gang",
+    "keepLocal": "Bruk lokal informasjon",
+    "exportConversation": "Eksporter samtale"
   },
   "thinking": {
     "fallback": "Tenker…",
@@ -298,7 +310,8 @@
     "folderMissing": "Denne mappen er ikke her akkurat nå. Filene blir på hyllen.",
     "removeSynced": "Fjern synkronisert mappe fra denne hyllen",
     "removeSyncedHint": "Fjern fra denne hyllen (filene blir på disken)",
-    "moreSynced": "Flere synkroniserte mapper"
+    "moreSynced": "Flere synkroniserte mapper",
+    "showAllRows": "Vis alle rader for lesing eller tastaturnavigering"
   },
   "documents": {
     "ready": "Klar til bruk",
@@ -326,7 +339,11 @@
     "showInFolder": "Vis i mappen",
     "viewText": "Vis teksten",
     "unavailable": "Denne filen er ikke tilgjengelig.",
-    "loading": "Laster inn"
+    "loading": "Laster inn",
+    "citedPassage": "Avsnitt brukt i dette svaret",
+    "sourceChanged": "Filen er endret siden svaret. Det lagrede avsnittet ovenfor er fra versjonen som ble brukt da.",
+    "currentContext": "Kontekst i gjeldende fil",
+    "sourceUnverified": "Det lagrede avsnittet ble ikke funnet i gjeldende fil."
   },
   "recipes": {
     "title": "Oppskrifter",
@@ -521,7 +538,9 @@
     "recipeTooLong": "Denne Recipen er for lang. Hold den innenfor 12 000 tegn.",
     "typeDelete": "Skriv DELETE for å bekrefte.",
     "engineLogMissing": "Det finnes ingen logg på denne datamaskinen ennå.",
-    "folderNotFound": "Finner ikke mappen."
+    "folderNotFound": "Finner ikke mappen.",
+    "promptTooLong": "Spørsmålet og instruksjonene dine overskrider konteksten til denne KI-en. Forkort dem eller velg en større KI.",
+    "attachmentsFailed": "Noen vedlegg kunne ikke leses. Behandle dem på nytt før du spør om dem."
   },
   "pii": {
     "heading": "Personopplysninger",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "Liten fil, korte svar.",
       "gemma_3_1b": "Det minste valget. Installeres på et minutt."
     }
+  },
+  "imports": {
+    "addedOne": "Lagt til i denne samtalen.",
+    "addedMany": "%{count} filer er lagt til i denne samtalen.",
+    "unsupported": "Disse filtypene støttes ikke."
   }
 }

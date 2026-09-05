@@ -263,6 +263,7 @@ pub fn run() {
             commands::thread_delete,
             commands::chat_send,
             commands::chat_cancel,
+            commands::chat_approve_web,
             commands::warm_engine,
             commands::engine_status,
             commands::machine_profile,

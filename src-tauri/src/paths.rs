@@ -159,29 +159,122 @@ impl Paths {
     }
 }
 
-/// Write `contents` to `path` via a sibling `.tmp` file, then rename.
+/// Serialize metadata transactions for one file without blocking independent workspaces.
+pub(crate) fn metadata_lock(path: &Path) -> std::sync::Arc<std::sync::Mutex<()>> {
+    use std::sync::{Arc, Mutex, OnceLock, Weak};
+    static LOCKS: OnceLock<Mutex<std::collections::HashMap<PathBuf, Weak<Mutex<()>>>>> =
+        OnceLock::new();
+    let mut locks = crate::core::mutex_lock(LOCKS.get_or_init(|| Mutex::new(Default::default())));
+    if let Some(lock) = locks.get(path).and_then(Weak::upgrade) {
+        return lock;
+    }
+    locks.retain(|_, lock| lock.strong_count() > 0);
+    let lock = Arc::new(Mutex::new(()));
+    locks.insert(path.to_path_buf(), Arc::downgrade(&lock));
+    lock
+}
+
+/// Replace a file using a unique, flushed sibling so concurrent writes cannot
+/// rename or truncate one another's temporary file.
 pub fn atomic_write(path: &Path, contents: impl AsRef<[u8]>) -> std::io::Result<()> {
+    use std::io::Write;
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let tmp = {
-        let mut name = path
-            .file_name()
-            .unwrap_or_else(|| std::ffi::OsStr::new("file"))
-            .to_os_string();
-        name.push(".tmp");
-        match path.parent() {
-            Some(parent) => parent.join(name),
-            None => PathBuf::from(name),
+    let tmp = path.with_file_name(format!(
+        ".{}.{}.tmp",
+        path.file_name().unwrap_or_default().to_string_lossy(),
+        uuid::Uuid::new_v4()
+    ));
+    let result = (|| {
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
         }
-    };
-    std::fs::write(&tmp, contents)?;
-    std::fs::rename(&tmp, path)
+        let mut file = options.open(&tmp)?;
+        file.write_all(contents.as_ref())?;
+        file.sync_all()?;
+        drop(file);
+        std::fs::rename(&tmp, path)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&tmp);
+    }
+    result
+}
+
+fn backup_path(path: &Path) -> PathBuf {
+    path.with_file_name(format!(
+        "{}.bak",
+        path.file_name().unwrap_or_default().to_string_lossy()
+    ))
+}
+
+/// Keep the last valid JSON snapshot. Callers serialize read-modify-write operations.
+pub fn write_json(path: &Path, value: &impl serde::Serialize) -> anyhow::Result<()> {
+    let contents = serde_json::to_vec_pretty(value)?;
+    if let Ok(previous) = std::fs::read(path) {
+        if serde_json::from_slice::<serde_json::Value>(&previous).is_ok() {
+            atomic_write(&backup_path(path), previous)?;
+        } else {
+            // Preserve the damaged snapshot for recovery instead of overwriting it.
+            let damaged = path.with_extension(format!("corrupt-{}", uuid::Uuid::new_v4()));
+            atomic_write(&damaged, previous)?;
+        }
+    }
+    atomic_write(path, contents)?;
+    Ok(())
+}
+
+pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
+    if let Some(value) = std::fs::read(path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+    {
+        return Some(value);
+    }
+    let value = std::fs::read(backup_path(path))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok());
+    if value.is_some() {
+        log::warn!("using last valid metadata snapshot for {}", path.display());
+    }
+    value
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn damaged_metadata_uses_the_last_valid_snapshot() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        write_json(&path, &vec!["saved"]).unwrap();
+        write_json(&path, &vec!["newer"]).unwrap();
+        std::fs::write(&path, "{interrupted").unwrap();
+        assert_eq!(read_json::<Vec<String>>(&path).unwrap(), vec!["saved"]);
+    }
+
+    #[test]
+    fn concurrent_atomic_writes_never_mix_snapshots() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("snapshot.json");
+        std::thread::scope(|scope| {
+            for n in 0..12 {
+                let path = &path;
+                scope.spawn(move || {
+                    atomic_write(path, format!("\"{}\"", n.to_string().repeat(1000))).unwrap();
+                });
+            }
+        });
+        let result: String = read_json(&path).unwrap();
+        assert!((0..12).any(|n| result == n.to_string().repeat(1000)));
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 1);
+    }
 
     #[test]
     fn library_dir_is_under_app_data() {

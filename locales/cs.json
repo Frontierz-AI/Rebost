@@ -86,7 +86,7 @@
     "saveHouseRules": "Uložit House rules",
     "saved": "Uloženo",
     "online": "Online",
-    "onlineHelp": "Po zapnutí může Chat hledat na veřejném webu. Tvoje soubory zůstávají na tomto počítači. Odpověď vzniká pořád tady.",
+    "onlineHelp": "Povolte hledání na veřejném webu. Každý dotaz nebo adresa se před odesláním zobrazí ke schválení. Odpovědi vznikají na tomto počítači.",
     "ai": "AI",
     "installedHere": "nainstalovaná na tomto počítači",
     "engineReady": "Připraveno",
@@ -185,7 +185,19 @@
     "page": "s. %{start}",
     "pageRange": "s. %{start}–%{end}",
     "pageWord": "Strana %{start}",
-    "pageWordRange": "Strana %{start}–%{end}"
+    "pageWordRange": "Strana %{start}–%{end}",
+    "interrupted": "Odpověď byla přerušena. Otázka a částečná odpověď jsou uložené.",
+    "continuePrompt": "Pokračuj v předchozí odpovědi od poslední věty. Neopakuj se.",
+    "continue": "Pokračovat",
+    "answerInProgress": "Píšu odpověď…",
+    "preparingAnswer": "Připravuji odpověď…",
+    "answerComplete": "Odpověď je připravena. Zkontrolujte ji a její zdroje.",
+    "reviewOnline": "Zkontrolovat online požadavek",
+    "queryLeaves": "Tento přesný dotaz bude odeslán do Wikipedie, DuckDuckGo a You.com. Ověřte, že neobsahuje soukromé informace.",
+    "urlLeaves": "Tato adresa bude vyžádána od webu. Zkontrolujte celou adresu, zda neobsahuje soukromé informace.",
+    "allowOnce": "Povolit jednou",
+    "keepLocal": "Použít místní informace",
+    "exportConversation": "Exportovat konverzaci"
   },
   "thinking": {
     "fallback": "Přemýšlí…",
@@ -298,7 +310,8 @@
     "folderMissing": "Tato složka teď není k dispozici. Soubory na polici zůstávají.",
     "removeSynced": "Odebrat synchronizovanou složku z této police",
     "removeSyncedHint": "Odebrat z této police (soubory zůstanou na disku)",
-    "moreSynced": "Další synchronizované složky"
+    "moreSynced": "Další synchronizované složky",
+    "showAllRows": "Zobrazit všechny řádky pro čtení nebo ovládání klávesnicí"
   },
   "documents": {
     "ready": "Připraveno k použití",
@@ -326,7 +339,11 @@
     "showInFolder": "Zobrazit ve složce",
     "viewText": "Zobrazit text",
     "unavailable": "Tento soubor není dostupný.",
-    "loading": "Načítání"
+    "loading": "Načítání",
+    "citedPassage": "Pasáž použitá pro tuto odpověď",
+    "sourceChanged": "Soubor se od odpovědi změnil. Uložená pasáž výše pochází z tehdy použité verze.",
+    "currentContext": "Kontext aktuálního souboru",
+    "sourceUnverified": "Uloženou pasáž se nepodařilo najít v aktuálním souboru."
   },
   "recipes": {
     "title": "Recepty",
@@ -521,7 +538,9 @@
     "recipeTooLong": "Tento Recipe je příliš dlouhý. Maximum je 12 000 znaků.",
     "typeDelete": "Pro potvrzení napiš DELETE.",
     "engineLogMissing": "Na tomto počítači zatím žádný protokol není.",
-    "folderNotFound": "Složka se nenašla."
+    "folderNotFound": "Složka se nenašla.",
+    "promptTooLong": "Otázka a vaše pokyny překračují kontext této AI. Zkraťte je nebo vyberte větší AI.",
+    "attachmentsFailed": "Některé přílohy se nepodařilo přečíst. Než se na ně zeptáte, zpracujte je znovu."
   },
   "pii": {
     "heading": "Osobní údaje",
@@ -584,5 +603,10 @@
       "granite_4_1_3b": "Malý soubor, krátké odpovědi.",
       "gemma_3_1b": "Nejmenší volba. Nainstaluje se za minutu."
     }
+  },
+  "imports": {
+    "addedOne": "Přidáno do této konverzace.",
+    "addedMany": "Do této konverzace bylo přidáno %{count} souborů.",
+    "unsupported": "Tyto typy souborů nejsou podporovány."
   }
 }

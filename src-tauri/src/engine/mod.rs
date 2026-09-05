@@ -5,6 +5,7 @@
 
 pub mod bench;
 mod binary;
+mod budget;
 pub mod catalog;
 pub mod download;
 mod gguf;
@@ -63,6 +64,8 @@ struct Inner {
     model_file: String,
     reasoning: Option<reasoning::ReasoningCaps>,
     chat_stall: Duration,
+    flatten_tools: bool,
+    tools_rejected: bool,
 }
 
 pub struct Engine {
@@ -81,7 +84,7 @@ pub struct Engine {
     skip_optional: AtomicBool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub role: String,
     /// `None` serializes as JSON null — required for assistant tool-call turns.
@@ -235,6 +238,8 @@ impl Engine {
                 model_file: String::new(),
                 reasoning: None,
                 chat_stall: Duration::from_secs(90),
+                flatten_tools: false,
+                tools_rejected: false,
             }),
             start_lock: tokio::sync::Mutex::new(()),
             status: std::sync::Mutex::new(EngineStatus {
@@ -288,6 +293,7 @@ pub(crate) async fn wait_if_cancelled(cancel: &AtomicBool) {
 
 /// A streamed piece of model output, already sorted into thinking vs answer.
 pub enum StreamEvent<'a> {
+    ResetAnswer,
     Thinking(&'a str),
     Answer(&'a str),
     /// The stream turned out to be reasoning-first without an opening tag

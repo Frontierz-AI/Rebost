@@ -67,7 +67,7 @@ pub struct StoredMessage {
     pub shelf_id: Option<String>,
     #[serde(default)]
     pub sources: Vec<SourcePassage>,
-    /// "done" | "stopped" | "error"
+    /// "done" | "stopped" | "interrupted" | "error"
     #[serde(default = "default_status")]
     pub status: String,
 }
@@ -135,12 +135,16 @@ pub struct Conversations;
 
 impl Conversations {
     pub fn list(paths: &Paths) -> Vec<ThreadMeta> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         let mut file = load_threads(paths);
         file.threads.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
         file.threads
     }
 
     pub fn get(paths: &Paths, thread_id: &str) -> Option<ThreadMeta> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         load_threads(paths)
             .threads
             .into_iter()
@@ -208,6 +212,8 @@ impl Conversations {
     }
 
     pub fn create(paths: &Paths, shelf_id: Option<String>) -> Result<ThreadMeta> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         let now = chrono::Utc::now().to_rfc3339();
         let mut file = read_threads(paths);
         assign_missing_avatars(&mut file.threads);
@@ -233,6 +239,8 @@ impl Conversations {
     }
 
     pub fn set_shelf(paths: &Paths, thread_id: &str, shelf_id: Option<String>) -> Result<()> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         let mut file = read_threads(paths);
         if let Some(thread) = file.threads.iter_mut().find(|t| t.id == thread_id) {
             thread.shelf_id = shelf_id;
@@ -242,6 +250,8 @@ impl Conversations {
 
     /// Remember the hidden upload Shelf. Does not replace the library Shelf.
     pub fn set_upload_shelf(paths: &Paths, thread_id: &str, shelf_id: String) -> Result<()> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         let mut file = read_threads(paths);
         let thread = file
             .threads
@@ -254,6 +264,8 @@ impl Conversations {
     }
 
     pub fn rename(paths: &Paths, thread_id: &str, title: &str) -> Result<()> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         let title = clean_title(title)?;
         let mut file = read_threads(paths);
         let thread = file
@@ -267,6 +279,8 @@ impl Conversations {
     }
 
     pub fn delete(paths: &Paths, thread_id: &str) -> Result<()> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
         let mut file = read_threads(paths);
         file.threads.retain(|t| t.id != thread_id);
         write_threads(paths, &file)?;
@@ -277,6 +291,12 @@ impl Conversations {
     /// Append a message and refresh thread metadata. An untitled thread
     /// ("New conversation") takes its title from the first user message.
     pub fn append(paths: &Paths, thread_id: &str, message: &StoredMessage) -> Result<()> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
+        let mut threads = read_threads(paths);
+        if !threads.threads.iter().any(|thread| thread.id == thread_id) {
+            return Err(anyhow::anyhow!("thread not found"));
+        }
         let path = paths.thread_path(thread_id);
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -286,11 +306,21 @@ impl Conversations {
             .append(true)
             .open(&path)
             .with_context(|| format!("open {}", path.display()))?;
+        // A crash may leave a partial last record. Keep it separate from the new one.
+        use std::io::{Read, Seek, SeekFrom};
+        if let Ok(mut existing) = std::fs::File::open(&path) {
+            if existing.seek(SeekFrom::End(-1)).is_ok() {
+                let mut tail = [0];
+                if existing.read_exact(&mut tail).is_ok() && tail[0] != b'\n' {
+                    writeln!(file)?;
+                }
+            }
+        }
         let mut stored = message.clone();
         compact_message(&mut stored);
         writeln!(file, "{}", serde_json::to_string(&stored)?)?;
+        file.sync_data()?;
 
-        let mut threads = read_threads(paths);
         if let Some(thread) = threads.threads.iter_mut().find(|t| t.id == thread_id) {
             thread.updated_at = chrono::Utc::now().to_rfc3339();
             thread.message_count += 1;
@@ -382,7 +412,7 @@ impl Conversations {
             if message.status == "error" {
                 return true;
             }
-            let cost = message.text.chars().count().min(1600);
+            let cost = super::history_message_text(&message).chars().count();
             if selected.len() >= max_messages || used + cost > max_chars {
                 return false;
             }
@@ -540,18 +570,31 @@ fn write_threads(paths: &Paths, file: &ThreadsFile) -> Result<()> {
 }
 
 fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
-    let text = std::fs::read_to_string(path).ok()?;
-    serde_json::from_str(&text).ok()
+    crate::paths::read_json(path)
 }
 
 fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
-    crate::paths::atomic_write(path, serde_json::to_string_pretty(value)?)?;
-    Ok(())
+    crate::paths::write_json(path, value)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn concurrent_creates_preserve_every_thread() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().join("data"));
+        std::thread::scope(|scope| {
+            for _ in 0..12 {
+                let paths = &paths;
+                scope.spawn(move || {
+                    Conversations::create(paths, None).unwrap();
+                });
+            }
+        });
+        assert_eq!(Conversations::list(&paths).len(), 12);
+    }
 
     #[test]
     fn threads_roundtrip_and_title() {
@@ -767,6 +810,7 @@ mod tests {
                 ts: String::new(),
                 shelf_id: None,
                 sources: vec![crate::types::SourcePassage {
+                    anchor: None,
                     sid: "S1".into(),
                     document_id: "d1".into(),
                     shelf_id: "s1".into(),
@@ -818,6 +862,7 @@ mod tests {
         message.role = "assistant".into();
         message.thinking = Some(thinking);
         message.sources = vec![crate::types::SourcePassage {
+            anchor: None,
             sid: "S1".into(),
             document_id: "d1".into(),
             shelf_id: "s1".into(),

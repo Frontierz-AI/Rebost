@@ -40,29 +40,41 @@ pub(crate) fn catalog(ctx: &crate::core::Ctx, shelf_id: &str) -> Vec<ShelfFile> 
         .into_iter()
         .filter(|d| d.status == DocStatus::Ready)
         .collect();
-    let mut counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
-    for doc in &docs {
-        *counts.entry(doc.file_name.clone()).or_insert(0) += 1;
-    }
-    docs.into_iter()
-        .map(|doc| {
-            let unique = counts.get(&doc.file_name).copied().unwrap_or(0) <= 1;
-            let label = if unique {
-                doc.file_name.clone()
-            } else {
-                doc.rel_path.replace('\\', "/")
-            };
-            ShelfFile {
-                id: doc.id,
-                shelf_id: shelf_id.to_string(),
-                file_name: doc.file_name,
-                rel_path: doc.rel_path,
-                label,
-                path: doc.path,
-                pages: doc.pages,
-            }
+    let mut files: Vec<_> = docs
+        .into_iter()
+        .map(|doc| ShelfFile {
+            id: doc.id,
+            shelf_id: shelf_id.to_string(),
+            label: doc.file_name.clone(),
+            file_name: doc.file_name,
+            rel_path: doc.rel_path,
+            path: doc.path,
+            pages: doc.pages,
         })
-        .collect()
+        .collect();
+    disambiguate_labels(&mut files);
+    files
+}
+
+pub(crate) fn disambiguate_labels(files: &mut [ShelfFile]) {
+    let mut names = std::collections::HashMap::<String, usize>::new();
+    let mut paths = std::collections::HashMap::<String, usize>::new();
+    for file in files.iter() {
+        *names.entry(fold_ws(&file.file_name)).or_default() += 1;
+        *paths
+            .entry(fold_ws(&file.rel_path.replace('\\', "/")))
+            .or_default() += 1;
+    }
+    for file in files {
+        let relative = file.rel_path.replace('\\', "/");
+        file.label = if names[&fold_ws(&file.file_name)] <= 1 {
+            file.file_name.clone()
+        } else if paths[&fold_ws(&relative)] <= 1 {
+            relative
+        } else {
+            file.path.replace('\\', "/")
+        };
+    }
 }
 
 pub(crate) fn labels_for_schema(files: &[ShelfFile]) -> Vec<String> {
@@ -149,6 +161,7 @@ pub(crate) fn open_shelf_file(tool: &ToolCtx<'_>, requested: &str) -> ToolOutcom
     let next_char = next_read_offset(&text, &body, start);
     let from_start = start == 0;
     let source = SourcePassage {
+        anchor: None,
         sid: sid.clone(),
         document_id: file.id.clone(),
         shelf_id: shelf_id.to_string(),
@@ -211,6 +224,7 @@ fn resolve_file<'a>(
             fold_ws(&f.label) == folded
                 || fold_ws(&f.file_name) == folded
                 || fold_ws(&f.rel_path.replace('\\', "/")) == folded
+                || fold_ws(&f.path.replace('\\', "/")) == folded
         })
         .collect();
     if exact.len() == 1 {
@@ -314,6 +328,25 @@ mod tests {
             path: format!("/{rel}"),
             pages: None,
         }
+    }
+
+    #[test]
+    fn combined_catalog_labels_resolve_duplicate_names_and_relative_paths() {
+        let mut files = vec![
+            file("a", "notes.md", "docs/notes.md"),
+            file("b", "notes.md", "docs/notes.md"),
+            file("c", "notes.md", "other/notes.md"),
+        ];
+        files[0].path = "/library/docs/notes.md".into();
+        files[1].path = "/uploads/docs/notes.md".into();
+        disambiguate_labels(&mut files);
+        assert_eq!(files[0].label, "/library/docs/notes.md");
+        assert_eq!(files[1].label, "/uploads/docs/notes.md");
+        assert_eq!(files[2].label, "other/notes.md");
+        for file in &files {
+            assert_eq!(resolve_file(&files, &file.label).unwrap().id, file.id);
+        }
+        assert_eq!(labels_for_schema(&files).len(), 3);
     }
 
     #[test]

@@ -102,11 +102,31 @@ impl Engine {
                 if cancel.load(Ordering::Relaxed) {
                     return Ok(ChatOutput::default());
                 }
+                body["messages"] = json!(messages.as_ref());
                 let caps = {
-                    let inner = self.inner.lock().await;
+                    let inner = tokio::select! {
+                        biased;
+                        _ = super::wait_if_cancelled(cancel) => return Ok(ChatOutput::default()),
+                        inner = self.inner.lock() => inner,
+                    };
+                    if inner.flatten_tools && !flattened {
+                        flattened = true;
+                    }
+                    if inner.tools_rejected {
+                        dropped_tools = true;
+                        if let Some(obj) = body.as_object_mut() {
+                            obj.remove("tools");
+                            obj.remove("tool_choice");
+                            obj.remove("parallel_tool_calls");
+                        }
+                    }
                     inner.reasoning.clone().unwrap_or_default()
                 };
                 super::reasoning::apply_to_body(&mut body, options.thinking, &caps);
+                tokio::select! {
+                    _ = super::wait_if_cancelled(cancel) => return Ok(ChatOutput::default()),
+                    result = self.fit_request(&base, &mut body, flattened) => result?,
+                }
                 let send = self
                     .client
                     .post(format!("{base}/v1/chat/completions"))
@@ -121,7 +141,11 @@ impl Engine {
                 };
                 if !response.status().is_success() {
                     let status = response.status();
-                    let text = response.text().await.unwrap_or_default();
+                    let text = tokio::select! {
+                        biased;
+                        _ = super::wait_if_cancelled(cancel) => return Ok(ChatOutput::default()),
+                        text = response.text() => text.unwrap_or_default(),
+                    };
                     if !retried && is_compute_failure(&text) {
                         retried = true;
                         self.recover_after_compute_failure(&text).await;
@@ -129,19 +153,28 @@ impl Engine {
                     }
                     if !flattened && is_template_failure(&text) {
                         flattened = true;
+                        if let Ok(mut inner) = self.inner.try_lock() {
+                            inner.flatten_tools = true;
+                        }
                         log::warn!(
                             "chat template rejected the message list ({status}); \
 inlining tool turns and trying again: {text}"
                         );
-                        body["messages"] =
-                            json!(super::messages::flatten_tool_turns(messages.as_ref()));
                         continue;
                     }
-                    if !dropped_tools && options.tools.is_some() && !is_compute_failure(&text) {
+                    if !dropped_tools
+                        && options.tools.is_some()
+                        && status.is_client_error()
+                        && text.to_ascii_lowercase().contains("tool")
+                        && !is_compute_failure(&text)
+                    {
                         log::warn!(
                             "engine rejected tools ({status}); answering without them: {text}"
                         );
                         dropped_tools = true;
+                        if let Ok(mut inner) = self.inner.try_lock() {
+                            inner.tools_rejected = true;
+                        }
                         if let Some(obj) = body.as_object_mut() {
                             obj.remove("tools");
                             obj.remove("tool_choice");
@@ -164,6 +197,7 @@ inlining tool turns and trying again: {text}"
                         let message = error.to_string();
                         if !retried && is_compute_failure(&message) {
                             retried = true;
+                            on_event(StreamEvent::ResetAnswer);
                             self.recover_after_compute_failure(&message).await;
                             continue;
                         }
@@ -243,7 +277,7 @@ where
 {
     let mut output = ChatOutput::default();
     let mut splitter = ThinkSplitter::new();
-    let mut buffer = String::new();
+    let mut buffer: Vec<u8> = Vec::new();
     let mut tool_acc = ToolCallAcc::default();
 
     let apply = |events: Vec<SplitOut>,
@@ -260,6 +294,7 @@ where
     };
 
     let mut stream_error: Option<String> = None;
+    let mut finished = false;
     'outer: loop {
         let chunk = tokio::select! {
             biased;
@@ -277,14 +312,17 @@ where
             break;
         }
         let chunk = chunk.map_err(|error| anyhow!("chat stream: {error}"))?;
-        buffer.push_str(&String::from_utf8_lossy(&chunk));
-        while let Some(line_end) = buffer.find('\n') {
-            let line = buffer[..line_end].trim().to_string();
+        buffer.extend_from_slice(&chunk);
+        while let Some(line_end) = buffer.iter().position(|byte| *byte == b'\n') {
+            let line = String::from_utf8_lossy(&buffer[..line_end])
+                .trim()
+                .to_string();
             buffer.drain(..=line_end);
-            let Some(data) = line.strip_prefix("data: ") else {
+            let Some(data) = line.strip_prefix("data:").map(str::trim_start) else {
                 continue;
             };
             if data == "[DONE]" {
+                finished = true;
                 break 'outer;
             }
             let Ok(value) = serde_json::from_str::<serde_json::Value>(data) else {
@@ -337,6 +375,9 @@ where
         return Err(anyhow!("generation failed: {error}"));
     }
     apply(splitter.flush(), &mut output, on_event);
+    if !cancel.load(Ordering::Relaxed) && !finished && output.finish_reason.is_none() {
+        return Err(anyhow!("chat stream ended before the answer finished"));
+    }
     output.tool_calls = tool_acc.finish();
     if output.finish_reason.is_none() && !output.tool_calls.is_empty() {
         output.finish_reason = Some("tool_calls".into());
@@ -422,6 +463,40 @@ mod tests {
             "data: {{\"choices\":[{{\"delta\":{{\"content\":{}}}}}]}}\n\n",
             serde_json::to_string(text).unwrap()
         ))
+    }
+
+    #[tokio::test]
+    async fn multilingual_text_survives_every_byte_boundary() {
+        let expected = "Aquí está el rebost: 日本語 · Ελληνικά · 🥕. This answer is complete.";
+        let mut bytes = delta(expected).to_vec();
+        bytes.extend_from_slice(b"data:[DONE]\n\n");
+        let pieces = bytes
+            .into_iter()
+            .map(|b| Ok::<_, std::io::Error>(Bytes::from(vec![b])));
+        let output = consume_sse(
+            stream::iter(pieces),
+            &Arc::new(AtomicBool::new(false)),
+            &mut |_| {},
+        )
+        .await
+        .unwrap();
+        assert_eq!(output.answer, expected);
+    }
+
+    #[tokio::test]
+    async fn early_eof_is_interrupted_and_keeps_visible_text() {
+        let expected = "The retained partial answer contains useful information.";
+        let stream = stream::iter([Ok::<_, std::io::Error>(delta(expected))]);
+        let mut visible = String::new();
+        let error = consume_sse(stream, &Arc::new(AtomicBool::new(false)), &mut |event| {
+            if let StreamEvent::Answer(text) = event {
+                visible.push_str(text);
+            }
+        })
+        .await
+        .unwrap_err();
+        assert_eq!(visible, expected);
+        assert!(error.to_string().contains("before the answer finished"));
     }
 
     #[tokio::test]

@@ -162,8 +162,19 @@ fn expire_stale_reading(ctx: &Ctx, shelf_id: &str) {
     let now = chrono::Utc::now();
     let changed = {
         let mut library = crate::core::write_lock(&ctx.library);
+        let reading_ids: std::collections::HashSet<_> = library
+            .documents(shelf_id)
+            .into_iter()
+            .filter(|d| d.status == crate::types::DocStatus::Reading)
+            .map(|d| d.id)
+            .collect();
         let changed = library.expire_stale_reading(shelf_id, now);
         if changed > 0 {
+            for doc in library.documents(shelf_id).into_iter().filter(|d| {
+                reading_ids.contains(&d.id) && d.status == crate::types::DocStatus::Error
+            }) {
+                crate::ingest::emit_file_event(ctx, &doc);
+            }
             if let Err(error) = library.save_documents(&ctx.paths, shelf_id) {
                 log::error!("saving documents after stale reading expire: {error:#}");
             }
@@ -545,19 +556,23 @@ pub fn document_text(
     page: Option<u32>,
     section: Option<String>,
     around: Option<String>,
+    source_hash: Option<String>,
 ) -> CmdResult<crate::ingest::excerpt::DocumentExcerpt> {
     require_id(&shelf_id)?;
     require_id(&doc_id)?;
     let text = std::fs::read_to_string(ctx.paths.extracted_path(&shelf_id, &doc_id))
         .map_err(|_| "No extracted text yet.".to_string())?;
-    let pages = crate::core::read_lock(&ctx.library)
-        .document(&shelf_id, &doc_id)
-        .and_then(|doc| doc.pages);
+    let doc = crate::core::read_lock(&ctx.library).document(&shelf_id, &doc_id);
+    let pages = doc.as_ref().and_then(|doc| doc.pages);
+    let version_changed = source_hash
+        .as_ref()
+        .is_some_and(|hash| doc.as_ref().is_none_or(|doc| &doc.hash != hash));
+    let start_char = if version_changed { None } else { start_char };
     let mut around = around.filter(|s| !s.trim().is_empty());
     if around.is_none() && start_char.is_none() {
         around = ctx.search.passage_needle(&doc_id, page, section.as_deref());
     }
-    Ok(crate::ingest::excerpt::from_text(
+    let mut excerpt = crate::ingest::excerpt::from_text(
         &text,
         start_char,
         &crate::ingest::excerpt::LocateHint {
@@ -566,7 +581,9 @@ pub fn document_text(
             section,
             around,
         },
-    ))
+    );
+    excerpt.version_changed = version_changed;
+    Ok(excerpt)
 }
 
 /// Force a document through ingest again.

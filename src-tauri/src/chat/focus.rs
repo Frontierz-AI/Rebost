@@ -281,6 +281,7 @@ pub(crate) fn coverage_passages(
     let mut sources = Vec::with_capacity(chosen.len());
     for body in chosen {
         sources.push(SourcePassage {
+            anchor: None,
             sid: String::new(),
             document_id: document_id.to_string(),
             shelf_id: shelf_id.to_string(),
@@ -576,6 +577,7 @@ mod tests {
     fn continue_offset_follows_the_open_window() {
         let extracted = "AAAA\n\nBBBB\n\nCCCC";
         let sources = [SourcePassage {
+            anchor: None,
             sid: "S1".into(),
             document_id: "d1".into(),
             shelf_id: "s".into(),

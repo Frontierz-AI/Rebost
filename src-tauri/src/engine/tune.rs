@@ -85,6 +85,7 @@ pub struct SpawnPlan {
 }
 
 impl SpawnPlan {
+    #[cfg(test)]
     pub fn from_profile(profile: &MachineProfile, pin: &EnginePin) -> Self {
         Self::for_model(profile, pin, None)
     }
