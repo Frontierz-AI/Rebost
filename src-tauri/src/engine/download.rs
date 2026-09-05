@@ -1297,9 +1297,10 @@ mod tests {
     async fn skipped_verify_keeps_an_already_downloaded_file() {
         let dir = tempfile::tempdir().unwrap();
         let dest = dir.path().join("model.gguf");
-        let part = dest.with_extension("part");
         let body = b"already-downloaded";
-        tokio::fs::write(&part, body).await.unwrap();
+        // The finished file, not a leftover `.part`. On Windows a complete-looking
+        // `.part` without allocated-size info is discarded before skip-verify runs.
+        tokio::fs::write(&dest, body).await.unwrap();
         let client = reqwest::Client::builder().no_proxy().build().unwrap();
         struct Noop;
         impl crate::core::Events for Noop {
