@@ -41,10 +41,19 @@ pub fn recipe_delete(ctx: State<'_, Arc<Ctx>>, id: String) -> CmdResult<()> {
     crate::recipes::delete(&ctx.paths, &id).map_err(friendly)
 }
 
-/// Replace the list with the shipped defaults.
+/// Add missing shipped Recipes without replacing edits or custom Recipes.
 #[tauri::command]
 pub fn recipes_restore_defaults(
     ctx: State<'_, Arc<Ctx>>,
 ) -> CmdResult<Vec<crate::recipes::Recipe>> {
     crate::recipes::restore_defaults(&ctx.paths).map_err(friendly)
+}
+
+#[tauri::command]
+pub fn recipe_reset_default(
+    ctx: State<'_, Arc<Ctx>>,
+    id: String,
+) -> CmdResult<crate::recipes::Recipe> {
+    require_id(&id)?;
+    crate::recipes::reset_default(&ctx.paths, &id).map_err(friendly)
 }

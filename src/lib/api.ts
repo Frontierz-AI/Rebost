@@ -298,6 +298,14 @@ export interface Diagnostics {
     generationTokensPerSecond: number;
     measuredAt: string;
     modelFile: string;
+    runtime?: {
+      engineBuild: string;
+      accelerator: string;
+      contextTokens: number;
+      batch: number;
+      ubatch: number;
+      gpuLayers: number;
+    } | null;
   } | null;
   machine: MachineProfile;
   engineLogPath: string;
@@ -509,6 +517,7 @@ export const api = {
   warmEngine: () => invoke<void>("warm_engine"),
 
   engineStatus: () => invoke<EngineStatus>("engine_status"),
+  engineRemeasure: () => invoke<void>("engine_remeasure"),
   machineProfile: () => invoke<MachineView>("machine_profile"),
   modelsSearch: (query: string) => invoke<ModelSearchResult[]>("models_search", { query }),
   modelInstall: (source: string, reference: string, name: string, license?: string) =>
@@ -555,6 +564,7 @@ export const api = {
     invoke<Recipe>("recipe_update", { id, name, prompt }),
   recipeDelete: (id: string) => invoke<void>("recipe_delete", { id }),
   recipesRestoreDefaults: () => invoke<Recipe[]>("recipes_restore_defaults"),
+  recipeResetDefault: (id: string) => invoke<Recipe>("recipe_reset_default", { id }),
 };
 
 // Events
@@ -777,7 +787,7 @@ export const PII_CATEGORY_ORDER = [
   "ip_address",
 ] as const;
 
-/** Empty Privacy Lens: name the categories; do not call the file clean. */
+/** Describe what Rebost detected without promising the file has no personal information. */
 export function piiEmptyHint(): string {
   return t("pii.empty");
 }
@@ -786,7 +796,8 @@ export function piiEmptyHint(): string {
 export const PII_EMPTY_HINT = piiEmptyHint;
 
 export function piiLabel(category: string, count: number): string {
-  const kind = count === 1 ? "one" : "other";
+  const plural = new Intl.PluralRules(dateLocale()).select(count);
+  const kind = plural === "one" || plural === "few" ? plural : "other";
   const key = `pii.${category}_${kind}`;
   const label = t(key);
   return label === key ? category : label;

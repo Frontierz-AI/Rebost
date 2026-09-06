@@ -149,7 +149,7 @@
   }
 </script>
 
-<div class="px-6 pt-3 pb-4">
+<div class="px-3 pt-3 pb-4 min-[900px]:px-6">
   <div class="mx-auto max-w-[760px]">
     {#if !hasModel}
       <button

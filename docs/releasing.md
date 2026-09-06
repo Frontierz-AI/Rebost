@@ -11,7 +11,9 @@ The same version must appear in:
 - `src-tauri/Cargo.toml` (package `version` only)
 - `src-tauri/Cargo.lock` (`name = "rebost"`)
 
-Docs that quote it (README, SECURITY, `docs/accessibility.md`, CHANGELOG, the bug template, `docs/privacy.md`) should match. The HTTP user agent reads its version from `CARGO_PKG_VERSION`, so it follows the bump without an edit. Historical CHANGELOG sections stay as they were.
+Current-version references in README, SECURITY, CHANGELOG, the bug template, and `docs/privacy.md` should match. Accessibility's "verified against" version changes only after that verification is performed. The HTTP user agent reads its version from `CARGO_PKG_VERSION`, so it follows the bump without an edit. Historical CHANGELOG sections stay as they were.
+
+Finish source changes, synchronization, and tracked release documentation before building. Run the full verification gate on the final source. Every installer in a release must correspond to the published commit; rebuild after source or build-input changes. Record manual and hardware checks from `experience-quality.md` separately from automated checks.
 
 ## What a contributor can build
 

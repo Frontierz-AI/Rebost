@@ -88,6 +88,20 @@ pub struct BenchmarkResult {
     /// Model file that was measured.
     #[serde(alias = "model_file")]
     pub model_file: String,
+    /// Missing on older measurements, which must be recalibrated.
+    #[serde(default)]
+    pub runtime: Option<BenchmarkRuntime>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BenchmarkRuntime {
+    pub engine_build: String,
+    pub accelerator: String,
+    pub context_tokens: u32,
+    pub batch: u32,
+    pub ubatch: u32,
+    pub gpu_layers: u32,
 }
 
 impl Settings {

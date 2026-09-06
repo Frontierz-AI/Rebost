@@ -11,6 +11,7 @@
   } from "$lib/api";
   import {
     app,
+    chatState,
     invalidateSettingsLoads,
     beginModelInstall,
     notifyInvokeError,
@@ -52,6 +53,26 @@
   let showExplore = $state(shot.explore || import.meta.env.VITE_START_EXPLORE === "1");
   let openedAbout = $state(false);
   let resetting = $state(false);
+  let measuring = $state(false);
+  let measureStatus = $state("");
+  const chatBusy = $derived(
+    Object.keys(chatState.pending).length > 0 || Object.keys(chatState.outbound).length > 0,
+  );
+
+  async function measureAgain() {
+    if (measuring) return;
+    measuring = true;
+    measureStatus = "";
+    try {
+      await api.engineRemeasure();
+      diag = await api.diagnostics();
+      measureStatus = t("settings.measureDone");
+    } catch {
+      measureStatus = t("settings.measureFailed");
+    } finally {
+      measuring = false;
+    }
+  }
   const hasAi = $derived(!!app.settings?.activeModel);
 
   $effect(() => {
@@ -191,12 +212,12 @@
   }
 </script>
 
-<div class="mx-auto max-w-[760px] px-8 py-8">
+<div class="mx-auto max-w-[760px] px-4 py-5 min-[900px]:px-8 min-[900px]:py-8">
   <h1 class="mb-6 text-[22px] font-semibold text-ink">{t("settings.title")}</h1>
 
-  <section class="card mb-6 px-6 py-5">
+  <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 flex-1 basis-64">
         <h2 id="ui-locale-heading" class="text-[15px] font-semibold text-ink">
           {t("locale.heading")}
         </h2>
@@ -234,9 +255,9 @@
     </div>
   </section>
 
-  <section class="card mb-6 px-6 py-5">
+  <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 flex-1 basis-64">
         <h2 id="text-size-heading" class="text-[15px] font-semibold text-ink">
           {t("settings.textSize")}
         </h2>
@@ -290,7 +311,7 @@
   {/if}
 
   {#snippet houseRulesSection()}
-    <section class="card mb-6 px-6 py-5">
+    <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
       <h2 class="mb-1 text-[15px] font-semibold text-ink">{t("settings.houseRules")}</h2>
       <p class="mb-3 text-[12.5px] leading-snug text-ink-soft">
         {t("settings.houseRulesHelp")}
@@ -325,7 +346,7 @@
   {/snippet}
 
   {#snippet onlineSection()}
-    <section class="card mb-6 px-6 py-5">
+    <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
       <label class="flex cursor-default items-start gap-3" for="online-research">
         <input
           id="online-research"
@@ -347,10 +368,10 @@
   {/snippet}
 
   {#snippet aiSection()}
-    <section class="card mb-6 px-6 py-5">
+    <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
       <h2 class="mb-1 text-[15px] font-semibold text-ink">{t("settings.ai")}</h2>
       {#if machine}
-        <p class="mb-4 flex items-center gap-1.5 text-[12px] text-ink-faint">
+        <p class="mb-4 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-faint">
           <Cpu size={12.5} />
           {machine.profile.cpu} · {formatBytes(machine.profile.totalRamBytes)} memory ·
           {formatBytes(machine.profile.freeDiskBytes)} free disk
@@ -374,7 +395,7 @@
       {#if app.settings?.activeModel}
         {@const model = app.settings.activeModel}
         <div
-          class="flex items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 px-4 py-3"
+          class="flex flex-wrap items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 px-4 py-3"
         >
           <BadgeCheck size={18} class="shrink-0 text-navy-600 dark:text-navy-400" />
           <div class="min-w-0 flex-1">
@@ -412,7 +433,7 @@
       {/if}
 
       <div
-        class="mt-5 flex items-center gap-4 border-t border-navy-950/10 pt-5 dark:border-white/10"
+        class="mt-5 flex flex-wrap items-center gap-4 border-t border-navy-950/10 pt-5 dark:border-white/10"
       >
         <div class="min-w-0 flex-1">
           <h3 class="text-[15px] font-semibold text-ink">{t("settings.exploreHeading")}</h3>
@@ -435,8 +456,8 @@
     </section>
   {/snippet}
 
-  <section class="card mb-6 px-6 py-5">
-    <div class="flex items-center gap-4">
+  <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
+    <div class="flex flex-wrap items-center gap-4">
       <img src={icon} alt="" class="h-12 w-12 rounded-[22%]" />
       <div class="min-w-0 flex-1">
         <h2 class="text-[15px] font-semibold text-ink">{t("settings.aboutHeading")}</h2>
@@ -454,8 +475,8 @@
     </div>
   </section>
 
-  <section class="card mb-6 px-6 py-5">
-    <div class="flex items-center gap-4">
+  <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
+    <div class="flex flex-wrap items-center gap-4">
       <div class="min-w-0 flex-1">
         <h2 class="text-[15px] font-semibold text-ink">{t("settings.resetHeading")}</h2>
         <p class="mt-0.5 text-[12.5px] leading-snug text-ink-soft">
@@ -480,8 +501,23 @@
       <Stethoscope size={13} />
       {showDiag ? t("settings.hideDiagnostics") : t("settings.diagnostics")}
     </button>
+    {#if showDiag && hasAi}
+      <div class="mt-2 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          class="btn-outline"
+          onclick={measureAgain}
+          disabled={measuring || chatBusy || !!modelDownload || !!engineDownload}
+        >
+          {measuring ? t("settings.measuring") : t("settings.measureAgain")}
+        </button>
+        <p role="status" class="text-sm text-ink-soft">{measureStatus}</p>
+      </div>
+    {/if}
     {#if showDiag && diag}
-      <div class="card mt-2 px-5 py-4 font-mono text-[11.5px] leading-relaxed text-ink-soft">
+      <div
+        class="card mt-2 px-4 py-4 font-mono text-[11.5px] leading-relaxed break-words text-ink-soft"
+      >
         <p>
           Rebost {diag.version} · engine {diag.engineBuild} ({diag.engineState.state}{diag
             .engineState.detail

@@ -37,6 +37,29 @@
   import { t } from "$lib/i18n.svelte";
   import { shot } from "$lib/shot-control.svelte";
   import { tick } from "svelte";
+  import { MediaQuery } from "svelte/reactivity";
+  import { PanelLeft, Plus } from "@lucide/svelte";
+
+  const narrow = new MediaQuery("(max-width: 899px)");
+  let conversationsDialog = $state<HTMLDialogElement | null>(null);
+
+  $effect(() => {
+    if (!narrow.current || app.threads.length === 0) conversationsDialog?.close();
+  });
+
+  async function chooseThread(id: string) {
+    try {
+      await openThread(id);
+      conversationsDialog?.close();
+    } catch (error) {
+      notifyInvokeError(error);
+    }
+  }
+
+  function startConversation() {
+    conversationsDialog?.close();
+    newConversation();
+  }
 
   let composerEl = $state<HTMLTextAreaElement | null>(null);
   let scrollEl = $state<HTMLDivElement | null>(null);
@@ -377,18 +400,55 @@
     </div>
   {/if}
 
-  <ChatThreadList
-    threads={app.threads}
-    activeThreadId={chatState.activeThreadId}
-    shelves={app.shelves}
-    onOpen={(id) => openThread(id).catch(notifyInvokeError)}
-    onNew={newConversation}
-    onRemove={removeThread}
-    onRename={renameThread}
-    onExport={exportThread}
-  />
+  {#snippet threadList(drawer = false)}
+    <ChatThreadList
+      threads={app.threads}
+      activeThreadId={chatState.activeThreadId}
+      shelves={app.shelves}
+      onOpen={chooseThread}
+      onNew={startConversation}
+      onRemove={removeThread}
+      onRename={renameThread}
+      onExport={exportThread}
+      onClose={drawer ? () => conversationsDialog?.close() : undefined}
+    />
+  {/snippet}
+  {#if narrow.current}
+    <dialog
+      bind:this={conversationsDialog}
+      aria-label={t("chat.conversations")}
+      class="fixed inset-y-4 left-[80px] m-0 h-[calc(100%-2rem)] max-h-none max-w-[calc(100%-96px)] overflow-visible border-0 bg-transparent p-0 backdrop:bg-navy-950/30 dark:backdrop:bg-black/50"
+    >
+      {@render threadList(true)}
+    </dialog>
+  {:else}
+    {@render threadList()}
+  {/if}
 
   <section class="flex min-w-0 flex-1 flex-col">
+    {#if narrow.current}
+      <div class="flex shrink-0 items-center gap-2 border-b border-paper-line px-3 py-2">
+        {#if app.threads.length > 0}
+          <button
+            type="button"
+            class="btn-ghost !px-2"
+            aria-haspopup="dialog"
+            onclick={() => conversationsDialog?.showModal()}
+          >
+            <PanelLeft size={17} aria-hidden="true" />{t("chat.conversations")}
+          </button>
+        {/if}
+        <button
+          type="button"
+          class="btn-ghost ml-auto !p-2"
+          onclick={startConversation}
+          aria-label={t("chat.newConversation")}
+          title={t("chat.newConversation")}
+        >
+          <Plus size={17} aria-hidden="true" />
+        </button>
+      </div>
+    {/if}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (the scroll region supports native keyboard scrolling) -->
     <div
       bind:this={scrollEl}
@@ -402,7 +462,7 @@
       {:else}
         <div
           bind:this={scrollContentEl}
-          class="mx-auto flex max-w-[760px] flex-col gap-4 px-6 pt-4 pb-6"
+          class="mx-auto flex max-w-[760px] flex-col gap-4 px-3 pt-4 pb-6 min-[900px]:px-6"
         >
           {#if activeThread}
             {@const thread = activeThread}
@@ -430,7 +490,7 @@
             {#if message.role === "user"}
               <div data-chat-message={message.id} class="flex justify-end">
                 <div
-                  class="max-w-[85%] cursor-text rounded-2xl rounded-br-md bg-navy-900 px-4 py-2.5 text-[13.8px] leading-relaxed whitespace-pre-wrap text-white select-text"
+                  class="max-w-[90%] cursor-text rounded-2xl rounded-br-md bg-navy-900 px-4 py-2.5 text-[13.8px] leading-relaxed break-words whitespace-pre-wrap text-white select-text"
                 >
                   {message.text}
                 </div>
@@ -585,7 +645,7 @@
     {#if chatState.webApprovals[chatState.activeThreadId ?? ""]}
       {@const request = chatState.webApprovals[chatState.activeThreadId ?? ""]!}
       <div
-        class="mx-6 rounded-xl border border-paper-line bg-paper-soft p-3"
+        class="mx-3 rounded-xl border border-paper-line bg-paper-soft p-3 min-[900px]:mx-6"
         role="region"
         aria-label={t("chat.reviewOnline")}
       >

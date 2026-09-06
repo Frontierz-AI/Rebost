@@ -48,6 +48,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `chat_cancel` | `messageId` | `()` |
 | `warm_engine` | — | `()` |
 | `engine_status` | — | `EngineStatus` |
+| `engine_remeasure` | — | `()` (recalibrates when Chat is idle) |
 | `machine_profile` | — | `MachineView` |
 | `active_model` | — | `ActiveModel \| null` (Rust command; the UI reads the model from `settings_get`) |
 | `models_search` | `query` | `ModelSearchResult[]` |
@@ -68,7 +69,8 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `recipes_list` | — | `Recipe[]` |
 | `recipe_create` | `name`, `prompt` | `Recipe` |
 | `recipe_delete` | `id` | `()` |
-| `recipes_restore_defaults` | — | `Recipe[]` |
+| `recipes_restore_defaults` | — | `Recipe[]` (adds missing defaults; preserves existing Recipes) |
+| `recipe_reset_default` | `id` | `Recipe` (resets one existing built-in Recipe) |
 | `about_info` | — | `AboutInfo` |
 | `show_about_window` | — | `()` |
 | `open_external` | `link` | `()` |

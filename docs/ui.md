@@ -132,3 +132,5 @@ Sonner, top-right. Surface + paper-line. Close control is always visible, top-ri
 ## Copy and a11y
 
 User-facing English follows the House style in [CONTRIBUTING.md](../CONTRIBUTING.md) (outcome, not machinery; AI over model). Keyboard and VoiceOver: [accessibility.md](accessibility.md). New controls need a name: visible label, or `aria-label` on icon-only buttons.
+
+The main window supports 640 × 540 logical pixels. Below 900 pixels wide, Chat opens its conversation list in a modal drawer, and Shelf and Recipe cards stack vertically. Source panels use the available height. Preserve keyboard focus when opening or closing the drawer.

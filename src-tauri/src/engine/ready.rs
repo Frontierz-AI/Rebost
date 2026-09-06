@@ -441,6 +441,16 @@ impl Engine {
         inner.child = Some(child);
         inner.port = port;
         inner.model_file = model.file.clone();
+        let runtime = super::bench::runtime(pin, &plan);
+        let invalidated = super::bench::invalidate(
+            &mut crate::core::write_lock(&self.ctx.settings),
+            &model.file,
+            &runtime,
+        );
+        if invalidated {
+            self.ctx.save_settings();
+        }
+        inner.benchmark_runtime = Some(runtime);
         inner.chat_stall = super::tune::chat_stall_timeout(&plan);
         let url = format!("http://127.0.0.1:{port}");
         inner.reasoning = Some(self.load_reasoning_caps(&url).await);

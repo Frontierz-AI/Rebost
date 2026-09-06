@@ -6,6 +6,22 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-09-06
+
+### Added
+
+- On a narrow window, conversations open from a button instead of a side column. The window can shrink further than before.
+- Diagnostics can measure Chat speed again when Chat is idle.
+- A shipped Recipe can be reset to its original name and prompt.
+
+### Changed
+
+- Restore missing default Recipes adds only the ones that are gone. It no longer replaces Recipes that were added or edited.
+- The lowest Shelf look-through step is Basic.
+- Onboarding, Settings, Recipes, and Chat wrap on a smaller frame.
+- UI copy in every catalog was tightened.
+- A speed measurement is kept only for the same AI file and the same engine setup. A change there measures again.
+
 ## [0.9.2] - 2026-09-05
 
 ### Added
@@ -558,7 +574,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.3...HEAD
+[0.9.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.8.14...v0.9.0

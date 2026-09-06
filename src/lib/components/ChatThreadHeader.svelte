@@ -33,8 +33,11 @@
     class="h-px min-w-0 flex-1 bg-linear-to-r from-transparent to-paper-line"
     aria-hidden="true"
   ></div>
-  <div class="flex min-w-0 items-center gap-2.5 bg-paper px-2.5">
-    <ul role="list" class="flex min-w-0 items-center gap-2 text-[0.75rem] leading-4 text-ink-faint">
+  <div class="flex min-w-0 flex-wrap items-center justify-center gap-2.5 bg-paper px-2.5">
+    <ul
+      role="list"
+      class="flex min-w-0 flex-wrap items-center justify-center gap-2 text-[0.75rem] leading-4 text-ink-faint"
+    >
       <li class="truncate">{started}</li>
       {#if messageCount > 0}
         <li class="flex items-center gap-2 whitespace-nowrap tabular-nums">

@@ -5,8 +5,8 @@
 //! picks a Shelf if the ask needs those files, and sends. Retrieval, the
 //! gate, and citations are ordinary Chat.
 //!
-//! Users can add, edit, and delete Recipes, defaults included. Restore
-//! writes the shipped set and drops everything else. Stored in `recipes.json`.
+//! Restore adds missing defaults; individual defaults can be reset separately.
+//! Custom Recipes and edits persist in `recipes.json`.
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
@@ -170,13 +170,36 @@ pub fn delete(paths: &Paths, id: &str) -> Result<()> {
     write(paths, &recipes)
 }
 
-/// Replace the list with the shipped defaults. Edits and extras go away.
+/// Add missing defaults without changing existing Recipes.
 pub fn restore_defaults(paths: &Paths) -> Result<Vec<Recipe>> {
     let transaction = crate::paths::metadata_lock(&paths.recipes_path());
     let _write = crate::core::mutex_lock(&transaction);
-    let defaults = default_recipes();
-    write(paths, &defaults)?;
-    Ok(defaults)
+    let mut recipes = list_unlocked(paths);
+    for default in default_recipes() {
+        if !recipes.iter().any(|recipe| recipe.id == default.id) {
+            recipes.push(default);
+        }
+    }
+    write(paths, &recipes)?;
+    Ok(recipes)
+}
+
+/// Reset one shipped Recipe, leaving the rest of the collection intact.
+pub fn reset_default(paths: &Paths, id: &str) -> Result<Recipe> {
+    let transaction = crate::paths::metadata_lock(&paths.recipes_path());
+    let _write = crate::core::mutex_lock(&transaction);
+    let default = default_recipes()
+        .into_iter()
+        .find(|recipe| recipe.id == id)
+        .ok_or_else(|| anyhow!("Recipe not found"))?;
+    let mut recipes = list_unlocked(paths);
+    let recipe = recipes
+        .iter_mut()
+        .find(|recipe| recipe.id == id)
+        .ok_or_else(|| anyhow!("Recipe not found"))?;
+    *recipe = default.clone();
+    write(paths, &recipes)?;
+    Ok(default)
 }
 
 #[cfg(test)]
@@ -225,7 +248,7 @@ mod tests {
         assert_eq!(after.len(), DEFAULTS.len() - 1);
         assert!(!after.iter().any(|r| r.id == "translate"));
 
-        // Restore replaces the list with the shipped defaults.
+        // Restore adds the missing default.
         let restored = restore_defaults(&paths).unwrap();
         assert_eq!(restored.len(), DEFAULTS.len());
         assert!(restored.iter().any(|r| r.id == "translate"));
@@ -234,7 +257,7 @@ mod tests {
     }
 
     #[test]
-    fn update_keeps_edits_until_restore() {
+    fn bulk_restore_preserves_edits_and_custom_recipes() {
         let (_dir, paths) = paths();
         let _ = list(&paths);
         let updated = update(
@@ -255,11 +278,33 @@ mod tests {
             "Translate for me"
         );
 
+        let mine = create(&paths, "Custom brief", "My prompt").unwrap();
+        delete(&paths, "one-page-brief").unwrap();
         let restored = restore_defaults(&paths).unwrap();
+        assert_eq!(restored.len(), DEFAULTS.len() + 1);
         assert_eq!(
             restored.iter().find(|r| r.id == "translate").unwrap().name,
-            "Translate this"
+            "Translate for me"
         );
+        assert_eq!(
+            restored.iter().find(|r| r.id == mine.id).unwrap().prompt,
+            "My prompt"
+        );
+        assert!(restored.iter().any(|r| r.id == "one-page-brief"));
+        assert_eq!(restore_defaults(&paths).unwrap().len(), restored.len());
+
+        let reset = reset_default(&paths, "translate").unwrap();
+        assert_eq!(reset.name, "Translate this");
+        assert_eq!(
+            list(&paths)
+                .iter()
+                .find(|r| r.id == mine.id)
+                .unwrap()
+                .prompt,
+            "My prompt"
+        );
+        assert!(reset_default(&paths, &mine.id).is_err());
+        assert_eq!(list(&paths).len(), DEFAULTS.len() + 1);
     }
 
     #[test]

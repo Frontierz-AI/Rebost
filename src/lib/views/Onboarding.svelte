@@ -117,9 +117,12 @@
 
 <div
   data-tauri-drag-region
-  class="flex h-full items-center justify-center overflow-y-auto bg-navy-950 p-8 select-none"
+  class="flex h-full items-start justify-center overflow-y-auto bg-navy-950 p-4 select-none min-[900px]:p-8"
 >
-  <div data-tauri-drag-region="false" class="onboard-stage w-[600px] py-4 select-none">
+  <div
+    data-tauri-drag-region="false"
+    class="onboard-stage my-auto w-full max-w-[600px] py-4 select-none"
+  >
     {#if step === "promise"}
       <div
         class="onboard-pane flex flex-col items-center text-center"
@@ -130,11 +133,11 @@
         <p class="mt-2 max-w-md text-[15px] leading-relaxed whitespace-pre-line text-white/65">
           {t("onboarding.lede")}
         </p>
-        <div class="mt-8 grid w-full grid-cols-3 gap-3">
+        <div class="mt-8 grid w-full grid-cols-1 gap-3 min-[900px]:grid-cols-3">
           <div class="onboard-card rounded-xl bg-white/6 px-4 py-4 text-left">
             <MessageCircle size={17} class="mb-2 text-mint" />
             <p class="text-[14px] font-semibold text-white">{t("onboarding.cardChatTitle")}</p>
-            <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
+            <p class="mt-1 text-[13px] leading-snug text-white/55 min-[900px]:min-h-[4.5rem]">
               {t("onboarding.cardChatBody")}
             </p>
           </div>
@@ -144,7 +147,7 @@
           >
             <LibraryBig size={17} class="mb-2 text-mint" />
             <p class="text-[14px] font-semibold text-white">{t("onboarding.cardShelfTitle")}</p>
-            <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
+            <p class="mt-1 text-[13px] leading-snug text-white/55 min-[900px]:min-h-[4.5rem]">
               {t("onboarding.cardShelfBody")}
             </p>
           </div>
@@ -154,7 +157,7 @@
           >
             <ChefHat size={17} class="mb-2 text-mint" />
             <p class="text-[14px] font-semibold text-white">{t("onboarding.cardRecipesTitle")}</p>
-            <p class="mt-1 min-h-[4.5rem] text-[13px] leading-snug text-white/55">
+            <p class="mt-1 text-[13px] leading-snug text-white/55 min-[900px]:min-h-[4.5rem]">
               {t("onboarding.cardRecipesBody")}
             </p>
           </div>
@@ -169,7 +172,7 @@
       </div>
     {:else}
       <section
-        class="onboard-pane flex flex-col items-center rounded-3xl bg-white/[0.04] px-8 py-8 text-center ring-1 ring-white/15"
+        class="onboard-pane flex flex-col items-center rounded-3xl bg-white/[0.04] px-4 py-5 text-center ring-1 ring-white/15 min-[900px]:px-8 min-[900px]:py-8"
         aria-labelledby="onboard-install-heading"
         aria-busy={busy}
         in:installCard
@@ -233,10 +236,10 @@
                 {t("onboarding.severalFree")}
               </p>
               <div
-                class="onboard-card flex items-start gap-4 rounded-xl bg-white/10 px-4 py-4 text-left"
+                class="onboard-card flex flex-wrap items-start gap-4 rounded-xl bg-white/10 px-4 py-4 text-left"
               >
                 <Download size={17} class="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
-                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                <div class="flex min-w-0 flex-1 basis-48 flex-col gap-1">
                   <p class="text-[12.5px] font-semibold text-white">
                     {failedDownload ? t("onboarding.couldntInstall") : t("onboarding.chosen")}
                   </p>
@@ -274,7 +277,7 @@
                 {/if}
               </div>
 
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-3">
                 {#if machine.alternatives.length > 0}
                   <button
                     type="button"

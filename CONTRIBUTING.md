@@ -47,6 +47,24 @@ CI runs frontend checks and `cargo deny` on every push. The Rust job runs only w
 
 `pnpm check` (`svelte-check`) uses **TypeScript 6** (`typescript` in `package.json`). `@typescript/native` is a TypeScript 7 preview for editors. Version-mismatch warnings between those two are expected.
 
+## Verification
+
+Run commands from the repo root with pnpm. Match verification to the changed behavior:
+
+| Change | Checks |
+|--------|--------|
+| Documentation or instruction prose | Review accuracy, links, and examples; `git diff --check`. App compilation and runtime tests are unnecessary. |
+| Frontend code | Format changed files; `pnpm check`, `pnpm format:check`, `pnpm lint`, and relevant Vitest tests for changed behavior. |
+| UI catalogs | Check JSON, interpolation tokens, and catalog parity with `pnpm exec vitest run src/lib/i18n.test.ts`. |
+| Rust code | `cargo fmt --manifest-path src-tauri/Cargo.toml --check`, relevant Rust tests, and Clippy for affected targets. Include release Clippy when debug-only code or imports changed. |
+| Build or release helpers | Check script syntax and exercise changed behavior using isolated fixtures or mocked build/publish commands. |
+| Broad changes across subsystems | `just gate` (format, check, test). |
+| Installer release | Full `just gate` on the final source before building, plus the applicable release-candidate checks in `docs/experience-quality.md`. |
+
+Reuse successful checks until a later change, failure, or unresolved concern invalidates them. Rerun the affected checks, including behavioral tests when logic changes. Do not add tests that only restate a trivial implementation. Fix failures while making progress; report the actual blocker when progress requires unavailable input or tools. Do not bypass failing required checks to publish.
+
+`just check` and `just test` remain convenient full-check wrappers. Normal tests do not require ignored network or real-model tests; those are explicit checks for the relevant work and release candidates.
+
 ## Dev utilities
 
 - `./scripts/reset.sh` (macOS) or `./scripts/reset.ps1` (Windows): wipe Rebost app data (Shelf files in `library/` are kept). Settings → Reset Rebost does the same from the running app.

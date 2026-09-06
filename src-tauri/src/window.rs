@@ -7,8 +7,8 @@ pub fn shot_park_enabled() -> bool {
     matches!(std::env::var("REBOST_SHOT_PARK").as_deref(), Ok("1"))
 }
 
-const DESIGN_MIN_WIDTH: f64 = 1000.0;
-const DESIGN_MIN_HEIGHT: f64 = 660.0;
+const DESIGN_MIN_WIDTH: f64 = 640.0;
+const DESIGN_MIN_HEIGHT: f64 = 540.0;
 const WORK_FIT: f64 = 0.92;
 
 /// After the window-state plugin restores the last frame, shrink the min
@@ -146,12 +146,12 @@ mod tests {
 
     #[test]
     fn small_display_lowers_the_design_minimum() {
-        let (w, h) = min_size_for_work(911.0, 512.0);
-        assert!(w < 1000.0);
-        assert!(h < 660.0);
-        assert!(w > 800.0);
+        let (w, h) = min_size_for_work(600.0, 512.0);
+        assert!(w < 640.0);
+        assert!(h < 540.0);
+        assert!(w > 500.0);
         let (wide_w, wide_h) = min_size_for_work(1600.0, 1000.0);
-        assert_eq!((wide_w, wide_h), (1000.0, 660.0));
+        assert_eq!((wide_w, wide_h), (640.0, 540.0));
     }
 
     #[test]

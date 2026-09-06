@@ -133,3 +133,9 @@ pub fn download_skip_verify(engine: State<'_, Arc<Engine>>, id: String) {
         engine.skip_download_verify(&id);
     }
 }
+
+/// Recalibrate the installed AI on the active engine.
+#[tauri::command]
+pub async fn engine_remeasure(engine: State<'_, Arc<Engine>>) -> CmdResult<()> {
+    engine.inner().clone().remeasure().await.map_err(friendly)
+}

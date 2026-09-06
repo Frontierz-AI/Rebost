@@ -55,7 +55,7 @@ test:
     cd src-tauri && cargo test
     pnpm test
 
-# Format, then check and test. Run this before a commit or a release bump.
+# Full verification for broad changes and final release source; see CONTRIBUTING.md.
 gate:
     just fmt
     just check

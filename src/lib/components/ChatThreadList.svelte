@@ -3,7 +3,7 @@
   import { t } from "$lib/i18n.svelte";
   import { threadShelfSubtitle } from "$lib/shelf-label";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
-  import { Plus, Trash2, Lock, Pencil } from "@lucide/svelte";
+  import { Plus, Trash2, Lock, Pencil, X } from "@lucide/svelte";
   import ConversationFace from "./ConversationFace.svelte";
 
   let {
@@ -15,6 +15,7 @@
     onRemove,
     onRename,
     onExport,
+    onClose,
   }: {
     threads: ThreadMeta[];
     activeThreadId: string | null;
@@ -24,6 +25,7 @@
     onRemove: (id: string) => void;
     onRename: (id: string, title: string) => void;
     onExport: (id: string) => void;
+    onClose?: () => void;
   } = $props();
 
   const open = $derived(threads.length > 0);
@@ -88,6 +90,16 @@
     inert={!open}
   >
     <div data-tauri-drag-region class="flex items-center justify-between px-3 pt-3 pb-2">
+      {#if onClose}
+        <button
+          type="button"
+          class="btn-ghost !p-1.5"
+          onclick={onClose}
+          aria-label={t("chat.closeConversations")}
+        >
+          <X size={15} aria-hidden="true" />
+        </button>
+      {/if}
       <span class="pointer-events-none text-[11px] font-semibold text-ink-faint"
         >{t("chat.conversations")}</span
       >

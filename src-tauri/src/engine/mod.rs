@@ -62,6 +62,7 @@ struct Inner {
     child: Option<Child>,
     port: u16,
     model_file: String,
+    benchmark_runtime: Option<crate::settings::BenchmarkRuntime>,
     reasoning: Option<reasoning::ReasoningCaps>,
     chat_stall: Duration,
     flatten_tools: bool,
@@ -76,6 +77,7 @@ pub struct Engine {
     /// Serializes first-time engine download + spawn so two chat/warmup
     /// callers cannot both fetch llama.cpp.
     start_lock: tokio::sync::Mutex<()>,
+    benchmark_lock: tokio::sync::Mutex<()>,
     status: std::sync::Mutex<EngineStatus>,
     downloads: std::sync::Mutex<HashMap<String, download::DownloadControl>>,
     /// Chat completions in flight — the install benchmark waits until this is 0.
@@ -236,12 +238,14 @@ impl Engine {
                 child: None,
                 port: 0,
                 model_file: String::new(),
+                benchmark_runtime: None,
                 reasoning: None,
                 chat_stall: Duration::from_secs(90),
                 flatten_tools: false,
                 tools_rejected: false,
             }),
             start_lock: tokio::sync::Mutex::new(()),
+            benchmark_lock: tokio::sync::Mutex::new(()),
             status: std::sync::Mutex::new(EngineStatus {
                 state,
                 detail: None,

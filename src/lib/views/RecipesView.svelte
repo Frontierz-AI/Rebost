@@ -87,18 +87,30 @@
   }
 
   async function restoreDefaults() {
-    const ok = await confirmDanger(t("recipes.restoreConfirm"), t("recipes.restoreAction"));
-    if (!ok) return;
     try {
       recipes = await api.recipesRestoreDefaults();
-      cancelForm();
+    } catch (error) {
+      notifyInvokeError(error);
+    }
+  }
+
+  async function resetDefault() {
+    const id = editingId;
+    if (!id || !(await confirmDanger(t("recipes.resetConfirm"), t("recipes.resetAction")))) return;
+    try {
+      const recipe = await api.recipeResetDefault(id);
+      await refresh();
+      if (editingId === id) {
+        formName = recipe.name;
+        formPrompt = recipe.prompt;
+      }
     } catch (error) {
       notifyInvokeError(error);
     }
   }
 </script>
 
-<div class="mx-auto max-w-[860px] px-8 py-8">
+<div class="mx-auto max-w-[860px] px-4 py-5 min-[900px]:px-8 min-[900px]:py-8">
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div class="min-w-0 flex-1 basis-64">
       <h1 class="text-[22px] font-semibold text-ink">{t("recipes.title")}</h1>
@@ -143,7 +155,12 @@
         placeholder={t("recipes.promptPlaceholder")}
         maxlength={PROMPT_MAX_CHARS}
         bind:value={formPrompt}></textarea>
-      <div class="mt-2.5 flex justify-end gap-2">
+      <div class="mt-2.5 flex flex-wrap justify-end gap-2">
+        {#if recipes.some((recipe) => recipe.id === editingId && recipe.builtin)}
+          <button type="button" class="btn-ghost mr-auto" onclick={resetDefault}>
+            <RotateCcw size={13} aria-hidden="true" />{t("recipes.resetAction")}
+          </button>
+        {/if}
         <button type="button" class="btn-ghost" onclick={cancelForm}>{t("recipes.cancel")}</button>
         <button
           type="button"
@@ -157,7 +174,7 @@
     </div>
   {/if}
 
-  <div class="grid grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 gap-4 min-[900px]:grid-cols-2">
     {#each recipes as recipe (recipe.id)}
       <div
         class="card group relative flex flex-col px-5 py-4 text-left hover:shadow-pop dark:hover:shadow-none"
@@ -213,7 +230,7 @@
         </button>
       </div>
     {:else}
-      <div class="card col-span-2 flex flex-col items-center px-8 py-12 text-center">
+      <div class="card flex flex-col items-center px-8 py-12 text-center min-[900px]:col-span-2">
         <ChefHat size={22} class="mb-2 text-ink-faint" aria-hidden="true" />
         <p class="text-[13.5px] font-medium text-ink">{t("recipes.emptyTitle")}</p>
         <p class="mt-1 text-[12.5px] text-ink-soft">

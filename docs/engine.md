@@ -69,3 +69,5 @@ A release build already contains the bundled archive. For tests, point `REBOST_E
 ## Warmup
 
 `warm_engine` and Chat both call `ensure_ready`. The UI shows "Warming up..." while weights load. Closing Rebost kills the process (and leftover PIDs from crashed dev builds).
+
+Calibration is tied to the model file, engine build, active accelerator, and context/batch settings. Older or mismatched measurements are discarded when the engine starts. The next idle pause after an answer measures again; Settings → Diagnostics → Measure speed again reruns it on demand. Chat interrupts calibration, and failed measurements do not replace a valid result.

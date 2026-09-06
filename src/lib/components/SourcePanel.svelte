@@ -85,7 +85,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-40 flex items-end justify-end bg-navy-950/20 p-5 dark:bg-black/50"
+  class="fixed inset-0 z-40 flex items-end justify-end bg-navy-950/20 p-3 min-[900px]:p-5 dark:bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-label={source.title}
@@ -96,7 +96,7 @@
   onkeydown={(e) => e.key === "Escape" && onClose()}
 >
   <div
-    class="card z-50 flex max-h-[70vh] w-full max-w-[520px] flex-col overflow-hidden shadow-pop dark:shadow-none"
+    class="card z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[520px] flex-col overflow-hidden shadow-pop min-[900px]:max-h-[70vh] dark:shadow-none"
     in:sheetPanel
   >
     <div class="flex items-start gap-3 border-b border-paper-line bg-paper-soft px-4 py-3">

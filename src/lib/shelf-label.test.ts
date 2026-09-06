@@ -7,7 +7,7 @@ import {
 } from "./shelf-label";
 
 describe("shelfDisplayName", () => {
-  it("uses Uploaded files for a conversation shelf", () => {
+  it("uses the attached-files label for a conversation shelf", () => {
     expect(isUploadShelf({ threadId: "t_1" })).toBe(true);
     expect(shelfDisplayName({ name: "Files", threadId: "t_1" })).toBe(uploadedFilesLabel());
     expect(shelfDisplayName({ name: "Legal" })).toBe("Legal");

@@ -33,7 +33,7 @@
   });
 </script>
 
-<div class="flex h-full flex-col items-center justify-center px-8">
+<div class="flex h-full flex-col items-center justify-center px-4 py-4 min-[900px]:px-8">
   {#if avatarId}
     <div class="mb-3">
       <ConversationFace {avatarId} size="hero" />
@@ -60,7 +60,7 @@
     </p>
   {/if}
   {#if hasModel && shown.length > 0}
-    <div class="grid w-full max-w-xl grid-cols-2 gap-2">
+    <div class="grid w-full max-w-xl grid-cols-1 gap-2 min-[900px]:grid-cols-2">
       {#each shown as recipe (recipe.id)}
         <button
           type="button"

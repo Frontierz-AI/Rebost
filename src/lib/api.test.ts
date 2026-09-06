@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { applyLocale } from "./i18n.svelte";
 import {
   catalogHostLabel,
   downloadErrorMessage,
@@ -87,15 +88,40 @@ describe("downloadErrorMessage", () => {
 });
 
 describe("Privacy Lens labels", () => {
-  it("names the empty-state categories without calling the file clean", () => {
-    expect(piiEmptyHint()).toMatch(/Social Security/);
-    expect(piiEmptyHint()).toMatch(/labeled names/);
-    expect(piiEmptyHint().toLowerCase()).not.toContain("no personal information detected");
+  afterEach(() => applyLocale("en"));
+
+  it("limits the empty-state claim to information Rebost recognizes", () => {
+    expect(piiEmptyHint()).toContain("it recognizes");
   });
 
-  it("labels Social Security numbers", () => {
-    expect(piiLabel("ssn", 1)).toBe("Social Security number");
-    expect(piiLabel("ssn", 2)).toBe("Social Security numbers");
+  it("identifies the country of Social Security numbers", () => {
+    expect(piiLabel("ssn", 1)).toBe("US Social Security number");
+    expect(piiLabel("ssn", 2)).toBe("US Social Security numbers");
+    applyLocale("nl");
+    expect(piiLabel("ssn", 1)).toBe("Amerikaans socialezekerheidsnummer");
+  });
+
+  it("uses Czech count forms for one, two to four, and other totals", () => {
+    applyLocale("cs");
+    expect(piiLabel("email", 1)).toBe("e-mailová adresa");
+    for (const count of [2, 3, 4]) {
+      expect(piiLabel("email", count)).toBe("e-mailové adresy");
+    }
+    for (const count of [0, 5, 11, 21, 22, 104]) {
+      expect(piiLabel("email", count)).toBe("e-mailových adres");
+    }
+    expect(piiLabel("phone", 2)).toBe("telefonní čísla");
+    expect(piiLabel("phone", 5)).toBe("telefonních čísel");
+  });
+
+  it("keeps Finnish count forms and Japanese invariant labels", () => {
+    applyLocale("fi");
+    expect(piiLabel("name", 1)).toBe("nimi");
+    expect(piiLabel("name", 2)).toBe("nimeä");
+    applyLocale("ja");
+    expect(piiLabel("name", 1)).toBe("氏名");
+    expect(piiLabel("name", 5)).toBe("氏名");
+    expect(piiLabel("unknown_category", 5)).toBe("unknown_category");
   });
 });
 

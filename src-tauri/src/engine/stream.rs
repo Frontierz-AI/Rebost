@@ -12,11 +12,18 @@ use super::think::{SplitOut, ThinkSplitter};
 use super::{ChatOutput, Engine, StreamEvent, ToolCall};
 
 /// Counts this completion so a model switch can wait until Chat is idle.
-struct GenerationSlot<'a> {
+pub(super) struct GenerationSlot<'a> {
     counter: &'a AtomicUsize,
 }
 
 impl<'a> GenerationSlot<'a> {
+    pub(super) fn try_acquire(counter: &'a AtomicUsize) -> Option<Self> {
+        counter
+            .compare_exchange(0, 1, Ordering::Relaxed, Ordering::Relaxed)
+            .ok()
+            .map(|_| Self { counter })
+    }
+
     fn acquire(counter: &'a AtomicUsize) -> Self {
         counter.fetch_add(1, Ordering::Relaxed);
         Self { counter }
@@ -220,9 +227,7 @@ inlining tool turns and trying again: {text}"
         self.stop().await;
     }
 
-    /// One-shot completion returning llama.cpp's timing block — used only by
-    /// the installation benchmark. Takes the base URL directly so it never
-    /// re-enters `ensure_ready` (which spawns the benchmark).
+    /// Read llama.cpp timings for calibration using the already loaded engine.
     pub async fn completion_timings(
         self: &Arc<Self>,
         base: &str,

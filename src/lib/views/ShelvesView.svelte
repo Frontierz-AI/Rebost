@@ -299,7 +299,7 @@
 
 {#if !shelf}
   <div class="h-full overflow-y-auto">
-    <div class="mx-auto max-w-[860px] px-8 py-8">
+    <div class="mx-auto max-w-[860px] px-4 py-5 min-[900px]:px-8 min-[900px]:py-8">
       <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div class="min-w-0 flex-1 basis-64">
           <h1 class="text-[22px] font-semibold text-ink">{t("shelves.title")}</h1>
@@ -352,7 +352,7 @@
           >
         </div>
       {:else}
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 min-[900px]:grid-cols-2">
           {#each app.shelves as shelfCard (shelfCard.id)}
             {@const status = shelfListStatus(shelfCard.stats)}
             <div class="card group flex items-stretch hover:shadow-pop dark:hover:shadow-none">
@@ -469,7 +469,7 @@
       </div>
     {/if}
 
-    <header class="flex shrink-0 flex-col gap-3 px-8 pt-5 pb-5">
+    <header class="flex shrink-0 flex-col gap-3 px-4 pt-5 pb-5 min-[900px]:px-8">
       <button
         type="button"
         class="inline-flex min-h-8 w-fit items-center gap-1 rounded-md text-[13px] font-medium whitespace-nowrap text-ink-soft hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy-500"
@@ -535,7 +535,7 @@
     </header>
 
     {#if documents.length === 0}
-      <div class="flex min-h-0 flex-1 flex-col px-8 pb-4">
+      <div class="flex min-h-0 flex-1 flex-col px-4 pb-4 min-[900px]:px-8">
         <div
           class="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 rounded-xl border-2 border-dashed px-8 py-10 text-center {dropActive
             ? 'border-navy-500 bg-navy-100/50 dark:bg-white/10'
@@ -570,9 +570,9 @@
     {:else}
       <div class="flex min-h-0 flex-1 flex-col">
         <div
-          class="flex shrink-0 flex-nowrap items-center justify-between gap-3 border-t border-paper-line py-2.5 pr-8 pl-[29px]"
+          class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-paper-line px-4 py-2.5 min-[900px]:pr-8 min-[900px]:pl-[29px]"
         >
-          <div class="flex shrink-0 flex-nowrap items-center gap-2">
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
             <div class="relative min-w-0">
               <Search
                 size={13}

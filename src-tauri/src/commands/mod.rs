@@ -177,7 +177,7 @@ mod tests {
         assert_eq!(friendly("invalid id"), "That request was not valid.");
         assert_eq!(
             friendly("not in a Shelf"),
-            "That file is not in a Shelf Rebost knows."
+            "That file isn't in any of Rebost's Shelves."
         );
         assert_eq!(
             friendly("shelf not found"),
