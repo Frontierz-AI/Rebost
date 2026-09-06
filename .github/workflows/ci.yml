@@ -119,11 +119,14 @@ jobs:
         run: |
           set -euo pipefail
           cache="${TESSERACT_RS_CACHE_DIR}"
-          if [[ -d "${cache}/third_party/leptonica" && ! -f "${cache}/third_party/leptonica/CMakeLists.txt" ]]; then
-            echo "Incomplete leptonica source cache; removing ${cache}"
-            rm -rf "${cache}"
-            mkdir -p "${cache}"
-          fi
+          for lib in leptonica tesseract; do
+            if [[ -d "${cache}/third_party/${lib}" && ! -f "${cache}/third_party/${lib}/CMakeLists.txt" ]]; then
+              echo "Incomplete ${lib} source cache; removing ${cache}"
+              rm -rf "${cache}"
+              mkdir -p "${cache}"
+              break
+            fi
+          done
           rm -rf src-tauri/target/xberg-tesseract-cache
       - name: Verify llama.cpp pins still exist
         run: |
@@ -186,6 +189,18 @@ jobs:
         with:
           workspaces: src-tauri
           cache-directories: src-tauri/target/xberg-tesseract-cache
+      - name: Reset incomplete Tesseract sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache="src-tauri/target/xberg-tesseract-cache"
+          for lib in leptonica tesseract; do
+            if [[ -d "${cache}/third_party/${lib}" && ! -f "${cache}/third_party/${lib}/CMakeLists.txt" ]]; then
+              echo "Incomplete ${lib} source cache; removing ${cache}"
+              rm -rf "${cache}"
+              break
+            fi
+          done
       - name: Unit and integration quality checks
         run: cargo test --manifest-path src-tauri/Cargo.toml --locked
 

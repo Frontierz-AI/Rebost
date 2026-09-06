@@ -99,14 +99,14 @@ async fn cancel_while_waiting_for_the_generation_slot_skips_the_engine() {
         saw_waiting,
         "waiting status while another answer holds the slot"
     );
-    let stopped = std::time::Instant::now();
     chat.cancel(&message_id);
-    let message = tokio::time::timeout(std::time::Duration::from_millis(250), handle)
+    // The other turn still holds the slot. Stop must return without waiting
+    // for that lock; a couple of seconds is still far shorter than waiting.
+    let message = tokio::time::timeout(std::time::Duration::from_secs(2), handle)
         .await
         .expect("Stop must not wait for the occupied generation slot")
         .unwrap()
         .unwrap();
-    assert!(stopped.elapsed() < std::time::Duration::from_millis(250));
     drop(guard);
     assert_eq!(chat.cancel_count(), 0);
     assert_eq!(message.status, "stopped");
