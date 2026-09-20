@@ -614,7 +614,8 @@
       "ministral_3_3b": "Sopii, kun muisti on tiukilla.",
       "qwen3_5_2b": "Rebostin kokeiluun ilman odottelua.",
       "phi_4_mini": "Microsoftilta. Huolellisia vastauksia pienessä tiedostossa.",
-      "granite_4_1_3b": "Pieni tiedosto, lyhyet vastaukset.",
+      "granite_4_2_3b": "Pieni tiedosto, lyhyet vastaukset.",
+      "lfm2_5_2_6b": "Tukee monia kieliä. Pieni tiedosto arjen kirjoitustöihin.",
       "gemma_3_1b": "Pienin valinta. Asentuu minuutissa."
     }
   },

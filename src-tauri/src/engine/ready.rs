@@ -81,7 +81,9 @@ fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<Stri
         "--no-webui".into(),
     ];
     if plan.no_mmap {
-        args.push("--no-mmap".into());
+        // Discrete Vulkan/CUDA: copy weights into RAM. 0.4.1 dropped --no-mmap.
+        args.push("--load-mode".into());
+        args.push("none".into());
     }
     args
 }
@@ -310,7 +312,7 @@ impl Engine {
             plan.gpu_layers,
             plan.flash_attn,
             plan.cache_type,
-            if plan.no_mmap { " --no-mmap" } else { "" }
+            if plan.no_mmap { " --load-mode none" } else { "" }
         );
         self.set_status(EngineState::Starting, None);
 
@@ -551,9 +553,10 @@ mod tests {
     }
 
     #[test]
-    fn vulkan_args_include_no_mmap() {
+    fn vulkan_args_include_load_mode_none() {
         let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan(true, "on"));
-        assert!(args.iter().any(|a| a == "--no-mmap"));
+        assert!(has_pair(&args, "--load-mode", "none"));
+        assert!(!args.iter().any(|a| a == "--no-mmap"));
         assert!(has_pair(&args, "-fa", "on"));
         assert!(has_pair(&args, "-ub", "512"));
         assert!(has_pair(&args, "--cache-type-k", "q8_0"));
@@ -563,6 +566,7 @@ mod tests {
     #[test]
     fn metal_args_keep_mmap() {
         let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan(false, "on"));
+        assert!(!args.iter().any(|a| a == "--load-mode"));
         assert!(!args.iter().any(|a| a == "--no-mmap"));
     }
 
@@ -570,6 +574,7 @@ mod tests {
     fn cpu_args_use_flash_auto() {
         let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan(false, "auto"));
         assert!(has_pair(&args, "-fa", "auto"));
+        assert!(!args.iter().any(|a| a == "--load-mode"));
         assert!(!args.iter().any(|a| a == "--no-mmap"));
     }
 

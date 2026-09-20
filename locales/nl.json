@@ -614,7 +614,8 @@
       "ministral_3_3b": "Geschikt voor computers met weinig geheugen.",
       "qwen3_5_2b": "Om Rebost te proberen zonder te wachten.",
       "phi_4_mini": "Van Microsoft. Zorgvuldige antwoorden in een klein bestand.",
-      "granite_4_1_3b": "Klein bestand, korte antwoorden.",
+      "granite_4_2_3b": "Klein bestand, korte antwoorden.",
+      "lfm2_5_2_6b": "Veel talen. Een klein bestand voor alledaags schrijfwerk.",
       "gemma_3_1b": "De kleinste keuze. Binnen een minuut geïnstalleerd."
     }
   },

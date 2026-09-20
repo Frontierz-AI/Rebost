@@ -11,7 +11,7 @@ The installed catalog is `src-tauri/src/engine/catalog.rs` (`CATALOG`, `recommen
 Capability order is set on the maintainer machine, never at runtime. Family heads use `CatalogStanding` in `catalog.rs`:
 
 - **Scored** — Artificial Analysis Intelligence Index, higher first.
-- **BenchLead** — no Index yet. Published benches show a clear lead over the current document pick for the RAM bands the new row would take. The row sorts just above that pick’s score (`BenchLead { above }`). Ornith-1.5 9B is the current example (`above: 22`, ahead of Gemma 4 12B).
+- **BenchLead** — no Index yet. Published benches show a clear lead over the current document pick for the RAM bands the new row would take. The row sorts just above that pick’s score (`BenchLead { above }`). Ornith-1.5 9B is the current example (`above: 14`, ahead of Gemma 4 12B).
 
 A coding-only sweep does not unseat a document default. Overlapping benches the incumbent also reports count (Terminal-Bench v2.1, HLE, GPQA Diamond, and office or document benches when both sides publish them). Clear means ahead on at least two of those, and not clearly behind on the rest.
 

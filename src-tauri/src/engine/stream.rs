@@ -198,6 +198,9 @@ inlining tool turns and trying again: {text}"
                     Ok(mut output) => {
                         output.answer = output.answer.trim().to_string();
                         output.thinking = output.thinking.trim().to_string();
+                        if recover_misfiled_answer(&mut output, options.thinking) {
+                            on_event(StreamEvent::Answer(&output.answer));
+                        }
                         return Ok(output);
                     }
                     Err(error) => {
@@ -251,6 +254,21 @@ inlining tool turns and trying again: {text}"
             predicted_per_second: timings["predicted_per_second"].as_f64().unwrap_or(0.0),
         })
     }
+}
+
+/// llama.cpp `--reasoning-format auto` sometimes files a normal reply in
+/// `reasoning_content` and leaves `content` empty (templates that end the
+/// generation prompt with `</think>`). When we asked for thinking off, that
+/// block is the answer.
+fn recover_misfiled_answer(output: &mut ChatOutput, thinking: super::ChatThinking) -> bool {
+    if thinking != super::ChatThinking::Off {
+        return false;
+    }
+    if !output.answer.is_empty() || output.thinking.is_empty() {
+        return false;
+    }
+    output.answer = std::mem::take(&mut output.thinking);
+    true
 }
 
 /// Give up when llama-server sends no bytes for this long (prefill or a hung follow-up).
@@ -611,5 +629,38 @@ mod tests {
             "{\"file\":\"notes.md\"}"
         );
         assert!(output.answer.is_empty(), "{:?}", output.answer);
+    }
+
+    #[test]
+    fn off_thinking_recovers_a_reply_filed_as_reasoning() {
+        let mut output = ChatOutput {
+            thinking: "EBITDA is earnings before interest, tax, depreciation, and amortization."
+                .into(),
+            ..Default::default()
+        };
+        assert!(recover_misfiled_answer(
+            &mut output,
+            super::super::ChatThinking::Off
+        ));
+        assert!(output.thinking.is_empty());
+        assert!(output.answer.contains("earnings before interest"));
+        assert!(!recover_misfiled_answer(
+            &mut output,
+            super::super::ChatThinking::Off
+        ));
+    }
+
+    #[test]
+    fn deep_thinking_keeps_reasoning_out_of_the_answer() {
+        let mut output = ChatOutput {
+            thinking: "scratch work".into(),
+            ..Default::default()
+        };
+        assert!(!recover_misfiled_answer(
+            &mut output,
+            super::super::ChatThinking::Deep
+        ));
+        assert_eq!(output.thinking, "scratch work");
+        assert!(output.answer.is_empty());
     }
 }

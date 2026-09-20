@@ -614,7 +614,8 @@
       "ministral_3_3b": "Vejde se, když je paměti málo.",
       "qwen3_5_2b": "Na vyzkoušení Rebostu bez čekání.",
       "phi_4_mini": "Od Microsoftu. Pečlivé odpovědi v malém souboru.",
-      "granite_4_1_3b": "Malý soubor, krátké odpovědi.",
+      "granite_4_2_3b": "Malý soubor, krátké odpovědi.",
+      "lfm2_5_2_6b": "Hodně jazyků. Malý soubor na běžné psaní.",
       "gemma_3_1b": "Nejmenší volba. Nainstaluje se za minutu."
     }
   },

@@ -12,6 +12,12 @@ The app-data layout may change without a migration.
 
 - Creating a Shelf, adding files, or linking a folder while Chat is open attaches that Shelf to the conversation if none was chosen. Chat can stay on No Shelf when that is the choice.
 - The first file excerpts stay on the question, so a small AI still sees them. Chat names the files it can look through without mentioning the hidden upload Shelf.
+- When the installed AI is not asked to think out loud, a reply that 0.4.1 files only as reasoning still becomes the visible answer.
+
+### Changed
+
+- What runs the AI is the 0.4.1 release.
+- First-run picks use the current open-weight scores. Gemma 4 31B now ranks above Muse Glimmer. IBM Granite 4.2 3B replaces Granite 4.1 3B. On 8 GB machines the extra suggestions are LFM2.5 2.6B and Phi-4 Mini.
 
 ### Security
 

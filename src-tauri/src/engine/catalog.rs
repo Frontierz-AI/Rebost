@@ -136,29 +136,18 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Qwen3.8 27B",
         family: "Qwen",
         provider: "Alibaba",
-        standing: CatalogStanding::Scored(52),
+        standing: CatalogStanding::Scored(34),
         hf_repo: "unsloth/Qwen3.8-27B-GGUF",
-        approx_bytes: 16314 * MIB,
+        approx_bytes: 15702 * MIB,
         license: "Apache-2.0",
         released: "2026-08",
         blurb: "Many languages. Strong on documents and everyday writing.",
     },
     CatalogEntry {
-        name: "Muse Glimmer",
-        family: "Muse",
-        provider: "Meta",
-        standing: CatalogStanding::Scored(35),
-        hf_repo: "unsloth/Muse-Glimmer-30B-GGUF",
-        approx_bytes: 15143 * MIB,
-        license: "Apache-2.0",
-        released: "2026-08",
-        blurb: "From Meta. Needs a computer with plenty of memory.",
-    },
-    CatalogEntry {
         name: "Gemma 4 31B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(30),
+        standing: CatalogStanding::Scored(19),
         hf_repo: "unsloth/gemma-4-31B-it-GGUF",
         approx_bytes: 17475 * MIB,
         license: "Apache-2.0",
@@ -166,10 +155,21 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "Larger Gemma from Google. Big download.",
     },
     CatalogEntry {
+        name: "Muse Glimmer",
+        family: "Muse",
+        provider: "Meta",
+        standing: CatalogStanding::Scored(17),
+        hf_repo: "unsloth/Muse-Glimmer-30B-GGUF",
+        approx_bytes: 15143 * MIB,
+        license: "Apache-2.0",
+        released: "2026-08",
+        blurb: "From Meta. Needs a computer with plenty of memory.",
+    },
+    CatalogEntry {
         name: "Ornith-1.5 9B",
         family: "Ornith",
         provider: "DeepReinforce",
-        standing: CatalogStanding::BenchLead { above: 22 },
+        standing: CatalogStanding::BenchLead { above: 14 },
         hf_repo: "ornith-ai/Ornith-1.5-9B-GGUF",
         approx_bytes: 5512 * MIB,
         license: "MIT",
@@ -180,7 +180,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 4 12B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(22),
+        standing: CatalogStanding::Scored(14),
         hf_repo: "unsloth/gemma-4-12b-it-GGUF",
         approx_bytes: 6792 * MIB,
         license: "Apache-2.0",
@@ -191,7 +191,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Qwen3.5 4B",
         family: "Qwen",
         provider: "Alibaba",
-        standing: CatalogStanding::Scored(20),
+        standing: CatalogStanding::Scored(13),
         hf_repo: "unsloth/Qwen3.5-4B-GGUF",
         approx_bytes: 2614 * MIB,
         license: "Apache-2.0",
@@ -202,7 +202,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "gpt-oss 20B",
         family: "GPT",
         provider: "OpenAI",
-        standing: CatalogStanding::Scored(15),
+        standing: CatalogStanding::Scored(9),
         hf_repo: "unsloth/gpt-oss-20b-GGUF",
         approx_bytes: 11086 * MIB,
         license: "Apache-2.0",
@@ -213,7 +213,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 4 E4B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(12),
+        standing: CatalogStanding::Scored(9),
         hf_repo: "unsloth/gemma-4-E4B-it-GGUF",
         approx_bytes: 4747 * MIB,
         license: "Apache-2.0",
@@ -221,37 +221,26 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "From Google. A smaller Gemma for tighter memory.",
     },
     CatalogEntry {
-        name: "Ministral 3 14B",
-        family: "Mistral",
-        provider: "Mistral",
-        standing: CatalogStanding::Scored(11),
-        hf_repo: "unsloth/Ministral-3-14B-Instruct-2512-GGUF",
-        approx_bytes: 7857 * MIB,
-        license: "Apache-2.0",
-        released: "2025-12",
-        blurb: "Comfortable with long documents.",
-    },
-    CatalogEntry {
-        name: "Ministral 3 8B",
-        family: "Mistral",
-        provider: "Mistral",
+        name: "Granite 4.2 3B",
+        family: "Granite",
+        provider: "IBM",
         standing: CatalogStanding::Scored(9),
-        hf_repo: "unsloth/Ministral-3-8B-Instruct-2512-GGUF",
-        approx_bytes: 4958 * MIB,
+        hf_repo: "ibm-granite/granite-4.2-3b-GGUF",
+        approx_bytes: 2140 * MIB,
         license: "Apache-2.0",
-        released: "2025-12",
-        blurb: "Quicker replies.",
+        released: "2026-08",
+        blurb: "Small file, short answers.",
     },
     CatalogEntry {
-        name: "Ministral 3 3B",
-        family: "Mistral",
-        provider: "Mistral",
-        standing: CatalogStanding::Scored(7),
-        hf_repo: "unsloth/Ministral-3-3B-Instruct-2512-GGUF",
-        approx_bytes: 2047 * MIB,
-        license: "Apache-2.0",
-        released: "2025-12",
-        blurb: "Fits when memory is tight.",
+        name: "LFM2.5 2.6B",
+        family: "LFM",
+        provider: "Liquid AI",
+        standing: CatalogStanding::Scored(8),
+        hf_repo: "LiquidAI/LFM2.5-2.6B-GGUF",
+        approx_bytes: 1597 * MIB,
+        license: "LFM Open License v1.0",
+        released: "2026-08",
+        blurb: "Many languages. A small file for everyday writing.",
     },
     CatalogEntry {
         name: "Qwen3.5 2B",
@@ -265,6 +254,17 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "For trying Rebost without waiting.",
     },
     CatalogEntry {
+        name: "Ministral 3 14B",
+        family: "Mistral",
+        provider: "Mistral",
+        standing: CatalogStanding::Scored(6),
+        hf_repo: "unsloth/Ministral-3-14B-Instruct-2512-GGUF",
+        approx_bytes: 7857 * MIB,
+        license: "Apache-2.0",
+        released: "2025-12",
+        blurb: "Comfortable with long documents.",
+    },
+    CatalogEntry {
         name: "Phi-4 Mini",
         family: "Phi",
         provider: "Microsoft",
@@ -276,15 +276,26 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "From Microsoft. Careful answers in a small file.",
     },
     CatalogEntry {
-        name: "Granite 4.1 3B",
-        family: "Granite",
-        provider: "IBM",
-        standing: CatalogStanding::Scored(4),
-        hf_repo: "unsloth/granite-4.1-3b-GGUF",
-        approx_bytes: 2002 * MIB,
+        name: "Ministral 3 8B",
+        family: "Mistral",
+        provider: "Mistral",
+        standing: CatalogStanding::Scored(5),
+        hf_repo: "unsloth/Ministral-3-8B-Instruct-2512-GGUF",
+        approx_bytes: 4958 * MIB,
         license: "Apache-2.0",
-        released: "2026-04",
-        blurb: "Small file, short answers.",
+        released: "2025-12",
+        blurb: "Quicker replies.",
+    },
+    CatalogEntry {
+        name: "Ministral 3 3B",
+        family: "Mistral",
+        provider: "Mistral",
+        standing: CatalogStanding::Scored(5),
+        hf_repo: "unsloth/Ministral-3-3B-Instruct-2512-GGUF",
+        approx_bytes: 2047 * MIB,
+        license: "Apache-2.0",
+        released: "2025-12",
+        blurb: "Fits when memory is tight.",
     },
     CatalogEntry {
         name: "Gemma 3 1B",
@@ -543,7 +554,7 @@ mod tests {
                 .into_iter()
                 .map(|r| r.name)
                 .collect::<Vec<_>>(),
-            ["Ministral 3 3B", "Phi-4 Mini"]
+            ["LFM2.5 2.6B", "Phi-4 Mini"]
         );
         assert!(smaller_alternatives(&mk(4), 2).is_empty());
     }
@@ -587,6 +598,7 @@ mod tests {
                 .expect(name)
         };
         let ornith = standing("Ornith-1.5 9B");
+        assert!(standing("Gemma 4 31B") > standing("Muse Glimmer"));
         assert!(ornith > standing("Gemma 4 12B"));
         assert!(ornith > standing("Gemma 4 E4B"));
         assert!(ornith > standing("gpt-oss 20B"));
@@ -598,7 +610,7 @@ mod tests {
                 .position(|entry| entry.name == "Ornith-1.5 9B"),
             CATALOG
                 .iter()
-                .position(|entry| entry.name == "Gemma 4 31B")
+                .position(|entry| entry.name == "Muse Glimmer")
                 .map(|i| i + 1)
         );
     }
@@ -668,7 +680,8 @@ mod tests {
         assert_eq!(blurb_slug("Gemma 4 E4B"), "gemma_4_e4b");
         assert_eq!(blurb_slug("Muse Glimmer"), "muse_glimmer");
         assert_eq!(blurb_slug("Phi-4 Mini"), "phi_4_mini");
-        assert_eq!(blurb_slug("Granite 4.1 3B"), "granite_4_1_3b");
+        assert_eq!(blurb_slug("Granite 4.2 3B"), "granite_4_2_3b");
+        assert_eq!(blurb_slug("LFM2.5 2.6B"), "lfm2_5_2_6b");
     }
 
     #[test]

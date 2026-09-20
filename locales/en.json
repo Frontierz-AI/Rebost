@@ -613,7 +613,8 @@
       "ministral_3_3b": "Fits when memory is tight.",
       "qwen3_5_2b": "For trying Rebost without waiting.",
       "phi_4_mini": "From Microsoft. Careful answers in a small file.",
-      "granite_4_1_3b": "Small file, short answers.",
+      "granite_4_2_3b": "Small file, short answers.",
+      "lfm2_5_2_6b": "Many languages. A small file for everyday writing.",
       "gemma_3_1b": "Smallest pick. Installs in a minute."
     }
   },

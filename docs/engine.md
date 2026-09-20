@@ -6,12 +6,12 @@ Each installer contains **one** archive for that OS/arch. There is no universal 
 
 ## Pin
 
-Rebost follows official llama.cpp `v*` releases, not nightlies. The `v*` tag does not attach OS archives; those live on the nightly tag named in that release (0.3.0 names `b10621`).
+Rebost follows official llama.cpp `v*` releases, not nightlies. The `v*` tag does not attach OS archives; those live on the nightly tag named in that release (0.4.1 names `b10964`).
 
 `src-tauri/src/engine/pin.rs`:
 
-- `ENGINE_RELEASE` (e.g. `0.3.0`) — official semver; Settings diagnostics and extract folders use this
-- `ENGINE_BUILD` (e.g. `b10621`) — GitHub tag that hosts the archives
+- `ENGINE_RELEASE` (e.g. `0.4.1`) — official semver; Settings diagnostics and extract folders use this
+- `ENGINE_BUILD` (e.g. `b10964`) — GitHub tag that hosts the archives
 - `ENGINE_PINS`: one GitHub archive URL + SHA-256 per OS/arch (what the installer ships)
 - `ENGINE_OPTIONAL_PINS`: faster GPU archives downloaded at first warmup when the hardware matches. Not bundled.
 
@@ -47,9 +47,9 @@ Windows x64 needs a working Vulkan driver for the bundled pin. Windows arm64 shi
 
 ## Flags
 
-Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU and the x64-on-ARM Vulkan copy use `-ngl 0`. `--no-mmap` only on discrete Vulkan and CUDA. CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
+Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU and the x64-on-ARM Vulkan copy use `-ngl 0`. `--load-mode none` only on discrete Vulkan and CUDA (0.4.1 dropped `--no-mmap`). CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
 
-Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.3.0-metal`, `0.3.0-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
+Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.4.1-metal`, `0.4.1-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
 
 ## First run
 

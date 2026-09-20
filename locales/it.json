@@ -614,7 +614,8 @@
       "ministral_3_3b": "Adatta quando la memoria è poca.",
       "qwen3_5_2b": "Per provare Rebost senza aspettare.",
       "phi_4_mini": "Di Microsoft. Risposte ponderate in un file piccolo.",
-      "granite_4_1_3b": "File piccolo, risposte brevi.",
+      "granite_4_2_3b": "File piccolo, risposte brevi.",
+      "lfm2_5_2_6b": "Molte lingue. Un file piccolo per i testi di tutti i giorni.",
       "gemma_3_1b": "La più piccola. Si installa in un minuto."
     }
   },

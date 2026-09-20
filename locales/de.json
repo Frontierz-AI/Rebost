@@ -614,7 +614,8 @@
       "ministral_3_3b": "Für Computer mit wenig Arbeitsspeicher.",
       "qwen3_5_2b": "Rebost ausprobieren, ohne zu warten.",
       "phi_4_mini": "Von Microsoft. Sorgfältige Antworten in einer kleinen Datei.",
-      "granite_4_1_3b": "Kleine Datei, kurze Antworten.",
+      "granite_4_2_3b": "Kleine Datei, kurze Antworten.",
+      "lfm2_5_2_6b": "Viele Sprachen. Eine kleine Datei für alltägliches Schreiben.",
       "gemma_3_1b": "Die kleinste Wahl. In einer Minute installiert."
     }
   },
