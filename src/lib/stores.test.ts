@@ -17,6 +17,7 @@ const mock = vi.hoisted(() => ({
     shelfDocuments: vi.fn(),
     pickFiles: vi.fn(),
     threadEnsureUploadShelf: vi.fn(),
+    threadSetShelf: vi.fn(),
     shelfImportPaths: vi.fn(),
   },
 }));
@@ -51,11 +52,13 @@ function deferred<T>() {
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  localStorage.clear();
   mock.handlers.clear();
   mock.failListener = false;
   mock.removed = 0;
   mock.api.shelvesList.mockResolvedValue([]);
   mock.api.threadsList.mockResolvedValue([]);
+  mock.api.threadSetShelf.mockResolvedValue(undefined);
   mock.api.settingsGet.mockResolvedValue({
     onboardingDone: true,
     activeModel: null,
@@ -183,4 +186,47 @@ it("reconciles optimistic user messages and restores an unacknowledged failed dr
   });
   expect(state.chatState.draft).toBe("Question");
   expect(state.chatState.messages).toEqual([]);
+});
+
+describe("bindLibraryShelfIfUnset", () => {
+  const thread = {
+    id: "t1",
+    title: "T",
+    shelfId: null as string | null,
+    createdAt: "",
+    updatedAt: "",
+    messageCount: 1,
+    avatarId: "a",
+  };
+
+  it("points Chat at a library Shelf when the conversation has none", async () => {
+    mock.api.threadsList.mockResolvedValue([thread]);
+    const state = await import("./stores.svelte");
+    await state.bootstrap();
+    await state.openThread("t1");
+    expect(state.chatState.selectedShelfId).toBeNull();
+    mock.api.threadsList.mockResolvedValue([{ ...thread, shelfId: "s1" }]);
+    await state.bindLibraryShelfIfUnset("s1");
+    expect(mock.api.threadSetShelf).toHaveBeenCalledWith("t1", "s1");
+    expect(state.chatState.selectedShelfId).toBe("s1");
+  });
+
+  it("keeps an already selected library Shelf", async () => {
+    mock.api.threadsList.mockResolvedValue([{ ...thread, shelfId: "s-keep" }]);
+    const state = await import("./stores.svelte");
+    await state.bootstrap();
+    await state.openThread("t1");
+    await state.bindLibraryShelfIfUnset("s-other");
+    expect(mock.api.threadSetShelf).not.toHaveBeenCalled();
+    expect(state.chatState.selectedShelfId).toBe("s-keep");
+  });
+
+  it("sets the composer Shelf when there is no open conversation", async () => {
+    const state = await import("./stores.svelte");
+    await state.bootstrap();
+    state.chatState.selectedShelfId = null;
+    await state.bindLibraryShelfIfUnset("s1");
+    expect(mock.api.threadSetShelf).not.toHaveBeenCalled();
+    expect(state.chatState.selectedShelfId).toBe("s1");
+  });
 });

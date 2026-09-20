@@ -6,6 +6,17 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-09-20
+
+### Fixed
+
+- Creating a Shelf, adding files, or linking a folder while Chat is open attaches that Shelf to the conversation if none was chosen. Chat can stay on No Shelf when that is the choice.
+- The first file excerpts stay on the question, so a small AI still sees them. Chat names the files it can look through without mentioning the hidden upload Shelf.
+
+### Security
+
+- HTTPS uses rustls 0.23.45. The chacha20 crate is no longer pinned to a yanked 0.10.1 release.
+
 ## [0.9.3] - 2026-09-06
 
 ### Added
@@ -574,7 +585,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.3...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.4...HEAD
+[0.9.4]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.0...v0.9.1

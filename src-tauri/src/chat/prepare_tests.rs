@@ -156,14 +156,14 @@ async fn prepare_turn_puts_shelf_passages_in_the_prompt() {
         .iter()
         .find(|m| m.role == "user")
         .expect("user message");
-    assert_eq!(user.as_text(), "When is the kitchen restocked?");
+    assert!(user.as_text().starts_with("When is the kitchen restocked?"));
     assert!(
-        prepared
-            .messages
-            .iter()
-            .filter(|m| m.role == "tool")
-            .any(|m| m.as_text().to_lowercase().contains("tuesday")),
-        "retrieved files should sit in a tool result, not the question"
+        user.as_text().to_lowercase().contains("tuesday"),
+        "first retrieved excerpts should sit on the user turn"
+    );
+    assert!(
+        prepared.messages.iter().all(|m| m.role != "tool"),
+        "first retrieval must not use a synthetic tool pair"
     );
     assert_no_late_system_message(&prepared.messages);
     let system = prepared.messages[0].as_text();
@@ -253,8 +253,52 @@ async fn prepare_turn_keeps_the_library_shelf_and_appends_uploads() {
             .any(|s| s.shelf_id == fixture.shelf.id),
         "library shelf should be in sources"
     );
-    assert!(prepared.messages[0].as_text().contains("Notes"));
-    assert!(prepared.messages[0].as_text().contains("Uploaded files"));
+    let system = prepared.messages[0].as_text();
+    assert!(system.contains("Notes"));
+    assert!(system.contains("invoice.md"));
+    assert!(system.contains("handbook.md"));
+    assert!(!system.contains("Uploaded files"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn prepare_turn_upload_only_does_not_name_uploaded_files() {
+    let fixture = shelf_with_file(
+        "handbook.md",
+        "# Staff handbook\n\nThe office kitchen is restocked every Tuesday morning.\n",
+    )
+    .await;
+    let thread = Conversations::create(&fixture.ctx.paths, None).unwrap();
+    let upload = add_upload_file(
+        &fixture,
+        &thread.id,
+        "invoice.md",
+        "# Invoice\n\nThe attached invoice total is 480 euros.\n",
+    )
+    .await;
+    let prepared = prepare_turn(
+        &fixture.ctx,
+        &thread.id,
+        "What is the invoice total?",
+        None,
+        Some(&upload.id),
+        "m_none",
+        &[],
+        ThinkLevel::Off,
+        &[],
+    )
+    .unwrap();
+    let system = prepared.messages[0].as_text();
+    assert!(system.contains("Files in this conversation"));
+    assert!(system.contains("invoice.md"));
+    assert!(!system.contains("Uploaded files"));
+    assert!(!system.contains("could not find that in \""));
+    let user = prepared
+        .messages
+        .iter()
+        .find(|m| m.role == "user")
+        .expect("user message");
+    assert!(user.as_text().contains("480"));
+    assert!(prepared.messages.iter().all(|m| m.role != "tool"));
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -518,19 +562,22 @@ async fn prepare_turn_keeps_citation_ids_on_a_short_follow_up() {
     let retrieval = follow
         .messages
         .last()
-        .expect("follow-up should end with the retrieved passages");
-    assert_eq!(retrieval.role, "tool");
+        .expect("follow-up should end with the current question");
+    assert_eq!(retrieval.role, "user");
     assert!(
-        retrieval.as_text().contains(&mac.sid) && retrieval.as_text().contains(&mac.body),
-        "the tool result should carry the Mac excerpt that stayed in sources, got {}",
+        retrieval.as_text().starts_with("shorten to only 5 terms"),
+        "the follow-up question should stay first, got {}",
         retrieval.as_text()
     );
-    let call = follow.messages[follow.messages.len() - 2]
-        .tool_calls
-        .as_ref()
-        .expect("a tool result needs the call that produced it");
-    assert_eq!(call[0].function.name, tools::SEARCH_SHELF);
-    assert_eq!(retrieval.tool_call_id.as_deref(), Some(call[0].id.as_str()));
+    assert!(
+        retrieval.as_text().contains(&mac.sid) && retrieval.as_text().contains(&mac.body),
+        "first retrieved excerpts should sit on the user turn, got {}",
+        retrieval.as_text()
+    );
+    assert!(
+        follow.messages.iter().all(|message| message.role != "tool"),
+        "first retrieval must not use a synthetic tool pair"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -1215,14 +1262,20 @@ async fn small_context_reclaims_unused_history_without_clipping_the_question() {
         !turn.sources.is_empty(),
         "unused history space must remain available to retrieval"
     );
-    assert_eq!(
-        turn.messages
-            .iter()
-            .rev()
-            .find(|m| m.role == "user")
-            .unwrap()
-            .as_text(),
-        question
+    let user = turn
+        .messages
+        .iter()
+        .rev()
+        .find(|m| m.role == "user")
+        .unwrap()
+        .as_text();
+    assert!(
+        user.starts_with(&question),
+        "the question must stay intact at the start of the user turn"
+    );
+    assert!(
+        user.contains("7391"),
+        "reclaimed space should still carry the retrieved file"
     );
 }
 

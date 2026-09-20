@@ -22,14 +22,14 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **0.9.3**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **0.9.4**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
 
-| Machine | Installer |
-|---------|-----------|
+| Machine                | Installer        |
+| ---------------------- | ---------------- |
 | Mac with an Apple chip | Mac (Apple chip) |
-| Intel Mac | Mac (Intel) |
-| Windows 10/11 | Windows |
-| Windows on ARM | Windows (ARM) |
+| Intel Mac              | Mac (Intel)      |
+| Windows 10/11          | Windows          |
+| Windows on ARM         | Windows (ARM)    |
 
 The Mac download is a disk image: open it and drag Rebost into Applications. The Windows download is an installer.
 

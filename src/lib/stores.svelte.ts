@@ -91,6 +91,39 @@ export function rememberPreferredShelf(shelfId: string | null) {
   savePreferredShelf(shelfId);
 }
 
+function conversationHasLibraryShelf(): boolean {
+  const current = chatState.selectedShelfId;
+  const uploadId =
+    chatState.uploadShelf?.id ??
+    app.threads.find((thread) => thread.id === chatState.activeThreadId)?.uploadShelfId ??
+    null;
+  return Boolean(current && current !== uploadId);
+}
+
+/** Point Chat at a library Shelf when this conversation has none yet. */
+export async function bindLibraryShelfIfUnset(shelfId: string): Promise<void> {
+  if (conversationHasLibraryShelf()) return;
+  const threadId = chatState.activeThreadId;
+  const previousSelected = chatState.selectedShelfId;
+  const previousThreads = app.threads;
+  rememberPreferredShelf(shelfId);
+  if (threadId) {
+    app.threads = app.threads.map((thread) =>
+      thread.id === threadId ? { ...thread, shelfId } : thread,
+    );
+  }
+  chatState.selectedShelfId = shelfId;
+  if (!threadId) return;
+  try {
+    await api.threadSetShelf(threadId, shelfId);
+    await refreshThreads();
+  } catch (error) {
+    app.threads = previousThreads;
+    chatState.selectedShelfId = previousSelected;
+    notifyInvokeError(error);
+  }
+}
+
 /** Shelf for a new conversation: last manual pick, else the only Shelf. */
 export function preferredShelfForNew(): string | null {
   return shelfForNewConversation(
