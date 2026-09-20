@@ -2,13 +2,12 @@
   import { api, type Card, type DocumentMeta, type LinkedView, type ShelfView } from "$lib/api";
   import {
     app,
-    chatState,
     notify,
     notifyInvokeError,
     loadShelfDocuments,
     rememberPreferredShelf,
+    bindLibraryShelfIfUnset,
     refreshShelves,
-    refreshThreads,
   } from "$lib/stores.svelte";
   import { linkedFolderName, linkedFolderSourceId, listenFileDrop } from "$lib/files";
   import {
@@ -100,9 +99,10 @@
       onDrop: () => {
         api
           .shelfImportPaths(shelfId, [])
-          .then((result) => {
+          .then(async (result) => {
             const message = importFeedback(result.queued, result.atLimit, result.skippedLong ?? 0);
             if (message) notify(message);
+            if (result.queued > 0) await bindLibraryShelfIfUnset(shelfId);
           })
           .catch(notifyInvokeError);
       },
@@ -170,13 +170,7 @@
       rememberPreferredShelf(created.id);
       await refreshShelves();
       app.openShelfId = created.id;
-      if (chatState.messages.length === 0) {
-        chatState.selectedShelfId = created.id;
-        if (chatState.activeThreadId) {
-          await api.threadSetShelf(chatState.activeThreadId, created.id);
-          await refreshThreads();
-        }
-      }
+      await bindLibraryShelfIfUnset(created.id);
     } catch (error) {
       notifyInvokeError(error);
     }
@@ -269,6 +263,7 @@
       if (result.cancelled) return;
       const message = importFeedback(result.queued, result.atLimit, result.skippedLong ?? 0);
       if (message) notify(message);
+      await bindLibraryShelfIfUnset(shelf.id);
     } catch (error) {
       notifyInvokeError(error);
     }
@@ -282,6 +277,7 @@
       await refreshShelves();
       const message = importFeedback(result.queued, result.atLimit);
       if (message) notify(message);
+      await bindLibraryShelfIfUnset(shelf.id);
     } catch (error) {
       notifyInvokeError(error);
     }

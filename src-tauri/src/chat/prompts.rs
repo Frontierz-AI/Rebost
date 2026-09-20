@@ -35,8 +35,17 @@ where
 }
 
 pub(crate) fn format_shelf_inventory(shelf_name: &str, labels: &[String]) -> String {
+    format_file_inventory(&format!("Shelf \"{shelf_name}\""), labels)
+}
+
+/// File list for conversation attachments. Never names the hidden upload Shelf.
+pub(crate) fn format_conversation_inventory(labels: &[String]) -> String {
+    format_file_inventory("Files in this conversation", labels)
+}
+
+fn format_file_inventory(scope: &str, labels: &[String]) -> String {
     let total = labels.len();
-    let head = format!("Shelf \"{shelf_name}\" · {total} files");
+    let head = format!("{scope} · {total} files");
     if total == 0 {
         return format!("{head}.");
     }
@@ -101,8 +110,8 @@ These messages are the recent turns of this conversation.\n",
     if let Some(notes) = named_notes {
         push_blank_section(&mut prompt, notes);
     }
-    if let Some(shelf) = shelf_name {
-        push_shelf_source_rules(&mut prompt, shelf, full_files, shelf_tools);
+    if shelf_name.is_some() || shelf_inventory.is_some() {
+        push_shelf_source_rules(&mut prompt, full_files, shelf_tools);
     }
     if online {
         prompt.push_str(
@@ -120,12 +129,8 @@ fn push_blank_section(prompt: &mut String, text: &str) {
     prompt.push('\n');
 }
 
-fn push_shelf_source_rules(prompt: &mut String, shelf: &str, full_files: bool, shelf_tools: bool) {
-    let _ = write!(
-        prompt,
-        "\nThis turn may include LOCAL DOCUMENT SOURCES retrieved from \"{shelf}\" \
-for this question. "
-    );
+fn push_shelf_source_rules(prompt: &mut String, full_files: bool, shelf_tools: bool) {
+    prompt.push_str("\nThis turn may include LOCAL DOCUMENT SOURCES retrieved for this question. ");
     if full_files {
         prompt.push_str("When they are present they are the full files. ");
     }
@@ -139,16 +144,14 @@ not a citation. Only cite ids that appear in the sources. The same id is the sam
 in this conversation.\n",
     );
     if shelf_tools && !full_files {
-        let _ = writeln!(
-            prompt,
-            "If they do not cover the question, look up more from this Shelf \
-before saying you could not find it in \"{shelf}\"."
+        prompt.push_str(
+            "If they do not cover the question, look up more from these files \
+before saying you could not find it.\n",
         );
     } else {
-        let _ = writeln!(
-            prompt,
+        prompt.push_str(
             "If there are no sources, or they do not cover the question, say you could \
-not find that in \"{shelf}\"."
+not find that in the files.\n",
         );
     }
     prompt.push_str("General knowledge is fine for everything else.\n");
@@ -222,7 +225,7 @@ pub(crate) fn format_memory_notes(memory: &[MemorySnippet]) -> String {
     content
 }
 
-/// Retrieved Shelf text for a system message. Not the user's words.
+/// Retrieved Shelf text appended to the user turn. Not the user's words.
 pub(crate) fn format_retrieved_context(sources: &[SourcePassage]) -> String {
     if sources.is_empty() {
         return String::new();
@@ -499,6 +502,11 @@ mod tests {
             format_shelf_inventory("Work", &[]),
             "Shelf \"Work\" · 0 files."
         );
+        assert_eq!(
+            format_conversation_inventory(&labels),
+            "Files in this conversation · 2 files: invoice.md, notes.md."
+        );
+        assert!(!format_conversation_inventory(&labels).contains("Uploaded files"));
     }
 
     #[test]
@@ -579,8 +587,9 @@ mod tests {
             false,
             "Rebost",
         );
-        assert!(can_open.contains("look up more from this Shelf"));
-        assert!(can_open.contains("could not find it in \"Work\""));
+        assert!(can_open.contains("look up more from these files"));
+        assert!(can_open.contains("could not find it"));
+        assert!(!can_open.contains("could not find it in \""));
         assert!(!can_open.contains("excerpts, not the full shelf"));
         assert_no_tool_names(&can_open);
 
@@ -609,6 +618,21 @@ mod tests {
             "Rebost",
         );
         assert_eq!(with_sources, without_sources);
+
+        let upload_only = build_system_prompt(
+            "",
+            Some("this conversation"),
+            Some("Files in this conversation · 1 files: notes.md."),
+            None,
+            false,
+            false,
+            false,
+            "Rebost",
+        );
+        assert!(upload_only.contains("LOCAL DOCUMENT SOURCES"));
+        assert!(upload_only.contains("could not find that in the files"));
+        assert!(!upload_only.contains("Uploaded files"));
+        assert!(!upload_only.contains("could not find that in \""));
 
         let no_shelf = build_system_prompt("", None, None, None, false, false, false, "Rebost");
         assert!(!no_shelf.contains("Shelf \""));
