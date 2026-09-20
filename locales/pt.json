@@ -614,7 +614,8 @@
       "ministral_3_3b": "Cabe quando há pouca memória.",
       "qwen3_5_2b": "Para experimentar o Rebost sem esperar.",
       "phi_4_mini": "Da Microsoft. Respostas cuidadosas num ficheiro pequeno.",
-      "granite_4_1_3b": "Ficheiro pequeno, respostas curtas.",
+      "granite_4_2_3b": "Ficheiro pequeno, respostas curtas.",
+      "lfm2_5_2_6b": "Muitos idiomas. Um ficheiro pequeno para a escrita do dia a dia.",
       "gemma_3_1b": "A mais pequena. Instala-se num minuto."
     }
   },

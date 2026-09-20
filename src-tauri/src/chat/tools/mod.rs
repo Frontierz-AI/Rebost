@@ -736,7 +736,7 @@ impl AnswerHoldback {
         if self.released {
             return output_answer.trim().to_string();
         }
-        let text = if hidden.is_empty() {
+        let text = if hidden.trim().is_empty() {
             output_answer
         } else {
             hidden
@@ -959,5 +959,11 @@ mod tests {
         assert!(gate.push("{\"name\":\"open_shelf_file\"}").is_none());
         let hidden = gate.take_hidden();
         assert!(gate.visible_answer(&hidden, &hidden).is_empty());
+
+        let gate = AnswerHoldback::new(true);
+        assert_eq!(
+            gate.visible_answer("\n", "EBITDA is earnings before interest."),
+            "EBITDA is earnings before interest."
+        );
     }
 }

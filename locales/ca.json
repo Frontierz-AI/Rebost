@@ -613,7 +613,8 @@
       "ministral_3_3b": "Per a ordinadors amb poca memòria.",
       "qwen3_5_2b": "Per provar Rebost sense esperar.",
       "phi_4_mini": "De Microsoft. Respostes acurades en un fitxer petit.",
-      "granite_4_1_3b": "Fitxer petit, respostes curtes.",
+      "granite_4_2_3b": "Fitxer petit, respostes curtes.",
+      "lfm2_5_2_6b": "Molts idiomes. Un fitxer petit per a l'escriptura quotidiana.",
       "gemma_3_1b": "La més petita. S'instal·la en un minut."
     }
   },

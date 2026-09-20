@@ -21,19 +21,19 @@ tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 # Desktop shell
-tauri = { version = "2.11.5", features = [] }
+tauri = { version = "2.11.6", features = [] }
 tauri-plugin-dialog = "2.7.3"
-tauri-plugin-log = "2.9.0"
+tauri-plugin-log = "2.9.2"
 tauri-plugin-opener = "2.5.4"
 tauri-plugin-os = "2.3.2"
-tauri-plugin-updater = "2.10.1"
+tauri-plugin-updater = "2.12.0"
 tauri-plugin-window-state = "2.4.1"
 
 # Document understanding. Only the formats and analysis passes Rebost uses are
 # enabled so the binary stays lean and fully offline. OCR is vendored
 # tesseract, statically linked, with English data bundled at build time.
 # Extra `*.traineddata` packs in `resources/tessdata/` are copied on first extract.
-xberg = { version = "1.0.14", default-features = false, features = [
+xberg = { version = "1.2.6", default-features = false, features = [
     "tokio-runtime",
     "simd-utf8",
     "pdf",
@@ -51,7 +51,7 @@ xberg = { version = "1.0.14", default-features = false, features = [
 ] }
 
 # Local retrieval
-tantivy = "0.26.1"
+tantivy = "0.26.2"
 tantivy-stemmers = { version = "0.4.0", default-features = false, features = [
     "armenian_mkrtchyan",
     "basque",
@@ -73,7 +73,7 @@ pii-vault = "0.2.0"
 # Core plumbing
 notify = "8.2.0"
 tokio = { version = "1.53.1", features = ["full"] }
-reqwest = { version = "0.13.4", features = ["json", "stream", "gzip", "query", "charset", "http2"] }
+reqwest = { version = "0.13.5", features = ["json", "stream", "gzip", "query", "charset", "http2"] }
 bytes = "1"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
@@ -95,7 +95,7 @@ zip = { version = "8", default-features = false, features = ["deflate"] }
 dirs = "6"
 readabilityrs = "0.1.4"
 url = "2.5.8"
-rust-i18n = "4.2.1"
+rust-i18n = "4.2.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.4"

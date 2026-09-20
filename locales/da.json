@@ -614,7 +614,8 @@
       "ministral_3_3b": "Passer, når hukommelsen er knap.",
       "qwen3_5_2b": "Til at prøve Rebost uden ventetid.",
       "phi_4_mini": "Fra Microsoft. Omhyggelige svar i en lille fil.",
-      "granite_4_1_3b": "Lille fil, korte svar.",
+      "granite_4_2_3b": "Lille fil, korte svar.",
+      "lfm2_5_2_6b": "Mange sprog. En lille fil til almindelige skriveopgaver.",
       "gemma_3_1b": "Det mindste valg. Installeres på et minut."
     }
   },

@@ -11,9 +11,9 @@ use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 
 /// Official llama.cpp semver. Bump only when they cut a new `v*` release.
-pub const ENGINE_RELEASE: &str = "0.3.0";
+pub const ENGINE_RELEASE: &str = "0.4.1";
 /// GitHub tag that hosts the archives for [`ENGINE_RELEASE`].
-pub const ENGINE_BUILD: &str = "b10621";
+pub const ENGINE_BUILD: &str = "b10964";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EnginePin {
@@ -46,49 +46,49 @@ pub const ENGINE_PINS: &[EnginePin] = &[
     EnginePin {
         os: "macos",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-macos-arm64.tar.gz",
-        sha256: "429c8270608600188035e5e92f7d78dffb7900904fe7dd7e6a84f48068cd13cf",
-        file_name: "llama-b10621-bin-macos-arm64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-macos-arm64.tar.gz",
+        sha256: "033c845c1df9bf945ff37bb193238b40910b2244be3e1e637b2ceb5878f1a6f5",
+        file_name: "llama-b10964-bin-macos-arm64.tar.gz",
         accelerator: "Metal",
     },
     EnginePin {
         os: "macos",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-macos-x64.tar.gz",
-        sha256: "33c44e036e0e223f71a29fc74a0ab3e130ca9eadeb032ecc1c7af25985b8b91b",
-        file_name: "llama-b10621-bin-macos-x64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-macos-x64.tar.gz",
+        sha256: "03430a394d0a169a5e6d8f01c09f48cf58eb026af6fc95940a4a528e2e50cf38",
+        file_name: "llama-b10964-bin-macos-x64.tar.gz",
         accelerator: "Metal",
     },
     EnginePin {
         os: "windows",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-win-vulkan-x64.zip",
-        sha256: "2672d85bf87c8280d94dee01eb6a86280046878f70a07d786a93637fa9081163",
-        file_name: "llama-b10621-bin-win-vulkan-x64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-win-vulkan-x64.zip",
+        sha256: "1ee3ad952f4ba71f438bd6d7bebef19e1c7af04adcaa35d08b4ddabb27d4c642",
+        file_name: "llama-b10964-bin-win-vulkan-x64.zip",
         accelerator: "Vulkan",
     },
     EnginePin {
         os: "windows",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-win-cpu-arm64.zip",
-        sha256: "c072e8bb057751587243c1e0ed28d82e23c7e0544a426e0d476f1e77792bf3ce",
-        file_name: "llama-b10621-bin-win-cpu-arm64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-win-cpu-arm64.zip",
+        sha256: "4b6a004b076eea47c318bea35cf1db2ff2bf037738b04645646ae8d7c3159478",
+        file_name: "llama-b10964-bin-win-cpu-arm64.zip",
         accelerator: "CPU",
     },
     EnginePin {
         os: "linux",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-ubuntu-vulkan-x64.tar.gz",
-        sha256: "3db8e4411033ef4531072be43377e859bcdbf9640c7bb36f9656e538eabd0978",
-        file_name: "llama-b10621-bin-ubuntu-vulkan-x64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-ubuntu-vulkan-x64.tar.gz",
+        sha256: "55d1e58e14c11eedea090bf088fdeefbfe7b4b09ee03bf6dba9834651769afcf",
+        file_name: "llama-b10964-bin-ubuntu-vulkan-x64.tar.gz",
         accelerator: "Vulkan",
     },
     EnginePin {
         os: "linux",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-ubuntu-vulkan-arm64.tar.gz",
-        sha256: "1267a0e918c37be5ef568b37f9a5de377e47cbe1ea77d4d42e38a20dfff1b358",
-        file_name: "llama-b10621-bin-ubuntu-vulkan-arm64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-ubuntu-vulkan-arm64.tar.gz",
+        sha256: "f7864baa0edf5a059fb42c5efb5aceb96075aa1f41e6c3142b71ca69286cb0bb",
+        file_name: "llama-b10964-bin-ubuntu-vulkan-arm64.tar.gz",
         accelerator: "Vulkan",
     },
 ];
@@ -99,17 +99,17 @@ pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
     EnginePin {
         os: "windows",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-win-cuda-12.4-x64.zip",
-        sha256: "81c2ff62e14b549cd5c766ccdd5c61f09e821a171655c3047bdccfddc2d1a1e2",
-        file_name: "llama-b10621-bin-win-cuda-12.4-x64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-win-cuda-12.4-x64.zip",
+        sha256: "264f20d7ee3860aecca9ec12418357a9f3e80349a2b186f66c63859ded1a9593",
+        file_name: "llama-b10964-bin-win-cuda-12.4-x64.zip",
         accelerator: "CUDA",
     },
     EnginePin {
         os: "windows",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/llama-b10621-bin-win-opencl-adreno-arm64.zip",
-        sha256: "46e551fc6a4b1074cda5e0fcff20712e83ece24194d431d677bf99db20e487e0",
-        file_name: "llama-b10621-bin-win-opencl-adreno-arm64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-win-opencl-adreno-arm64.zip",
+        sha256: "3aa04706008402d3bd667ce9bec2e188b8552af30963650ee4782dc91578c6f1",
+        file_name: "llama-b10964-bin-win-opencl-adreno-arm64.zip",
         accelerator: "OpenCL",
     },
 ];
@@ -118,7 +118,7 @@ pub const ENGINE_OPTIONAL_RUNTIMES: &[EngineRuntimePin] = &[EngineRuntimePin {
     os: "windows",
     arch: "x86_64",
     accelerator: "CUDA",
-    url: "https://github.com/ggml-org/llama.cpp/releases/download/b10621/cudart-llama-bin-win-cuda-12.4-x64.zip",
+    url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/cudart-llama-bin-win-cuda-12.4-x64.zip",
     sha256: "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6",
     file_name: "cudart-llama-bin-win-cuda-12.4-x64.zip",
     sidecar: "cudart64_12.dll",
@@ -229,8 +229,8 @@ mod tests {
 
     #[test]
     fn official_release_uses_named_nightly_archives() {
-        assert_eq!(ENGINE_RELEASE, "0.3.0");
-        assert_eq!(ENGINE_BUILD, "b10621");
+        assert_eq!(ENGINE_RELEASE, "0.4.1");
+        assert_eq!(ENGINE_BUILD, "b10964");
     }
 
     #[test]
@@ -295,25 +295,25 @@ mod tests {
             pin_for_target_triple("aarch64-apple-darwin")
                 .unwrap()
                 .file_name,
-            "llama-b10621-bin-macos-arm64.tar.gz"
+            "llama-b10964-bin-macos-arm64.tar.gz"
         );
         assert_eq!(
             pin_for_target_triple("x86_64-apple-darwin")
                 .unwrap()
                 .file_name,
-            "llama-b10621-bin-macos-x64.tar.gz"
+            "llama-b10964-bin-macos-x64.tar.gz"
         );
         assert_eq!(
             pin_for_target_triple("x86_64-pc-windows-msvc")
                 .unwrap()
                 .file_name,
-            "llama-b10621-bin-win-vulkan-x64.zip"
+            "llama-b10964-bin-win-vulkan-x64.zip"
         );
         assert_eq!(
             pin_for_target_triple("aarch64-pc-windows-msvc")
                 .unwrap()
                 .file_name,
-            "llama-b10621-bin-win-cpu-arm64.zip"
+            "llama-b10964-bin-win-cpu-arm64.zip"
         );
         assert!(pin_for_target_triple("wasm32-unknown-unknown").is_err());
     }
@@ -356,8 +356,8 @@ mod tests {
     #[test]
     fn extract_dir_is_release_plus_accelerator() {
         let metal = pin_for("macos", "aarch64").unwrap();
-        assert_eq!(extract_dir_name(metal), "0.3.0-metal");
+        assert_eq!(extract_dir_name(metal), "0.4.1-metal");
         let cuda = optional_pin_for("windows", "x86_64", "CUDA").unwrap();
-        assert_eq!(extract_dir_name(cuda), "0.3.0-cuda");
+        assert_eq!(extract_dir_name(cuda), "0.4.1-cuda");
     }
 }

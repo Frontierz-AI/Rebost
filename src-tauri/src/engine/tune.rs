@@ -667,7 +667,7 @@ mod tests {
     #[test]
     fn granite_tiny_may_use_8k_on_metal() {
         let pin = pin_for("macos", "aarch64").unwrap();
-        let model = hint("Granite 4.1 3B", "granite-4.1-3b.gguf", 2002);
+        let model = hint("Granite 4.2 3B", "granite-4.2-3b.gguf", 2140);
         let plan = SpawnPlan::for_model(&profile(16, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 8192);
         assert_eq!(plan.answer_tokens, 768);
