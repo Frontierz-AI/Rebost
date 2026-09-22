@@ -52,6 +52,8 @@ pub const ACTIVITY_MAX_STEPS: usize = 24;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StoredMessage {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<super::images::ChatImage>,
     pub id: String,
     /// "user" | "assistant"
     pub role: String,
@@ -434,6 +436,10 @@ pub fn thread_markdown(title: &str, messages: &[StoredMessage]) -> String {
             "Rebost"
         };
         out.push_str(&format!("\n**{heading}**\n\n{}\n", message.text.trim()));
+        for image in &message.images {
+            let name = image.name.replace(['[', ']', '\n', '\r'], " ");
+            out.push_str(&format!("\n![{name}](rebost-images/{}.png)\n", image.id));
+        }
         if message.role != "user" && !message.sources.is_empty() {
             let legend = format_citation_legend(&message.sources);
             if !legend.is_empty() {
@@ -604,6 +610,7 @@ mod tests {
 
         let thread = Conversations::create(&paths, None).unwrap();
         let message = StoredMessage {
+            images: Vec::new(),
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "Explain EBITDA in simple terms for our monthly board meeting".into(),
@@ -631,6 +638,7 @@ mod tests {
 
     fn user_line(text: &str) -> StoredMessage {
         StoredMessage {
+            images: Vec::new(),
             id: crate::ids::message_id(),
             role: "user".into(),
             text: text.into(),
@@ -748,6 +756,7 @@ mod tests {
         let thread = Conversations::create(&paths, None).unwrap();
         Conversations::rename(&paths, &thread.id, "  Weekly notes  ").unwrap();
         let message = StoredMessage {
+            images: Vec::new(),
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "What changed this week?".into(),
@@ -770,6 +779,7 @@ mod tests {
 
         let thread = Conversations::create(&paths, None).unwrap();
         let first = StoredMessage {
+            images: Vec::new(),
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "First question about the lease".into(),
@@ -783,6 +793,7 @@ mod tests {
         Conversations::append(&paths, &thread.id, &first).unwrap();
         Conversations::rename(&paths, &thread.id, "New conversation").unwrap();
         let second = StoredMessage {
+            images: Vec::new(),
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "And the dates?".into(),
@@ -802,6 +813,7 @@ mod tests {
         let md = thread_markdown(
             "Lease notes",
             &[StoredMessage {
+                images: Vec::new(),
                 id: "m1".into(),
                 role: "assistant".into(),
                 text: "Notice is 90 days. [S1]".into(),
@@ -839,6 +851,7 @@ mod tests {
 
     fn stored(id: &str, text: &str) -> StoredMessage {
         StoredMessage {
+            images: Vec::new(),
             id: id.into(),
             role: "user".into(),
             text: text.into(),

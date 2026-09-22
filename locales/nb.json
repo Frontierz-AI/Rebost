@@ -623,5 +623,30 @@
     "addedOne": "Lagt til i denne samtalen.",
     "addedMany": "%{count} filer er lagt til i denne samtalen.",
     "unsupported": "Disse filtypene støttes ikke."
+  },
+  "images": {
+    "pasted": "Innlimt bilde",
+    "add": "Legg til bilder",
+    "attached": "Vedlagte bilder",
+    "preview": "Forhåndsvis %{name}",
+    "remove": "Fjern %{name}",
+    "closePreview": "Lukk forhåndsvisning",
+    "missingShort": "Bildet er utilgjengelig",
+    "preparing": "Forbereder vedlegg…",
+    "defaultPrompt": "Beskriv dette bildet.",
+    "hint": "Lim inn eller legg ved PNG/JPG. Bildegrense: %{count}.",
+    "limit": "Bildegrense: %{count}. Fjern et bilde før du legger til et nytt.",
+    "ready": "Bilder kan brukes. Grense per melding: %{count}.",
+    "enable": "Aktiver bilder",
+    "enableDescription": "Denne KI-en kan lese bilder med en ekstra nedlasting på %{size}.",
+    "enabling": "Aktiverer bilder…",
+    "unavailable": "Denne KI-en kan ikke motta bilder på denne datamaskinen. Velg en annen KI for å legge ved bilder.",
+    "tooLarge": "Bildet er for stort. Bruk en PNG eller JPG under 20 MB og 40 megapiksler.",
+    "format": "Dette bildeformatet støttes ikke. Velg en PNG eller JPG.",
+    "tooMany": "Det er for mange bilder for denne KI-en. Fjern et bilde og prøv igjen.",
+    "limitsChanged": "Bildene overskrider grensene til den nåværende KI-en. Fjern dem og legg dem ved på nytt.",
+    "missing": "Et bilde er ikke lenger tilgjengelig. Legg det ved på nytt for å fortsette.",
+    "storageFull": "Samtalen har nådd lagringsgrensen for bilder. Start en ny samtale.",
+    "invalid": "Rebost kunne ikke lese bildet. Prøv en annen PNG eller JPG."
   }
 }

@@ -230,3 +230,32 @@ describe("bindLibraryShelfIfUnset", () => {
     expect(state.chatState.selectedShelfId).toBe("s1");
   });
 });
+
+it("restores an image-only draft when sending fails before acknowledgement", async () => {
+  const state = await import("./stores.svelte");
+  await state.bootstrap();
+  state.chatState.activeThreadId = "t";
+  const image = { id: "img_a", name: "screen.png", width: 100, height: 100, bytes: 100 };
+  state.chatState.messages = [
+    {
+      id: "local-1",
+      role: "user",
+      text: "Describe this image",
+      ts: "",
+      status: "done",
+      sources: [],
+      images: [image],
+    },
+  ];
+  state.chatState.sentDrafts.t = "";
+  state.chatState.sentImages.t = [image];
+  mock.handlers.get("chat")!({
+    kind: "error",
+    threadId: "t",
+    messageId: "",
+    error: "Save failed.",
+  });
+  expect(state.chatState.imageDrafts.t).toEqual([image]);
+  expect(state.chatState.messages).toEqual([]);
+  expect(state.chatState.sentImages.t).toBeUndefined();
+});

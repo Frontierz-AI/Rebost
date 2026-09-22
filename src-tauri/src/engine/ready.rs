@@ -238,6 +238,18 @@ impl Engine {
             {
                 Ok(url) => return Ok(url),
                 Err(fail) if is_stopped(&fail.error) => return Err(fail.error),
+                Err(fail)
+                    if !is_stopped(&fail.error)
+                        && model.projector.is_some()
+                        && crate::core::mutex_lock(&self.disabled_vision).as_deref()
+                            != Some(&model.file) =>
+                {
+                    log::warn!(
+                        "vision startup failed; retrying this AI with text only: {}",
+                        fail.error
+                    );
+                    *crate::core::mutex_lock(&self.disabled_vision) = Some(model.file.clone());
+                }
                 Err(fail) if should_fallback_to_bundled(&fail, used_fallback, pin, bundled) => {
                     drop(inner);
                     used_fallback = true;
@@ -294,8 +306,24 @@ impl Engine {
             }
         };
         let profile = MachineProfile::detect(self.ctx.paths.base());
+        let mut vision_profile = profile.clone();
+        vision_profile.accelerator = pin.accelerator.into();
+        let vision = model
+            .projector
+            .as_ref()
+            .filter(|_| {
+                crate::core::mutex_lock(&self.disabled_vision).as_deref() != Some(&model.file)
+            })
+            .filter(|projector| self.ctx.paths.models_dir().join(&projector.file).is_file())
+            .and_then(|projector| {
+                super::vision::limits_for(&vision_profile, model.size_bytes, projector.size_bytes)
+            });
+        *crate::core::mutex_lock(&self.vision) = None;
         let hint = ModelHint::from_active(model, &self.ctx.paths.models_dir());
         let plan = SpawnPlan::for_model(&profile, pin, Some(&hint));
+        let vision = vision.and_then(|limits| {
+            limits.fit_context(plan.context_tokens, plan.answer_tokens.min(1024))
+        });
         if pin.accelerator == "Vulkan" && super::gpu::windows_host_is_arm64() {
             log::warn!(
                 "this Windows copy is running on ARM; using the CPU path so Chat can answer"
@@ -330,6 +358,18 @@ impl Engine {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
+        if let Some(limits) = vision {
+            let projector = model.projector.as_ref().expect("vision projector");
+            command
+                .arg("--mmproj")
+                .arg(self.ctx.paths.models_dir().join(&projector.file))
+                .arg("--image-max-tokens")
+                .arg(limits.tokens_per_image.to_string());
+            // Discrete VRAM is not measured. Keep the encoder on system RAM there.
+            if pin.accelerator != "Metal" {
+                command.arg("--no-mmproj-offload");
+            }
+        }
         #[cfg(unix)]
         {
             command.process_group(0);
@@ -456,6 +496,7 @@ impl Engine {
         inner.chat_stall = super::tune::chat_stall_timeout(&plan);
         let url = format!("http://127.0.0.1:{port}");
         inner.reasoning = Some(self.load_reasoning_caps(&url).await);
+        self.verify_vision(&url, vision).await;
 
         log::info!(
             "llama-server ready on 127.0.0.1:{port} after {}s",
@@ -490,6 +531,7 @@ impl Engine {
 
     /// Closing Rebost stops the engine and releases its memory.
     pub async fn stop(&self) {
+        *crate::core::mutex_lock(&self.vision) = None;
         let mut inner = self.inner.lock().await;
         if let Some(mut child) = inner.child.take() {
             let _ = child.kill().await;

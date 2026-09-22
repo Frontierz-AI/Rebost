@@ -623,5 +623,30 @@
     "addedOne": "Přidáno do této konverzace.",
     "addedMany": "Soubory přidané do této konverzace: %{count}.",
     "unsupported": "Tyto typy souborů nejsou podporovány."
+  },
+  "images": {
+    "pasted": "Vložený obrázek",
+    "add": "Přidat obrázky",
+    "attached": "Přiložené obrázky",
+    "preview": "Náhled %{name}",
+    "remove": "Odebrat %{name}",
+    "closePreview": "Zavřít náhled",
+    "missingShort": "Obrázek není dostupný",
+    "preparing": "Příprava příloh…",
+    "defaultPrompt": "Popiš tento obrázek.",
+    "hint": "Vložte nebo přiložte PNG/JPG. Limit obrázků: %{count}.",
+    "limit": "Limit obrázků: %{count}. Před přidáním dalšího obrázku jeden odeberte.",
+    "ready": "Obrázky jsou dostupné. Limit na zprávu: %{count}.",
+    "enable": "Zapnout obrázky",
+    "enableDescription": "Tato AI může číst obrázky po dodatečném stažení %{size}.",
+    "enabling": "Zapínání obrázků…",
+    "unavailable": "Tato AI na tomto počítači nemůže přijímat obrázky. Pro přiložení obrázků vyberte jinou AI.",
+    "tooLarge": "Obrázek je příliš velký. Použijte PNG nebo JPG menší než 20 MB a 40 megapixelů.",
+    "format": "Tento formát obrázku není podporován. Vyberte PNG nebo JPG.",
+    "tooMany": "Pro tuto AI je obrázků příliš mnoho. Odeberte obrázek a zkuste to znovu.",
+    "limitsChanged": "Obrázky přesahují limity aktuální AI. Odeberte je a znovu přiložte.",
+    "missing": "Obrázek už není dostupný. Pro pokračování jej znovu přiložte.",
+    "storageFull": "Konverzace dosáhla limitu úložiště obrázků. Začněte novou konverzaci.",
+    "invalid": "Rebost nemohl tento obrázek přečíst. Zkuste jiný PNG nebo JPG."
   }
 }

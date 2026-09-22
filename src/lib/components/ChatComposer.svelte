@@ -1,6 +1,8 @@
 <script lang="ts">
   import { api, type DocumentMeta } from "$lib/api";
   import { importIntoChat } from "$lib/chat-import";
+  import { addChatImages, pastedImages, removeChatImage } from "$lib/chat-images";
+  import ChatImages from "./ChatImages.svelte";
   import { fileListQuery, placeholderAt, replacePlaceholder } from "$lib/placeholders";
   import { shelfDisplayName } from "$lib/shelf-label";
   import {
@@ -11,11 +13,20 @@
     logInvokeError,
     notifyInvokeError,
     openCreateShelf,
+    notify,
   } from "$lib/stores.svelte";
   import { focusTrap } from "$lib/focus-trap";
   import { t } from "$lib/i18n.svelte";
-  import { PROMPT_MAX_CHARS } from "$lib/text-cap";
-  import { SendHorizontal, Square, ChevronDown, LibraryBig, Plus, Paperclip } from "@lucide/svelte";
+  import { clipChars, PROMPT_MAX_CHARS } from "$lib/text-cap";
+  import {
+    SendHorizontal,
+    Square,
+    ChevronDown,
+    LibraryBig,
+    Plus,
+    Paperclip,
+    ImagePlus,
+  } from "@lucide/svelte";
 
   let {
     composerEl = $bindable(null),
@@ -39,6 +50,42 @@
   let cursor = $state(0);
   let dismissedSlot = $state<string | null>(null);
   let highlight = $state(0);
+  const images = $derived(chatState.imageDrafts[chatState.activeThreadId ?? "new"] ?? []);
+  const vision = $derived(app.engine.vision);
+  const preparing = $derived(
+    (chatState.imports[chatState.activeThreadId ?? "new"] ?? 0) > 0 ||
+      (chatState.imports.new ?? 0) > 0,
+  );
+  const preparingImages = $derived(
+    (chatState.imageImports[chatState.activeThreadId ?? "new"] ?? 0) +
+      (chatState.activeThreadId ? (chatState.imageImports.new ?? 0) : 0),
+  );
+  const pendingImages = $derived(
+    Math.min(preparingImages, Math.max(0, (vision?.maxImages ?? 0) - images.length)),
+  );
+  const blockedImages = $derived(
+    images.length > 0 &&
+      (!vision ||
+        images.length > vision.maxImages ||
+        images.some((image) => image.width > vision.maxEdge || image.height > vision.maxEdge)),
+  );
+
+  function onPaste(event: ClipboardEvent) {
+    const files = pastedImages(event.clipboardData);
+    if (!files.length) return;
+    event.preventDefault();
+    const text = event.clipboardData?.getData("text/plain");
+    if (text && composerEl) {
+      composerEl.setRangeText(text, composerEl.selectionStart, composerEl.selectionEnd, "end");
+      chatState.draft = clipChars(composerEl.value, PROMPT_MAX_CHARS);
+      onAutoResize();
+    }
+    if (!vision) {
+      notify(t("images.unavailable"));
+      return;
+    }
+    void addChatImages(files);
+  }
 
   const selectedShelf = $derived.by(() => {
     const id = chatState.selectedShelfId;
@@ -200,6 +247,20 @@
       </details>
     {/if}
     <div class="card relative flex flex-col gap-1 !rounded-2xl px-3 pt-2.5 pb-2">
+      {#if images.length || pendingImages}
+        <ChatImages
+          threadId={chatState.activeThreadId ?? ""}
+          {images}
+          pending={pendingImages}
+          onRemove={(image) => removeChatImage(chatState.activeThreadId!, image)}
+        />
+      {/if}
+      {#if blockedImages}<p role="status" class="text-sm text-danger dark:text-red-400">
+          {t("images.limitsChanged")}
+        </p>{/if}
+      {#if preparing && !preparingImages}<p role="status" class="text-sm text-ink-soft">
+          {t("images.preparing")}
+        </p>{/if}
       {#if listOpen}
         <div
           class="absolute right-0 bottom-full left-0 z-30 mb-1 max-h-56 overflow-y-auto rounded-xl border border-paper-line bg-surface py-1 shadow-pop dark:shadow-none"
@@ -230,6 +291,8 @@
         </div>
       {/if}
       <textarea
+        name="message"
+        onpaste={onPaste}
         bind:this={composerEl}
         bind:value={chatState.draft}
         oninput={() => {
@@ -356,6 +419,18 @@
           >
             <Paperclip size={15} aria-hidden="true" />
           </button>
+          {#if vision}
+            <button
+              type="button"
+              class="btn-ghost !rounded-full !p-2"
+              onclick={() => importIntoChat(undefined, true)}
+              title={t("images.add")}
+              aria-label={t("images.add")}
+              disabled={preparing || images.length >= vision.maxImages}
+            >
+              <ImagePlus size={16} class="shrink-0" aria-hidden="true" />
+            </button>
+          {/if}
         </div>
         {#if generating}
           <button
@@ -372,7 +447,10 @@
             type="button"
             class="btn-amber btn-icon"
             onclick={onSend}
-            disabled={!hasModel || !chatState.draft.trim()}
+            disabled={!hasModel ||
+              (!chatState.draft.trim() && !images.length) ||
+              preparing ||
+              blockedImages}
             title={hasModel ? t("chat.send") : t("chat.installFirstTitle")}
             aria-label={hasModel ? t("chat.sendMessage") : t("chat.installFirstTitle")}
             aria-describedby={!hasModel ? "composer-needs-ai" : undefined}
@@ -382,5 +460,8 @@
         {/if}
       </div>
     </div>
+    {#if vision}<p class="px-3 pt-2 text-sm text-ink-soft">
+        {t("images.hint", { count: vision.maxImages })}
+      </p>{/if}
   </div>
 </div>

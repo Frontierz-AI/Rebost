@@ -10,6 +10,7 @@ import {
   refreshThreads,
 } from "./stores.svelte";
 import { t } from "./i18n.svelte";
+import { addChatImages, isImagePath } from "./chat-images";
 
 export type ChatImportResult = "done" | "cancelled";
 
@@ -24,23 +25,29 @@ function chatImportNotice(result: ImportResult): string {
 }
 
 /** Capture the destination before showing a native picker; navigation cannot retarget an import. */
-export async function importIntoChat(paths?: string[]): Promise<ChatImportResult> {
+export async function importIntoChat(
+  paths?: string[],
+  imagesOnly = false,
+): Promise<ChatImportResult> {
   const navigation = chatState.navigation;
   let threadId = chatState.activeThreadId;
   const key = threadId ?? "new";
   chatState.imports[key] = (chatState.imports[key] ?? 0) + 1;
   try {
-    const picked = paths ?? (await api.pickFiles());
+    const picked = paths ?? (await api.pickFiles(imagesOnly));
     if (!picked?.length) return "cancelled";
     if (!threadId) {
       if (chatState.navigation !== navigation) return "cancelled";
       threadId = await ensureActiveThread();
     }
+    await addChatImages(picked.filter(isImagePath), threadId);
+    const documents = picked.filter((path) => !isImagePath(path));
+    if (!documents.length) return "done";
     const shelf = await api.threadEnsureUploadShelf(threadId);
     if (chatState.activeThreadId === threadId && chatState.navigation === navigation)
       chatState.uploadShelf = shelf;
     await refreshThreads();
-    const result = await api.shelfImportPaths(shelf.id, picked);
+    const result = await api.shelfImportPaths(shelf.id, documents);
     if (result.queued > 0) {
       if (chatState.activeThreadId === threadId && chatState.navigation === navigation)
         fillDraft(pinFileNames(chatState.draft, result.names));

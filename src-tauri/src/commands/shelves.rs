@@ -482,8 +482,31 @@ pub async fn shelf_import_paths(
 pub async fn pick_files(
     app: AppHandle,
     pending: State<'_, PendingImports>,
+    engine: State<'_, Arc<crate::engine::Engine>>,
+    images_only: Option<bool>,
 ) -> CmdResult<Option<Vec<String>>> {
-    let Some(files) = app.dialog().file().blocking_pick_files() else {
+    let vision = engine.vision_limits().is_some();
+    if images_only == Some(true) && !vision {
+        return Err(friendly("image-unavailable"));
+    }
+    let mut extensions: Vec<&str> = if images_only == Some(true) {
+        Vec::new()
+    } else {
+        crate::ingest::extract::supported_extensions()
+            .iter()
+            .map(String::as_str)
+            .collect()
+    };
+    extensions.sort_unstable();
+    if vision {
+        extensions.extend(["png", "jpg", "jpeg"]);
+    }
+    let Some(files) = app
+        .dialog()
+        .file()
+        .add_filter(rust_i18n::t!("chat.addFiles"), &extensions)
+        .blocking_pick_files()
+    else {
         return Ok(None);
     };
     let paths: Vec<PathBuf> = files

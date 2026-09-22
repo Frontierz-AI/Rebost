@@ -59,7 +59,8 @@ impl ModelHint {
         Self {
             name: model.name.clone(),
             file: model.file.clone(),
-            file_bytes,
+            file_bytes: file_bytes
+                .saturating_add(model.projector.as_ref().map_or(0, |p| p.size_bytes)),
             gguf_path: Some(path),
         }
     }

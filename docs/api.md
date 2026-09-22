@@ -29,7 +29,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `shelf_remove_source` | `shelfId`, `sourceId` | `()` |
 | `shelf_import_paths` | `shelfId`, `paths` | `ImportResult` (`queued`, `names`, `cancelled`, `atLimit`, `skippedLong`). Empty `paths` imports the latest native drop. Other paths must already be on the drop/picker allowlist; anything else is ignored. |
 | `shelf_import_dialog` | `shelfId` | `ImportResult` (`cancelled` if the picker was dismissed; same fields as `shelf_import_paths`) |
-| `pick_files` | — | `string[] \| null` (null if cancelled; returned paths are allowlisted for a following `shelf_import_paths`) |
+| `pick_files` | `imagesOnly?` | `string[] \| null` (null if cancelled; returned paths are allowlisted for `shelf_import_paths` or `chat_image_add`; PNG/JPEG are offered only when vision is ready) |
 | `shelf_documents` | `shelfId` | `DocumentMeta[]` |
 | `document_card` | `shelfId`, `docId` | `Card` |
 | `document_text` | `shelfId`, `docId`, `startChar?`, `page?`, `section?`, `around?` | window of extracted text (`text`, `startChar`, `endChar`, `totalChars`, `windowChars`) |
@@ -44,7 +44,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `thread_rename` | `threadId`, `title` | `()` |
 | `thread_export` | `threadId` | `bool` (false if the save dialog was cancelled) |
 | `thread_delete` | `threadId` | `()` |
-| `chat_send` | `threadId`, `text`, `shelfId?` | `()` (answer arrives on `rebost://chat`; `queued` fires immediately, then waits if another answer is in flight) |
+| `chat_send` | `threadId`, `text`, `shelfId?`, `imageIds?` | `()` (answer arrives on `rebost://chat`; `queued` fires immediately, then waits if another answer is in flight) |
 | `chat_cancel` | `messageId` | `()` |
 | `warm_engine` | — | `()` |
 | `engine_status` | — | `EngineStatus` |
@@ -77,3 +77,17 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `update_info` | — | `AppUpdate \| null` (null unless a newer GitHub release was confirmed) |
 | `show_update_window` | — | `()` |
 | `install_update` | — | `()` (progress on `rebost://update-progress`; app restarts) |
+
+## Chat images
+
+`EngineStatus.vision` is null unless the ready local runtime reports `modalities.vision` and the hardware/context budget admits images. Otherwise it contains `{ maxImages, maxEdge, tokensPerImage }`. The composer follows that capability; model names and repository tags alone do not enable image input.
+
+| Command | Args | Returns |
+|---------|------|---------|
+| `chat_image_add` | `threadId`, `name`, exactly one of `path` or `data` (base64) | `ChatImage` (`id`, `name`, `width`, `height`, `bytes`); native paths must come from the picker/drop allowlist |
+| `chat_image_read` | `threadId`, `imageId`, `thumbnail` | local PNG data URL |
+| `chat_image_remove` | `threadId`, `imageId` | `()`; referenced images are retained |
+| `model_vision_offer` | — | companion download bytes, or null if no suitable upgrade is known |
+| `model_enable_vision` | — | `()`; downloads the matching companion and verifies the running engine; failure restores the prior text model |
+
+`StoredMessage.images` is optional metadata, never base64. Old text-only JSONL remains readable. Image-only sends use a localized description prompt. Markdown exports write portable image assets beside the document in `rebost-images/`.

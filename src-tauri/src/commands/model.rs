@@ -27,6 +27,21 @@ pub fn engine_status(engine: State<'_, Arc<Engine>>) -> EngineStatus {
     engine.status()
 }
 
+#[tauri::command]
+pub async fn model_vision_offer(engine: State<'_, Arc<Engine>>) -> CmdResult<Option<u64>> {
+    engine.vision_offer().await.map_err(super::friendly)
+}
+
+#[tauri::command]
+pub async fn model_enable_vision(engine: State<'_, Arc<Engine>>) -> CmdResult<()> {
+    engine
+        .inner()
+        .clone()
+        .enable_vision()
+        .await
+        .map_err(super::friendly)
+}
+
 /// Hardware profile plus catalog recommendations.
 #[tauri::command]
 pub fn machine_profile(ctx: State<'_, Arc<Ctx>>) -> MachineView {
@@ -129,7 +144,7 @@ pub fn download_cancel(engine: State<'_, Arc<Engine>>, id: String) {
 /// Skip SHA-256 check for a model download that stalled on verify.
 #[tauri::command]
 pub fn download_skip_verify(engine: State<'_, Arc<Engine>>, id: String) {
-    if id.starts_with("model:") {
+    if id.starts_with("model:") || id.starts_with("vision:") {
         engine.skip_download_verify(&id);
     }
 }

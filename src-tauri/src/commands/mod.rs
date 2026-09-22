@@ -2,12 +2,14 @@
 //! Heavy work stays in core modules; errors become friendly strings here.
 
 mod chat;
+mod images;
 mod model;
 mod recipes;
 mod settings;
 mod shelves;
 
 pub use chat::*;
+pub use images::*;
 pub use model::*;
 pub use recipes::*;
 pub use settings::*;
@@ -43,6 +45,20 @@ pub(crate) fn map_user_error(text: &str) -> String {
         return user_error_fallback();
     }
     let lower = trimmed.to_lowercase();
+    for (code, key) in [
+        ("image-unavailable", "images.unavailable"),
+        ("image-too-large", "images.tooLarge"),
+        ("image-format", "images.format"),
+        ("image-count", "images.tooMany"),
+        ("image-limits-changed", "images.limitsChanged"),
+        ("image-missing", "images.missing"),
+        ("image-storage-full", "images.storageFull"),
+        ("image-invalid", "images.invalid"),
+    ] {
+        if lower.contains(code) {
+            return rust_i18n::t!(key).into();
+        }
+    }
 
     if lower.contains("invalid id") {
         return rust_i18n::t!("errors.invalidId").into();

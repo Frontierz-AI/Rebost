@@ -29,6 +29,7 @@
   import ChatThreadList from "$lib/components/ChatThreadList.svelte";
   import ChatThreadHeader from "$lib/components/ChatThreadHeader.svelte";
   import ChatComposer from "$lib/components/ChatComposer.svelte";
+  import ChatImages from "$lib/components/ChatImages.svelte";
   import ChatEmptyState from "$lib/components/ChatEmptyState.svelte";
   import ThinkingStatus from "$lib/components/ThinkingStatus.svelte";
   import ThinkingPanel from "$lib/components/ThinkingPanel.svelte";
@@ -209,7 +210,21 @@
 
   async function send() {
     const text = chatState.draft.trim();
-    if (!text || generating || !hasModel) return;
+    const images = [...(chatState.imageDrafts[chatState.activeThreadId ?? "new"] ?? [])];
+    if ((!text && !images.length) || generating || !hasModel) return;
+    const vision = app.engine.vision;
+    if (
+      images.length &&
+      (!vision ||
+        images.length > vision.maxImages ||
+        images.some((image) => image.width > vision.maxEdge || image.height > vision.maxEdge))
+    )
+      return;
+    if (
+      (chatState.imports[chatState.activeThreadId ?? "new"] ?? 0) > 0 ||
+      (chatState.imports.new ?? 0) > 0
+    )
+      return;
     const navigation = chatState.navigation;
     const shelfId = chatState.selectedShelfId;
     const originalDraft = chatState.draft;
@@ -254,9 +269,10 @@
         setPlaceholderPending(threadId);
       }
       const optimistic: StoredMessage = {
+        images,
         id: optimisticId,
         role: "user",
-        text,
+        text: text || t("images.defaultPrompt"),
         ts: new Date().toISOString(),
         shelfId,
         sources: [],
@@ -270,8 +286,17 @@
       await tick();
       autoresize();
       chatState.sentDrafts[threadId] = originalDraft;
-      await api.chatSend(threadId, text, shelfId);
+      chatState.sentImages[threadId] = images;
+      chatState.imageDrafts[threadId] = [];
+      await api.chatSend(
+        threadId,
+        text,
+        shelfId,
+        images.map((image) => image.id),
+      );
     } catch (error) {
+      chatState.imageDrafts[outboundKey] = images;
+      delete chatState.sentImages[outboundKey];
       delete chatState.sentDrafts[outboundKey];
       clearOutbound(outboundKey);
       dropPending(outboundKey);
@@ -291,7 +316,11 @@
       .slice(0, index)
       .reverse()
       .find((m) => m.role === "user");
-    if (question) fillDraft(question.text);
+    if (question) {
+      fillDraft(question.text);
+      if (chatState.activeThreadId)
+        chatState.imageDrafts[chatState.activeThreadId] = [...(question.images ?? [])];
+    }
     composerEl?.focus();
   }
 
@@ -490,9 +519,12 @@
             {#if message.role === "user"}
               <div data-chat-message={message.id} class="flex justify-end">
                 <div
-                  class="max-w-[90%] cursor-text rounded-2xl rounded-br-md bg-navy-900 px-4 py-2.5 text-[13.8px] leading-relaxed break-words whitespace-pre-wrap text-white select-text"
+                  class="max-w-[90%] cursor-text rounded-2xl rounded-br-md bg-navy-900 px-4 py-2.5 text-[13.8px] leading-relaxed break-words text-white select-text"
                 >
-                  {message.text}
+                  {#if message.images?.length && chatState.activeThreadId}
+                    <ChatImages threadId={chatState.activeThreadId} images={message.images} />
+                  {/if}
+                  <p class="whitespace-pre-wrap">{message.text}</p>
                 </div>
               </div>
             {:else}

@@ -127,7 +127,7 @@ fn notify_send_failed_emits_an_error_for_the_thread() {
     let ctx = Ctx::new(paths, events.clone(), ExtractorSettings::default()).unwrap();
     let engine = Engine::new(ctx.clone());
     let chat = ChatService::new(ctx, engine);
-    chat.notify_send_failed("t1");
+    chat.notify_send_failed("t1", rust_i18n::t!("errors.generationFailed").as_ref());
     let captured = events.0.lock().unwrap();
     assert_eq!(captured.len(), 1);
     assert_eq!(
@@ -161,6 +161,7 @@ fn a_blank_follow_up_drops_tool_notes() {
 #[test]
 fn follow_up_search_keeps_the_last_user_questions() {
     let user = |id: &str, text: &str| StoredMessage {
+        images: Vec::new(),
         id: id.into(),
         role: "user".into(),
         text: text.into(),
@@ -191,6 +192,7 @@ fn follow_up_search_keeps_the_last_user_questions() {
 #[test]
 fn history_keeps_the_citation_titles_the_user_saw() {
     let message = StoredMessage {
+        images: Vec::new(),
         id: "a1".into(),
         role: "assistant".into(),
         text: "Notice is 90 days. [S1]".into(),

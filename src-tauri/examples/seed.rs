@@ -121,6 +121,7 @@ Never put a personal mobile on the door."
                 }
             }
             settings.active_model = Some(rebost::settings::ActiveModel {
+                projector: None,
                 file: file_name,
                 name: ai_name.clone(),
                 source: "huggingface".into(),
@@ -133,6 +134,7 @@ Never put a personal mobile on the door."
             // Screenshots / UI work: show the suggested name even if the
             // weights are not on disk.
             settings.active_model = Some(rebost::settings::ActiveModel {
+                projector: None,
                 file: "Muse-Glimmer-30B.gguf".into(),
                 name: ai_name.clone(),
                 source: "huggingface".into(),
@@ -277,6 +279,7 @@ fn new_thread(ctx: &Ctx, shelf_id: Option<&str>, title: &str) -> anyhow::Result<
 fn user(ctx: &Ctx, thread_id: &str, shelf_id: Option<&str>, text: &str) -> anyhow::Result<()> {
     let ts = now();
     let message = StoredMessage {
+        images: Vec::new(),
         id: rebost::ids::message_id(),
         role: "user".into(),
         text: text.into(),
@@ -304,6 +307,7 @@ fn assistant(
 ) -> anyhow::Result<()> {
     let ts = now();
     let message = StoredMessage {
+        images: Vec::new(),
         id: rebost::ids::message_id(),
         role: "assistant".into(),
         text: text.into(),

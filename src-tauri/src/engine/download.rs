@@ -53,6 +53,13 @@ impl DownloadControl {
         }
     }
 
+    pub fn check_cancelled(&self) -> Result<()> {
+        if self.cancel.load(Ordering::Relaxed) {
+            return Err(anyhow!("cancelled"));
+        }
+        Ok(())
+    }
+
     pub fn request_cancel(&self) {
         self.cancel.store(true, Ordering::Relaxed);
     }

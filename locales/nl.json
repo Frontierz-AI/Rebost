@@ -623,5 +623,30 @@
     "addedOne": "Toegevoegd aan dit gesprek.",
     "addedMany": "%{count} bestanden toegevoegd aan dit gesprek.",
     "unsupported": "Deze bestandstypen worden niet ondersteund."
+  },
+  "images": {
+    "pasted": "Geplakte afbeelding",
+    "add": "Afbeeldingen toevoegen",
+    "attached": "Bijgevoegde afbeeldingen",
+    "preview": "Voorbeeld van %{name}",
+    "remove": "%{name} verwijderen",
+    "closePreview": "Voorbeeld sluiten",
+    "missingShort": "Afbeelding niet beschikbaar",
+    "preparing": "Bijlagen voorbereiden…",
+    "defaultPrompt": "Beschrijf deze afbeelding.",
+    "hint": "Plak PNG/JPG of voeg ze toe. Afbeeldingslimiet: %{count}.",
+    "limit": "Afbeeldingslimiet: %{count}. Verwijder een afbeelding voordat je een nieuwe toevoegt.",
+    "ready": "Afbeeldingen zijn beschikbaar. Limiet per bericht: %{count}.",
+    "enable": "Afbeeldingen inschakelen",
+    "enableDescription": "Deze AI kan afbeeldingen lezen met een extra download van %{size}.",
+    "enabling": "Afbeeldingen inschakelen…",
+    "unavailable": "Deze AI kan op deze computer geen afbeeldingen ontvangen. Kies een andere AI om afbeeldingen toe te voegen.",
+    "tooLarge": "Deze afbeelding is te groot. Gebruik een PNG of JPG kleiner dan 20 MB en 40 megapixels.",
+    "format": "Dit afbeeldingsformaat wordt niet ondersteund. Kies een PNG of JPG.",
+    "tooMany": "Er zijn te veel afbeeldingen voor deze AI. Verwijder een afbeelding en probeer het opnieuw.",
+    "limitsChanged": "Deze afbeeldingen overschrijden de limieten van de huidige AI. Verwijder ze en voeg ze opnieuw toe.",
+    "missing": "Een afbeelding is niet meer beschikbaar. Voeg deze opnieuw toe om door te gaan.",
+    "storageFull": "Deze conversatie heeft de opslaglimiet voor afbeeldingen bereikt. Begin een nieuwe conversatie.",
+    "invalid": "Rebost kon deze afbeelding niet lezen. Probeer een andere PNG of JPG."
   }
 }

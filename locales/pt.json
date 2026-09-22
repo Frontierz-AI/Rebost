@@ -623,5 +623,30 @@
     "addedOne": "Adicionado a esta conversa.",
     "addedMany": "%{count} ficheiros adicionados a esta conversa.",
     "unsupported": "O tipo destes ficheiros não é suportado."
+  },
+  "images": {
+    "pasted": "Imagem colada",
+    "add": "Adicionar imagens",
+    "attached": "Imagens anexadas",
+    "preview": "Pré-visualizar %{name}",
+    "remove": "Remover %{name}",
+    "closePreview": "Fechar pré-visualização",
+    "missingShort": "Imagem indisponível",
+    "preparing": "A preparar os anexos…",
+    "defaultPrompt": "Descreve esta imagem.",
+    "hint": "Cola ou anexa PNG/JPG. Limite de imagens: %{count}.",
+    "limit": "Limite de imagens: %{count}. Remove uma antes de adicionar outra.",
+    "ready": "As imagens estão disponíveis. Limite por mensagem: %{count}.",
+    "enable": "Ativar imagens",
+    "enableDescription": "Esta IA pode ler imagens com uma transferência adicional de %{size}.",
+    "enabling": "A ativar imagens…",
+    "unavailable": "Esta IA não pode receber imagens neste computador. Escolhe outra para as anexar.",
+    "tooLarge": "Esta imagem é demasiado grande. Usa um PNG ou JPG com menos de 20 MB e 40 megapíxeis.",
+    "format": "Este formato de imagem não é suportado. Escolhe um PNG ou JPG.",
+    "tooMany": "Há demasiadas imagens para esta IA. Remove uma e tenta novamente.",
+    "limitsChanged": "Estas imagens excedem os limites da IA atual. Remove-as e volta a anexá-las.",
+    "missing": "Uma imagem já não está disponível. Volta a anexá-la para continuar.",
+    "storageFull": "Esta conversa atingiu o limite de armazenamento de imagens. Inicia uma nova conversa.",
+    "invalid": "O Rebost não conseguiu ler esta imagem. Experimenta outro PNG ou JPG."
   }
 }

@@ -25,8 +25,9 @@ pub(super) struct OllamaLayer {
 pub(super) async fn ollama_manifest(
     client: &reqwest::Client,
     name: &str,
-) -> Result<(OllamaLayer, Option<String>)> {
-    let url = format!("https://registry.ollama.ai/v2/library/{name}/manifests/latest");
+) -> Result<(OllamaLayer, Option<String>, Option<OllamaLayer>)> {
+    let (repo, tag) = name.split_once(':').unwrap_or((name, "latest"));
+    let url = format!("https://registry.ollama.ai/v2/library/{repo}/manifests/{tag}");
     let manifest: OllamaManifest = client
         .get(&url)
         .header(
@@ -51,7 +52,7 @@ pub(super) async fn ollama_manifest(
         .map(|l| l.digest.clone());
 
     let license = if let Some(digest) = license_digest {
-        let blob_url = format!("https://registry.ollama.ai/v2/library/{name}/blobs/{digest}");
+        let blob_url = format!("https://registry.ollama.ai/v2/library/{repo}/blobs/{digest}");
         match client.get(&blob_url).send().await {
             Ok(response) => response
                 .text()
@@ -63,7 +64,12 @@ pub(super) async fn ollama_manifest(
     } else {
         None
     };
-    Ok((model_layer, license))
+    let projector = manifest
+        .layers
+        .iter()
+        .find(|l| l.media_type == "application/vnd.ollama.image.projector")
+        .cloned();
+    Ok((model_layer, license, projector))
 }
 
 fn classify_license(text: &str) -> String {
@@ -120,7 +126,7 @@ pub(super) async fn search_ollama(
             continue;
         }
         match ollama_manifest(client, &name).await {
-            Ok((layer, license)) => {
+            Ok((layer, license, _)) => {
                 let fits = layer.size.map(|s| profile.runtime_need_bytes(s) <= budget);
                 results.push(ModelSearchResult {
                     id: normalize_model_key(&name),

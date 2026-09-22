@@ -45,6 +45,7 @@ async fn full_loop_answers_with_citations() {
     {
         let mut settings = app.ctx.settings.write().unwrap();
         settings.active_model = Some(ActiveModel {
+            projector: None,
             file: model_file.clone(),
             name: "Smoke test model".into(),
             source: "local".into(),

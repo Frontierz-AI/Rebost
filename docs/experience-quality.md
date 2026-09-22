@@ -29,3 +29,10 @@ Manual acceptance checks:
 - Open a citation, edit and reprocess its file, then reopen it. The saved quoted evidence must remain available with a changed-version notice and separate current context. Old conversations without saved anchors retain their legacy location lookup.
 
 Automatic tests do not establish screen-reader usability, general answer quality, or performance on hardware that was not exercised. Record those manual results explicitly.
+
+## Image input
+
+- With a ready vision model, pick a PNG and paste a screenshot; verify thumbnails, remove, preview, Escape/focus restoration, and image-only send. Repeat at the minimum window size and in dark appearance.
+- Ask a factual visual question and a follow-up after reopening the conversation. Compare two images when the runtime admits them. Stop a visual answer and retry.
+- Switch to a text-only model: hide the image button, reject pasted images with a clear message, and keep normal document attachment and text chat usable. A draft retained across a capability change must block an unsupported send.
+- Check corrupt/oversize images, count limits, navigation during intake, missing stored images, export assets, and deletion with the conversation. Use `vision_smoke` for real engine coverage and the unit suites for hardware, context, and wire contracts.

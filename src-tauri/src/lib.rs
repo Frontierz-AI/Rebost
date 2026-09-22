@@ -174,6 +174,9 @@ pub fn run() {
                 },
             )?;
             let engine = Engine::new(ctx.clone());
+            if let Err(error) = crate::chat::images::cleanup_drafts(&ctx.paths) {
+                log::warn!("cleaning abandoned image drafts: {error}");
+            }
             let chat = ChatService::new(ctx.clone(), engine.clone());
 
             // Core workers live on the tokio runtime tauri drives.
@@ -262,6 +265,11 @@ pub fn run() {
             commands::thread_ensure_upload_shelf,
             commands::thread_delete,
             commands::chat_send,
+            commands::chat_image_add,
+            commands::chat_image_read,
+            commands::chat_image_remove,
+            commands::model_vision_offer,
+            commands::model_enable_vision,
             commands::chat_cancel,
             commands::chat_approve_web,
             commands::warm_engine,

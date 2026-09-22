@@ -57,7 +57,10 @@ pub(super) fn flatten_tool_turns(messages: &[ChatMessage]) -> Vec<ChatMessage> {
         }
         // A tool result, a stray system turn, and an assistant turn that was
         // nothing but a tool call all have to ride along with a real turn.
-        if message.role == "tool" || message.role == "system" || text.is_empty() {
+        if message.role == "tool"
+            || message.role == "system"
+            || (text.is_empty() && message.images.is_empty())
+        {
             append_paragraph(&mut carried, text);
             continue;
         }
@@ -66,6 +69,9 @@ pub(super) fn flatten_tool_turns(messages: &[ChatMessage]) -> Vec<ChatMessage> {
             append_paragraph(&mut body, &std::mem::take(&mut carried));
         }
         merge_or_push(&mut out, &message.role, &body);
+        if let Some(last) = out.last_mut() {
+            last.images.extend(message.images.iter().cloned());
+        }
     }
     if !carried.is_empty() {
         merge_or_push(&mut out, "user", &carried);
@@ -96,6 +102,18 @@ fn append_paragraph(target: &mut String, text: &str) {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn template_fallback_keeps_images_even_when_the_turn_has_no_text() {
+        let mut first = super::ChatMessage::text("user", "");
+        first.images.push("data:image/png;base64,one".into());
+        let mut second = super::ChatMessage::text("user", "Compare them");
+        second.images.push("data:image/png;base64,two".into());
+        let flattened = super::flatten_tool_turns(&[first, second]);
+        assert_eq!(flattened.len(), 1);
+        assert_eq!(flattened[0].images.len(), 2);
+        assert_eq!(flattened[0].as_text(), "Compare them");
+    }
+
     use super::*;
     use crate::engine::ToolCall;
 
@@ -105,6 +123,7 @@ mod tests {
 
     fn tool_call() -> ChatMessage {
         ChatMessage {
+            images: Vec::new(),
             role: "assistant".into(),
             content: None,
             tool_calls: Some(vec![ToolCall::function("c1", "search_shelf", "{}")]),

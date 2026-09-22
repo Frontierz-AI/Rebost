@@ -547,9 +547,10 @@ pub async fn resolve_download(
     validate_reference(source, reference)?;
     match source {
         "ollama" => {
-            let (layer, _) = ollama_manifest(client, reference).await?;
+            let (layer, _, _) = ollama_manifest(client, reference).await?;
+            let repo = reference.split(':').next().unwrap_or(reference);
             let url = format!(
-                "https://registry.ollama.ai/v2/library/{reference}/blobs/{}",
+                "https://registry.ollama.ai/v2/library/{repo}/blobs/{}",
                 layer.digest
             );
             let file_name = format!("{}.gguf", reference.replace([':', '/'], "-"));
@@ -602,8 +603,142 @@ pub async fn resolve_download(
     }
 }
 
+/// Resolve a matching vision component; ambiguous multi-model repos stay text-only.
+pub async fn resolve_projector(
+    client: &reqwest::Client,
+    source: &str,
+    reference: &str,
+    model_file: &str,
+) -> Result<Option<ResolvedDownload>> {
+    validate_reference(source, reference)?;
+    if source == "ollama" {
+        let (_, _, projector) = ollama_manifest(client, reference).await?;
+        let repo = reference.split(':').next().unwrap_or(reference);
+        return Ok(projector.map(|layer| ResolvedDownload {
+            url: format!(
+                "https://registry.ollama.ai/v2/library/{repo}/blobs/{}",
+                layer.digest
+            ),
+            file_name: format!("mmproj-{}.gguf", reference.replace([':', '/'], "-")),
+            size: layer.size,
+            sha256: layer.digest.strip_prefix("sha256:").map(str::to_string),
+        }));
+    }
+    let entries: Vec<HfTreeEntry> = client
+        .get(format!(
+            "https://huggingface.co/api/models/{reference}/tree/main"
+        ))
+        .send()
+        .await?
+        .error_for_status()?
+        .json()
+        .await?;
+    let files: Vec<String> = entries.iter().map(|entry| entry.path.clone()).collect();
+    let Some(file) = pick_projector(&files, model_file) else {
+        return Ok(None);
+    };
+    let entry = entries
+        .iter()
+        .find(|entry| entry.path == file)
+        .expect("selected entry");
+    Ok(Some(ResolvedDownload {
+        url: format!("https://huggingface.co/{reference}/resolve/main/{file}"),
+        file_name: file.rsplit('/').next().unwrap_or(&file).to_string(),
+        size: entry.size.or(entry.lfs.as_ref().and_then(|l| l.size)),
+        sha256: entry.lfs.as_ref().and_then(|l| l.oid.clone()),
+    }))
+}
+
+fn pick_projector(files: &[String], model_file: &str) -> Option<String> {
+    let quant =
+        regex::Regex::new(r"(?i)(?:^|[-_.])(?:f16|bf16|f32|q\d+(?:_[a-z0-9]+)*)(?:\.gguf)?$")
+            .unwrap();
+    let size = regex::Regex::new(r"(?i)(?:^|[-_])(\d+(?:\.\d+)?b)(?:[-_.]|$)").unwrap();
+    let target_size = size.captures(model_file).map(|c| c[1].to_ascii_lowercase());
+    let mut candidates: Vec<_> = files
+        .iter()
+        .filter(|file| {
+            let lower = file.to_ascii_lowercase();
+            lower.contains("mmproj")
+                && lower.ends_with(".gguf")
+                && !lower.contains("-of-")
+                && size.captures(file).is_none_or(|c| {
+                    target_size
+                        .as_ref()
+                        .is_none_or(|target| c[1].eq_ignore_ascii_case(target))
+                })
+        })
+        .collect();
+    candidates.sort_by_key(|file| {
+        let lower = file.to_ascii_lowercase();
+        if lower.contains("q8_0") {
+            0
+        } else if lower.contains("bf16") {
+            2
+        } else if lower.contains("f16") {
+            1
+        } else {
+            3
+        }
+    });
+    let first = candidates.first()?;
+    let stem = quant.replace(&first.to_ascii_lowercase(), "").to_string();
+    if candidates
+        .iter()
+        .any(|file| quant.replace(&file.to_ascii_lowercase(), "") != stem)
+    {
+        return None;
+    }
+    Some((*first).clone())
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn projectors_match_the_selected_model_without_guessing_between_families() {
+        let pick = |files: &[&str], model: &str| {
+            super::pick_projector(
+                &files.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+                model,
+            )
+        };
+        assert_eq!(
+            pick(
+                &["mmproj-F16.gguf", "mmproj-Q8_0.gguf"],
+                "Qwen3.5-2B-Q4_K_M.gguf"
+            )
+            .as_deref(),
+            Some("mmproj-Q8_0.gguf")
+        );
+        assert_eq!(
+            pick(
+                &["mmproj-2B-F16.gguf", "mmproj-4B-F16.gguf"],
+                "Qwen3.5-2B-Q4_K_M.gguf"
+            )
+            .as_deref(),
+            Some("mmproj-2B-F16.gguf")
+        );
+        assert_eq!(
+            pick(
+                &["mmproj-BF16.gguf", "mmproj-F16.gguf", "mmproj-F32.gguf"],
+                "Qwen3.5-2B-Q4_K_M.gguf"
+            )
+            .as_deref(),
+            Some("mmproj-F16.gguf")
+        );
+        assert!(pick(
+            &["mmproj-family-a-F16.gguf", "mmproj-family-b-F16.gguf"],
+            "model.gguf"
+        )
+        .is_none());
+        assert!(pick(&["mmproj-4B-F16.gguf"], "Qwen3.5-2B-Q4_K_M.gguf").is_none());
+        assert!(pick(
+            &["model-Q4_K_M.gguf", "mmproj-00001-of-00002.gguf"],
+            "model.gguf"
+        )
+        .is_none());
+    }
+
     use super::hf::{
         author_matches_search, base_model_owner, is_original_maker, official_namespaces,
         publisher_guesses, publisher_namespace, HfModel,

@@ -622,5 +622,30 @@
     "addedOne": "Afegit a aquesta conversa.",
     "addedMany": "S'han afegit %{count} fitxers a aquesta conversa.",
     "unsupported": "El tipus d'aquests fitxers no és compatible."
+  },
+  "images": {
+    "pasted": "Imatge enganxada",
+    "add": "Afegeix imatges",
+    "attached": "Imatges adjuntes",
+    "preview": "Previsualitza %{name}",
+    "remove": "Elimina %{name}",
+    "closePreview": "Tanca la previsualització",
+    "missingShort": "Imatge no disponible",
+    "preparing": "Preparant els adjunts…",
+    "defaultPrompt": "Descriu aquesta imatge.",
+    "hint": "Enganxa o adjunta PNG/JPG. Límit d’imatges: %{count}.",
+    "limit": "Límit d’imatges: %{count}. Elimina’n una abans d’afegir-ne una altra.",
+    "ready": "Les imatges ja estan disponibles. Límit per missatge: %{count}.",
+    "enable": "Activa les imatges",
+    "enableDescription": "Aquesta IA pot llegir imatges amb una descàrrega addicional de %{size}.",
+    "enabling": "Activant les imatges…",
+    "unavailable": "Aquesta IA no pot rebre imatges en aquest ordinador. Tria’n una altra per adjuntar-ne.",
+    "tooLarge": "Aquesta imatge és massa gran. Fes servir un PNG o JPG de menys de 20 MB i 40 megapíxels.",
+    "format": "Aquest format d’imatge no és compatible. Tria un PNG o JPG.",
+    "tooMany": "Hi ha massa imatges per a aquesta IA. Elimina’n una i torna-ho a provar.",
+    "limitsChanged": "Aquestes imatges superen els límits de la IA actual. Elimina-les i torna-les a adjuntar.",
+    "missing": "Una imatge ja no està disponible. Torna-la a adjuntar per continuar.",
+    "storageFull": "Aquesta conversa ha arribat al límit d’emmagatzematge d’imatges. Comença una conversa nova.",
+    "invalid": "Rebost no ha pogut llegir aquesta imatge. Prova un altre PNG o JPG."
   }
 }

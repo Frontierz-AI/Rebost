@@ -109,6 +109,14 @@ impl Engine {
                 if cancel.load(Ordering::Relaxed) {
                     return Ok(ChatOutput::default());
                 }
+                let images: usize = messages.iter().map(|m| m.images.len()).sum();
+                if images > 0
+                    && self
+                        .vision_limits()
+                        .is_none_or(|limits| images > limits.max_images)
+                {
+                    return Err(anyhow!("{}", rust_i18n::t!("images.unavailable")));
+                }
                 body["messages"] = json!(messages.as_ref());
                 let caps = {
                     let inner = tokio::select! {
@@ -227,6 +235,10 @@ inlining tool turns and trying again: {text}"
 
     async fn recover_after_compute_failure(&self, detail: &str) {
         log::error!("engine compute failed; restarting: {detail}");
+        if self.vision_limits().is_some() {
+            *crate::core::mutex_lock(&self.disabled_vision) =
+                self.active_model().map(|model| model.file);
+        }
         self.stop().await;
     }
 

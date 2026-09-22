@@ -87,6 +87,17 @@ pub async fn thread_export(
         return Ok(false);
     };
     let path = path.into_path().map_err(friendly)?;
+    let images: Vec<_> = messages
+        .iter()
+        .flat_map(|message| message.images.iter().map(|image| image.id.clone()))
+        .collect();
+    crate::chat::images::export(
+        &ctx.paths,
+        &thread_id,
+        &images,
+        path.parent().ok_or("invalid export path")?,
+    )
+    .map_err(friendly)?;
     std::fs::write(&path, markdown).map_err(friendly)?;
     Ok(true)
 }
@@ -135,17 +146,27 @@ pub fn chat_send(
     thread_id: String,
     text: String,
     shelf_id: Option<String>,
+    image_ids: Option<Vec<String>>,
 ) -> CmdResult<()> {
     require_id(&thread_id)?;
     require_optional_id(shelf_id.as_deref())?;
-    if text.trim().is_empty() || text.chars().count() > crate::limits::PROMPT_MAX_CHARS {
+    let image_ids = image_ids.unwrap_or_default();
+    if image_ids.len() > 4 {
+        return Err(friendly("image-count"));
+    }
+    if (text.trim().is_empty() && image_ids.is_empty())
+        || text.chars().count() > crate::limits::PROMPT_MAX_CHARS
+    {
         return Err(rust_i18n::t!("errors.promptTooLong").to_string());
     }
     let chat = chat.inner().clone();
     tauri::async_runtime::spawn(async move {
-        if let Err(error) = chat.send_message(&thread_id, &text, shelf_id).await {
+        if let Err(error) = chat
+            .send_with_images(&thread_id, &text, shelf_id, &image_ids)
+            .await
+        {
             log::error!("chat send failed: {error:#}");
-            chat.notify_send_failed(&thread_id);
+            chat.notify_send_failed(&thread_id, &super::map_user_error(&error.to_string()));
         }
     });
     Ok(())

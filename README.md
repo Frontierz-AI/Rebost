@@ -41,7 +41,7 @@ Once installed, Rebost checks GitHub for a newer release and shows it in the sid
 
 ### Chat
 
-Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation. Opening the citation shows the passage used for that answer and the source file.
+Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. When the installed AI and computer support images, an image button also appears: attach or paste a PNG/JPEG, preview it, and ask about it locally. Rebost prepares images to fit the computer and keeps them with the conversation. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation. Opening the citation shows the passage used for that answer and the source file.
 
 <p align="center">
   <img src="docs/assets/conversation.webp" alt="Rebost Chat: a Shelf selected and an answer with citations." width="880" />

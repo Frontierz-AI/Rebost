@@ -66,6 +66,7 @@ async fn real_model_experience_gate() {
         std::fs::copy(&model, &dest).unwrap();
     }
     ctx.settings.write().unwrap().active_model = Some(ActiveModel {
+        projector: None,
         file: "quality.gguf".into(),
         name: "Quality model".into(),
         source: "local".into(),

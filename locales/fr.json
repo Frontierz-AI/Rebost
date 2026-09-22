@@ -623,5 +623,30 @@
     "addedOne": "Ajouté à cette conversation.",
     "addedMany": "%{count} fichiers ajoutés à cette conversation.",
     "unsupported": "Le type de ces fichiers n'est pas pris en charge."
+  },
+  "images": {
+    "pasted": "Image collée",
+    "add": "Ajouter des images",
+    "attached": "Images jointes",
+    "preview": "Aperçu de %{name}",
+    "remove": "Retirer %{name}",
+    "closePreview": "Fermer l’aperçu",
+    "missingShort": "Image indisponible",
+    "preparing": "Préparation des pièces jointes…",
+    "defaultPrompt": "Décris cette image.",
+    "hint": "Collez ou joignez des PNG/JPG. Limite d’images : %{count}.",
+    "limit": "Limite d’images : %{count}. Retirez une image avant d’en ajouter une autre.",
+    "ready": "Les images sont disponibles. Limite par message : %{count}.",
+    "enable": "Activer les images",
+    "enableDescription": "Cette IA peut lire les images avec un téléchargement supplémentaire de %{size}.",
+    "enabling": "Activation des images…",
+    "unavailable": "Cette IA ne peut pas recevoir d’images sur cet ordinateur. Choisissez une autre IA pour en joindre.",
+    "tooLarge": "Cette image est trop volumineuse. Utilisez un PNG ou JPG de moins de 20 Mo et 40 mégapixels.",
+    "format": "Ce format d’image n’est pas pris en charge. Choisissez un PNG ou JPG.",
+    "tooMany": "Il y a trop d’images pour cette IA. Retirez une image et réessayez.",
+    "limitsChanged": "Ces images dépassent les limites de l’IA actuelle. Retirez-les, puis joignez-les à nouveau.",
+    "missing": "Une image n’est plus disponible. Joignez-la à nouveau pour continuer.",
+    "storageFull": "Cette conversation a atteint sa limite de stockage d’images. Commencez une nouvelle conversation.",
+    "invalid": "Rebost n’a pas pu lire cette image. Essayez un autre PNG ou JPG."
   }
 }

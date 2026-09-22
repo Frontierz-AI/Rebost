@@ -20,6 +20,27 @@ struct PreviousAi {
     context_budget_chars: Option<usize>,
 }
 
+/// A model is installed only after all components have downloaded and the engine is ready.
+struct InstallEvents {
+    events: Arc<dyn crate::core::Events>,
+    offset: u64,
+    total: Option<u64>,
+}
+impl crate::core::Events for InstallEvents {
+    fn emit(&self, event: &str, mut payload: serde_json::Value) {
+        if event == "rebost://download" {
+            payload["done"] = json!(false);
+            if let Some(received) = payload["received"].as_u64() {
+                payload["received"] = json!(self.offset.saturating_add(received));
+            }
+            if let Some(total) = self.total {
+                payload["total"] = json!(total);
+            }
+        }
+        self.events.emit(event, payload);
+    }
+}
+
 impl Engine {
     pub fn cancel_download(&self, id: &str) {
         if let Some(control) = crate::core::mutex_lock(&self.downloads).get(id) {
@@ -48,6 +69,7 @@ impl Engine {
         display_name: &str,
         license: Option<String>,
     ) -> Result<()> {
+        let _install = self.install_lock.lock().await;
         let source = models::normalize_source(source)?;
         models::validate_reference(source, reference)?;
 
@@ -81,6 +103,12 @@ impl Engine {
         if result.is_err() && self.active_model().is_none() {
             self.set_status(EngineState::NoModel, None);
         }
+        if result.is_ok() {
+            self.ctx.events.emit(
+                "rebost://download",
+                json!({ "kind": ticket.kind, "id": ticket.id, "name": ticket.name, "done": true }),
+            );
+        }
         result
     }
 
@@ -104,6 +132,22 @@ impl Engine {
             install_file_name(&requested, previous.as_ref().map(|p| p.model.file.as_str()));
         let dest = self.ctx.paths.models_dir().join(&file_name);
 
+        let companion = self
+            .eligible_projector(
+                source,
+                reference,
+                &resolved.file_name,
+                resolved.size.unwrap_or(0),
+            )
+            .await?;
+        let total = resolved.size.map(|bytes| {
+            bytes.saturating_add(companion.as_ref().and_then(|p| p.size).unwrap_or(0))
+        });
+        let events: Arc<dyn crate::core::Events> = Arc::new(InstallEvents {
+            events: self.ctx.events.clone(),
+            offset: 0,
+            total,
+        });
         download::download(
             &self.download_client,
             &resolved.url,
@@ -111,7 +155,7 @@ impl Engine {
             ticket,
             Some(sha256),
             resolved.size,
-            &self.ctx.events.clone(),
+            &events,
             control,
         )
         .await?;
@@ -121,13 +165,32 @@ impl Engine {
             return Err(error);
         }
 
+        let projector = if let Some(companion) = companion {
+            let events: Arc<dyn crate::core::Events> = Arc::new(InstallEvents {
+                events: self.ctx.events.clone(),
+                offset: resolved.size.unwrap_or(0),
+                total,
+            });
+            Some(
+                self.download_projector(&companion, ticket, control, &events)
+                    .await?,
+            )
+        } else {
+            None
+        };
+        control.check_cancelled()?;
+
+        self.ctx.events.emit("rebost://download", json!({ "kind": ticket.kind, "id": ticket.id, "name": ticket.name, "phase": "preparing", "done": false }));
+
         if previous.is_some() {
             self.wait_until_chat_idle().await;
         }
+        control.check_cancelled()?;
 
         {
             let mut settings = crate::core::write_lock(&self.ctx.settings);
             settings.active_model = Some(ActiveModel {
+                projector,
                 file: file_name.clone(),
                 name: display_name.to_string(),
                 source: source.to_string(),
@@ -148,6 +211,15 @@ impl Engine {
                 ) {
                     let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(old));
                 }
+                if let Some(old) = previous.as_ref().and_then(|p| p.model.projector.as_ref()) {
+                    if self
+                        .active_model()
+                        .and_then(|m| m.projector)
+                        .is_none_or(|p| p.file != old.file)
+                    {
+                        let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(&old.file));
+                    }
+                }
                 Ok(())
             }
             Err(error) => {
@@ -164,6 +236,163 @@ impl Engine {
                 }
             }
         }
+    }
+
+    async fn eligible_projector(
+        &self,
+        source: &str,
+        reference: &str,
+        model_file: &str,
+        weights: u64,
+    ) -> Result<Option<models::ResolvedDownload>> {
+        let resolved =
+            match models::resolve_projector(&self.download_client, source, reference, model_file)
+                .await
+            {
+                Ok(Some(resolved)) => resolved,
+                Ok(None) => return Ok(None),
+                Err(error) => {
+                    log::warn!("vision component lookup failed: {error}");
+                    return Ok(None);
+                }
+            };
+        let profile = super::catalog::MachineProfile::detect(self.ctx.paths.base());
+        if super::vision::limits_for(&profile, weights, resolved.size.unwrap_or(0)).is_none()
+            || !resolved.sha256.as_deref().is_some_and(valid_sha256)
+        {
+            return Ok(None);
+        }
+        models::safe_model_file_name(&resolved.file_name)?;
+        Ok(Some(resolved))
+    }
+
+    async fn download_projector(
+        &self,
+        resolved: &models::ResolvedDownload,
+        ticket: &download::DownloadTicket,
+        control: &download::DownloadControl,
+        events: &Arc<dyn crate::core::Events>,
+    ) -> Result<crate::settings::VisionProjector> {
+        let sha = resolved
+            .sha256
+            .as_deref()
+            .filter(|sha| valid_sha256(sha))
+            .ok_or_else(|| anyhow!("invalid projector checksum"))?;
+        // Digest naming prevents collisions between repositories with mmproj-F16.gguf.
+        let file = format!("vision-{sha}.gguf");
+        let dest = self.ctx.paths.models_dir().join(&file);
+        download::download(
+            &self.download_client,
+            &resolved.url,
+            &dest,
+            ticket,
+            Some(sha),
+            resolved.size,
+            events,
+            control,
+        )
+        .await?;
+        super::gguf::require_engine_compatible(&dest)?;
+        Ok(crate::settings::VisionProjector {
+            file,
+            size_bytes: resolved.size.unwrap_or(0),
+        })
+    }
+
+    /// Check whether the installed AI can gain vision without replacing its language weights.
+    pub async fn vision_offer(&self) -> Result<Option<u64>> {
+        let Some(model) = self
+            .active_model()
+            .filter(|model| model.projector.is_none())
+        else {
+            return Ok(None);
+        };
+        if !matches!(model.source.as_str(), "huggingface" | "ollama") {
+            return Ok(None);
+        }
+        let Some(projector) = models::resolve_projector(
+            &self.download_client,
+            &model.source,
+            &model.reference,
+            &model.file,
+        )
+        .await?
+        else {
+            return Ok(None);
+        };
+        let profile = super::catalog::MachineProfile::detect(self.ctx.paths.base());
+        Ok(projector.size.filter(|size| {
+            projector.sha256.as_deref().is_some_and(valid_sha256)
+                && super::vision::limits_for(&profile, model.size_bytes, *size).is_some()
+        }))
+    }
+
+    /// Add just the vision weights to an already installed AI.
+    pub async fn enable_vision(self: &Arc<Self>) -> Result<()> {
+        let _install = self.install_lock.lock().await;
+        let model = self.active_model().ok_or_else(|| anyhow!("no AI model"))?;
+        if model.projector.is_some() {
+            return Ok(());
+        }
+        let ticket = download::DownloadTicket {
+            kind: "model",
+            id: format!("vision:{}", model.reference),
+            name: model.name.clone(),
+        };
+        let control = download::DownloadControl::new();
+        crate::core::mutex_lock(&self.downloads).insert(ticket.id.clone(), control.clone());
+        let previous = snapshot_previous(self).expect("active model");
+        let result = async {
+            let resolved = self
+                .eligible_projector(
+                    &model.source,
+                    &model.reference,
+                    &model.file,
+                    model.size_bytes,
+                )
+                .await?
+                .ok_or_else(|| anyhow!("image-unavailable"))?;
+            let events: Arc<dyn crate::core::Events> = Arc::new(InstallEvents {
+                events: self.ctx.events.clone(),
+                offset: 0,
+                total: resolved.size,
+            });
+            let projector = self
+                .download_projector(&resolved, &ticket, &control, &events)
+                .await?;
+            self.ctx.events.emit("rebost://download", json!({ "kind": ticket.kind, "id": ticket.id, "name": ticket.name, "phase": "preparing", "done": false }));
+            self.wait_until_chat_idle().await;
+            control.check_cancelled()?;
+            self.stop().await;
+            if let Some(active) = crate::core::write_lock(&self.ctx.settings)
+                .active_model
+                .as_mut()
+            {
+                active.projector = Some(projector);
+            }
+            self.ctx.save_settings();
+            *crate::core::mutex_lock(&self.disabled_vision) = None;
+            self.ensure_ready().await?;
+            if self.vision_limits().is_none() {
+                return Err(anyhow!("image-unavailable"));
+            }
+            Ok(())
+        }
+        .await;
+        if result.is_err()
+            && self
+                .active_model()
+                .is_some_and(|active| active.projector.is_some())
+        {
+            self.stop().await;
+            restore_previous(self, previous);
+            if let Err(error) = self.ensure_ready().await {
+                log::error!("could not restore text AI after vision upgrade: {error:#}");
+            }
+        }
+        crate::core::mutex_lock(&self.downloads).remove(&ticket.id);
+        self.ctx.events.emit("rebost://download", json!({ "kind": ticket.kind, "id": ticket.id, "name": ticket.name, "done": true, "error": result.as_ref().err().map(|error| error.to_string()) }));
+        result
     }
 
     async fn wait_until_chat_idle(&self) {
@@ -184,6 +413,10 @@ impl Engine {
             tokio::time::sleep(Duration::from_millis(200)).await;
         }
     }
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn snapshot_previous(engine: &Engine) -> Option<PreviousAi> {

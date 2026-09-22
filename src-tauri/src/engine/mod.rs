@@ -20,6 +20,8 @@ mod reasoning;
 mod stream;
 mod think;
 pub(crate) mod tune;
+pub mod vision;
+mod wire;
 
 pub use pin::{
     current_engine_pin, find_bundled_engine_archive, preferred_engine_pin, ENGINE_BUILD,
@@ -51,6 +53,7 @@ pub enum EngineState {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EngineStatus {
+    pub vision: Option<vision::VisionLimits>,
     pub state: EngineState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
@@ -70,6 +73,9 @@ struct Inner {
 }
 
 pub struct Engine {
+    vision: std::sync::Mutex<Option<vision::VisionLimits>>,
+    disabled_vision: std::sync::Mutex<Option<String>>,
+    install_lock: tokio::sync::Mutex<()>,
     ctx: Arc<Ctx>,
     pub client: reqwest::Client,
     download_client: reqwest::Client,
@@ -87,7 +93,9 @@ pub struct Engine {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(from = "wire::Message", into = "wire::Message")]
 pub struct ChatMessage {
+    pub images: Vec<String>,
     pub role: String,
     /// `None` serializes as JSON null — required for assistant tool-call turns.
     pub content: Option<String>,
@@ -102,6 +110,7 @@ pub struct ChatMessage {
 impl ChatMessage {
     pub fn text(role: impl Into<String>, content: impl Into<String>) -> Self {
         Self {
+            images: Vec::new(),
             role: role.into(),
             content: Some(content.into()),
             tool_calls: None,
@@ -218,6 +227,9 @@ impl Engine {
         };
         kill_stale_llama_servers(ctx.paths.base());
         Arc::new(Self {
+            vision: std::sync::Mutex::new(None),
+            disabled_vision: std::sync::Mutex::new(None),
+            install_lock: tokio::sync::Mutex::new(()),
             ctx,
             client: reqwest::Client::builder()
                 .user_agent(USER_AGENT)
@@ -247,6 +259,7 @@ impl Engine {
             start_lock: tokio::sync::Mutex::new(()),
             benchmark_lock: tokio::sync::Mutex::new(()),
             status: std::sync::Mutex::new(EngineStatus {
+                vision: None,
                 state,
                 detail: None,
                 model_name,
@@ -267,6 +280,11 @@ impl Engine {
             .as_ref()
             .map(|m| m.name.clone());
         let status = EngineStatus {
+            vision: if state == EngineState::Ready {
+                self.vision_limits()
+            } else {
+                None
+            },
             state,
             detail,
             model_name,

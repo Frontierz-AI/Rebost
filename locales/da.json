@@ -623,5 +623,30 @@
     "addedOne": "Føjet til denne samtale.",
     "addedMany": "%{count} filer er føjet til denne samtale.",
     "unsupported": "Disse filtyper understøttes ikke."
+  },
+  "images": {
+    "pasted": "Indsat billede",
+    "add": "Tilføj billeder",
+    "attached": "Vedhæftede billeder",
+    "preview": "Forhåndsvis %{name}",
+    "remove": "Fjern %{name}",
+    "closePreview": "Luk forhåndsvisning",
+    "missingShort": "Billedet er ikke tilgængeligt",
+    "preparing": "Forbereder vedhæftninger…",
+    "defaultPrompt": "Beskriv dette billede.",
+    "hint": "Indsæt eller vedhæft PNG/JPG. Billedgrænse: %{count}.",
+    "limit": "Billedgrænse: %{count}. Fjern et billede, før du tilføjer et nyt.",
+    "ready": "Billeder kan bruges. Grænse pr. besked: %{count}.",
+    "enable": "Aktivér billeder",
+    "enableDescription": "Denne AI kan læse billeder med en ekstra download på %{size}.",
+    "enabling": "Aktiverer billeder…",
+    "unavailable": "Denne AI kan ikke modtage billeder på denne computer. Vælg en anden AI for at vedhæfte billeder.",
+    "tooLarge": "Billedet er for stort. Brug en PNG eller JPG under 20 MB og 40 megapixel.",
+    "format": "Dette billedformat understøttes ikke. Vælg en PNG eller JPG.",
+    "tooMany": "Der er for mange billeder til denne AI. Fjern et billede, og prøv igen.",
+    "limitsChanged": "Billederne overskrider den aktuelle AI’s grænser. Fjern dem, og vedhæft dem igen.",
+    "missing": "Et billede er ikke længere tilgængeligt. Vedhæft det igen for at fortsætte.",
+    "storageFull": "Samtalen har nået lagergrænsen for billeder. Start en ny samtale.",
+    "invalid": "Rebost kunne ikke læse billedet. Prøv en anden PNG eller JPG."
   }
 }

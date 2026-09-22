@@ -622,5 +622,30 @@
     "addedOne": "Añadido a esta conversación.",
     "addedMany": "Se han añadido %{count} archivos a esta conversación.",
     "unsupported": "El tipo de esos archivos no es compatible."
+  },
+  "images": {
+    "pasted": "Imagen pegada",
+    "add": "Añadir imágenes",
+    "attached": "Imágenes adjuntas",
+    "preview": "Vista previa de %{name}",
+    "remove": "Quitar %{name}",
+    "closePreview": "Cerrar vista previa",
+    "missingShort": "Imagen no disponible",
+    "preparing": "Preparando los adjuntos…",
+    "defaultPrompt": "Describe esta imagen.",
+    "hint": "Pega o adjunta PNG/JPG. Límite de imágenes: %{count}.",
+    "limit": "Límite de imágenes: %{count}. Quita una antes de añadir otra.",
+    "ready": "Las imágenes ya están disponibles. Límite por mensaje: %{count}.",
+    "enable": "Activar imágenes",
+    "enableDescription": "Esta IA puede leer imágenes con una descarga adicional de %{size}.",
+    "enabling": "Activando imágenes…",
+    "unavailable": "Esta IA no puede recibir imágenes en este ordenador. Elige otra para adjuntarlas.",
+    "tooLarge": "Esta imagen es demasiado grande. Usa un PNG o JPG de menos de 20 MB y 40 megapíxeles.",
+    "format": "Este formato de imagen no es compatible. Elige un PNG o JPG.",
+    "tooMany": "Hay demasiadas imágenes para esta IA. Quita una y vuelve a intentarlo.",
+    "limitsChanged": "Estas imágenes superan los límites de la IA actual. Quítalas y vuelve a adjuntarlas.",
+    "missing": "Una imagen ya no está disponible. Vuelve a adjuntarla para continuar.",
+    "storageFull": "Esta conversación ha alcanzado el límite de almacenamiento de imágenes. Empieza una conversación nueva.",
+    "invalid": "Rebost no ha podido leer esta imagen. Prueba con otro PNG o JPG."
   }
 }

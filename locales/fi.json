@@ -623,5 +623,30 @@
     "addedOne": "Lisätty tähän keskusteluun.",
     "addedMany": "Tähän keskusteluun lisättiin %{count} tiedostoa.",
     "unsupported": "Näitä tiedostotyyppejä ei tueta."
+  },
+  "images": {
+    "pasted": "Liitetty kuva",
+    "add": "Lisää kuvia",
+    "attached": "Liitetyt kuvat",
+    "preview": "Esikatsele %{name}",
+    "remove": "Poista %{name}",
+    "closePreview": "Sulje esikatselu",
+    "missingShort": "Kuva ei ole saatavilla",
+    "preparing": "Valmistellaan liitteitä…",
+    "defaultPrompt": "Kuvaile tätä kuvaa.",
+    "hint": "Liitä PNG/JPG. Kuvien enimmäismäärä: %{count}.",
+    "limit": "Kuvien enimmäismäärä: %{count}. Poista kuva ennen uuden lisäämistä.",
+    "ready": "Kuvat ovat käytettävissä. Enimmäismäärä viestiä kohden: %{count}.",
+    "enable": "Ota kuvat käyttöön",
+    "enableDescription": "Tämä tekoäly voi lukea kuvia, kun %{size}:n lisälataus on valmis.",
+    "enabling": "Otetaan kuvia käyttöön…",
+    "unavailable": "Tämä tekoäly ei voi vastaanottaa kuvia tällä tietokoneella. Valitse toinen tekoäly kuvien liittämistä varten.",
+    "tooLarge": "Kuva on liian suuri. Käytä alle 20 Mt:n ja 40 megapikselin PNG- tai JPG-kuvaa.",
+    "format": "Tätä kuvamuotoa ei tueta. Valitse PNG tai JPG.",
+    "tooMany": "Tälle tekoälylle on liikaa kuvia. Poista kuva ja yritä uudelleen.",
+    "limitsChanged": "Kuvat ylittävät nykyisen tekoälyn rajat. Poista kuvat ja liitä ne uudelleen.",
+    "missing": "Kuva ei ole enää saatavilla. Liitä se uudelleen jatkaaksesi.",
+    "storageFull": "Keskustelun kuvien tallennustilaraja on saavutettu. Aloita uusi keskustelu.",
+    "invalid": "Rebost ei voinut lukea kuvaa. Kokeile toista PNG- tai JPG-kuvaa."
   }
 }

@@ -16,10 +16,12 @@ impl Engine {
         let Some(plan) = crate::core::read_lock(&self.ctx.runtime_plan).clone() else {
             return Ok(());
         };
+        let image_count = count_images(body);
         let answer = body["max_tokens"]
             .as_u64()
             .unwrap_or(plan.answer_tokens as u64)
-            .min(plan.answer_tokens as u64);
+            .min(plan.answer_tokens as u64)
+            .min(if image_count > 0 { 1024 } else { u64::MAX });
         body["max_tokens"] = json!(answer);
         let limit = (plan.context_tokens as usize).saturating_sub(answer as usize + 128);
         for _ in 0..24 {
@@ -60,7 +62,12 @@ impl Engine {
                 .as_array()
                 .context("missing prompt tokens")?
                 .len();
-            if count <= limit {
+            // /tokenize only counts the media marker, not the image embeddings.
+            let image_tokens = count_images(&request)
+                * self
+                    .vision_limits()
+                    .map_or(2048, |limits| limits.tokens_per_image as usize + 256);
+            if count.saturating_add(image_tokens) <= limit {
                 *body = request;
                 return Ok(());
             }
@@ -70,6 +77,17 @@ impl Engine {
         }
         Err(anyhow!("{}", rust_i18n::t!("errors.promptTooLong")))
     }
+}
+
+fn count_images(body: &Value) -> usize {
+    body["messages"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|m| m["content"].as_array())
+        .flatten()
+        .filter(|part| part["type"] == "image_url")
+        .count()
 }
 
 /// Never shorten the user's request or standing rules. Remove old dialogue
@@ -108,6 +126,24 @@ fn reduce_context(body: &mut Value) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn trimming_old_visual_turns_keeps_the_current_image() {
+        let mut body = serde_json::json!({"messages":[
+            {"role":"system","content":"rules"},
+            {"role":"user","content":[{"type":"image_url","image_url":{"url":"old"}}]},
+            {"role":"assistant","content":"old answer"},
+            {"role":"user","content":[{"type":"text","text":"look"},{"type":"image_url","image_url":{"url":"current"}}]}
+        ]});
+        assert_eq!(super::count_images(&body), 2);
+        assert!(super::reduce_context(&mut body));
+        assert_eq!(super::count_images(&body), 1);
+        assert_eq!(
+            body["messages"][1]["content"][1]["image_url"]["url"],
+            "current"
+        );
+        assert!(!super::reduce_context(&mut body));
+    }
+
     use super::*;
 
     #[test]

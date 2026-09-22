@@ -674,6 +674,7 @@ pub(crate) fn format_passages(header: &str, passages: &[SourcePassage]) -> Strin
 
 pub(crate) fn assistant_tool_message(calls: &[ToolCall]) -> crate::engine::ChatMessage {
     crate::engine::ChatMessage {
+        images: Vec::new(),
         role: "assistant".into(),
         content: None,
         tool_calls: Some(calls.to_vec()),
@@ -684,6 +685,7 @@ pub(crate) fn assistant_tool_message(calls: &[ToolCall]) -> crate::engine::ChatM
 
 pub(crate) fn tool_result_message(call: &ToolCall, content: String) -> crate::engine::ChatMessage {
     crate::engine::ChatMessage {
+        images: Vec::new(),
         role: "tool".into(),
         content: Some(content),
         tool_calls: None,

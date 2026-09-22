@@ -29,3 +29,13 @@ The app is MIT. Weights are not. The UI shows the upstream license before downlo
 2. Keep family heads in `CatalogStanding::sort_key` descending.
 3. Adjust `recommend` / `smaller_alternatives` if the policy changes.
 4. Run `cargo test --manifest-path src-tauri/Cargo.toml catalog` (and `model_catalog` ignored tests if live APIs are touched).
+
+## Image-capable models
+
+Install also resolves an unambiguous matching `mmproj` GGUF from the same Hugging Face repository, or the projector layer in an Ollama manifest. The complete package must fit the machine budget, and the companion must have a SHA-256. Ambiguous repositories remain text-only. Existing installations can add only their missing companion from Settings. Downloads share progress and cancellation; the old model remains installed until the replacement is ready.
+
+Vision requires at least 8 GiB RAM and room for the language weights, projector, ordinary runtime overhead, and another 512 MiB within the existing 65% model budget. Conservative ceilings are one image at 768px on CPU/small machines, two at 1024px on accelerated machines with at least 16 GiB, and four at 1536px on Metal with at least 32 GiB and 4 GiB remaining headroom. Context capacity can lower these counts or disable vision. Discrete GPU memory is not measured, so their image encoder runs in system RAM and keeps the middle tier ceiling. These are resource guardrails, not promises of model accuracy.
+
+The runtime starts with `--mmproj` and `--image-max-tokens`, then must confirm vision through `/props`. A vision startup failure retries text-only. A compute failure disables vision for that model for the session. Pending images are never silently converted into a text-only question. Image embeddings are reserved separately when fitting the context because `/tokenize` counts only their text markers.
+
+For a real local integration check, run `cargo test --test vision_smoke -- --ignored --nocapture` from `src-tauri` with `REBOST_ENGINE_ARCHIVE`, `REBOST_VISION_MODEL`, and `REBOST_VISION_PROJECTOR` pointing to compatible local files. The test uses an isolated data directory. Set `REBOST_VISION_REPO` to the matching Hugging Face repository to also check discovery and upgrading an existing text-only installation using the cached companion.

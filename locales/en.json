@@ -622,5 +622,30 @@
     "addedOne": "Added to this conversation.",
     "addedMany": "Added %{count} files to this conversation.",
     "unsupported": "Those files aren't a supported type."
+  },
+  "images": {
+    "pasted": "Pasted image",
+    "add": "Add images",
+    "attached": "Attached images",
+    "preview": "Preview %{name}",
+    "remove": "Remove %{name}",
+    "closePreview": "Close image preview",
+    "missingShort": "Image unavailable",
+    "preparing": "Preparing attachments…",
+    "defaultPrompt": "Describe this image.",
+    "hint": "Paste or attach PNG/JPG. Image limit: %{count}.",
+    "limit": "Image limit: %{count}. Remove an image before adding another.",
+    "ready": "Image input is ready. Limit per message: %{count}.",
+    "enable": "Enable images",
+    "enableDescription": "This AI can read images with an additional %{size} download.",
+    "enabling": "Enabling images…",
+    "unavailable": "Image input is unavailable with this AI on this computer. Choose another AI to attach images.",
+    "tooLarge": "This image is too large. Use a PNG or JPG under 20 MB and 40 megapixels.",
+    "format": "This image format is not supported. Choose a PNG or JPG.",
+    "tooMany": "There are too many images for this AI. Remove an image and try again.",
+    "limitsChanged": "These images exceed the current AI’s limits. Remove them and attach them again.",
+    "missing": "An image is no longer available. Attach it again to continue.",
+    "storageFull": "This conversation has reached its image storage limit. Start a new conversation.",
+    "invalid": "Rebost couldn’t read this image. Try another PNG or JPG."
   }
 }

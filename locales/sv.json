@@ -623,5 +623,30 @@
     "addedOne": "Tillagd i det här samtalet.",
     "addedMany": "%{count} filer har lagts till i det här samtalet.",
     "unsupported": "Dessa filtyper stöds inte."
+  },
+  "images": {
+    "pasted": "Inklistrad bild",
+    "add": "Lägg till bilder",
+    "attached": "Bifogade bilder",
+    "preview": "Förhandsvisa %{name}",
+    "remove": "Ta bort %{name}",
+    "closePreview": "Stäng förhandsvisning",
+    "missingShort": "Bilden är inte tillgänglig",
+    "preparing": "Förbereder bilagor…",
+    "defaultPrompt": "Beskriv den här bilden.",
+    "hint": "Klistra in eller bifoga PNG/JPG. Bildgräns: %{count}.",
+    "limit": "Bildgräns: %{count}. Ta bort en bild innan du lägger till en till.",
+    "ready": "Bilder kan användas. Gräns per meddelande: %{count}.",
+    "enable": "Aktivera bilder",
+    "enableDescription": "Den här AI:n kan läsa bilder med en extra nedladdning på %{size}.",
+    "enabling": "Aktiverar bilder…",
+    "unavailable": "Den här AI:n kan inte ta emot bilder på den här datorn. Välj en annan AI för att bifoga bilder.",
+    "tooLarge": "Bilden är för stor. Använd en PNG eller JPG under 20 MB och 40 megapixlar.",
+    "format": "Bildformatet stöds inte. Välj en PNG eller JPG.",
+    "tooMany": "Det finns för många bilder för den här AI:n. Ta bort en bild och försök igen.",
+    "limitsChanged": "Bilderna överskrider den aktuella AI:ns gränser. Ta bort dem och bifoga dem igen.",
+    "missing": "En bild är inte längre tillgänglig. Bifoga den igen för att fortsätta.",
+    "storageFull": "Konversationen har nått lagringsgränsen för bilder. Starta en ny konversation.",
+    "invalid": "Rebost kunde inte läsa bilden. Prova en annan PNG eller JPG."
   }
 }

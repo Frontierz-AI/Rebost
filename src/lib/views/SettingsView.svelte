@@ -16,6 +16,7 @@
     beginModelInstall,
     notifyInvokeError,
     refreshSettings,
+    logInvokeError,
     setTextSize,
     setUiLocale,
   } from "$lib/stores.svelte";
@@ -38,6 +39,37 @@
   import icon from "../../assets/rebost-icon.png";
 
   let machine = $state<MachineView | null>(null);
+  let visionOffer = $state<number | null>(null);
+  let enablingVision = $state(false);
+
+  $effect(() => {
+    void app.settings?.activeModel;
+    let cancelled = false;
+    visionOffer = null;
+    void api
+      .modelVisionOffer()
+      .then((bytes) => {
+        if (!cancelled) visionOffer = bytes;
+      })
+      .catch((error) => logInvokeError(error, "image support"));
+    return () => {
+      cancelled = true;
+    };
+  });
+
+  async function enableVision() {
+    if (enablingVision) return;
+    enablingVision = true;
+    try {
+      await api.modelEnableVision();
+      await refreshSettings();
+      app.engine = await api.engineStatus();
+    } catch (error) {
+      notifyInvokeError(error);
+    } finally {
+      enablingVision = false;
+    }
+  }
   let houseRules = $state(app.rulesDraft ?? app.settings?.houseRules ?? "");
   let rulesBaseline = $state(app.settings?.houseRules ?? "");
   let rulesError = $state("");
@@ -401,7 +433,9 @@
           <div class="min-w-0 flex-1">
             <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
             <p class="text-[11.5px] text-ink-soft">
-              {formatBytes(model.sizeBytes)}{model.license ? ` · ${model.license}` : ""} ·
+              {formatBytes(model.sizeBytes + (model.projector?.sizeBytes ?? 0))}{model.license
+                ? ` · ${model.license}`
+                : ""} ·
               {t("settings.installedHere")}
             </p>
           </div>
@@ -418,6 +452,24 @@
         </div>
       {/if}
 
+      {#if app.engine.vision}
+        <p class="mt-3 text-sm text-ink-soft">
+          {t("images.ready", { count: app.engine.vision.maxImages })}
+        </p>
+      {:else if visionOffer}
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <p class="min-w-0 text-ink-soft">
+            {t("images.enableDescription", { size: formatBytes(visionOffer) })}
+          </p>
+          <button
+            type="button"
+            class="btn-outline shrink-0"
+            onclick={enableVision}
+            disabled={enablingVision || chatBusy || !!modelDownload}
+            >{t(enablingVision ? "images.enabling" : "images.enable")}</button
+          >
+        </div>
+      {/if}
       {#if machine && machine.suggestions.length > 0}
         <div class="mt-5">
           <ModelSuggestionCards

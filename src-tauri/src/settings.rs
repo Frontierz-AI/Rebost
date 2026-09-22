@@ -58,6 +58,8 @@ pub struct Settings {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveModel {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub projector: Option<VisionProjector>,
     /// GGUF file name inside `<app-data>/models/`.
     pub file: String,
     /// User-facing model name, e.g. "Gemma 4 12B".
@@ -70,6 +72,14 @@ pub struct ActiveModel {
     pub license: Option<String>,
     /// Approximate download size in bytes.
     #[serde(alias = "size_bytes")]
+    pub size_bytes: u64,
+}
+
+/// Vision weights installed alongside the language model.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VisionProjector {
+    pub file: String,
     pub size_bytes: u64,
 }
 

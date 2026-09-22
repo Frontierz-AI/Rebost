@@ -715,6 +715,7 @@ async fn look_around_widens_an_excerpt() {
 
 fn user_line(text: &str) -> StoredMessage {
     StoredMessage {
+        images: Vec::new(),
         id: crate::ids::message_id(),
         role: "user".into(),
         text: text.into(),

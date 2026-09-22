@@ -122,6 +122,7 @@ export interface ChatActivityStep {
 }
 
 export interface StoredMessage {
+  images?: ChatImage[];
   id: string;
   role: "user" | "assistant";
   text: string;
@@ -139,9 +140,24 @@ export interface ThreadPage {
 }
 
 export interface EngineStatus {
+  vision?: VisionLimits | null;
   state: "no-model" | "downloading" | "stopped" | "starting" | "ready" | "error";
   detail?: string;
   modelName?: string;
+}
+
+export interface VisionLimits {
+  maxImages: number;
+  maxEdge: number;
+  tokensPerImage: number;
+}
+
+export interface ChatImage {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  bytes: number;
 }
 
 export interface MachineProfile {
@@ -171,6 +187,7 @@ export interface MachineView {
 }
 
 export interface ActiveModel {
+  projector?: { file: string; sizeBytes: number };
   file: string;
   name: string;
   source: string;
@@ -343,6 +360,28 @@ const BANNED_ERROR_TERMS = [
 export function userFacingError(error: unknown): string {
   const trimmed = invokeError(error).trim();
   if (!trimmed) return USER_ERROR_FALLBACK();
+  const imageErrors = [
+    "unavailable",
+    "tooLarge",
+    "format",
+    "tooMany",
+    "limitsChanged",
+    "missing",
+    "storageFull",
+    "invalid",
+  ];
+  for (const key of imageErrors) if (trimmed === t(`images.${key}`)) return trimmed;
+  const imageCodes: Record<string, string> = {
+    "image-unavailable": "unavailable",
+    "image-too-large": "tooLarge",
+    "image-format": "format",
+    "image-count": "tooMany",
+    "image-limits-changed": "limitsChanged",
+    "image-missing": "missing",
+    "image-storage-full": "storageFull",
+    "image-invalid": "invalid",
+  };
+  if (imageCodes[trimmed]) return t(`images.${imageCodes[trimmed]}`);
   if (["errors.promptTooLong", "errors.attachmentsFailed"].some((key) => trimmed === t(key)))
     return trimmed;
   const lower = trimmed.toLowerCase();
@@ -467,7 +506,7 @@ export const api = {
   shelfImportPaths: (shelfId: string, paths: string[]) =>
     invoke<ImportResult>("shelf_import_paths", { shelfId, paths }),
   shelfImportDialog: (shelfId: string) => invoke<ImportResult>("shelf_import_dialog", { shelfId }),
-  pickFiles: () => invoke<string[] | null>("pick_files"),
+  pickFiles: (imagesOnly = false) => invoke<string[] | null>("pick_files", { imagesOnly }),
   shelfDocuments: (shelfId: string) => invoke<DocumentMeta[]>("shelf_documents", { shelfId }),
   documentCard: (shelfId: string, docId: string) =>
     invoke<Card>("document_card", { shelfId, docId }),
@@ -509,14 +548,22 @@ export const api = {
   threadEnsureUploadShelf: (threadId: string) =>
     invoke<ShelfView>("thread_ensure_upload_shelf", { threadId }),
   threadDelete: (threadId: string) => invoke<void>("thread_delete", { threadId }),
-  chatSend: (threadId: string, text: string, shelfId?: string | null) =>
-    invoke<void>("chat_send", { threadId, text, shelfId }),
+  chatSend: (threadId: string, text: string, shelfId?: string | null, imageIds: string[] = []) =>
+    invoke<void>("chat_send", { threadId, text, shelfId, imageIds }),
+  chatImageAdd: (threadId: string, name: string, input: { data?: string; path?: string }) =>
+    invoke<ChatImage>("chat_image_add", { threadId, name, ...input }),
+  chatImageRead: (threadId: string, imageId: string, thumbnail = true) =>
+    invoke<string>("chat_image_read", { threadId, imageId, thumbnail }),
+  chatImageRemove: (threadId: string, imageId: string) =>
+    invoke<void>("chat_image_remove", { threadId, imageId }),
   chatApproveWeb: (requestId: string, allowed: boolean) =>
     invoke<void>("chat_approve_web", { requestId, allowed }),
   chatCancel: (messageId: string) => invoke<void>("chat_cancel", { messageId }),
   warmEngine: () => invoke<void>("warm_engine"),
 
   engineStatus: () => invoke<EngineStatus>("engine_status"),
+  modelVisionOffer: () => invoke<number | null>("model_vision_offer"),
+  modelEnableVision: () => invoke<void>("model_enable_vision"),
   engineRemeasure: () => invoke<void>("engine_remeasure"),
   machineProfile: () => invoke<MachineView>("machine_profile"),
   modelsSearch: (query: string) => invoke<ModelSearchResult[]>("models_search", { query }),
@@ -580,7 +627,7 @@ export interface IngestEvent {
   passages?: number;
 }
 
-export type DownloadPhase = "downloading" | "verifying";
+export type DownloadPhase = "downloading" | "verifying" | "preparing";
 
 export interface DownloadEvent {
   kind: "engine" | "model";
@@ -693,6 +740,8 @@ export function formatCount(n?: number | null): string {
 export function downloadHeadline(download: DownloadEvent): string {
   const phase: DownloadPhase = download.phase ?? "downloading";
   switch (phase) {
+    case "preparing":
+      return t("downloads.preparing");
     case "verifying":
       return t("downloads.checking");
     case "downloading":

@@ -12,6 +12,7 @@ import {
   type ChatEvent,
   type DownloadEvent,
   type EngineStatus,
+  type ChatImage,
   type MenuAction,
   type SettingsView,
   type ShelfView,
@@ -60,6 +61,7 @@ export const chatState = $state({
   navigation: 0,
   drafts: {} as Record<string, string>,
   imports: {} as Record<string, number>,
+  imageImports: {} as Record<string, number>,
   webApprovals: {} as Record<string, WebApproval>,
   messages: [] as StoredMessage[],
   /** Composer draft — lives here so Recipes can pre-fill it. */
@@ -75,6 +77,8 @@ export const chatState = $state({
   /** Threads that have sent but not yet received `queued`. */
   outbound: {} as Record<string, boolean>,
   sentDrafts: {} as Record<string, string>,
+  imageDrafts: {} as Record<string, ChatImage[]>,
+  sentImages: {} as Record<string, ChatImage[]>,
   /** Stop pressed before the backend had a message id to cancel. */
   cancelWhenQueued: {} as Record<string, boolean>,
   /** Older messages exist above the open window. */
@@ -442,15 +446,24 @@ function handleChatEvent(event: ChatEvent) {
       }
     }
     delete chatState.sentDrafts[event.threadId];
+    delete chatState.sentImages[event.threadId];
   }
   if (event.kind === "error" && !event.messageId) {
+    const images = chatState.sentImages[event.threadId];
+    if (images?.length) {
+      chatState.imageDrafts[event.threadId] = [
+        ...images,
+        ...(chatState.imageDrafts[event.threadId] ?? []),
+      ];
+      delete chatState.sentImages[event.threadId];
+    }
     const draft = chatState.sentDrafts[event.threadId];
-    if (draft) {
-      if (chatState.activeThreadId === event.threadId && !chatState.draft) {
-        chatState.draft = draft;
+    if (draft !== undefined || images?.length) {
+      if (chatState.activeThreadId === event.threadId) {
+        if (!chatState.draft) chatState.draft = draft ?? "";
         chatState.messages = chatState.messages.filter((m) => !m.id.startsWith("local-"));
       } else if (chatState.activeThreadId !== event.threadId)
-        chatState.drafts[event.threadId] = draft;
+        chatState.drafts[event.threadId] = draft ?? "";
       delete chatState.sentDrafts[event.threadId];
     }
   }

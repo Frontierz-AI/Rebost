@@ -134,3 +134,9 @@ Sonner, top-right. Surface + paper-line. Close control is always visible, top-ri
 User-facing English follows the House style in [CONTRIBUTING.md](../CONTRIBUTING.md) (outcome, not machinery; AI over model). Keyboard and VoiceOver: [accessibility.md](accessibility.md). New controls need a name: visible label, or `aria-label` on icon-only buttons.
 
 The main window supports 640 × 540 logical pixels. Below 900 pixels wide, Chat opens its conversation list in a modal drawer, and Shelf and Recipe cards stack vertically. Source panels use the available height. Preserve keyboard focus when opening or closing the drawer.
+
+## Chat images
+
+The image button appears only while the installed AI is ready with confirmed vision support. PNG/JPEG can be picked, attached with the paperclip, or pasted into the composer. The limit is shown beside the composer. Attachment thumbnails have a named remove action, keyboard-operable previews, Escape dismissal, and focus restoration. Preparation and changed model limits block sending until the draft is usable. Unsupported models keep the document attachment button.
+
+Images are capped at 20 MiB and 40 megapixels before normalization, then resized for the active hardware tier without upscaling. Conversation storage is bounded to 256 MiB. Recent images accompany follow-up questions within the current image/context limits; older or unavailable images are explicitly marked unavailable to the model.

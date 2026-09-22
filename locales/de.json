@@ -623,5 +623,30 @@
     "addedOne": "Zu dieser Unterhaltung hinzugefügt.",
     "addedMany": "%{count} Dateien zu dieser Unterhaltung hinzugefügt.",
     "unsupported": "Diese Dateitypen werden nicht unterstützt."
+  },
+  "images": {
+    "pasted": "Eingefügtes Bild",
+    "add": "Bilder hinzufügen",
+    "attached": "Angehängte Bilder",
+    "preview": "Vorschau von %{name}",
+    "remove": "%{name} entfernen",
+    "closePreview": "Bildvorschau schließen",
+    "missingShort": "Bild nicht verfügbar",
+    "preparing": "Anhänge werden vorbereitet…",
+    "defaultPrompt": "Beschreibe dieses Bild.",
+    "hint": "PNG/JPG einfügen oder anhängen. Bildlimit: %{count}.",
+    "limit": "Bildlimit: %{count}. Entferne ein Bild, bevor du ein weiteres hinzufügst.",
+    "ready": "Bilder können verwendet werden. Limit pro Nachricht: %{count}.",
+    "enable": "Bilder aktivieren",
+    "enableDescription": "Diese KI kann Bilder lesen. Dafür ist ein zusätzlicher Download von %{size} nötig.",
+    "enabling": "Bilder werden aktiviert…",
+    "unavailable": "Diese KI kann auf diesem Computer keine Bilder verarbeiten. Wähle eine andere KI, um Bilder anzuhängen.",
+    "tooLarge": "Dieses Bild ist zu groß. Verwende eine PNG- oder JPG-Datei unter 20 MB und 40 Megapixeln.",
+    "format": "Dieses Bildformat wird nicht unterstützt. Wähle PNG oder JPG.",
+    "tooMany": "Für diese KI sind zu viele Bilder angehängt. Entferne ein Bild und versuche es erneut.",
+    "limitsChanged": "Diese Bilder überschreiten die Limits der aktuellen KI. Entferne sie und hänge sie erneut an.",
+    "missing": "Ein Bild ist nicht mehr verfügbar. Hänge es erneut an, um fortzufahren.",
+    "storageFull": "Diese Unterhaltung hat ihr Speicherlimit für Bilder erreicht. Starte eine neue Unterhaltung.",
+    "invalid": "Rebost konnte dieses Bild nicht lesen. Versuche eine andere PNG- oder JPG-Datei."
   }
 }
