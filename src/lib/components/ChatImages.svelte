@@ -88,24 +88,28 @@
           : t("images.preview", { name: image.name })}
       >
         <div
-          class="relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-xl bg-paper-soft outline-1 -outline-offset-1 outline-ink/10 group-enabled:group-hover:outline-navy-500"
+          class="relative aspect-4/3 w-full rounded-xl border border-ink/10 bg-paper-soft group-enabled:group-hover:border-navy-500"
         >
-          {#if previews[image.id]}
-            <img
-              src={previews[image.id]}
-              alt=""
-              class="absolute inset-0 size-full object-contain {loaded[image.id]
-                ? ''
-                : 'opacity-0'}"
-              onload={() => (loaded[image.id] = true)}
-              onerror={() => (previews[image.id] = null)}
-            />
-          {:else if previews[image.id] === null}
-            <ImageOff size={16} class="shrink-0 text-ink-soft" aria-hidden="true" />
-          {/if}
-          {#if previews[image.id] !== null && !loaded[image.id]}
-            <ChatImagePlaceholder />
-          {/if}
+          <div
+            class="absolute inset-0 flex items-center justify-center overflow-hidden rounded-[calc(0.75rem-1px)]"
+          >
+            {#if previews[image.id]}
+              <img
+                src={previews[image.id]}
+                alt=""
+                class="absolute inset-0 size-full object-contain {loaded[image.id]
+                  ? ''
+                  : 'opacity-0'}"
+                onload={() => (loaded[image.id] = true)}
+                onerror={() => (previews[image.id] = null)}
+              />
+            {:else if previews[image.id] === null}
+              <ImageOff size={16} class="shrink-0 text-ink-soft" aria-hidden="true" />
+            {/if}
+            {#if previews[image.id] !== null && !loaded[image.id]}
+              <ChatImagePlaceholder framed={false} />
+            {/if}
+          </div>
         </div>
       </button>
       {#if onRemove}
