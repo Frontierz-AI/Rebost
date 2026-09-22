@@ -6,6 +6,18 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-09-22
+
+### Added
+
+- When the installed AI can read images on this computer, Chat can attach or paste a PNG or JPEG, show a preview, and answer questions about it. The images stay with that conversation and are not added to a Shelf.
+- Exporting a conversation keeps its images beside the file.
+- Settings can add image reading to an installed AI that supports it, with one extra download. The AI already in use stays until the new one is ready.
+
+### Changed
+
+- A new install downloads the matching image file when there is one clear companion and it fits the computer. Chat shows the image button only after the running AI confirms it can see images.
+
 ## [0.9.4] - 2026-09-20
 
 ### Fixed
@@ -591,7 +603,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.4...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.5...HEAD
+[0.9.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.1...v0.9.2
