@@ -634,7 +634,6 @@
     "missingShort": "Bilden är inte tillgänglig",
     "preparing": "Förbereder bilagor…",
     "defaultPrompt": "Beskriv den här bilden.",
-    "hint": "Klistra in eller bifoga PNG/JPG. Bildgräns: %{count}.",
     "limit": "Bildgräns: %{count}. Ta bort en bild innan du lägger till en till.",
     "ready": "Bilder kan användas. Gräns per meddelande: %{count}.",
     "enable": "Aktivera bilder",

@@ -634,7 +634,6 @@
     "missingShort": "Immagine non disponibile",
     "preparing": "Preparazione degli allegati…",
     "defaultPrompt": "Descrivi questa immagine.",
-    "hint": "Incolla o allega PNG/JPG. Limite immagini: %{count}.",
     "limit": "Limite immagini: %{count}. Rimuovi un’immagine prima di aggiungerne un’altra.",
     "ready": "Le immagini sono disponibili. Limite per messaggio: %{count}.",
     "enable": "Attiva immagini",

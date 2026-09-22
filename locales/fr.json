@@ -634,7 +634,6 @@
     "missingShort": "Image indisponible",
     "preparing": "Préparation des pièces jointes…",
     "defaultPrompt": "Décris cette image.",
-    "hint": "Collez ou joignez des PNG/JPG. Limite d’images : %{count}.",
     "limit": "Limite d’images : %{count}. Retirez une image avant d’en ajouter une autre.",
     "ready": "Les images sont disponibles. Limite par message : %{count}.",
     "enable": "Activer les images",

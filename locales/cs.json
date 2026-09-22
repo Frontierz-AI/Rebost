@@ -634,7 +634,6 @@
     "missingShort": "Obrázek není dostupný",
     "preparing": "Příprava příloh…",
     "defaultPrompt": "Popiš tento obrázek.",
-    "hint": "Vložte nebo přiložte PNG/JPG. Limit obrázků: %{count}.",
     "limit": "Limit obrázků: %{count}. Před přidáním dalšího obrázku jeden odeberte.",
     "ready": "Obrázky jsou dostupné. Limit na zprávu: %{count}.",
     "enable": "Zapnout obrázky",

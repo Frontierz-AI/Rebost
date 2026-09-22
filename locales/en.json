@@ -633,7 +633,6 @@
     "missingShort": "Image unavailable",
     "preparing": "Preparing attachments…",
     "defaultPrompt": "Describe this image.",
-    "hint": "Paste or attach PNG/JPG. Image limit: %{count}.",
     "limit": "Image limit: %{count}. Remove an image before adding another.",
     "ready": "Image input is ready. Limit per message: %{count}.",
     "enable": "Enable images",

@@ -634,7 +634,6 @@
     "missingShort": "Afbeelding niet beschikbaar",
     "preparing": "Bijlagen voorbereiden…",
     "defaultPrompt": "Beschrijf deze afbeelding.",
-    "hint": "Plak PNG/JPG of voeg ze toe. Afbeeldingslimiet: %{count}.",
     "limit": "Afbeeldingslimiet: %{count}. Verwijder een afbeelding voordat je een nieuwe toevoegt.",
     "ready": "Afbeeldingen zijn beschikbaar. Limiet per bericht: %{count}.",
     "enable": "Afbeeldingen inschakelen",

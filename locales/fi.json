@@ -634,7 +634,6 @@
     "missingShort": "Kuva ei ole saatavilla",
     "preparing": "Valmistellaan liitteitä…",
     "defaultPrompt": "Kuvaile tätä kuvaa.",
-    "hint": "Liitä PNG/JPG. Kuvien enimmäismäärä: %{count}.",
     "limit": "Kuvien enimmäismäärä: %{count}. Poista kuva ennen uuden lisäämistä.",
     "ready": "Kuvat ovat käytettävissä. Enimmäismäärä viestiä kohden: %{count}.",
     "enable": "Ota kuvat käyttöön",

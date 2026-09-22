@@ -634,7 +634,6 @@
     "missingShort": "Bild nicht verfügbar",
     "preparing": "Anhänge werden vorbereitet…",
     "defaultPrompt": "Beschreibe dieses Bild.",
-    "hint": "PNG/JPG einfügen oder anhängen. Bildlimit: %{count}.",
     "limit": "Bildlimit: %{count}. Entferne ein Bild, bevor du ein weiteres hinzufügst.",
     "ready": "Bilder können verwendet werden. Limit pro Nachricht: %{count}.",
     "enable": "Bilder aktivieren",

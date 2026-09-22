@@ -137,6 +137,6 @@ The main window supports 640 × 540 logical pixels. Below 900 pixels wide, Chat 
 
 ## Chat images
 
-The image button appears only while the installed AI is ready with confirmed vision support. PNG/JPEG can be picked, attached with the paperclip, or pasted into the composer. The limit is shown beside the composer. Attachment thumbnails have a named remove action, keyboard-operable previews, Escape dismissal, and focus restoration. Preparation and changed model limits block sending until the draft is usable. Unsupported models keep the document attachment button.
+The image button appears only while the installed AI is ready with confirmed vision support. PNG/JPEG can be picked, attached with the paperclip, or pasted into the composer. Attachment thumbnails have a named remove action, keyboard-operable previews, Escape dismissal, and focus restoration. Preparation and changed model limits block sending until the draft is usable. Unsupported models keep the document attachment button.
 
 Images are capped at 20 MiB and 40 megapixels before normalization, then resized for the active hardware tier without upscaling. Conversation storage is bounded to 256 MiB. Recent images accompany follow-up questions within the current image/context limits; older or unavailable images are explicitly marked unavailable to the model.

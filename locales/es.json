@@ -633,7 +633,6 @@
     "missingShort": "Imagen no disponible",
     "preparing": "Preparando los adjuntos…",
     "defaultPrompt": "Describe esta imagen.",
-    "hint": "Pega o adjunta PNG/JPG. Límite de imágenes: %{count}.",
     "limit": "Límite de imágenes: %{count}. Quita una antes de añadir otra.",
     "ready": "Las imágenes ya están disponibles. Límite por mensaje: %{count}.",
     "enable": "Activar imágenes",

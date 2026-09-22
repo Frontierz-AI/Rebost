@@ -634,7 +634,6 @@
     "missingShort": "Billedet er ikke tilgængeligt",
     "preparing": "Forbereder vedhæftninger…",
     "defaultPrompt": "Beskriv dette billede.",
-    "hint": "Indsæt eller vedhæft PNG/JPG. Billedgrænse: %{count}.",
     "limit": "Billedgrænse: %{count}. Fjern et billede, før du tilføjer et nyt.",
     "ready": "Billeder kan bruges. Grænse pr. besked: %{count}.",
     "enable": "Aktivér billeder",

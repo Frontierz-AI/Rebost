@@ -634,7 +634,6 @@
     "missingShort": "Imagem indisponível",
     "preparing": "A preparar os anexos…",
     "defaultPrompt": "Descreve esta imagem.",
-    "hint": "Cola ou anexa PNG/JPG. Limite de imagens: %{count}.",
     "limit": "Limite de imagens: %{count}. Remove uma antes de adicionar outra.",
     "ready": "As imagens estão disponíveis. Limite por mensagem: %{count}.",
     "enable": "Ativar imagens",

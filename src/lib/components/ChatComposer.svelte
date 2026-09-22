@@ -460,8 +460,5 @@
         {/if}
       </div>
     </div>
-    {#if vision}<p class="px-3 pt-2 text-sm text-ink-soft">
-        {t("images.hint", { count: vision.maxImages })}
-      </p>{/if}
   </div>
 </div>

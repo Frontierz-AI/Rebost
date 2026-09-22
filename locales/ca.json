@@ -633,7 +633,6 @@
     "missingShort": "Imatge no disponible",
     "preparing": "Preparant els adjunts…",
     "defaultPrompt": "Descriu aquesta imatge.",
-    "hint": "Enganxa o adjunta PNG/JPG. Límit d’imatges: %{count}.",
     "limit": "Límit d’imatges: %{count}. Elimina’n una abans d’afegir-ne una altra.",
     "ready": "Les imatges ja estan disponibles. Límit per missatge: %{count}.",
     "enable": "Activa les imatges",

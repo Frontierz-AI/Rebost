@@ -634,7 +634,6 @@
     "missingShort": "Bildet er utilgjengelig",
     "preparing": "Forbereder vedlegg…",
     "defaultPrompt": "Beskriv dette bildet.",
-    "hint": "Lim inn eller legg ved PNG/JPG. Bildegrense: %{count}.",
     "limit": "Bildegrense: %{count}. Fjern et bilde før du legger til et nytt.",
     "ready": "Bilder kan brukes. Grense per melding: %{count}.",
     "enable": "Aktiver bilder",
