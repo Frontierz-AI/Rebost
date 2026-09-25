@@ -75,7 +75,7 @@ notify = "8.2.0"
 tokio = { version = "1.53.1", features = ["full"] }
 reqwest = { version = "0.13.5", features = ["json", "stream", "gzip", "query", "charset", "http2"] }
 bytes = "1"
-base64 = "0.22"
+base64 = "0.23"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
