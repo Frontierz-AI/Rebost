@@ -48,7 +48,7 @@
     "@tauri-apps/plugin-dialog": "^2.7.3",
     "@tauri-apps/plugin-os": "^2.3.2",
     "dompurify": "^3.4.15",
-    "marked": "^18.0.13",
+    "marked": "^18.0.14",
     "svelte-sonner": "^1.2.1"
   },
   "devDependencies": {
