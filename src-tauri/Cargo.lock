@@ -9084,9 +9084,9 @@ dependencies = [
 
 [[package]]
 name = "xberg"
-version = "1.2.6"
+version = "1.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21d7978ff7f97e397cb9671835f703c49a8be54f21ead48b8c23f18c4715cbcb"
+checksum = "346e6f854ea416087ebdb236f66e06579d29eb6510060e978691b398c49fbe33"
 dependencies = [
  "ahash",
  "async-trait",
@@ -9167,9 +9167,9 @@ dependencies = [
 
 [[package]]
 name = "xberg-native-pdf"
-version = "1.2.6"
+version = "1.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "069b021cb6e2386601988a7e54768b0d696cf8d50f0a292c403d4d232f3407ab"
+checksum = "ddc05f380b448050b95361f59a4155291cc850286ceee2ebf98b83c5ab6e5dff"
 dependencies = [
  "aes",
  "base64 0.23.1",
@@ -9214,9 +9214,9 @@ dependencies = [
 
 [[package]]
 name = "xberg-tesseract"
-version = "1.2.6"
+version = "1.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bb3f460dfb985465d01e5d4c17a02f5b1adf2b4305775585a488095b89dd95c"
+checksum = "b6d6714013f52d238cf8e14614056c5d2fffb3662f40ae0434b79ec0cd945635"
 dependencies = [
  "cc",
  "cmake",
