@@ -159,6 +159,8 @@ pub struct Diagnostics {
     pub engine_log_path: String,
     pub engine_log_present: bool,
     pub supported_formats: Vec<String>,
+    /// Why image support last failed to start this session.
+    pub vision_error: Option<String>,
 }
 
 /// Local diagnostics for Settings (paths and counts, not log bodies).
@@ -188,6 +190,7 @@ pub fn diagnostics(
         engine_log_path: log_path.to_string_lossy().to_string(),
         engine_log_present: log_path.is_file(),
         supported_formats: formats,
+        vision_error: engine.vision_error(),
     }
 }
 

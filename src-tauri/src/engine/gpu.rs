@@ -5,9 +5,15 @@
 
 use super::pin::{optional_pin_for, EnginePin};
 
-/// Optional GPU pin for this machine, if a faster archive exists and the
-/// hardware can load it.
+/// Downloaded pin for this machine, if a better archive exists than the
+/// bundled one and the hardware can load it.
 pub fn preferred_optional_pin() -> Option<&'static EnginePin> {
+    if runs_x64_on_arm() {
+        // The x64 copy on an ARM PC runs the native ARM64 CPU build. Under
+        // emulation the bundled Vulkan build still sends prompt batches to
+        // the Adreno GPU, which hangs or writes garbage.
+        return super::pin::pin_for("windows", "aarch64").ok();
+    }
     let accel = detected_accelerator()?;
     optional_pin_for(std::env::consts::OS, std::env::consts::ARCH, accel)
 }
@@ -29,6 +35,18 @@ fn detected_accelerator() -> Option<&'static str> {
         return Some("OpenCL");
     }
     None
+}
+
+/// The x64 Windows build running under emulation on an ARM PC.
+pub(crate) fn runs_x64_on_arm() -> bool {
+    #[cfg(all(windows, target_arch = "x86_64"))]
+    {
+        native_machine_is_arm64()
+    }
+    #[cfg(not(all(windows, target_arch = "x86_64")))]
+    {
+        false
+    }
 }
 
 /// True on Windows ARM, including an x64 process running under emulation.
@@ -118,9 +136,13 @@ mod tests {
     #[test]
     fn optional_pin_is_absent_on_this_host_or_well_formed() {
         if let Some(pin) = preferred_optional_pin() {
-            assert!(pin.accelerator == "CUDA" || pin.accelerator == "OpenCL");
             assert_eq!(pin.os, std::env::consts::OS);
-            assert_eq!(pin.arch, std::env::consts::ARCH);
+            if pin.arch == std::env::consts::ARCH {
+                assert!(pin.accelerator == "CUDA" || pin.accelerator == "OpenCL");
+            } else {
+                // x64 Windows copy on an ARM PC.
+                assert_eq!((pin.arch, pin.accelerator), ("aarch64", "CPU"));
+            }
         }
     }
 

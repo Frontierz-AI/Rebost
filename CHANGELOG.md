@@ -6,6 +6,17 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Fixed
+
+- On a Windows PC whose graphics driver cannot run the AI, Rebost downloads a small CPU version of the engine and answers with it. That AI starts on the CPU version next time.
+- The regular Windows download on a Snapdragon (ARM) PC runs the AI with the native ARM engine, so answers no longer hang or come out garbled. Its next update installs the Windows (ARM) version, and the regular installer points ARM PCs to the ARM download.
+- When image reading fails to start with an installed AI, Settings says so, deletes the extra download, and stops offering it for that AI. Diagnostics shows the reason.
+- Installing from a repository that only has low-bit IQ files picks the strongest one without the extra prediction head, and skips importance-matrix files.
+
+### Security
+
+- Signed Windows releases also sign `llama-server.exe` and its DLLs, which antivirus software flagged when they were unsigned.
+
 ## [0.9.5] - 2026-09-22
 
 ### Added

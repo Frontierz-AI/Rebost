@@ -99,6 +99,23 @@ impl Engine {
         Ok((path, bundled))
     }
 
+    /// Start on the CPU build when it already had to replace the GPU build
+    /// for this AI; otherwise the usual preference.
+    pub(super) async fn ensure_start_binary(
+        &self,
+        cpu: Option<&'static EnginePin>,
+    ) -> Result<(PathBuf, &'static EnginePin)> {
+        if let Some(cpu) = cpu {
+            match self.ensure_pin_binary(cpu, false).await {
+                Ok(path) => return Ok((path, cpu)),
+                Err(error) => {
+                    log::warn!("CPU engine unavailable ({error:#}); trying the usual build")
+                }
+            }
+        }
+        self.ensure_binary().await
+    }
+
     /// Make sure one llama.cpp build is present. Preference: already extracted,
     /// `REBOST_ENGINE_ARCHIVE` / the installer bundle (bundled pin only), then GitHub.
     pub(super) async fn ensure_pin_binary(
@@ -330,8 +347,9 @@ fn resolve_local_archive(
         .filter(|path| path.is_file())
         .map(|path| LocalArchive {
             path: path.to_path_buf(),
-            // Notary unpacks this tar.gz, so signed Mac builds re-sign Mach-O
-            // inside it and the bytes no longer match the GitHub pin SHA.
+            // Signed releases re-sign the binaries inside this archive (Mach-O
+            // for notary, Authenticode on Windows), so the bytes no longer
+            // match the GitHub pin SHA.
             verify_pin_sha: false,
             delete_after_unpack: false,
         })

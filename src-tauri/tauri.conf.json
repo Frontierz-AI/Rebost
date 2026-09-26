@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://127.0.0.1:1420",
-    "beforeBuildCommand": "node scripts/fetch-engine.mjs && node scripts/sign-engine-macos.mjs && pnpm build",
+    "beforeBuildCommand": "node scripts/fetch-engine.mjs && node scripts/sign-engine-macos.mjs && node scripts/sign-engine-windows.mjs && pnpm build",
     "frontendDist": "../dist"
   },
   "app": {

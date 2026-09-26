@@ -46,6 +46,7 @@ pub(crate) fn map_user_error(text: &str) -> String {
     }
     let lower = trimmed.to_lowercase();
     for (code, key) in [
+        ("image-start-failed", "images.startFailed"),
         ("image-unavailable", "images.unavailable"),
         ("image-too-large", "images.tooLarge"),
         ("image-format", "images.format"),

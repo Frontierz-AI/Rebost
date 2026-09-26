@@ -3,6 +3,7 @@
     api,
     userFacingError,
     formatBytes,
+    runsEmulatedOnArm,
     type Diagnostics,
     type MachineView,
     type ModelSearchResult,
@@ -66,6 +67,9 @@
       app.engine = await api.engineStatus();
     } catch (error) {
       notifyInvokeError(error);
+      // A start that failed is not offered again; settings dropped the file.
+      await refreshSettings();
+      visionOffer = await api.modelVisionOffer().catch(() => null);
     } finally {
       enablingVision = false;
     }
@@ -408,6 +412,24 @@
           {machine.profile.cpu} · {formatBytes(machine.profile.totalRamBytes)} memory ·
           {formatBytes(machine.profile.freeDiskBytes)} free disk
         </p>
+        {#if runsEmulatedOnArm(machine.profile)}
+          <div
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-paper-line bg-paper-soft px-4 py-3 text-sm"
+          >
+            <p class="min-w-0 flex-1 text-ink-soft">{t("settings.armBuildNotice")}</p>
+            <button
+              type="button"
+              class="btn-outline shrink-0"
+              onclick={() =>
+                (app.update?.switchesToArm
+                  ? api.showUpdateWindow()
+                  : api.openExternal("releases")
+                ).catch(notifyInvokeError)}
+            >
+              {t("settings.armBuildDownload")}
+            </button>
+          </div>
+        {/if}
       {/if}
 
       {#if modelDownload}
@@ -585,6 +607,15 @@
             ? `${diag.model.name} · ${diag.model.file}`
             : t("settings.noneInstalled")}
         </p>
+        {#if diag.model?.projector || diag.visionError}
+          <p>
+            images: {diag.engineState.vision
+              ? "ready"
+              : diag.visionError
+                ? `failed · ${diag.visionError}`
+                : "off"}
+          </p>
+        {/if}
         <p>index records: {diag.indexRecords} · context budget: {diag.contextBudgetChars} chars</p>
         {#if diag.benchmark}
           <p>

@@ -8,7 +8,7 @@ use std::time::Duration;
 use tokio::process::Command;
 
 use super::catalog::MachineProfile;
-use super::pin::{current_engine_pin, EnginePin};
+use super::pin::{cpu_fallback_pin, current_engine_pin, EnginePin};
 use super::process::{
     engine_log_tail, force_kill_pid, free_port, kill_stale_llama_servers, pipe_to_log,
     write_server_pid,
@@ -32,7 +32,22 @@ struct SpawnFailed {
     /// Process died, never started, or never became healthy. Callers may try
     /// the bundled pin. Port errors stay false — Vulkan will not help.
     try_bundled: bool,
+    /// The failed start included `--mmproj`.
+    with_vision: bool,
+    /// First llama-server log line that names the problem, when one exists.
+    reason: Option<String>,
     error: anyhow::Error,
+}
+
+impl SpawnFailed {
+    fn before_start(try_bundled: bool, error: anyhow::Error) -> Self {
+        Self {
+            try_bundled,
+            with_vision: false,
+            reason: None,
+            error,
+        }
+    }
 }
 
 fn should_fallback_to_bundled(
@@ -42,6 +57,44 @@ fn should_fallback_to_bundled(
     bundled: &EnginePin,
 ) -> bool {
     fail.try_bundled && !used_fallback && !std::ptr::eq(pin, bundled)
+}
+
+/// The bundled GPU build would not start (driver, VRAM, or emulation).
+/// The CPU build is slower, but it answers.
+fn should_fallback_to_cpu(
+    fail: &SpawnFailed,
+    used_cpu: bool,
+    pin: &EnginePin,
+    cpu: Option<&EnginePin>,
+) -> bool {
+    fail.try_bundled && !used_cpu && cpu.is_some_and(|cpu| !std::ptr::eq(pin, cpu))
+}
+
+/// Key for [`crate::settings::Settings::cpu_engine_for`].
+fn cpu_engine_key(model: &ActiveModel) -> String {
+    format!("{ENGINE_RELEASE}/{}", model.file)
+}
+
+/// The llama-server line most likely to explain a failed start.
+fn failure_reason(tail: &str) -> Option<String> {
+    let flagged: Vec<&str> = tail
+        .lines()
+        .map(str::trim)
+        .filter(|line| {
+            let lower = line.to_ascii_lowercase();
+            ["error", "failed", "unsupported", "unknown", "invalid"]
+                .iter()
+                .any(|word| lower.contains(word))
+        })
+        .collect();
+    let line = flagged
+        .iter()
+        .find(|line| {
+            let lower = line.to_ascii_lowercase();
+            lower.contains("mmproj") || lower.contains("clip") || lower.contains("mtmd")
+        })
+        .or_else(|| flagged.first())?;
+    Some(line.chars().take(240).collect())
 }
 
 fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<String> {
@@ -84,6 +137,11 @@ fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<Stri
         // Discrete Vulkan/CUDA: copy weights into RAM. 0.4.1 dropped --no-mmap.
         args.push("--load-mode".into());
         args.push("none".into());
+    }
+    if plan.cpu_only {
+        args.push("--device".into());
+        args.push("none".into());
+        args.push("--no-op-offload".into());
     }
     args
 }
@@ -199,14 +257,25 @@ impl Engine {
 
         // Download llama.cpp without holding the process lock — otherwise the
         // first chat sits on "Warming up…" with no engine log for minutes.
+        let bundled = current_engine_pin()?;
+        let cpu = cpu_fallback_pin();
+        let remembered_cpu = cpu.filter(|_| {
+            crate::core::read_lock(&self.ctx.settings)
+                .cpu_engine_for
+                .as_deref()
+                == Some(cpu_engine_key(&model).as_str())
+        });
+        let mut used_cpu = false;
         let (mut binary, mut pin) = tokio::select! {
             _ = crate::engine::wait_if_cancelled(cancel) => return Err(stopped_error()),
-            result = self.ensure_binary() => result?,
+            result = self.ensure_start_binary(remembered_cpu) => result?,
         };
+        if remembered_cpu.is_some_and(|cpu| std::ptr::eq(pin, cpu)) {
+            used_cpu = true;
+        }
         if cancel.load(Ordering::Relaxed) {
             return Err(stopped_error());
         }
-        let bundled = current_engine_pin()?;
         let data_dir = self.ctx.paths.base().to_path_buf();
         if let Err(error) =
             tokio::task::spawn_blocking(move || kill_stale_llama_servers(&data_dir)).await
@@ -236,18 +305,25 @@ impl Engine {
                 .spawn_and_wait(&mut inner, &binary, pin, &model, &model_path, cancel)
                 .await
             {
-                Ok(url) => return Ok(url),
+                Ok(url) => {
+                    self.remember_engine_choice(&model, pin, cpu);
+                    return Ok(url);
+                }
                 Err(fail) if is_stopped(&fail.error) => return Err(fail.error),
                 Err(fail)
-                    if !is_stopped(&fail.error)
-                        && model.projector.is_some()
+                    if fail.with_vision
                         && crate::core::mutex_lock(&self.disabled_vision).as_deref()
                             != Some(&model.file) =>
                 {
-                    log::warn!(
-                        "vision startup failed; retrying this AI with text only: {}",
+                    let reason = fail
+                        .reason
+                        .clone()
+                        .unwrap_or_else(|| fail.error.to_string());
+                    log::error!(
+                        "vision startup failed ({:#}); retrying this AI with text only. {reason}",
                         fail.error
                     );
+                    *crate::core::mutex_lock(&self.vision_error) = Some(reason);
                     *crate::core::mutex_lock(&self.disabled_vision) = Some(model.file.clone());
                 }
                 Err(fail) if should_fallback_to_bundled(&fail, used_fallback, pin, bundled) => {
@@ -270,6 +346,38 @@ impl Engine {
                     }
                     binary = self.ensure_pin_binary(bundled, true).await?;
                     pin = bundled;
+                }
+                Err(fail) if should_fallback_to_cpu(&fail, used_cpu, pin, cpu) => {
+                    drop(inner);
+                    used_cpu = true;
+                    // The GPU builds already failed; if the CPU build fails
+                    // too, do not go back to the bundled one.
+                    used_fallback = true;
+                    let cpu = cpu.expect("CPU fallback pin");
+                    log::warn!(
+                        "{} engine failed ({:#}); trying the CPU build",
+                        pin.accelerator,
+                        fail.error
+                    );
+                    let data_dir = self.ctx.paths.base().to_path_buf();
+                    if let Err(error) =
+                        tokio::task::spawn_blocking(move || kill_stale_llama_servers(&data_dir))
+                            .await
+                    {
+                        log::warn!("kill stale llama-servers: {error}");
+                    }
+                    binary = match self.ensure_pin_binary(cpu, false).await {
+                        Ok(binary) => binary,
+                        Err(error) => {
+                            log::error!("CPU engine unavailable: {error:#}");
+                            self.set_status(
+                                EngineState::Error,
+                                Some("Rebost isn't ready yet. Try again in a moment.".into()),
+                            );
+                            return Err(fail.error);
+                        }
+                    };
+                    pin = cpu;
                 }
                 Err(fail) => {
                     let timeout = fail.error.to_string().contains("timeout");
@@ -298,12 +406,7 @@ impl Engine {
     ) -> Result<String, SpawnFailed> {
         let port = match free_port() {
             Ok(port) => port,
-            Err(error) => {
-                return Err(SpawnFailed {
-                    try_bundled: false,
-                    error,
-                })
-            }
+            Err(error) => return Err(SpawnFailed::before_start(false, error)),
         };
         let profile = MachineProfile::detect(self.ctx.paths.base());
         let mut vision_profile = profile.clone();
@@ -324,15 +427,29 @@ impl Engine {
         let vision = vision.and_then(|limits| {
             limits.fit_context(plan.context_tokens, plan.answer_tokens.min(1024))
         });
-        if pin.accelerator == "Vulkan" && super::gpu::windows_host_is_arm64() {
+        if model.projector.is_some()
+            && vision.is_none()
+            && crate::core::mutex_lock(&self.disabled_vision).as_deref() != Some(&model.file)
+        {
             log::warn!(
-                "this Windows copy is running on ARM; using the CPU path so Chat can answer"
+                "starting {} without image support: the image file is missing or does not fit memory and context",
+                model.file
+            );
+        }
+        if plan.cpu_only {
+            log::warn!(
+                "this x64 Windows copy is running on ARM; the Vulkan build stays off the GPU (--device none)"
             );
         }
         log::info!(
-            "starting llama-server {} {} with {} (-c {} -b {} -ub {} -ngl {} -fa {} --cache-type {}{})",
+            "starting llama-server {} {}{} with {} (-c {} -b {} -ub {} -ngl {} -fa {} --cache-type {}{}{}{})",
             ENGINE_RELEASE,
             pin.accelerator,
+            if pin.arch == std::env::consts::ARCH {
+                String::new()
+            } else {
+                format!(" {}", pin.arch)
+            },
             model.file,
             plan.context_tokens,
             plan.batch,
@@ -340,7 +457,9 @@ impl Engine {
             plan.gpu_layers,
             plan.flash_attn,
             plan.cache_type,
-            if plan.no_mmap { " --load-mode none" } else { "" }
+            if plan.no_mmap { " --load-mode none" } else { "" },
+            if plan.cpu_only { " --device none" } else { "" },
+            if vision.is_some() { " --mmproj" } else { "" }
         );
         self.set_status(EngineState::Starting, None);
 
@@ -380,14 +499,10 @@ impl Engine {
             command.creation_flags(CREATE_NO_WINDOW);
         }
 
+        let with_vision = vision.is_some();
         let mut child = match command.spawn().context("spawn llama-server") {
             Ok(child) => child,
-            Err(error) => {
-                return Err(SpawnFailed {
-                    try_bundled: true,
-                    error,
-                })
-            }
+            Err(error) => return Err(SpawnFailed::before_start(true, error)),
         };
         if let Some(pid) = child.id() {
             write_server_pid(self.ctx.paths.base(), pid);
@@ -410,16 +525,15 @@ impl Engine {
                     force_kill_pid(pid);
                 }
                 let _ = child.kill().await;
-                return Err(SpawnFailed {
-                    try_bundled: false,
-                    error: stopped_error(),
-                });
+                return Err(SpawnFailed::before_start(false, stopped_error()));
             }
             if let Ok(Some(status)) = child.try_wait() {
                 let tail = engine_log_tail(&log_path);
                 log::error!("llama-server exited early ({status}); log tail:\n{tail}");
                 return Err(SpawnFailed {
                     try_bundled: true,
+                    with_vision,
+                    reason: failure_reason(&tail),
                     error: anyhow!("llama-server exited early ({status})"),
                 });
             }
@@ -446,6 +560,8 @@ impl Engine {
                     let _ = child.kill().await;
                     return Err(SpawnFailed {
                         try_bundled: true,
+                        with_vision,
+                        reason: None,
                         error: anyhow!("OpenCL probe failed"),
                     });
                 }
@@ -463,6 +579,8 @@ impl Engine {
                 );
                 return Err(SpawnFailed {
                     try_bundled: true,
+                    with_vision,
+                    reason: failure_reason(&tail),
                     error: anyhow!("llama-server health timeout"),
                 });
             }
@@ -505,6 +623,30 @@ impl Engine {
         self.set_status(EngineState::Ready, None);
 
         Ok(url)
+    }
+
+    /// Start this AI straight on the CPU build next time, until the engine
+    /// release or the AI changes. A GPU start that works again clears it.
+    fn remember_engine_choice(
+        &self,
+        model: &ActiveModel,
+        pin: &EnginePin,
+        cpu: Option<&EnginePin>,
+    ) {
+        let key = cpu_engine_key(model);
+        let on_cpu = cpu.is_some_and(|cpu| std::ptr::eq(pin, cpu));
+        {
+            let mut settings = crate::core::write_lock(&self.ctx.settings);
+            let remembered = settings.cpu_engine_for.as_deref() == Some(key.as_str());
+            if on_cpu == remembered {
+                return;
+            }
+            settings.cpu_engine_for = on_cpu.then_some(key);
+        }
+        if on_cpu {
+            log::warn!("{} starts on the CPU build on this computer", model.file);
+        }
+        self.ctx.save_settings();
     }
 
     async fn live_url(&self, inner: &mut Inner, model: &ActiveModel) -> Option<String> {
@@ -586,6 +728,7 @@ mod tests {
             flash_attn: flash,
             cache_type: "q8_0",
             gpu_layers: 99,
+            cpu_only: false,
         }
     }
 
@@ -637,26 +780,61 @@ mod tests {
         plan.gpu_layers = 0;
         let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan);
         assert!(has_pair(&args, "-ngl", "0"));
+        assert!(!args.iter().any(|a| a == "--device"));
+    }
+
+    #[test]
+    fn cpu_only_vulkan_keeps_every_op_off_the_gpu() {
+        let mut plan = plan(false, "auto");
+        plan.gpu_layers = 0;
+        plan.cpu_only = true;
+        let args = llama_server_args(Path::new("/tmp/m.gguf"), 8080, &plan);
+        assert!(has_pair(&args, "--device", "none"));
+        assert!(args.iter().any(|a| a == "--no-op-offload"));
     }
 
     #[test]
     fn optional_timeout_falls_back_once() {
         let bundled = crate::engine::pin::pin_for("windows", "x86_64").unwrap();
         let cuda = crate::engine::pin::optional_pin_for("windows", "x86_64", "CUDA").unwrap();
-        let timeout = SpawnFailed {
-            try_bundled: true,
-            error: anyhow!("llama-server health timeout"),
-        };
+        let timeout = SpawnFailed::before_start(true, anyhow!("llama-server health timeout"));
         assert!(should_fallback_to_bundled(&timeout, false, cuda, bundled));
         assert!(!should_fallback_to_bundled(&timeout, true, cuda, bundled));
         assert!(!should_fallback_to_bundled(
             &timeout, false, bundled, bundled
         ));
-        let port = SpawnFailed {
-            try_bundled: false,
-            error: anyhow!("no free port"),
-        };
+        let port = SpawnFailed::before_start(false, anyhow!("no free port"));
         assert!(!should_fallback_to_bundled(&port, false, cuda, bundled));
+    }
+
+    #[test]
+    fn a_failed_gpu_bundle_falls_back_to_cpu_once() {
+        let vulkan = crate::engine::pin::pin_for("windows", "x86_64").unwrap();
+        let cpu = crate::engine::pin::optional_pin_for("windows", "x86_64", "CPU").unwrap();
+        let exited = SpawnFailed::before_start(true, anyhow!("llama-server exited early (1)"));
+        assert!(should_fallback_to_cpu(&exited, false, vulkan, Some(cpu)));
+        assert!(!should_fallback_to_cpu(&exited, true, vulkan, Some(cpu)));
+        assert!(!should_fallback_to_cpu(&exited, false, cpu, Some(cpu)));
+        assert!(!should_fallback_to_cpu(&exited, false, vulkan, None));
+        let port = SpawnFailed::before_start(false, anyhow!("no free port"));
+        assert!(!should_fallback_to_cpu(&port, false, vulkan, Some(cpu)));
+    }
+
+    #[test]
+    fn failure_reason_prefers_the_image_encoder_line() {
+        let tail = "load_tensors: loading model\n\
+                    clip_model_loader: error: unknown projector type: qwen3vl_merger\n\
+                    main: error: failed to load multimodal model\n";
+        assert_eq!(
+            failure_reason(tail).as_deref(),
+            Some("clip_model_loader: error: unknown projector type: qwen3vl_merger")
+        );
+        assert_eq!(
+            failure_reason("ggml_vulkan: Device lost\nmain: error: failed to load model\n")
+                .as_deref(),
+            Some("main: error: failed to load model")
+        );
+        assert_eq!(failure_reason("all good\n"), None);
     }
 
     #[test]

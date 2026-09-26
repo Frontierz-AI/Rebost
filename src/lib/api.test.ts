@@ -6,8 +6,17 @@ import {
   formatCount,
   piiEmptyHint,
   piiLabel,
+  runsEmulatedOnArm,
   userFacingError,
 } from "./api";
+
+describe("runsEmulatedOnArm", () => {
+  it("flags only the x64 copy on an ARM PC", () => {
+    expect(runsEmulatedOnArm({ processArch: "x86_64", osArch: "aarch64" })).toBe(true);
+    expect(runsEmulatedOnArm({ processArch: "aarch64", osArch: "aarch64" })).toBe(false);
+    expect(runsEmulatedOnArm({ processArch: "x86_64", osArch: "x86_64" })).toBe(false);
+  });
+});
 
 describe("formatCount", () => {
   it("compacts Hugging Face download totals", () => {
@@ -53,6 +62,15 @@ describe("userFacingError", () => {
     );
     expect(userFacingError("warmup-failed")).toBe(
       "That AI didn't start. Try again, or pick a smaller one.",
+    );
+  });
+
+  it("tells a failed image start apart from an AI without images", () => {
+    expect(userFacingError("image-start-failed")).toBe(
+      "This AI's image reading didn't start on this computer, so Rebost removed it. Chat still works with text.",
+    );
+    expect(userFacingError("image-unavailable")).toBe(
+      "Image input is unavailable with this AI on this computer. Choose another AI to attach images.",
     );
   });
 

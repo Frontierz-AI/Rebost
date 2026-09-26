@@ -4,13 +4,20 @@
 //! and cannot apply a GitHub Release.
 //!
 //! The endpoint is `{Cargo.toml package.repository}/releases/latest/download/latest.json`.
+//!
+//! The x64 Windows copy on an ARM PC asks for the `windows-aarch64` entry and
+//! accepts the same version, so its next update moves it to the ARM build.
+//! Both installers use the same per-user folder and keep app data.
 
 use std::sync::Mutex;
 use std::time::Duration;
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_updater::{Update, UpdaterExt};
+use tauri_plugin_updater::{Update, UpdaterBuilder, UpdaterExt};
+
+/// `latest.json` key of the ARM installer.
+const WINDOWS_ARM_TARGET: &str = "windows-aarch64";
 
 use crate::commands::{friendly, CmdResult};
 use crate::core::mutex_lock;
@@ -31,6 +38,8 @@ pub struct UpdateMeta {
     pub version: String,
     pub current_version: String,
     pub notes: Option<String>,
+    /// This update replaces the x64 copy on an ARM PC with the ARM build.
+    pub switches_to_arm: bool,
 }
 
 #[derive(Clone, Serialize)]
@@ -75,6 +84,12 @@ pub async fn check_silently(app: AppHandle) {
     else {
         return;
     };
+    let switch_to_arm = crate::engine::runs_x64_on_arm();
+    let builder = if switch_to_arm {
+        arm_switch(builder)
+    } else {
+        builder
+    };
     let Ok(updater) = builder.build() else {
         return;
     };
@@ -91,6 +106,7 @@ pub async fn check_silently(app: AppHandle) {
         version: update.version.clone(),
         current_version: update.current_version.clone(),
         notes,
+        switches_to_arm: switch_to_arm && update.target == WINDOWS_ARM_TARGET,
     };
     {
         let pending = app.state::<PendingUpdate>();
@@ -100,6 +116,13 @@ pub async fn check_silently(app: AppHandle) {
         });
     }
     let _ = app.emit("rebost://update", meta);
+}
+
+/// Ask for the ARM installer and take it even at the current version.
+fn arm_switch(builder: UpdaterBuilder) -> UpdaterBuilder {
+    builder
+        .target(WINDOWS_ARM_TARGET)
+        .version_comparator(|current, remote| remote.version >= current)
 }
 
 /// Pending in-app update metadata, if any.

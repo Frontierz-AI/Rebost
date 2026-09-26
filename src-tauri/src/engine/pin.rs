@@ -93,9 +93,19 @@ pub const ENGINE_PINS: &[EnginePin] = &[
     },
 ];
 
-/// Faster GPU builds, downloaded at warmup when the hardware matches.
-/// Not bundled: CUDA is ~250 MB plus a ~370 MB runtime zip; Adreno OpenCL is Snapdragon-only.
+/// Builds downloaded at warmup, never bundled. CUDA (~250 MB plus a ~370 MB
+/// runtime zip) and Adreno OpenCL are faster GPU builds for matching hardware.
+/// The Windows x64 CPU build (~18 MB) is the last resort when the bundled
+/// Vulkan build will not start on a PC's graphics driver.
 pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
+    EnginePin {
+        os: "windows",
+        arch: "x86_64",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b10964/llama-b10964-bin-win-cpu-x64.zip",
+        sha256: "917f39c076402c421224824607397af20f53625a60defc20e8dd22446bf4c5d7",
+        file_name: "llama-b10964-bin-win-cpu-x64.zip",
+        accelerator: "CPU",
+    },
     EnginePin {
         os: "windows",
         arch: "x86_64",
@@ -150,6 +160,19 @@ pub fn optional_pin_for(os: &str, arch: &str, accelerator: &str) -> Option<&'sta
         .find(|pin| pin.os == os && pin.arch == arch && pin.accelerator == accelerator)
 }
 
+/// CPU-only build tried after the bundled GPU build fails to start.
+pub fn cpu_fallback_pin() -> Option<&'static EnginePin> {
+    cpu_fallback_pin_for(std::env::consts::OS, std::env::consts::ARCH)
+}
+
+fn cpu_fallback_pin_for(os: &str, arch: &str) -> Option<&'static EnginePin> {
+    let bundled = pin_for(os, arch).ok()?;
+    if bundled.accelerator == "CPU" {
+        return None;
+    }
+    optional_pin_for(os, arch, "CPU")
+}
+
 pub fn runtime_for(pin: &EnginePin) -> Option<&'static EngineRuntimePin> {
     ENGINE_OPTIONAL_RUNTIMES.iter().find(|runtime| {
         runtime.os == pin.os && runtime.arch == pin.arch && runtime.accelerator == pin.accelerator
@@ -157,11 +180,18 @@ pub fn runtime_for(pin: &EnginePin) -> Option<&'static EngineRuntimePin> {
 }
 
 pub fn extract_dir_name(pin: &EnginePin) -> String {
-    format!(
+    let name = format!(
         "{}-{}",
         ENGINE_RELEASE,
         pin.accelerator.to_ascii_lowercase()
-    )
+    );
+    // The x64 Windows copy on an ARM PC runs the ARM64 CPU build. Keep it
+    // apart from the x64 CPU build, which shares the accelerator name.
+    if pin.arch == std::env::consts::ARCH {
+        name
+    } else {
+        format!("{name}-{}", pin.arch)
+    }
 }
 
 /// Map a Rust/Tauri target triple onto a pin (one installer per triple).
@@ -355,9 +385,33 @@ mod tests {
 
     #[test]
     fn extract_dir_is_release_plus_accelerator() {
-        let metal = pin_for("macos", "aarch64").unwrap();
-        assert_eq!(extract_dir_name(metal), "0.4.1-metal");
-        let cuda = optional_pin_for("windows", "x86_64", "CUDA").unwrap();
-        assert_eq!(extract_dir_name(cuda), "0.4.1-cuda");
+        let native = pin_for(std::env::consts::OS, std::env::consts::ARCH).unwrap();
+        assert_eq!(
+            extract_dir_name(native),
+            format!("0.4.1-{}", native.accelerator.to_ascii_lowercase())
+        );
+        let foreign_arch = if std::env::consts::ARCH == "aarch64" {
+            "x86_64"
+        } else {
+            "aarch64"
+        };
+        let foreign = pin_for("windows", foreign_arch).unwrap();
+        assert_eq!(
+            extract_dir_name(foreign),
+            format!(
+                "0.4.1-{}-{foreign_arch}",
+                foreign.accelerator.to_ascii_lowercase()
+            )
+        );
+    }
+
+    #[test]
+    fn only_a_gpu_bundle_has_a_cpu_fallback() {
+        let fallback = cpu_fallback_pin_for("windows", "x86_64").unwrap();
+        assert_eq!(fallback.accelerator, "CPU");
+        assert_eq!(fallback.file_name, "llama-b10964-bin-win-cpu-x64.zip");
+        assert!(cpu_fallback_pin_for("windows", "aarch64").is_none());
+        assert!(cpu_fallback_pin_for("macos", "aarch64").is_none());
+        assert!(cpu_fallback_pin_for("linux", "x86_64").is_none());
     }
 }
