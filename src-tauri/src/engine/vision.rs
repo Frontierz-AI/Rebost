@@ -59,27 +59,45 @@ impl Engine {
         *crate::core::mutex_lock(&self.vision)
     }
 
-    pub(super) async fn verify_vision(&self, base: &str, candidate: Option<VisionLimits>) {
-        let supported = if candidate.is_some() {
-            match self
-                .client
-                .get(format!("{base}/props"))
-                .timeout(Duration::from_secs(10))
-                .send()
-                .await
-            {
-                Ok(response) if response.status().is_success() => response
-                    .json::<serde_json::Value>()
-                    .await
-                    .ok()
-                    .is_some_and(|props| props["modalities"]["vision"] == true),
-                _ => false,
-            }
-        } else {
-            false
-        };
-        *crate::core::mutex_lock(&self.vision) = candidate.filter(|_| supported);
+    /// Why image support last failed to start, if it did.
+    pub fn vision_error(&self) -> Option<String> {
+        crate::core::mutex_lock(&self.vision_error).clone()
     }
+
+    pub(super) async fn verify_vision(&self, base: &str, candidate: Option<VisionLimits>) {
+        let Some(limits) = candidate else {
+            *crate::core::mutex_lock(&self.vision) = None;
+            return;
+        };
+        let problem = match self
+            .client
+            .get(format!("{base}/props"))
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await
+        {
+            Ok(response) if response.status().is_success() => {
+                match response.json::<serde_json::Value>().await {
+                    Ok(props) if props["modalities"]["vision"] == true => None,
+                    Ok(_) => Some("the AI started but did not report image support".to_string()),
+                    Err(error) => Some(format!("unreadable /props reply: {error}")),
+                }
+            }
+            Ok(response) => Some(format!("/props answered {}", response.status())),
+            Err(error) => Some(format!("/props failed: {error}")),
+        };
+        if let Some(problem) = &problem {
+            log::error!("image support not confirmed: {problem}");
+        }
+        *crate::core::mutex_lock(&self.vision_error) = problem.clone();
+        *crate::core::mutex_lock(&self.vision) = problem.is_none().then_some(limits);
+    }
+}
+
+/// Stops Settings from offering the same image download again after it
+/// failed to start with this AI on this engine release.
+pub fn failed_vision_key(model_file: &str) -> String {
+    format!("{}/{model_file}", super::ENGINE_RELEASE)
 }
 
 #[cfg(test)]

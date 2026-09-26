@@ -53,6 +53,14 @@ pub struct Settings {
     /// UI language: follow the computer, or pin a shipped catalog.
     #[serde(alias = "ui_locale")]
     pub ui_locale: UiLocalePref,
+    /// "<engine release>/<model file>" that only started on the CPU build
+    /// after the bundled GPU build failed. A new release tries the GPU again.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpu_engine_for: Option<String>,
+    /// "<engine release>/<model file>" whose image file failed to start.
+    /// Settings stops offering that download until either changes.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vision_failed_for: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -2,8 +2,10 @@
 # once the version bump is on the remote:
 #   gh workflow run release-windows.yml
 #
-# x64 Authenticode-signs during the NSIS build. ARM is built unsigned on
-# windows-11-arm (Azure SignTool is x64), then signed on windows-latest.
+# x64 Authenticode-signs during the NSIS build, including llama-server.exe
+# and its DLLs inside the bundled engine zip. ARM is built unsigned on
+# windows-11-arm (Azure SignTool is x64), then signed on windows-latest; its
+# engine zip is signed first in engine-arm64 and handed to the ARM build.
 # To sign an ARM installer from an earlier run without rebuilding:
 #   gh workflow run release-windows.yml -f sign_arm_from_run=RUN_ID
 #
@@ -29,9 +31,48 @@ permissions:
   actions: read
 
 jobs:
+  engine-arm64:
+    # The ARM runner cannot sign, so sign the ARM64 llama.cpp zip here. If
+    # this fails, the ARM build still ships with the unsigned upstream zip.
+    name: Sign ARM64 engine
+    if: ${{ inputs.sign_arm_from_run == '' }}
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/setup-dotnet@v6
+        with:
+          # Current LTS. artifact-signing-cli wants .NET 8 or newer.
+          dotnet-version: "10.0.x"
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.98.0
+      - name: Install artifact-signing-cli
+        run: cargo install artifact-signing-cli
+      - name: Stage the ARM64 engine
+        run: node scripts/fetch-engine.mjs --triple=aarch64-pc-windows-msvc
+      - name: Sign llama-server.exe and DLLs
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_ARTIFACT_SIGNING_ENDPOINT: ${{ secrets.AZURE_ARTIFACT_SIGNING_ENDPOINT }}
+          AZURE_ARTIFACT_SIGNING_ACCOUNT: ${{ secrets.AZURE_ARTIFACT_SIGNING_ACCOUNT }}
+          AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
+        run: pwsh -File scripts/sign-engine-windows.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: engine-arm64-signed
+          path: src-tauri/resources/engine/*.zip
+          if-no-files-found: error
+
   nsis:
     name: NSIS (${{ matrix.label }})
-    if: ${{ inputs.sign_arm_from_run == '' }}
+    needs: [engine-arm64]
+    if: ${{ !cancelled() && inputs.sign_arm_from_run == '' }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -75,8 +116,16 @@ jobs:
         if: ${{ matrix.extra_args == '' }}
         continue-on-error: true
         run: cargo install artifact-signing-cli
+      - uses: actions/download-artifact@v8
+        if: ${{ matrix.label == 'ARM64' && needs.engine-arm64.result == 'success' }}
+        # Missing artifact: sign-engine-windows.mjs warns and bundles the upstream zip.
+        continue-on-error: true
+        with:
+          name: engine-arm64-signed
+          path: engine-signed
       - name: NSIS
         env:
+          REBOST_SIGNED_ENGINE_DIR: ${{ matrix.label == 'ARM64' && needs.engine-arm64.result == 'success' && format('{0}/engine-signed', github.workspace) || '' }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

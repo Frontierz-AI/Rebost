@@ -19,12 +19,15 @@ pub struct AboutInfo {
 #[serde(rename_all = "camelCase")]
 pub enum ExternalLink {
     Repository,
+    /// Latest installers, for the x64 Windows copy running on an ARM PC.
+    Releases,
 }
 
 impl ExternalLink {
     fn url(self) -> &'static str {
         match self {
             ExternalLink::Repository => env!("CARGO_PKG_REPOSITORY"),
+            ExternalLink::Releases => concat!(env!("CARGO_PKG_REPOSITORY"), "/releases/latest"),
         }
     }
 }

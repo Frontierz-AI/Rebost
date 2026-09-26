@@ -101,7 +101,14 @@
       class="h-[72px] w-[72px] rounded-[22%] shadow-pop ring-[3px] ring-paper dark:shadow-none"
     />
     <h1 class="mt-3.5 text-[22px] font-semibold tracking-tight text-ink">{t("update.heading")}</h1>
-    {#if info}
+    {#if info?.switchesToArm}
+      <p class="mt-1 text-[11.5px] font-medium tracking-wide text-navy-500">
+        {t("update.armAvailable", { version: info.version })}
+      </p>
+      <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
+        {t("update.armSwitch")}
+      </p>
+    {:else if info}
       <p class="mt-1 text-[11.5px] font-medium tracking-wide text-navy-500">
         {t("update.available", { version: info.version })}
       </p>

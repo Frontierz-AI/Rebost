@@ -15,10 +15,12 @@ mod ollama;
 use hf::{parse_hf_repo_query, search_huggingface, HfTreeEntry};
 use ollama::{ollama_manifest, search_ollama};
 
-/// Quantization preference for automatic file selection.
+/// Quantization preference for automatic file selection. Low-bit IQ builds
+/// come last, strongest first, for repos that ship nothing else.
 const QUANT_PREFERENCE: &[&str] = &[
     "Q4_K_M", "Q4_K_XL", "Q4_K_S", "IQ4_XS", "Q5_K_M", "Q4_0", "Q5_0", "Q6_K", "Q8_0", "F16",
-    "BF16",
+    "BF16", "IQ4_NL", "Q3_K_M", "IQ3_M", "IQ3_S", "IQ3_XS", "IQ3_XXS", "IQ2_M", "IQ2_S", "IQ2_XS",
+    "IQ2_XXS",
 ];
 
 /// How many catalog hits to return after ranking (Explore paginates these).
@@ -43,6 +45,18 @@ fn is_unusable_artifact(name: &str) -> bool {
     ]
     .iter()
     .any(|t| lower.contains(t))
+}
+
+/// Importance-matrix data shipped beside the quants (`imatrix-….gguf`).
+/// Repo names may say "imatrix", so this only looks at file names.
+fn is_imatrix_file(name: &str) -> bool {
+    name.to_ascii_lowercase().starts_with("imatrix")
+}
+
+/// Builds that carry an extra multi-token-prediction head. Same answers,
+/// a larger file, and the head is only used for speculative decoding.
+fn has_mtp_head(name: &str) -> bool {
+    alnum_tokens(name.trim_end_matches(".gguf")).any(|token| token == "mtp")
 }
 
 /// Research packs that use unofficial `custom_*` tensor types.
@@ -164,15 +178,18 @@ fn keep_explore_hit(
 
 /// Pick the best single-file GGUF from a repo file listing.
 pub fn pick_gguf(files: &[(String, Option<u64>)]) -> Option<(String, Option<u64>)> {
-    let candidates: Vec<&(String, Option<u64>)> = files
+    let mut candidates: Vec<&(String, Option<u64>)> = files
         .iter()
         .filter(|(name, _)| name.to_lowercase().ends_with(".gguf"))
-        .filter(|(name, _)| !is_hidden_catalog_name(name))
+        .filter(|(name, _)| !is_hidden_catalog_name(name) && !is_imatrix_file(name))
         // Multi-part files (…-00001-of-00003.gguf) need merging — skip.
         .filter(|(name, _)| !name.contains("-of-"))
         .collect();
     if candidates.is_empty() {
         return None;
+    }
+    if candidates.iter().any(|(name, _)| !has_mtp_head(name)) {
+        candidates.retain(|(name, _)| !has_mtp_head(name));
     }
     for quant in QUANT_PREFERENCE {
         if let Some(hit) = candidates
@@ -756,6 +773,38 @@ mod tests {
         ];
         let (picked, _) = pick_gguf(&files).unwrap();
         assert_eq!(picked, "Model-Q4_K_M.gguf");
+    }
+
+    #[test]
+    fn gguf_picker_skips_mtp_heads_and_imatrix_and_knows_iq_builds() {
+        // ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF, as the Hub lists it.
+        let files: Vec<(String, Option<u64>)> = [
+            "Qwen3.8-27B-GSQ-RCO-IQ2_S-mtp.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ2_S.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ2_XS-mtp.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ2_XS.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf",
+            "Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf",
+            "imatrix-qwen3.8-27b.gguf",
+            "mmproj-Qwen3.8-27B-BF16.gguf",
+        ]
+        .into_iter()
+        .map(|name| (name.to_string(), None))
+        .collect();
+        let (picked, _) = pick_gguf(&files).unwrap();
+        assert_eq!(picked, "Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf");
+
+        let only_mtp = vec![("Model-IQ2_S-mtp.gguf".to_string(), None)];
+        assert_eq!(pick_gguf(&only_mtp).unwrap().0, "Model-IQ2_S-mtp.gguf");
+        assert!(pick_gguf(&[("imatrix-model.gguf".into(), None)]).is_none());
+        assert!(!has_mtp_head("smtp-assistant-Q4_K_M.gguf"));
+        let xxs = vec![
+            ("m-IQ3_XXS.gguf".to_string(), None),
+            ("m-IQ3_XS.gguf".to_string(), None),
+        ];
+        assert_eq!(pick_gguf(&xxs).unwrap().0, "m-IQ3_XS.gguf");
     }
 
     #[test]

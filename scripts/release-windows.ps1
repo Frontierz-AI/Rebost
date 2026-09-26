@@ -84,6 +84,8 @@ function Invoke-NsisBuild {
         }
     }
     if ($Sign) {
+        # beforeBuildCommand signs llama-server.exe and its DLLs in the staged zip.
+        $env:REBOST_SIGN_ENGINE = "1"
         $signCommand = @(
             "artifact-signing-cli",
             "-e", $env:AZURE_ARTIFACT_SIGNING_ENDPOINT,
@@ -95,6 +97,8 @@ function Invoke-NsisBuild {
         $config.bundle.windows = @{
             signCommand = $signCommand
         }
+    } else {
+        Remove-Item Env:REBOST_SIGN_ENGINE -ErrorAction SilentlyContinue
     }
     $configPath = Join-Path $env:TEMP "rebost-tauri-windows-sign.json"
     $json = $config | ConvertTo-Json -Depth 6 -Compress

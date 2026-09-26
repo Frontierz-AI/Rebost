@@ -83,6 +83,9 @@ pub struct SpawnPlan {
     /// llama.cpp `--cache-type-k/v`. OpenCL Adreno crashes on q8_0 KV.
     pub cache_type: &'static str,
     pub gpu_layers: u32,
+    /// Keep every tensor op off the GPU (`--device none`). `-ngl 0` alone
+    /// still lets a Vulkan build run large prompt batches on the GPU.
+    pub cpu_only: bool,
 }
 
 impl SpawnPlan {
@@ -92,6 +95,19 @@ impl SpawnPlan {
     }
 
     pub fn for_model(profile: &MachineProfile, pin: &EnginePin, model: Option<&ModelHint>) -> Self {
+        let cpu_only = pin.accelerator == "Vulkan" && super::gpu::windows_host_is_arm64();
+        let cpu_view;
+        let pin = if cpu_only {
+            // The x64 Windows copy on an ARM PC: Adreno Vulkan under emulation
+            // hangs or returns garbage, so tune it like the CPU build.
+            cpu_view = EnginePin {
+                accelerator: "CPU",
+                ..*pin
+            };
+            &cpu_view
+        } else {
+            pin
+        };
         let (batch, ubatch) = batch_for(profile, pin);
         let class = model.map(classify_hint);
         let context_tokens = context_tokens_for(profile, pin, model, class);
@@ -104,6 +120,7 @@ impl SpawnPlan {
             flash_attn: flash_attn_for(pin),
             cache_type: cache_type_for(pin),
             gpu_layers: gpu_layers_for(pin),
+            cpu_only,
         }
     }
 }
@@ -125,12 +142,11 @@ fn cache_type_for(pin: &EnginePin) -> &'static str {
 fn gpu_layers_for(pin: &EnginePin) -> u32 {
     match pin.accelerator {
         "CPU" => 0,
-        "Vulkan" if super::gpu::windows_host_is_arm64() => 0,
         _ => 99,
     }
 }
 
-/// First-token wait. CPU (and the x64-on-ARM Vulkan copy running on CPU)
+/// First-token wait. CPU (including the x64-on-ARM Vulkan copy held on CPU)
 /// can spend a minute on prefill before any SSE bytes arrive.
 pub fn chat_stall_timeout(plan: &SpawnPlan) -> std::time::Duration {
     if plan.gpu_layers == 0 || plan.flash_attn == "auto" {

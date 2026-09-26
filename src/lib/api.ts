@@ -263,7 +263,7 @@ export interface Recipe {
   needsShelf?: boolean;
 }
 
-export type ExternalLink = "repository";
+export type ExternalLink = "repository" | "releases";
 
 export interface AboutInfo {
   version: string;
@@ -295,6 +295,8 @@ export interface AppUpdate {
   version: string;
   currentVersion: string;
   notes?: string | null;
+  /** Replaces the x64 copy on an ARM PC with the ARM build. */
+  switchesToArm?: boolean;
 }
 
 export type UpdateProgress =
@@ -328,6 +330,12 @@ export interface Diagnostics {
   engineLogPath: string;
   engineLogPresent: boolean;
   supportedFormats: string[];
+  visionError?: string | null;
+}
+
+/** The x64 Windows build running under emulation on an ARM PC. */
+export function runsEmulatedOnArm(profile: Pick<MachineProfile, "processArch" | "osArch">) {
+  return profile.processArch === "x86_64" && profile.osArch === "aarch64";
 }
 
 /** Turn a Tauri or JS failure into a string the UI can show or log. */
@@ -361,6 +369,7 @@ export function userFacingError(error: unknown): string {
   const trimmed = invokeError(error).trim();
   if (!trimmed) return USER_ERROR_FALLBACK();
   const imageErrors = [
+    "startFailed",
     "unavailable",
     "tooLarge",
     "format",
@@ -372,6 +381,7 @@ export function userFacingError(error: unknown): string {
   ];
   for (const key of imageErrors) if (trimmed === t(`images.${key}`)) return trimmed;
   const imageCodes: Record<string, string> = {
+    "image-start-failed": "startFailed",
     "image-unavailable": "unavailable",
     "image-too-large": "tooLarge",
     "image-format": "format",

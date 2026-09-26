@@ -23,6 +23,7 @@ pub(crate) mod tune;
 pub mod vision;
 mod wire;
 
+pub(crate) use gpu::runs_x64_on_arm;
 pub use pin::{
     current_engine_pin, find_bundled_engine_archive, preferred_engine_pin, ENGINE_BUILD,
     ENGINE_RELEASE,
@@ -75,6 +76,8 @@ struct Inner {
 pub struct Engine {
     vision: std::sync::Mutex<Option<vision::VisionLimits>>,
     disabled_vision: std::sync::Mutex<Option<String>>,
+    /// Why image support last failed to start, for Diagnostics.
+    vision_error: std::sync::Mutex<Option<String>>,
     install_lock: tokio::sync::Mutex<()>,
     ctx: Arc<Ctx>,
     pub client: reqwest::Client,
@@ -229,6 +232,7 @@ impl Engine {
         Arc::new(Self {
             vision: std::sync::Mutex::new(None),
             disabled_vision: std::sync::Mutex::new(None),
+            vision_error: std::sync::Mutex::new(None),
             install_lock: tokio::sync::Mutex::new(()),
             ctx,
             client: reqwest::Client::builder()

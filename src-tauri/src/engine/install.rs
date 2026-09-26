@@ -202,9 +202,23 @@ impl Engine {
             settings.context_budget_chars = None;
         }
         self.ctx.save_settings();
+        *crate::core::mutex_lock(&self.vision_error) = None;
 
         match self.ensure_ready().await {
             Ok(_) => {
+                if let Some(active) = self.active_model() {
+                    if let Some(projector) = active
+                        .projector
+                        .as_ref()
+                        .filter(|_| self.vision_start_failed(&active))
+                    {
+                        log::warn!(
+                            "image support did not start with {}; removing it",
+                            active.file
+                        );
+                        self.drop_failed_projector(&active.file, &projector.file);
+                    }
+                }
                 if let Some(old) = previous_file_to_remove(
                     previous.as_ref().map(|p| p.model.file.as_str()),
                     &file_name,
@@ -299,6 +313,32 @@ impl Engine {
         })
     }
 
+    /// Image support was attempted with this AI and did not come up.
+    fn vision_start_failed(&self, model: &ActiveModel) -> bool {
+        model.projector.is_some()
+            && self.vision_limits().is_none()
+            && (crate::core::mutex_lock(&self.disabled_vision).as_deref() == Some(&model.file)
+                || crate::core::mutex_lock(&self.vision_error).is_some())
+    }
+
+    /// Forget and delete an image file that would not start, and stop
+    /// offering it for this AI on this engine release.
+    fn drop_failed_projector(&self, model_file: &str, projector_file: &str) {
+        {
+            let mut settings = crate::core::write_lock(&self.ctx.settings);
+            if let Some(active) = settings
+                .active_model
+                .as_mut()
+                .filter(|active| active.file == model_file)
+            {
+                active.projector = None;
+            }
+            settings.vision_failed_for = Some(super::vision::failed_vision_key(model_file));
+        }
+        self.ctx.save_settings();
+        let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(projector_file));
+    }
+
     /// Check whether the installed AI can gain vision without replacing its language weights.
     pub async fn vision_offer(&self) -> Result<Option<u64>> {
         let Some(model) = self
@@ -307,6 +347,13 @@ impl Engine {
         else {
             return Ok(None);
         };
+        if crate::core::read_lock(&self.ctx.settings)
+            .vision_failed_for
+            .as_deref()
+            == Some(super::vision::failed_vision_key(&model.file).as_str())
+        {
+            return Ok(None);
+        }
         if !matches!(model.source.as_str(), "huggingface" | "ollama") {
             return Ok(None);
         }
@@ -342,6 +389,9 @@ impl Engine {
         let control = download::DownloadControl::new();
         crate::core::mutex_lock(&self.downloads).insert(ticket.id.clone(), control.clone());
         let previous = snapshot_previous(self).expect("active model");
+        *crate::core::mutex_lock(&self.vision_error) = None;
+        let mut downloaded: Option<String> = None;
+        let mut started = false;
         let result = async {
             let resolved = self
                 .eligible_projector(
@@ -360,9 +410,11 @@ impl Engine {
             let projector = self
                 .download_projector(&resolved, &ticket, &control, &events)
                 .await?;
+            downloaded = Some(projector.file.clone());
             self.ctx.events.emit("rebost://download", json!({ "kind": ticket.kind, "id": ticket.id, "name": ticket.name, "phase": "preparing", "done": false }));
             self.wait_until_chat_idle().await;
             control.check_cancelled()?;
+            started = true;
             self.stop().await;
             if let Some(active) = crate::core::write_lock(&self.ctx.settings)
                 .active_model
@@ -372,9 +424,12 @@ impl Engine {
             }
             self.ctx.save_settings();
             *crate::core::mutex_lock(&self.disabled_vision) = None;
-            self.ensure_ready().await?;
+            if let Err(error) = self.ensure_ready().await {
+                log::error!("engine start with image support failed: {error:#}");
+                return Err(anyhow!("image-start-failed"));
+            }
             if self.vision_limits().is_none() {
-                return Err(anyhow!("image-unavailable"));
+                return Err(anyhow!("image-start-failed"));
             }
             Ok(())
         }
@@ -388,6 +443,21 @@ impl Engine {
             restore_previous(self, previous);
             if let Err(error) = self.ensure_ready().await {
                 log::error!("could not restore text AI after vision upgrade: {error:#}");
+            }
+        }
+        if let (Err(error), Some(file)) = (&result, downloaded.as_deref()) {
+            // The previous AI had no image file, so nothing else uses this one.
+            let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(file));
+            if started {
+                log::error!(
+                    "image support for {} did not start ({error}); {}",
+                    model.file,
+                    self.vision_error()
+                        .unwrap_or_else(|| "no reason in the engine log".into())
+                );
+                crate::core::write_lock(&self.ctx.settings).vision_failed_for =
+                    Some(super::vision::failed_vision_key(&model.file));
+                self.ctx.save_settings();
             }
         }
         crate::core::mutex_lock(&self.downloads).remove(&ticket.id);
