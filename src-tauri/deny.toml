@@ -10,12 +10,7 @@ yanked = "warn"
 # Transitive GTK/unic/paste from Tauri/xberg; we cannot patch them here.
 unmaintained = "workspace"
 unsound = "workspace"
-ignore = [
-    # Transitive via xberg → biblib → quick-xml 0.37. Memory DoS on hostile XML.
-    # Not RCE. Revisit when xberg bumps biblib.
-    { id = "RUSTSEC-2026-0194", reason = "quick-xml 0.37 via xberg/biblib; quadratic attribute check DoS" },
-    { id = "RUSTSEC-2026-0195", reason = "quick-xml 0.37 via xberg/biblib; namespace allocation DoS" },
-]
+ignore = []
 
 [licenses]
 version = 2
