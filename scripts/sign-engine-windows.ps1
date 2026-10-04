@@ -4,7 +4,7 @@
 # is x64); it signs ARM64 binaries too.
 #
 #   pwsh scripts/sign-engine-windows.ps1
-#   pwsh scripts/sign-engine-windows.ps1 -Archive src-tauri/resources/engine/llama-b10964-bin-win-vulkan-x64.zip
+#   pwsh scripts/sign-engine-windows.ps1 -Archive src-tauri/resources/engine/llama-b11146-bin-win-vulkan-x64.zip
 
 param(
     # Defaults to the one zip that scripts/fetch-engine.mjs staged.
