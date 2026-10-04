@@ -6,6 +6,8 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.8] - 2026-10-04
+
 ### Added
 
 - Keep more than one AI. Settings lists the other installed AIs under the one in use. Use switches to one, Remove deletes it after a confirm, and Open folder shows where they live. Explore marks AIs that are already installed.
@@ -645,7 +647,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.7...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.8...HEAD
+[0.9.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.4...v0.9.5
