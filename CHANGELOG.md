@@ -6,6 +6,20 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Changed
+
+- What runs the AI is the 0.5.0 release.
+- First-run picks use the current open-weight scores. Gemma 4 26B A4B replaces Gemma 4 31B, which scores lower now and needs more memory. IBM Granite 4.2 30B and 8B and Mistral's Magistral Small 1.2 join the list. On 16 and 24 GB machines the second extra suggestion is Granite 4.2 8B.
+- Tauri 2.12 and current frontend packages. The toolchain is Rust 1.99.0.
+
+### Fixed
+
+- When Qwen 3.5 or newer writes a Shelf tool call as text in Deep mode, Chat runs it instead of showing the raw call.
+
+### Security
+
+- devalue 5.9.4 and DOMPurify 3.4.16 fix published advisories in those packages.
+
 ## [0.9.6] - 2026-09-26
 
 ### Changed
