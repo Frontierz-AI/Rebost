@@ -606,7 +606,7 @@
     "blurbs": {
       "qwen3_8_27b": "Muchos idiomas. Buena con documentos y escritura cotidiana.",
       "muse_glimmer": "De Meta. Necesita un ordenador con bastante memoria.",
-      "gemma_4_31b": "Gemma más grande de Google. Descarga grande.",
+      "gemma_4_26b_a4b": "Gemma más grande de Google. Descarga grande.",
       "ornith_1_5_9b": "Muchos idiomas. Documentos y escritura cotidiana en ordenadores con 16 GB de memoria.",
       "gemma_4_12b": "De Google. Documentos y conversación.",
       "qwen3_5_4b": "Muchos idiomas. Documentos y escritura cotidiana en ordenadores con 8 GB de memoria.",
@@ -619,7 +619,10 @@
       "phi_4_mini": "De Microsoft. Respuestas cuidadas en un archivo pequeño.",
       "granite_4_2_3b": "Archivo pequeño, respuestas cortas.",
       "lfm2_5_2_6b": "Muchos idiomas. Un archivo pequeño para la escritura cotidiana.",
-      "gemma_3_1b": "La más pequeña. Se instala en un minuto."
+      "gemma_3_1b": "La más pequeña. Se instala en un minuto.",
+      "granite_4_2_30b": "De IBM. Necesita un ordenador con bastante memoria.",
+      "granite_4_2_8b": "De IBM. Documentos y conversación.",
+      "magistral_small_1_2": "De Mistral. Piensa antes de responder."
     }
   },
   "imports": {

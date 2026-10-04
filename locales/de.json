@@ -607,7 +607,7 @@
     "blurbs": {
       "qwen3_8_27b": "Viele Sprachen. Stark bei Dokumenten und alltäglichem Schreiben.",
       "muse_glimmer": "Von Meta. Braucht einen Computer mit viel Arbeitsspeicher.",
-      "gemma_4_31b": "Die größere Gemma von Google. Großer Download.",
+      "gemma_4_26b_a4b": "Die größere Gemma von Google. Großer Download.",
       "ornith_1_5_9b": "Viele Sprachen. Dokumente und alltägliches Schreiben auf Computern mit 16 GB Arbeitsspeicher.",
       "gemma_4_12b": "Von Google. Dokumente und Chat.",
       "qwen3_5_4b": "Viele Sprachen. Dokumente und alltägliches Schreiben auf Computern mit 8 GB Arbeitsspeicher.",
@@ -620,7 +620,10 @@
       "phi_4_mini": "Von Microsoft. Sorgfältige Antworten in einer kleinen Datei.",
       "granite_4_2_3b": "Kleine Datei, kurze Antworten.",
       "lfm2_5_2_6b": "Viele Sprachen. Eine kleine Datei für alltägliches Schreiben.",
-      "gemma_3_1b": "Die kleinste Wahl. In einer Minute installiert."
+      "gemma_3_1b": "Die kleinste Wahl. In einer Minute installiert.",
+      "granite_4_2_30b": "Von IBM. Braucht einen Computer mit viel Arbeitsspeicher.",
+      "granite_4_2_8b": "Von IBM. Dokumente und Chat.",
+      "magistral_small_1_2": "Von Mistral. Denkt nach, bevor sie antwortet."
     }
   },
   "imports": {

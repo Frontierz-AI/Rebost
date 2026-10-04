@@ -607,7 +607,7 @@
     "blurbs": {
       "qwen3_8_27b": "Veel talen. Sterk met documenten en alledaags schrijfwerk.",
       "muse_glimmer": "Van Meta. Heeft een computer met veel geheugen nodig.",
-      "gemma_4_31b": "De grotere Gemma van Google. Flinke download.",
+      "gemma_4_26b_a4b": "De grotere Gemma van Google. Flinke download.",
       "ornith_1_5_9b": "Veel talen. Documenten en alledaags schrijfwerk op computers met 16 GB geheugen.",
       "gemma_4_12b": "Van Google. Documenten en chat.",
       "qwen3_5_4b": "Veel talen. Documenten en alledaags schrijfwerk op computers met 8 GB geheugen.",
@@ -620,7 +620,10 @@
       "phi_4_mini": "Van Microsoft. Zorgvuldige antwoorden in een klein bestand.",
       "granite_4_2_3b": "Klein bestand, korte antwoorden.",
       "lfm2_5_2_6b": "Veel talen. Een klein bestand voor alledaags schrijfwerk.",
-      "gemma_3_1b": "De kleinste keuze. Binnen een minuut geïnstalleerd."
+      "gemma_3_1b": "De kleinste keuze. Binnen een minuut geïnstalleerd.",
+      "granite_4_2_30b": "Van IBM. Heeft een computer met veel geheugen nodig.",
+      "granite_4_2_8b": "Van IBM. Documenten en chat.",
+      "magistral_small_1_2": "Van Mistral. Denkt na voordat het antwoordt."
     }
   },
   "imports": {

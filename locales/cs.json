@@ -607,7 +607,7 @@
     "blurbs": {
       "qwen3_8_27b": "Hodně jazyků. Silná v dokumentech i běžném psaní.",
       "muse_glimmer": "Od Mety. Potřebuje počítač s dostatkem paměti.",
-      "gemma_4_31b": "Větší Gemma od Googlu. Velký soubor ke stažení.",
+      "gemma_4_26b_a4b": "Větší Gemma od Googlu. Velký soubor ke stažení.",
       "ornith_1_5_9b": "Hodně jazyků. Dokumenty a běžné psaní na počítačích s 16 GB paměti.",
       "gemma_4_12b": "Od Googlu. Dokumenty a konverzace.",
       "qwen3_5_4b": "Hodně jazyků. Dokumenty a běžné psaní na počítačích s 8 GB paměti.",
@@ -620,7 +620,10 @@
       "phi_4_mini": "Od Microsoftu. Pečlivé odpovědi v malém souboru.",
       "granite_4_2_3b": "Malý soubor, krátké odpovědi.",
       "lfm2_5_2_6b": "Hodně jazyků. Malý soubor na běžné psaní.",
-      "gemma_3_1b": "Nejmenší volba. Nainstaluje se za minutu."
+      "gemma_3_1b": "Nejmenší volba. Nainstaluje se za minutu.",
+      "granite_4_2_30b": "Od IBM. Potřebuje počítač s velkou pamětí.",
+      "granite_4_2_8b": "Od IBM. Dokumenty a konverzace.",
+      "magistral_small_1_2": "Od Mistralu. Před odpovědí přemýšlí."
     }
   },
   "imports": {

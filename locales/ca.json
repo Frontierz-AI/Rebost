@@ -606,7 +606,7 @@
     "blurbs": {
       "qwen3_8_27b": "Molts idiomes. Bona amb documents i escriptura quotidiana.",
       "muse_glimmer": "De Meta. Cal un ordinador amb prou memòria.",
-      "gemma_4_31b": "Gemma més gran de Google. Baixada gran.",
+      "gemma_4_26b_a4b": "Gemma més gran de Google. Baixada gran.",
       "ornith_1_5_9b": "Molts idiomes. Documents i escriptura quotidiana en ordinadors amb 16 GB de memòria.",
       "gemma_4_12b": "De Google. Documents i conversa.",
       "qwen3_5_4b": "Molts idiomes. Documents i escriptura quotidiana en ordinadors amb 8 GB de memòria.",
@@ -619,7 +619,10 @@
       "phi_4_mini": "De Microsoft. Respostes acurades en un fitxer petit.",
       "granite_4_2_3b": "Fitxer petit, respostes curtes.",
       "lfm2_5_2_6b": "Molts idiomes. Un fitxer petit per a l'escriptura quotidiana.",
-      "gemma_3_1b": "La més petita. S'instal·la en un minut."
+      "gemma_3_1b": "La més petita. S'instal·la en un minut.",
+      "granite_4_2_30b": "D’IBM. Necessita un ordinador amb força memòria.",
+      "granite_4_2_8b": "D’IBM. Documents i conversa.",
+      "magistral_small_1_2": "De Mistral. Pensa abans de respondre."
     }
   },
   "imports": {

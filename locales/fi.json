@@ -607,7 +607,7 @@
     "blurbs": {
       "qwen3_8_27b": "Tukee monia kieliä. Hyvä asiakirjojen käsittelyssä ja arjen kirjoitustöissä.",
       "muse_glimmer": "Metalta. Tarvitsee tietokoneen, jossa on runsaasti muistia.",
-      "gemma_4_31b": "Googlen suurempi Gemma. Iso lataus.",
+      "gemma_4_26b_a4b": "Googlen suurempi Gemma. Iso lataus.",
       "ornith_1_5_9b": "Tukee monia kieliä. Asiakirjoihin ja arjen kirjoitustöihin tietokoneilla, joissa on 16 Gt muistia.",
       "gemma_4_12b": "Googlelta. Asiakirjat ja keskustelu.",
       "qwen3_5_4b": "Tukee monia kieliä. Asiakirjoihin ja arjen kirjoitustöihin tietokoneilla, joissa on 8 Gt muistia.",
@@ -620,7 +620,10 @@
       "phi_4_mini": "Microsoftilta. Huolellisia vastauksia pienessä tiedostossa.",
       "granite_4_2_3b": "Pieni tiedosto, lyhyet vastaukset.",
       "lfm2_5_2_6b": "Tukee monia kieliä. Pieni tiedosto arjen kirjoitustöihin.",
-      "gemma_3_1b": "Pienin valinta. Asentuu minuutissa."
+      "gemma_3_1b": "Pienin valinta. Asentuu minuutissa.",
+      "granite_4_2_30b": "IBM:ltä. Vaatii tietokoneen, jossa on runsaasti muistia.",
+      "granite_4_2_8b": "IBM:ltä. Asiakirjat ja keskustelu.",
+      "magistral_small_1_2": "Mistralilta. Miettii ennen vastaamista."
     }
   },
   "imports": {

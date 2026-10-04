@@ -144,17 +144,6 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "Many languages. Strong on documents and everyday writing.",
     },
     CatalogEntry {
-        name: "Gemma 4 31B",
-        family: "Gemma",
-        provider: "Google",
-        standing: CatalogStanding::Scored(19),
-        hf_repo: "unsloth/gemma-4-31B-it-GGUF",
-        approx_bytes: 17475 * MIB,
-        license: "Apache-2.0",
-        released: "2026-04",
-        blurb: "Larger Gemma from Google. Big download.",
-    },
-    CatalogEntry {
         name: "Muse Glimmer",
         family: "Muse",
         provider: "Meta",
@@ -164,6 +153,28 @@ pub const CATALOG: &[CatalogEntry] = &[
         license: "Apache-2.0",
         released: "2026-08",
         blurb: "From Meta. Needs a computer with plenty of memory.",
+    },
+    CatalogEntry {
+        name: "Gemma 4 26B A4B",
+        family: "Gemma",
+        provider: "Google",
+        standing: CatalogStanding::Scored(17),
+        hf_repo: "unsloth/gemma-4-26B-A4B-it-GGUF",
+        approx_bytes: 16162 * MIB,
+        license: "Apache-2.0",
+        released: "2026-03",
+        blurb: "Larger Gemma from Google. Big download.",
+    },
+    CatalogEntry {
+        name: "Granite 4.2 30B",
+        family: "Granite",
+        provider: "IBM",
+        standing: CatalogStanding::Scored(15),
+        hf_repo: "ibm-granite/granite-4.2-30b-GGUF",
+        approx_bytes: 16900 * MIB,
+        license: "Apache-2.0",
+        released: "2026-08",
+        blurb: "From IBM. Needs a computer with plenty of memory.",
     },
     CatalogEntry {
         name: "Ornith-1.5 9B",
@@ -199,15 +210,37 @@ pub const CATALOG: &[CatalogEntry] = &[
         blurb: "Many languages. Documents and everyday writing on computers with 8 GB of memory.",
     },
     CatalogEntry {
+        name: "Granite 4.2 8B",
+        family: "Granite",
+        provider: "IBM",
+        standing: CatalogStanding::Scored(11),
+        hf_repo: "ibm-granite/granite-4.2-8b-GGUF",
+        approx_bytes: 5100 * MIB,
+        license: "Apache-2.0",
+        released: "2026-08",
+        blurb: "From IBM. Documents and chat.",
+    },
+    CatalogEntry {
         name: "gpt-oss 20B",
         family: "GPT",
         provider: "OpenAI",
-        standing: CatalogStanding::Scored(9),
+        standing: CatalogStanding::Scored(10),
         hf_repo: "unsloth/gpt-oss-20b-GGUF",
         approx_bytes: 11086 * MIB,
         license: "Apache-2.0",
         released: "2025-08",
         blurb: "Open weights from OpenAI.",
+    },
+    CatalogEntry {
+        name: "Magistral Small 1.2",
+        family: "Mistral",
+        provider: "Mistral",
+        standing: CatalogStanding::Scored(9),
+        hf_repo: "unsloth/Magistral-Small-2509-GGUF",
+        approx_bytes: 13670 * MIB,
+        license: "Apache-2.0",
+        released: "2025-09",
+        blurb: "From Mistral. Thinks before answering.",
     },
     CatalogEntry {
         name: "Gemma 4 E4B",
@@ -301,7 +334,7 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 3 1B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(1),
+        standing: CatalogStanding::Scored(5),
         hf_repo: "unsloth/gemma-3-1b-it-GGUF",
         approx_bytes: 769 * MIB,
         license: "Gemma",
@@ -541,13 +574,13 @@ mod tests {
             .into_iter()
             .map(|r| r.name)
             .collect();
-        assert_eq!(alts24, ["Qwen3.5 4B", "Ministral 3 8B"]);
+        assert_eq!(alts24, ["Qwen3.5 4B", "Granite 4.2 8B"]);
         assert_eq!(
             smaller_alternatives(&mk(16), 2)
                 .into_iter()
                 .map(|r| r.name)
                 .collect::<Vec<_>>(),
-            ["Qwen3.5 4B", "Ministral 3 8B"]
+            ["Qwen3.5 4B", "Granite 4.2 8B"]
         );
         assert_eq!(
             smaller_alternatives(&mk(8), 2)
@@ -589,7 +622,7 @@ mod tests {
     }
 
     #[test]
-    fn ornith_sits_above_gemma_12b_e4b_and_gpt_oss() {
+    fn ornith_sits_between_the_large_rows_and_gemma_12b() {
         let standing = |name: &str| {
             CATALOG
                 .iter()
@@ -598,7 +631,8 @@ mod tests {
                 .expect(name)
         };
         let ornith = standing("Ornith-1.5 9B");
-        assert!(standing("Gemma 4 31B") > standing("Muse Glimmer"));
+        assert!(standing("Gemma 4 26B A4B") > ornith);
+        assert!(standing("Granite 4.2 30B") > ornith);
         assert!(ornith > standing("Gemma 4 12B"));
         assert!(ornith > standing("Gemma 4 E4B"));
         assert!(ornith > standing("gpt-oss 20B"));
@@ -610,7 +644,7 @@ mod tests {
                 .position(|entry| entry.name == "Ornith-1.5 9B"),
             CATALOG
                 .iter()
-                .position(|entry| entry.name == "Muse Glimmer")
+                .position(|entry| entry.name == "Granite 4.2 30B")
                 .map(|i| i + 1)
         );
     }
@@ -681,6 +715,8 @@ mod tests {
         assert_eq!(blurb_slug("Muse Glimmer"), "muse_glimmer");
         assert_eq!(blurb_slug("Phi-4 Mini"), "phi_4_mini");
         assert_eq!(blurb_slug("Granite 4.2 3B"), "granite_4_2_3b");
+        assert_eq!(blurb_slug("Gemma 4 26B A4B"), "gemma_4_26b_a4b");
+        assert_eq!(blurb_slug("Magistral Small 1.2"), "magistral_small_1_2");
         assert_eq!(blurb_slug("LFM2.5 2.6B"), "lfm2_5_2_6b");
     }
 
