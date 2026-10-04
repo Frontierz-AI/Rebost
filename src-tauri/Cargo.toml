@@ -17,17 +17,17 @@ name = "rebost"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.6.3", features = [] }
+tauri-build = { version = "2.7.1", features = [] }
 
 [dependencies]
 # Desktop shell
-tauri = { version = "2.11.6", features = [] }
-tauri-plugin-dialog = "2.7.3"
-tauri-plugin-log = "2.9.2"
-tauri-plugin-opener = "2.5.4"
-tauri-plugin-os = "2.3.2"
-tauri-plugin-updater = "2.12.0"
-tauri-plugin-window-state = "2.4.1"
+tauri = { version = "2.12.0", features = [] }
+tauri-plugin-dialog = "2.8.0"
+tauri-plugin-log = "2.10.0"
+tauri-plugin-opener = "2.7.0"
+tauri-plugin-os = "2.4.0"
+tauri-plugin-updater = "2.13.1"
+tauri-plugin-window-state = "2.5.0"
 
 # Document understanding. Only the formats and analysis passes Rebost uses are
 # enabled so the binary stays lean and fully offline. OCR is vendored
@@ -94,10 +94,10 @@ futures-util = "0.3"
 tar = "0.4"
 flate2 = "1"
 zip = { version = "8", default-features = false, features = ["deflate"] }
-dirs = "6"
+dirs = "7"
 readabilityrs = "0.1.4"
 url = "2.5.8"
-rust-i18n = "4.2.2"
+rust-i18n = "4.2.4"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.4"
