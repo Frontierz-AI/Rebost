@@ -70,6 +70,9 @@ pub(crate) fn parse_tool_calls_from_text(text: &str) -> Vec<ToolCall> {
     if let Some(calls) = parse_tagged_tools(&trimmed) {
         return calls;
     }
+    if let Some(calls) = parse_function_tags(&trimmed) {
+        return calls;
+    }
     if let Some(calls) = parse_gemma_tools(&trimmed) {
         return calls;
     }
@@ -239,6 +242,35 @@ fn parse_tagged_tools(text: &str) -> Option<Vec<ToolCall>> {
     None
 }
 
+/// Qwen 3.5+ XML shape: `<function=name><parameter=key>value</parameter></function>`,
+/// usually inside `<tool_call>`. Closing tags may be missing when generation stops early.
+fn parse_function_tags(text: &str) -> Option<Vec<ToolCall>> {
+    let start = text.find("<function=")? + "<function=".len();
+    let rest = &text[start..];
+    let name_end = rest.find('>')?;
+    let name = normalize_tool_name(rest[..name_end].trim());
+    ToolName::parse(&name)?;
+    let body = &rest[name_end + 1..];
+    let body = body.find("</function>").map_or(body, |end| &body[..end]);
+    let mut params = serde_json::Map::new();
+    for chunk in body.split("<parameter=").skip(1) {
+        let Some(key_end) = chunk.find('>') else {
+            continue;
+        };
+        let key = chunk[..key_end].trim();
+        let value = &chunk[key_end + 1..];
+        let value = value
+            .find("</parameter>")
+            .map_or(value, |end| &value[..end]);
+        let value = value.trim();
+        if !key.is_empty() && !value.is_empty() {
+            params.insert(key.to_string(), Value::String(value.to_string()));
+        }
+    }
+    let args = leftover_args(&Value::Object(params), &name);
+    Some(vec![ToolCall::function("call_1", name, args)])
+}
+
 fn parse_gemma_tools(text: &str) -> Option<Vec<ToolCall>> {
     let start = text.find("call:")?;
     let rest = &text[start + 5..];
@@ -347,6 +379,27 @@ mod tests {
         let page = parse_tool_calls_from_text("<read_web_page>https://example.com</read_web_page>");
         assert_eq!(page[0].function.name, READ_WEB_PAGE);
         assert!(page[0].function.arguments.contains("https://example.com"));
+    }
+
+    #[test]
+    fn parse_qwen_function_tags() {
+        let open = parse_tool_calls_from_text(
+            "<tool_call>\n<function=open_shelf_file>\n<parameter=file>\ncódigo.gs.txt\n</parameter>\n</function>\n</tool_call>",
+        );
+        assert_eq!(open.len(), 1);
+        assert_eq!(open[0].function.name, OPEN_SHELF_FILE);
+        assert_eq!(
+            arg_string(&open[0].function.arguments, &["file"]).as_deref(),
+            Some("código.gs.txt")
+        );
+
+        let cut_off = parse_tool_calls_from_text(
+            "Let me check.\n<tool_call>\n<function=search_this_shelf>\n<parameter=q>\nboiler service\n",
+        );
+        assert_eq!(cut_off[0].function.name, SEARCH_SHELF);
+        assert!(cut_off[0].function.arguments.contains("boiler service"));
+
+        assert!(parse_tool_calls_from_text("<function=delete_everything></function>").is_empty());
     }
 
     #[test]
