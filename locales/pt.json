@@ -607,7 +607,7 @@
     "blurbs": {
       "qwen3_8_27b": "Muitos idiomas. Boa com documentos e escrita do dia a dia.",
       "muse_glimmer": "Da Meta. Precisa de um computador com bastante memória.",
-      "gemma_4_31b": "A Gemma maior da Google. Transferência grande.",
+      "gemma_4_26b_a4b": "A Gemma maior da Google. Transferência grande.",
       "ornith_1_5_9b": "Muitos idiomas. Documentos e escrita do dia a dia em computadores com 16 GB de memória.",
       "gemma_4_12b": "Da Google. Documentos e conversa.",
       "qwen3_5_4b": "Muitos idiomas. Documentos e escrita do dia a dia em computadores com 8 GB de memória.",
@@ -620,7 +620,10 @@
       "phi_4_mini": "Da Microsoft. Respostas cuidadosas num ficheiro pequeno.",
       "granite_4_2_3b": "Ficheiro pequeno, respostas curtas.",
       "lfm2_5_2_6b": "Muitos idiomas. Um ficheiro pequeno para a escrita do dia a dia.",
-      "gemma_3_1b": "A mais pequena. Instala-se num minuto."
+      "gemma_3_1b": "A mais pequena. Instala-se num minuto.",
+      "granite_4_2_30b": "Da IBM. Precisa de um computador com bastante memória.",
+      "granite_4_2_8b": "Da IBM. Documentos e conversa.",
+      "magistral_small_1_2": "Da Mistral. Pensa antes de responder."
     }
   },
   "imports": {

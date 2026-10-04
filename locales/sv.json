@@ -607,7 +607,7 @@
     "blurbs": {
       "qwen3_8_27b": "Många språk. Stark på dokument och vardagligt skrivande.",
       "muse_glimmer": "Från Meta. Behöver en dator med gott om minne.",
-      "gemma_4_31b": "Större Gemma från Google. Stor nedladdning.",
+      "gemma_4_26b_a4b": "Större Gemma från Google. Stor nedladdning.",
       "ornith_1_5_9b": "Många språk. Dokument och vardagligt skrivande på datorer med 16 GB minne.",
       "gemma_4_12b": "Från Google. Dokument och chatt.",
       "qwen3_5_4b": "Många språk. Dokument och vardagligt skrivande på datorer med 8 GB minne.",
@@ -620,7 +620,10 @@
       "phi_4_mini": "Från Microsoft. Noggranna svar i en liten fil.",
       "granite_4_2_3b": "Liten fil, korta svar.",
       "lfm2_5_2_6b": "Många språk. En liten fil för vardagligt skrivande.",
-      "gemma_3_1b": "Det minsta valet. Installeras på en minut."
+      "gemma_3_1b": "Det minsta valet. Installeras på en minut.",
+      "granite_4_2_30b": "Från IBM. Kräver en dator med gott om minne.",
+      "granite_4_2_8b": "Från IBM. Dokument och chatt.",
+      "magistral_small_1_2": "Från Mistral. Tänker efter innan den svarar."
     }
   },
   "imports": {

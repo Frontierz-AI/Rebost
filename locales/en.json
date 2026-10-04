@@ -606,7 +606,7 @@
     "blurbs": {
       "qwen3_8_27b": "Many languages. Strong on documents and everyday writing.",
       "muse_glimmer": "From Meta. Needs a computer with plenty of memory.",
-      "gemma_4_31b": "Larger Gemma from Google. Big download.",
+      "gemma_4_26b_a4b": "Larger Gemma from Google. Big download.",
       "ornith_1_5_9b": "Many languages. Documents and everyday writing on computers with 16 GB of memory.",
       "gemma_4_12b": "From Google. Documents and chat.",
       "qwen3_5_4b": "Many languages. Documents and everyday writing on computers with 8 GB of memory.",
@@ -619,7 +619,10 @@
       "phi_4_mini": "From Microsoft. Careful answers in a small file.",
       "granite_4_2_3b": "Small file, short answers.",
       "lfm2_5_2_6b": "Many languages. A small file for everyday writing.",
-      "gemma_3_1b": "Smallest pick. Installs in a minute."
+      "gemma_3_1b": "Smallest pick. Installs in a minute.",
+      "granite_4_2_30b": "From IBM. Needs a computer with plenty of memory.",
+      "granite_4_2_8b": "From IBM. Documents and chat.",
+      "magistral_small_1_2": "From Mistral. Thinks before answering."
     }
   },
   "imports": {
