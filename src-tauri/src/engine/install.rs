@@ -1,7 +1,9 @@
 //! Model download + switch-over.
 //!
-//! The previous AI stays usable while the new file downloads. Its file is
-//! removed only after the new process is Ready. A failed start rolls back.
+//! The previous AI stays usable while the new file downloads, and stays
+//! installed afterwards so the person can switch back. Reinstalling the same
+//! AI replaces its file only after the new process is Ready. A failed start
+//! rolls back.
 
 use anyhow::{anyhow, Result};
 use serde_json::json;
@@ -12,10 +14,10 @@ use std::time::Duration;
 use super::download;
 use super::models;
 use super::{Engine, EngineState};
-use crate::settings::{ActiveModel, BenchmarkResult};
+use crate::settings::{BenchmarkResult, InstalledModel};
 
 struct PreviousAi {
-    model: ActiveModel,
+    model: InstalledModel,
     benchmark: Option<BenchmarkResult>,
     context_budget_chars: Option<usize>,
 }
@@ -61,7 +63,8 @@ impl Engine {
     }
 
     /// Download and switch to a model. Chat keeps the previous AI until the
-    /// new process is Ready; only then is the old file removed.
+    /// new process is Ready. An AI that is already installed is switched to
+    /// without downloading it again.
     pub async fn install_model(
         self: &Arc<Self>,
         source: &str,
@@ -96,9 +99,26 @@ impl Engine {
             }),
         );
 
-        let result = self
-            .download_and_switch(&ticket, &control, source, reference, display_name, license)
-            .await;
+        let installed = crate::core::read_lock(&self.ctx.settings)
+            .other_models
+            .iter()
+            .find(|model| same_ai(model, source, reference))
+            .map(|model| model.file.clone())
+            .filter(|file| self.ctx.paths.models_dir().join(file).is_file());
+        let result = match installed {
+            Some(file) => self.switch_to(&file).await,
+            None => {
+                self.download_and_switch(
+                    &ticket,
+                    &control,
+                    source,
+                    reference,
+                    display_name,
+                    license,
+                )
+                .await
+            }
+        };
         crate::core::mutex_lock(&self.downloads).remove(&ticket.id);
         if result.is_err() && self.active_model().is_none() {
             self.set_status(EngineState::NoModel, None);
@@ -128,8 +148,10 @@ impl Engine {
             .ok_or_else(|| anyhow!("model file has no SHA-256 checksum; refusing to install"))?;
         let requested = models::safe_model_file_name(&resolved.file_name)?;
         let previous = snapshot_previous(self);
-        let file_name =
-            install_file_name(&requested, previous.as_ref().map(|p| p.model.file.as_str()));
+        let file_name = {
+            let settings = crate::core::read_lock(&self.ctx.settings);
+            install_file_name(&requested, |name| settings.uses_model_file(name))
+        };
         let dest = self.ctx.paths.models_dir().join(&file_name);
 
         let companion = self
@@ -187,9 +209,25 @@ impl Engine {
         }
         control.check_cancelled()?;
 
+        // Reinstalling the same AI replaces it; any other AI stays installed.
+        let replaced = previous
+            .as_ref()
+            .map(|p| &p.model)
+            .filter(|model| same_ai(model, source, reference))
+            .cloned();
         {
             let mut settings = crate::core::write_lock(&self.ctx.settings);
-            settings.active_model = Some(ActiveModel {
+            if let Some(kept) = previous
+                .as_ref()
+                .filter(|_| replaced.is_none())
+                .map(|p| p.model.clone())
+            {
+                settings
+                    .other_models
+                    .retain(|model| model.file != kept.file);
+                settings.other_models.insert(0, kept);
+            }
+            settings.active_model = Some(InstalledModel {
                 projector,
                 file: file_name.clone(),
                 name: display_name.to_string(),
@@ -219,20 +257,8 @@ impl Engine {
                         self.drop_failed_projector(&active.file, &projector.file);
                     }
                 }
-                if let Some(old) = previous_file_to_remove(
-                    previous.as_ref().map(|p| p.model.file.as_str()),
-                    &file_name,
-                ) {
-                    let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(old));
-                }
-                if let Some(old) = previous.as_ref().and_then(|p| p.model.projector.as_ref()) {
-                    if self
-                        .active_model()
-                        .and_then(|m| m.projector)
-                        .is_none_or(|p| p.file != old.file)
-                    {
-                        let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(&old.file));
-                    }
+                if let Some(old) = replaced {
+                    self.delete_unused_files(&old);
                 }
                 Ok(())
             }
@@ -314,7 +340,7 @@ impl Engine {
     }
 
     /// Image support was attempted with this AI and did not come up.
-    fn vision_start_failed(&self, model: &ActiveModel) -> bool {
+    fn vision_start_failed(&self, model: &InstalledModel) -> bool {
         model.projector.is_some()
             && self.vision_limits().is_none()
             && (crate::core::mutex_lock(&self.disabled_vision).as_deref() == Some(&model.file)
@@ -465,6 +491,129 @@ impl Engine {
         result
     }
 
+    /// Make another installed AI the one Chat uses. Waits for an answer in
+    /// progress, then starts the chosen AI; a failed start keeps the previous one.
+    pub async fn use_model(self: &Arc<Self>, file: &str) -> Result<()> {
+        let _install = self
+            .install_lock
+            .try_lock()
+            .map_err(|_| anyhow!("ai-busy"))?;
+        self.switch_to(file).await
+    }
+
+    async fn switch_to(self: &Arc<Self>, file: &str) -> Result<()> {
+        if self.active_model().is_some_and(|model| model.file == file) {
+            return Ok(());
+        }
+        let index = crate::core::read_lock(&self.ctx.settings)
+            .other_models
+            .iter()
+            .position(|model| model.file == file)
+            .ok_or_else(|| anyhow!("ai-missing"))?;
+        if !self.ctx.paths.models_dir().join(file).is_file() {
+            crate::core::write_lock(&self.ctx.settings)
+                .other_models
+                .retain(|model| model.file != file);
+            self.ctx.save_settings();
+            return Err(anyhow!("ai-missing"));
+        }
+        let previous = snapshot_previous(self);
+        self.wait_until_chat_idle().await;
+
+        let chosen = {
+            let mut settings = crate::core::write_lock(&self.ctx.settings);
+            let chosen = settings.other_models.remove(index);
+            if let Some(kept) = settings.active_model.take() {
+                settings.other_models.insert(0, kept);
+            }
+            settings.active_model = Some(chosen.clone());
+            settings.benchmark = None;
+            settings.context_budget_chars = None;
+            chosen
+        };
+        self.ctx.save_settings();
+        *crate::core::mutex_lock(&self.vision_error) = None;
+
+        match self.ensure_ready().await {
+            Ok(_) => Ok(()),
+            Err(error) => {
+                log::error!("engine start after switching AI failed: {error:#}");
+                match previous {
+                    Some(previous) => {
+                        restore_previous(self, previous);
+                        {
+                            let mut settings = crate::core::write_lock(&self.ctx.settings);
+                            let at = index.min(settings.other_models.len());
+                            settings.other_models.insert(at, chosen);
+                        }
+                        self.ctx.save_settings();
+                        if let Err(restart) = self.ensure_ready().await {
+                            log::error!("could not restore previous AI: {restart:#}");
+                        }
+                    }
+                    None => {
+                        {
+                            let mut settings = crate::core::write_lock(&self.ctx.settings);
+                            settings.active_model = None;
+                            settings.other_models.insert(index, chosen);
+                        }
+                        self.ctx.save_settings();
+                        self.set_status(EngineState::NoModel, None);
+                    }
+                }
+                Err(anyhow!("switch-failed"))
+            }
+        }
+    }
+
+    /// Delete an installed AI that is not in use, with its image file when
+    /// no other AI shares it.
+    pub async fn remove_model(&self, file: &str) -> Result<()> {
+        let _install = self
+            .install_lock
+            .try_lock()
+            .map_err(|_| anyhow!("ai-busy"))?;
+        let removed = {
+            let mut settings = crate::core::write_lock(&self.ctx.settings);
+            if settings
+                .active_model
+                .as_ref()
+                .is_some_and(|model| model.file == file)
+            {
+                return Err(anyhow!("ai-in-use"));
+            }
+            let index = settings
+                .other_models
+                .iter()
+                .position(|model| model.file == file)
+                .ok_or_else(|| anyhow!("ai-missing"))?;
+            settings.other_models.remove(index)
+        };
+        self.ctx.save_settings();
+        self.delete_unused_files(&removed);
+        Ok(())
+    }
+
+    /// Remove a forgotten AI's weights and image file unless something
+    /// installed still points at them.
+    fn delete_unused_files(&self, model: &InstalledModel) {
+        let settings = crate::core::read_lock(&self.ctx.settings);
+        let files = std::iter::once(model.file.as_str())
+            .chain(model.projector.as_ref().map(|p| p.file.as_str()))
+            .filter(|file| !settings.uses_model_file(file))
+            .map(str::to_string)
+            .collect::<Vec<_>>();
+        drop(settings);
+        for file in files {
+            let path = self.ctx.paths.models_dir().join(&file);
+            if let Err(error) = std::fs::remove_file(&path) {
+                if error.kind() != std::io::ErrorKind::NotFound {
+                    log::warn!("could not remove {file}: {error}");
+                }
+            }
+        }
+    }
+
     async fn wait_until_chat_idle(&self) {
         // A long answer can run well past a few seconds. Switching AI here
         // would kill llama-server under the stream.
@@ -501,6 +650,9 @@ fn snapshot_previous(engine: &Engine) -> Option<PreviousAi> {
 fn restore_previous(engine: &Engine, previous: PreviousAi) {
     {
         let mut settings = crate::core::write_lock(&engine.ctx.settings);
+        settings
+            .other_models
+            .retain(|model| model.file != previous.model.file);
         settings.active_model = Some(previous.model);
         settings.benchmark = previous.benchmark;
         settings.context_budget_chars = previous.context_budget_chars;
@@ -521,28 +673,28 @@ fn clear_failed_first_install(engine: &Engine) {
     engine.set_status(EngineState::NoModel, None);
 }
 
-/// If the live AI already uses this file name, write beside it so the
-/// running process keeps the old bytes until the new one is Ready.
-fn install_file_name(requested: &str, live_file: Option<&str>) -> String {
-    if live_file == Some(requested) {
-        sibling_install_name(requested)
-    } else {
-        requested.to_string()
+/// Same catalog entry: the same repository or library tag from the same source.
+fn same_ai(model: &InstalledModel, source: &str, reference: &str) -> bool {
+    model.source == source && model.reference.eq_ignore_ascii_case(reference)
+}
+
+/// If an installed AI already uses this file name, write beside it so its
+/// bytes stay intact (and a running process keeps them) until the new one is Ready.
+fn install_file_name(requested: &str, taken: impl Fn(&str) -> bool) -> String {
+    if !taken(requested) {
+        return requested.to_string();
     }
-}
-
-fn sibling_install_name(file_name: &str) -> String {
-    let stem = file_name
+    let stem = requested
         .strip_suffix(".gguf")
-        .or_else(|| file_name.strip_suffix(".GGUF"))
-        .unwrap_or(file_name);
-    format!("{stem}.next.gguf")
-}
-
-fn previous_file_to_remove(previous: Option<&str>, new_file: &str) -> Option<String> {
-    previous
-        .filter(|file| *file != new_file)
-        .map(str::to_string)
+        .or_else(|| requested.strip_suffix(".GGUF"))
+        .unwrap_or(requested);
+    (1..)
+        .map(|n| match n {
+            1 => format!("{stem}.next.gguf"),
+            n => format!("{stem}.next{n}.gguf"),
+        })
+        .find(|name| !taken(name))
+        .expect("an unused file name")
 }
 
 #[cfg(test)]
@@ -550,28 +702,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn same_file_name_writes_beside_the_live_file() {
+    fn taken_file_names_write_beside_the_installed_file() {
+        let taken = |names: &'static [&'static str]| move |name: &str| names.contains(&name);
         assert_eq!(
-            install_file_name("gemma.gguf", Some("gemma.gguf")),
+            install_file_name("gemma.gguf", taken(&["gemma.gguf"])),
             "gemma.next.gguf"
         );
         assert_eq!(
-            install_file_name("gemma.gguf", Some("other.gguf")),
+            install_file_name("gemma.gguf", taken(&["gemma.gguf", "gemma.next.gguf"])),
+            "gemma.next2.gguf"
+        );
+        assert_eq!(
+            install_file_name("gemma.gguf", taken(&["other.gguf"])),
             "gemma.gguf"
         );
-        assert_eq!(install_file_name("gemma.gguf", None), "gemma.gguf");
+        assert_eq!(install_file_name("gemma.gguf", taken(&[])), "gemma.gguf");
     }
 
     #[test]
-    fn previous_file_stays_until_the_new_name_differs() {
-        assert_eq!(
-            previous_file_to_remove(Some("old.gguf"), "new.gguf").as_deref(),
-            Some("old.gguf")
-        );
-        assert_eq!(
-            previous_file_to_remove(Some("same.gguf"), "same.gguf"),
-            None
-        );
-        assert_eq!(previous_file_to_remove(None, "new.gguf"), None);
+    fn same_ai_matches_source_and_reference() {
+        let model = InstalledModel {
+            projector: None,
+            file: "gemma.gguf".into(),
+            name: "Gemma".into(),
+            source: "huggingface".into(),
+            reference: "google/gemma-4-12b-GGUF".into(),
+            license: None,
+            size_bytes: 1,
+        };
+        assert!(same_ai(&model, "huggingface", "Google/Gemma-4-12B-GGUF"));
+        assert!(!same_ai(&model, "ollama", "google/gemma-4-12b-GGUF"));
+        assert!(!same_ai(&model, "huggingface", "google/gemma-4-26b-GGUF"));
     }
 }

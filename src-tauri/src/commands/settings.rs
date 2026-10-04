@@ -12,14 +12,16 @@ use crate::engine::models::MachineProfile;
 use crate::engine::{Engine, EngineStatus};
 use crate::i18n::{AppLocale, UiLocalePref};
 use crate::paths::Paths;
-use crate::settings::{ActiveModel, TextSize};
+use crate::settings::{InstalledModel, TextSize};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsView {
     pub house_rules: String,
     pub onboarding_done: bool,
-    pub active_model: Option<ActiveModel>,
+    pub active_model: Option<InstalledModel>,
+    /// Installed AIs that are not in use, most recently used first.
+    pub other_models: Vec<InstalledModel>,
     pub allow_online_research: bool,
     pub text_size: TextSize,
     pub ui_locale: UiLocalePref,
@@ -36,6 +38,7 @@ fn settings_view(ctx: &Ctx) -> SettingsView {
         house_rules: settings.house_rules.clone(),
         onboarding_done: settings.onboarding_done,
         active_model: settings.active_model.clone(),
+        other_models: settings.other_models.clone(),
         allow_online_research: settings.allow_online_research,
         text_size: settings.text_size,
         ui_locale: settings.ui_locale,
@@ -150,7 +153,7 @@ pub struct Diagnostics {
     pub data_dir: String,
     pub engine_build: String,
     pub engine_state: EngineStatus,
-    pub model: Option<ActiveModel>,
+    pub model: Option<InstalledModel>,
     pub index_records: u64,
     pub context_budget_chars: usize,
     pub benchmark: Option<crate::settings::BenchmarkResult>,

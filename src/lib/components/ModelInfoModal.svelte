@@ -11,17 +11,23 @@
   import { focusTrap } from "$lib/focus-trap";
   import { notifyInvokeError } from "$lib/stores.svelte";
   import { Download, ExternalLink, X } from "@lucide/svelte";
+  import type { InstalledMatch } from "$lib/installed-models";
 
   let {
     result,
     installing = false,
+    installed = null,
     onClose,
     onInstall,
+    onUse,
   }: {
     result: ModelSearchResult;
     installing?: boolean;
+    /** Set when this computer already has the AI. */
+    installed?: InstalledMatch | null;
     onClose: () => void;
     onInstall: () => void;
+    onUse?: (file: string) => void;
   } = $props();
 
   type InfoField =
@@ -167,15 +173,24 @@
         {t("explore.moreOn", { host: catalogHostLabel(result.source) })}
       </button>
       <button type="button" class="btn-outline" onclick={onClose}>{t("explore.close")}</button>
-      <button
-        type="button"
-        class="btn-primary"
-        onclick={onInstall}
-        disabled={installing || result.fits === false}
-      >
-        <Download size={13.5} aria-hidden="true" />
-        {t("explore.install")}
-      </button>
+      {#if installed?.inUse}
+        <button type="button" class="btn-primary" disabled>{t("settings.inUse")}</button>
+      {:else if installed && onUse}
+        {@const file = installed.model.file}
+        <button type="button" class="btn-primary" onclick={() => onUse(file)} disabled={installing}>
+          {t("settings.useAi")}
+        </button>
+      {:else}
+        <button
+          type="button"
+          class="btn-primary"
+          onclick={onInstall}
+          disabled={installing || result.fits === false}
+        >
+          <Download size={13.5} aria-hidden="true" />
+          {t("explore.install")}
+        </button>
+      {/if}
     </div>
   </div>
 </div>

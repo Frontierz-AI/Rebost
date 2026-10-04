@@ -5,7 +5,7 @@ mod common;
 use common::test_app;
 use rebost::chat::{conversations::Conversations, images, ChatService};
 use rebost::engine::Engine;
-use rebost::settings::{ActiveModel, VisionProjector};
+use rebost::settings::{InstalledModel, VisionProjector};
 use std::io::Cursor;
 use std::path::Path;
 
@@ -33,7 +33,7 @@ async fn images_reach_the_model_and_survive_reopening() {
         Path::new(&projector),
         &app.ctx.paths.models_dir().join("vision-projector.gguf"),
     );
-    app.ctx.settings.write().unwrap().active_model = Some(ActiveModel {
+    app.ctx.settings.write().unwrap().active_model = Some(InstalledModel {
         projector: Some(VisionProjector {
             file: "vision-projector.gguf".into(),
             size_bytes: std::fs::metadata(&projector).unwrap().len(),

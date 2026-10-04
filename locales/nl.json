@@ -116,7 +116,19 @@
     "measureAgain": "Snelheid opnieuw meten",
     "measuring": "Bezig met meten…",
     "measureDone": "Snelheidsmeting bijgewerkt.",
-    "measureFailed": "De snelheid kon niet worden gemeten. Probeer het opnieuw wanneer Chat niet bezig is."
+    "measureFailed": "De snelheid kon niet worden gemeten. Probeer het opnieuw wanneer Chat niet bezig is.",
+    "alsoInstalled": "Ook op deze computer",
+    "useAi": "Gebruiken",
+    "useAiNamed": "%{name} gebruiken",
+    "switchingAi": "Wisselen…",
+    "inUse": "In gebruik",
+    "aiActions": "Meer voor %{name}",
+    "removeAi": "Verwijderen…",
+    "removeAiConfirm": "%{name} van deze computer verwijderen? Dit maakt %{size} vrij. Je kunt hem later opnieuw downloaden.",
+    "removeAiAction": "Verwijderen",
+    "installedOne": "1 AI · %{size} op deze computer",
+    "installedMany": "%{count} AI's · %{size} op deze computer",
+    "openAiFolder": "Map openen"
   },
   "onboarding": {
     "welcome": "Welkom bij Rebost",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Het logboek staat nog niet op deze computer.",
     "folderNotFound": "Map niet gevonden.",
     "promptTooLong": "De vraag en de House rules zijn te lang voor deze AI om in één keer te lezen. Kort ze in of kies een AI die meer tekst kan verwerken.",
-    "attachmentsFailed": "Sommige bijlagen konden niet worden gelezen. Verwerk ze opnieuw voordat je er vragen over stelt."
+    "attachmentsFailed": "Sommige bijlagen konden niet worden gelezen. Verwerk ze opnieuw voordat je er vragen over stelt.",
+    "aiBusy": "Wacht tot de download klaar is en probeer het opnieuw.",
+    "aiInUse": "Schakel over naar een andere AI voordat je deze verwijdert.",
+    "aiMissing": "Die AI staat niet meer op deze computer."
   },
   "pii": {
     "heading": "Persoonsgegevens",

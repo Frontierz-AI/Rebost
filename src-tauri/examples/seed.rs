@@ -120,7 +120,7 @@ Never put a personal mobile on the door."
                     std::fs::copy(&model_path, &dest)?;
                 }
             }
-            settings.active_model = Some(rebost::settings::ActiveModel {
+            settings.active_model = Some(rebost::settings::InstalledModel {
                 projector: None,
                 file: file_name,
                 name: ai_name.clone(),
@@ -133,7 +133,7 @@ Never put a personal mobile on the door."
         } else {
             // Screenshots / UI work: show the suggested name even if the
             // weights are not on disk.
-            settings.active_model = Some(rebost::settings::ActiveModel {
+            settings.active_model = Some(rebost::settings::InstalledModel {
                 projector: None,
                 file: "Muse-Glimmer-30B.gguf".into(),
                 name: ai_name.clone(),

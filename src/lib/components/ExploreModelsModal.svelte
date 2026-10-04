@@ -18,7 +18,8 @@
   } from "$lib/explore-models";
   import { focusTrap } from "$lib/focus-trap";
   import { dialogPanel, overlay } from "$lib/motion";
-  import { notifyInvokeError } from "$lib/stores.svelte";
+  import { app, notifyInvokeError } from "$lib/stores.svelte";
+  import { findInstalled } from "$lib/installed-models";
   import { t } from "$lib/i18n.svelte";
   import { ArrowDown, ArrowUp, ArrowUpDown, Download, Info, Search, X } from "@lucide/svelte";
   import { onMount } from "svelte";
@@ -28,11 +29,17 @@
     installing = false,
     onClose,
     onInstall,
+    onUse,
   }: {
     installing?: boolean;
     onClose: () => void;
     onInstall: (result: ModelSearchResult) => void;
+    /** Switch to an AI this computer already has instead of downloading it again. */
+    onUse: (file: string) => void;
   } = $props();
+
+  const installedFor = (result: ModelSearchResult) =>
+    findInstalled(app.settings, result.source, result.reference);
 
   let query = $state("");
   let searching = $state(true);
@@ -361,6 +368,7 @@
           <tbody class="divide-y divide-navy-950/10 dark:divide-white/10">
             {#each visible as result (result.source + result.reference)}
               {@const fit = fitKind(result.fits)}
+              {@const owned = installedFor(result)}
               <tr class="bg-surface">
                 <th scope="row" class="max-w-0 px-5 py-2.5 font-medium text-ink">
                   <div class="flex min-w-0 items-center gap-1.5">
@@ -420,15 +428,30 @@
                       <Info size={12.5} aria-hidden="true" />
                       {t("explore.moreInfo")}
                     </button>
-                    <button
-                      type="button"
-                      class="btn-outline !py-1.5 !pr-2.5 !pl-1.5 !text-[12px] whitespace-nowrap"
-                      onclick={() => onInstall(result)}
-                      disabled={installing || fit === "no"}
-                    >
-                      <Download size={12.5} aria-hidden="true" />
-                      {t("explore.install")}
-                    </button>
+                    {#if owned?.inUse}
+                      <span class="px-2.5 text-[12px] font-medium whitespace-nowrap text-ink-soft">
+                        {t("settings.inUse")}
+                      </span>
+                    {:else if owned}
+                      <button
+                        type="button"
+                        class="btn-outline !px-2.5 !py-1.5 !text-[12px] whitespace-nowrap"
+                        onclick={() => onUse(owned.model.file)}
+                        disabled={installing}
+                      >
+                        {t("settings.useAi")}
+                      </button>
+                    {:else}
+                      <button
+                        type="button"
+                        class="btn-outline !py-1.5 !pr-2.5 !pl-1.5 !text-[12px] whitespace-nowrap"
+                        onclick={() => onInstall(result)}
+                        disabled={installing || fit === "no"}
+                      >
+                        <Download size={12.5} aria-hidden="true" />
+                        {t("explore.install")}
+                      </button>
+                    {/if}
                   </div>
                 </td>
               </tr>
@@ -466,6 +489,11 @@
   <ModelInfoModal
     result={info}
     {installing}
+    installed={installedFor(info)}
+    onUse={(file) => {
+      info = null;
+      onUse(file);
+    }}
     onClose={() => (info = null)}
     onInstall={() => {
       const selected = info;

@@ -115,7 +115,19 @@
     "measureAgain": "Torna a mesurar la velocitat",
     "measuring": "Mesurant…",
     "measureDone": "Mesura de velocitat actualitzada.",
-    "measureFailed": "No s’ha pogut mesurar la velocitat. Torna-ho a provar quan Chat estigui inactiu."
+    "measureFailed": "No s’ha pogut mesurar la velocitat. Torna-ho a provar quan Chat estigui inactiu.",
+    "alsoInstalled": "També en aquest ordinador",
+    "useAi": "Fes servir",
+    "useAiNamed": "Fes servir %{name}",
+    "switchingAi": "Canviant…",
+    "inUse": "En ús",
+    "aiActions": "Més opcions de %{name}",
+    "removeAi": "Elimina…",
+    "removeAiConfirm": "Vols eliminar %{name} d'aquest ordinador? S'alliberen %{size}. La pots tornar a baixar més endavant.",
+    "removeAiAction": "Elimina",
+    "installedOne": "1 IA · %{size} en aquest ordinador",
+    "installedMany": "%{count} IA · %{size} en aquest ordinador",
+    "openAiFolder": "Obre la carpeta"
   },
   "onboarding": {
     "welcome": "Et donem la benvinguda a Rebost",
@@ -548,7 +560,10 @@
     "engineLogMissing": "Encara no hi ha registre en aquest ordinador.",
     "folderNotFound": "No s'ha trobat la carpeta.",
     "promptTooLong": "Aquesta pregunta i les House rules són massa llargues perquè aquesta IA les llegeixi de cop. Escurça-les o tria una IA que admeti més text.",
-    "attachmentsFailed": "No s'han pogut llegir alguns fitxers adjunts. Torna'ls a processar abans de fer preguntes sobre aquests fitxers."
+    "attachmentsFailed": "No s'han pogut llegir alguns fitxers adjunts. Torna'ls a processar abans de fer preguntes sobre aquests fitxers.",
+    "aiBusy": "Espera que acabi la baixada i torna-ho a provar.",
+    "aiInUse": "Canvia a una altra IA abans d'eliminar aquesta.",
+    "aiMissing": "Aquesta IA ja no és en aquest ordinador."
   },
   "pii": {
     "heading": "Informació personal",

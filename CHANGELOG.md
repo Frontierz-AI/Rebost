@@ -6,6 +6,14 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Added
+
+- Keep more than one AI. Settings lists the other installed AIs under the one in use. Use switches to one, Remove deletes it after a confirm, and Open folder shows where they live. Explore marks AIs that are already installed.
+
+### Changed
+
+- Installing a new AI keeps the previous one instead of deleting it.
+
 ## [0.9.7] - 2026-10-04
 
 ### Changed

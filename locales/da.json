@@ -116,7 +116,19 @@
     "measureAgain": "Mål hastigheden igen",
     "measuring": "Måler…",
     "measureDone": "Hastighedsmålingen er opdateret.",
-    "measureFailed": "Hastigheden kunne ikke måles. Prøv igen, når Chat er inaktiv."
+    "measureFailed": "Hastigheden kunne ikke måles. Prøv igen, når Chat er inaktiv.",
+    "alsoInstalled": "Også på denne computer",
+    "useAi": "Brug",
+    "useAiNamed": "Brug %{name}",
+    "switchingAi": "Skifter…",
+    "inUse": "I brug",
+    "aiActions": "Mere for %{name}",
+    "removeAi": "Fjern…",
+    "removeAiConfirm": "Fjern %{name} fra denne computer? Det frigør %{size}. Du kan downloade den igen senere.",
+    "removeAiAction": "Fjern",
+    "installedOne": "1 AI · %{size} på denne computer",
+    "installedMany": "%{count} AI'er · %{size} på denne computer",
+    "openAiFolder": "Åbn mappe"
   },
   "onboarding": {
     "welcome": "Velkommen til Rebost",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Loggen findes ikke på denne computer endnu.",
     "folderNotFound": "Mappen blev ikke fundet.",
     "promptTooLong": "Spørgsmålet og House rules er for lange til, at denne AI kan læse dem på én gang. Forkort dem, eller vælg en AI, der kan læse mere tekst.",
-    "attachmentsFailed": "Nogle vedhæftede filer kunne ikke læses. Behandl dem igen, før du spørger om dem."
+    "attachmentsFailed": "Nogle vedhæftede filer kunne ikke læses. Behandl dem igen, før du spørger om dem.",
+    "aiBusy": "Vent, til downloaden er færdig, og prøv igen.",
+    "aiInUse": "Skift til en anden AI, før du fjerner denne.",
+    "aiMissing": "Den AI findes ikke længere på denne computer."
   },
   "pii": {
     "heading": "Personoplysninger",

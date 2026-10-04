@@ -37,7 +37,7 @@ use std::time::Duration;
 use tokio::process::Child;
 
 use crate::core::Ctx;
-use crate::settings::ActiveModel;
+use crate::settings::InstalledModel;
 use process::{kill_stale_llama_servers, USER_AGENT};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -219,6 +219,11 @@ impl Engine {
     }
 
     pub fn new(ctx: Arc<Ctx>) -> Arc<Self> {
+        let forgot =
+            crate::core::write_lock(&ctx.settings).forget_missing_models(&ctx.paths.models_dir());
+        if forgot {
+            ctx.save_settings();
+        }
         let model_name = crate::core::read_lock(&ctx.settings)
             .active_model
             .as_ref()
@@ -299,7 +304,7 @@ impl Engine {
         }
     }
 
-    fn active_model(&self) -> Option<ActiveModel> {
+    fn active_model(&self) -> Option<InstalledModel> {
         crate::core::read_lock(&self.ctx.settings)
             .active_model
             .clone()

@@ -186,7 +186,7 @@ export interface MachineView {
   suggestions: Recommendation[];
 }
 
-export interface ActiveModel {
+export interface InstalledModel {
   projector?: { file: string; sizeBytes: number };
   file: string;
   name: string;
@@ -234,7 +234,9 @@ export type LocalePref = "system" | AppLocale;
 export interface SettingsView {
   houseRules: string;
   onboardingDone: boolean;
-  activeModel?: ActiveModel | null;
+  activeModel?: InstalledModel | null;
+  /** Installed AIs that are not in use, most recently used first. */
+  otherModels?: InstalledModel[];
   allowOnlineResearch: boolean;
   textSize: TextSize;
   uiLocale: LocalePref;
@@ -309,7 +311,7 @@ export interface Diagnostics {
   dataDir: string;
   engineBuild: string;
   engineState: EngineStatus;
-  model?: ActiveModel | null;
+  model?: InstalledModel | null;
   indexRecords: number;
   contextBudgetChars: number;
   benchmark?: {
@@ -579,6 +581,9 @@ export const api = {
   modelsSearch: (query: string) => invoke<ModelSearchResult[]>("models_search", { query }),
   modelInstall: (source: string, reference: string, name: string, license?: string) =>
     invoke<void>("model_install", { source, reference, name, license }),
+  modelUse: (file: string) => invoke<void>("model_use", { file }),
+  modelRemove: (file: string) => invoke<void>("model_remove", { file }),
+  modelReveal: (file?: string) => invoke<void>("model_reveal", { file: file ?? null }),
   openModelPage: (source: string, reference: string) =>
     invoke<void>("open_model_page", { source, reference }),
   downloadCancel: (id: string) => invoke<void>("download_cancel", { id }),

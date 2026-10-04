@@ -116,7 +116,19 @@
     "measureAgain": "速度を再測定",
     "measuring": "測定中…",
     "measureDone": "速度の測定結果を更新しました。",
-    "measureFailed": "速度を測定できませんでした。Chatが応答していないときに再試行してください。"
+    "measureFailed": "速度を測定できませんでした。Chatが応答していないときに再試行してください。",
+    "alsoInstalled": "このコンピュータにあるほかのAI",
+    "useAi": "使う",
+    "useAiNamed": "%{name}を使う",
+    "switchingAi": "切り替え中…",
+    "inUse": "使用中",
+    "aiActions": "%{name}のその他の操作",
+    "removeAi": "削除…",
+    "removeAiConfirm": "%{name}をこのコンピュータから削除しますか？%{size}が空きます。あとで再ダウンロードできます。",
+    "removeAiAction": "削除",
+    "installedOne": "1件のAI · このコンピュータで%{size}",
+    "installedMany": "%{count}件のAI · このコンピュータで%{size}",
+    "openAiFolder": "フォルダを開く"
   },
   "onboarding": {
     "welcome": "Rebostへようこそ",
@@ -549,7 +561,10 @@
     "engineLogMissing": "このコンピュータには、まだエンジンのログがありません。",
     "folderNotFound": "フォルダが見つかりません。",
     "promptTooLong": "質問とHouse rulesが長すぎて、このAIでは一度に読み取れません。短くするか、より多くの文章を読み取れるAIを選んでください。",
-    "attachmentsFailed": "一部の添付ファイルを読み取れませんでした。質問する前に、ファイルを再処理してください。"
+    "attachmentsFailed": "一部の添付ファイルを読み取れませんでした。質問する前に、ファイルを再処理してください。",
+    "aiBusy": "ダウンロードが終わってから、もう一度お試しください。",
+    "aiInUse": "削除する前に、ほかのAIに切り替えてください。",
+    "aiMissing": "そのAIはこのコンピュータにもうありません。"
   },
   "pii": {
     "heading": "個人情報",
