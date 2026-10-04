@@ -9,7 +9,7 @@ repository = "https://github.com/Frontierz-AI/Rebost"
 homepage = "https://github.com/Frontierz-AI/Rebost"
 documentation = "https://github.com/Frontierz-AI/Rebost#readme"
 readme = "../README.md"
-rust-version = "1.98"
+rust-version = "1.99"
 edition = "2021"
 
 [lib]

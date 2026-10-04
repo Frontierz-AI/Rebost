@@ -523,7 +523,7 @@ async fn fetch_range(
         let resume = status == StatusCode::PARTIAL_CONTENT && have > 0;
         if have > 0 && !resume {
             let _ = tokio::fs::remove_file(range_path).await;
-            let _ = received.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
+            let _ = received.try_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
                 Some(value.saturating_sub(have))
             });
             have = 0;
