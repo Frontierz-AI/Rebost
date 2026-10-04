@@ -61,6 +61,15 @@ pub(crate) fn map_user_error(text: &str) -> String {
         }
     }
 
+    for (code, key) in [
+        ("ai-busy", "errors.aiBusy"),
+        ("ai-in-use", "errors.aiInUse"),
+        ("ai-missing", "errors.aiMissing"),
+    ] {
+        if lower.contains(code) {
+            return rust_i18n::t!(key).into();
+        }
+    }
     if lower.contains("invalid id") {
         return rust_i18n::t!("errors.invalidId").into();
     }
@@ -211,6 +220,10 @@ mod tests {
         assert_eq!(
             friendly("model file must be .gguf"),
             "That AI isn't available. Try another."
+        );
+        assert_eq!(
+            friendly("ai-in-use"),
+            "Switch to another AI before removing this one."
         );
         assert_eq!(
             friendly("incompatible-format"),

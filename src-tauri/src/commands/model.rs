@@ -17,7 +17,7 @@ pub struct MachineView {
     pub profile: MachineProfile,
     pub recommendation: Recommendation,
     pub alternatives: Vec<Recommendation>,
-    /// Catalog picks that fit and are not the installed model (max two).
+    /// Catalog picks that fit and are not installed (max two).
     pub suggestions: Vec<Recommendation>,
 }
 
@@ -48,11 +48,17 @@ pub fn machine_profile(ctx: State<'_, Arc<Ctx>>) -> MachineView {
     let profile = MachineProfile::detect(ctx.paths.base());
     let recommendation = models::recommend(&profile);
     let alternatives = models::smaller_alternatives(&profile, 2);
-    let installed = crate::core::read_lock(&ctx.settings)
-        .active_model
-        .as_ref()
-        .map(|model| model.reference.clone());
-    let suggestions = models::uninstalled_suggestions(&profile, installed.as_deref(), 2);
+    let installed: Vec<String> = {
+        let settings = crate::core::read_lock(&ctx.settings);
+        settings
+            .active_model
+            .iter()
+            .chain(&settings.other_models)
+            .map(|model| model.reference.clone())
+            .collect()
+    };
+    let installed: Vec<&str> = installed.iter().map(String::as_str).collect();
+    let suggestions = models::uninstalled_suggestions(&profile, &installed, 2);
     MachineView {
         profile,
         recommendation,
@@ -133,6 +139,54 @@ pub fn model_install(
         }
     });
     Ok(())
+}
+
+/// Switch Chat to another installed AI. Resolves once it is Ready.
+#[tauri::command]
+pub async fn model_use(engine: State<'_, Arc<Engine>>, file: String) -> CmdResult<()> {
+    engine
+        .inner()
+        .clone()
+        .use_model(&file)
+        .await
+        .map_err(friendly)
+}
+
+/// Delete an installed AI that is not in use.
+#[tauri::command]
+pub async fn model_remove(engine: State<'_, Arc<Engine>>, file: String) -> CmdResult<()> {
+    engine.remove_model(&file).await.map_err(friendly)
+}
+
+/// Show an installed AI's file in Finder or Explorer, or open the AI folder
+/// when no file is given. Only installed file names are accepted.
+#[tauri::command]
+pub fn model_reveal(
+    app: AppHandle,
+    ctx: State<'_, Arc<Ctx>>,
+    file: Option<String>,
+) -> CmdResult<()> {
+    let dir = ctx.paths.models_dir();
+    let Some(file) = file else {
+        std::fs::create_dir_all(&dir).map_err(friendly)?;
+        return app
+            .opener()
+            .open_path(dir.to_string_lossy().to_string(), None::<String>)
+            .map_err(friendly);
+    };
+    let installed = {
+        let settings = crate::core::read_lock(&ctx.settings);
+        settings
+            .active_model
+            .iter()
+            .chain(&settings.other_models)
+            .any(|model| model.file == file)
+    };
+    let path = dir.join(&file);
+    if !installed || !path.is_file() {
+        return Err(friendly("ai-missing"));
+    }
+    app.opener().reveal_item_in_dir(path).map_err(friendly)
 }
 
 /// Cancel an in-flight model download.

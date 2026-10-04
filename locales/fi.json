@@ -116,7 +116,19 @@
     "measureAgain": "Mittaa nopeus uudelleen",
     "measuring": "Mitataan…",
     "measureDone": "Nopeusmittaus päivitetty.",
-    "measureFailed": "Nopeutta ei voitu mitata. Yritä uudelleen, kun Chat ei ole käynnissä."
+    "measureFailed": "Nopeutta ei voitu mitata. Yritä uudelleen, kun Chat ei ole käynnissä.",
+    "alsoInstalled": "Myös tällä tietokoneella",
+    "useAi": "Käytä",
+    "useAiNamed": "Käytä: %{name}",
+    "switchingAi": "Vaihdetaan…",
+    "inUse": "Käytössä",
+    "aiActions": "Lisää: %{name}",
+    "removeAi": "Poista…",
+    "removeAiConfirm": "Poistetaanko %{name} tältä tietokoneelta? Tilaa vapautuu %{size}. Voit ladata sen myöhemmin uudelleen.",
+    "removeAiAction": "Poista",
+    "installedOne": "1 tekoäly · %{size} tällä tietokoneella",
+    "installedMany": "%{count} tekoälyä · %{size} tällä tietokoneella",
+    "openAiFolder": "Avaa kansio"
   },
   "onboarding": {
     "welcome": "Tervetuloa Rebostiin",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Lokia ei ole vielä tällä tietokoneella.",
     "folderNotFound": "Kansiota ei löytynyt.",
     "promptTooLong": "Kysymys ja House rules -ohjeet ovat liian pitkiä tämän tekoälyn luettavaksi kerralla. Lyhennä niitä tai valitse tekoäly, joka pystyy lukemaan enemmän tekstiä.",
-    "attachmentsFailed": "Joitakin liitteitä ei voitu lukea. Käsittele ne uudelleen ennen kuin kysyt niistä."
+    "attachmentsFailed": "Joitakin liitteitä ei voitu lukea. Käsittele ne uudelleen ennen kuin kysyt niistä.",
+    "aiBusy": "Odota, että lataus valmistuu, ja yritä uudelleen.",
+    "aiInUse": "Vaihda toiseen tekoälyyn ennen kuin poistat tämän.",
+    "aiMissing": "Tätä tekoälyä ei enää ole tällä tietokoneella."
   },
   "pii": {
     "heading": "Henkilötiedot",

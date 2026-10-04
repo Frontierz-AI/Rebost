@@ -116,7 +116,19 @@
     "measureAgain": "Mät hastigheten igen",
     "measuring": "Mäter…",
     "measureDone": "Hastighetsmätningen har uppdaterats.",
-    "measureFailed": "Det gick inte att mäta hastigheten. Försök igen när Chat är inaktivt."
+    "measureFailed": "Det gick inte att mäta hastigheten. Försök igen när Chat är inaktivt.",
+    "alsoInstalled": "Också på den här datorn",
+    "useAi": "Använd",
+    "useAiNamed": "Använd %{name}",
+    "switchingAi": "Byter…",
+    "inUse": "Används",
+    "aiActions": "Mer för %{name}",
+    "removeAi": "Ta bort…",
+    "removeAiConfirm": "Ta bort %{name} från den här datorn? Det frigör %{size}. Du kan ladda ned den igen senare.",
+    "removeAiAction": "Ta bort",
+    "installedOne": "1 AI · %{size} på den här datorn",
+    "installedMany": "%{count} AI · %{size} på den här datorn",
+    "openAiFolder": "Öppna mapp"
   },
   "onboarding": {
     "welcome": "Välkommen till Rebost",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Loggen finns inte på den här datorn ännu.",
     "folderNotFound": "Mappen hittades inte.",
     "promptTooLong": "Frågan och House rules är för långa för att den här AI:n ska kunna läsa dem på en gång. Korta ned dem eller välj en AI som kan läsa mer text.",
-    "attachmentsFailed": "Vissa bilagor kunde inte läsas. Bearbeta dem igen innan du ställer frågor om dem."
+    "attachmentsFailed": "Vissa bilagor kunde inte läsas. Bearbeta dem igen innan du ställer frågor om dem.",
+    "aiBusy": "Vänta tills nedladdningen är klar och försök igen.",
+    "aiInUse": "Byt till en annan AI innan du tar bort den här.",
+    "aiMissing": "Den AI:n finns inte längre på den här datorn."
   },
   "pii": {
     "heading": "Personuppgifter",

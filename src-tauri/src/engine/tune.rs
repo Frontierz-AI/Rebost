@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use super::catalog::MachineProfile;
 use super::gguf;
 use super::pin::EnginePin;
-use crate::settings::ActiveModel;
+use crate::settings::InstalledModel;
 
 const GIB: u64 = 1024 * 1024 * 1024;
 const MIB: u64 = 1024 * 1024;
@@ -49,7 +49,7 @@ pub struct ModelHint {
 }
 
 impl ModelHint {
-    pub fn from_active(model: &ActiveModel, models_dir: &Path) -> Self {
+    pub fn from_active(model: &InstalledModel, models_dir: &Path) -> Self {
         let path = models_dir.join(&model.file);
         let file_bytes = if model.size_bytes > 0 {
             model.size_bytes

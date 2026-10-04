@@ -116,7 +116,19 @@
     "measureAgain": "Geschwindigkeit erneut messen",
     "measuring": "Messung läuft…",
     "measureDone": "Geschwindigkeitsmessung aktualisiert.",
-    "measureFailed": "Geschwindigkeit konnte nicht gemessen werden. Erneut versuchen, wenn Chat inaktiv ist."
+    "measureFailed": "Geschwindigkeit konnte nicht gemessen werden. Erneut versuchen, wenn Chat inaktiv ist.",
+    "alsoInstalled": "Ebenfalls auf diesem Computer",
+    "useAi": "Verwenden",
+    "useAiNamed": "%{name} verwenden",
+    "switchingAi": "Wird gewechselt…",
+    "inUse": "In Verwendung",
+    "aiActions": "Mehr für %{name}",
+    "removeAi": "Entfernen…",
+    "removeAiConfirm": "%{name} von diesem Computer entfernen? Dadurch werden %{size} frei. Sie können die KI später erneut laden.",
+    "removeAiAction": "Entfernen",
+    "installedOne": "1 KI · %{size} auf diesem Computer",
+    "installedMany": "%{count} KIs · %{size} auf diesem Computer",
+    "openAiFolder": "Ordner öffnen"
   },
   "onboarding": {
     "welcome": "Willkommen bei Rebost",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Auf diesem Computer gibt es noch kein Protokoll.",
     "folderNotFound": "Ordner nicht gefunden.",
     "promptTooLong": "Die Frage und die House rules sind zu lang, um von dieser KI auf einmal gelesen zu werden. Kürze sie oder wähle eine KI, die mehr Text verarbeiten kann.",
-    "attachmentsFailed": "Einige Anhänge konnten nicht gelesen werden. Lass Rebost diese Dateien erneut einlesen, bevor du Fragen dazu stellst."
+    "attachmentsFailed": "Einige Anhänge konnten nicht gelesen werden. Lass Rebost diese Dateien erneut einlesen, bevor du Fragen dazu stellst.",
+    "aiBusy": "Warten Sie, bis der Download fertig ist, und versuchen Sie es erneut.",
+    "aiInUse": "Wechseln Sie zu einer anderen KI, bevor Sie diese entfernen.",
+    "aiMissing": "Diese KI ist nicht mehr auf diesem Computer."
   },
   "pii": {
     "heading": "Persönliche Daten",

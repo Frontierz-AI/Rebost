@@ -12,7 +12,7 @@ mod common;
 use common::*;
 use rebost::chat::ChatService;
 use rebost::engine::{Engine, EngineState};
-use rebost::settings::ActiveModel;
+use rebost::settings::InstalledModel;
 
 #[ignore = "needs REBOST_ENGINE_ARCHIVE and REBOST_TEST_MODEL"]
 #[tokio::test(flavor = "multi_thread")]
@@ -44,7 +44,7 @@ async fn full_loop_answers_with_citations() {
     }
     {
         let mut settings = app.ctx.settings.write().unwrap();
-        settings.active_model = Some(ActiveModel {
+        settings.active_model = Some(InstalledModel {
             projector: None,
             file: model_file.clone(),
             name: "Smoke test model".into(),

@@ -15,7 +15,7 @@ use super::process::{
 };
 use super::tune::{ModelHint, SpawnPlan};
 use super::{Engine, EngineState, Inner, ENGINE_RELEASE};
-use crate::settings::ActiveModel;
+use crate::settings::InstalledModel;
 
 const HEALTH_TIMEOUT: Duration = Duration::from_secs(240);
 const STOPPED: &str = "stopped";
@@ -71,7 +71,7 @@ fn should_fallback_to_cpu(
 }
 
 /// Key for [`crate::settings::Settings::cpu_engine_for`].
-fn cpu_engine_key(model: &ActiveModel) -> String {
+fn cpu_engine_key(model: &InstalledModel) -> String {
     format!("{ENGINE_RELEASE}/{}", model.file)
 }
 
@@ -147,7 +147,7 @@ fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<Stri
 }
 
 impl Engine {
-    fn model_path(&self, model: &ActiveModel) -> std::path::PathBuf {
+    fn model_path(&self, model: &InstalledModel) -> std::path::PathBuf {
         self.ctx.paths.models_dir().join(&model.file)
     }
 
@@ -400,7 +400,7 @@ impl Engine {
         inner: &mut Inner,
         binary: &Path,
         pin: &EnginePin,
-        model: &ActiveModel,
+        model: &InstalledModel,
         model_path: &Path,
         cancel: &AtomicBool,
     ) -> Result<String, SpawnFailed> {
@@ -629,7 +629,7 @@ impl Engine {
     /// release or the AI changes. A GPU start that works again clears it.
     fn remember_engine_choice(
         &self,
-        model: &ActiveModel,
+        model: &InstalledModel,
         pin: &EnginePin,
         cpu: Option<&EnginePin>,
     ) {
@@ -649,7 +649,7 @@ impl Engine {
         self.ctx.save_settings();
     }
 
-    async fn live_url(&self, inner: &mut Inner, model: &ActiveModel) -> Option<String> {
+    async fn live_url(&self, inner: &mut Inner, model: &InstalledModel) -> Option<String> {
         let child = inner.child.as_mut()?;
         let exited = child.try_wait().ok().flatten().is_some();
         let port = inner.port;

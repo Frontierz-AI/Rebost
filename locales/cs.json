@@ -116,7 +116,19 @@
     "measureAgain": "Znovu změřit rychlost",
     "measuring": "Probíhá měření…",
     "measureDone": "Měření rychlosti bylo aktualizováno.",
-    "measureFailed": "Rychlost se nepodařilo změřit. Zkuste to znovu, až Chat nebude pracovat."
+    "measureFailed": "Rychlost se nepodařilo změřit. Zkuste to znovu, až Chat nebude pracovat.",
+    "alsoInstalled": "Také na tomto počítači",
+    "useAi": "Použít",
+    "useAiNamed": "Použít %{name}",
+    "switchingAi": "Přepínání…",
+    "inUse": "Používá se",
+    "aiActions": "Další možnosti pro %{name}",
+    "removeAi": "Odstranit…",
+    "removeAiConfirm": "Odstranit %{name} z tohoto počítače? Uvolní se %{size}. Později ji můžete stáhnout znovu.",
+    "removeAiAction": "Odstranit",
+    "installedOne": "1 AI · %{size} na tomto počítači",
+    "installedMany": "%{count} AI · %{size} na tomto počítači",
+    "openAiFolder": "Otevřít složku"
   },
   "onboarding": {
     "welcome": "Vítej v Rebostu",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Na tomto počítači zatím žádný protokol není.",
     "folderNotFound": "Složka se nenašla.",
     "promptTooLong": "Otázka a House rules jsou příliš dlouhé na to, aby je tato AI přečetla najednou. Zkrať je nebo vyber AI, která zvládne více textu.",
-    "attachmentsFailed": "Některé přílohy se nepodařilo přečíst. Než se na ně zeptáš, nech je znovu zpracovat."
+    "attachmentsFailed": "Některé přílohy se nepodařilo přečíst. Než se na ně zeptáš, nech je znovu zpracovat.",
+    "aiBusy": "Počkejte na dokončení stahování a zkuste to znovu.",
+    "aiInUse": "Před odstraněním této AI přepněte na jinou.",
+    "aiMissing": "Tato AI už na tomto počítači není."
   },
   "pii": {
     "heading": "Osobní údaje",

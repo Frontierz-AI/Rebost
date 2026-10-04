@@ -6,7 +6,7 @@ use rebost::chat::{conversations::Conversations, ChatService};
 use rebost::core::{Ctx, Events};
 use rebost::engine::Engine;
 use rebost::ingest::extract::ExtractorSettings;
-use rebost::settings::ActiveModel;
+use rebost::settings::InstalledModel;
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -65,7 +65,7 @@ async fn real_model_experience_gate() {
     if std::fs::hard_link(&model, &dest).is_err() {
         std::fs::copy(&model, &dest).unwrap();
     }
-    ctx.settings.write().unwrap().active_model = Some(ActiveModel {
+    ctx.settings.write().unwrap().active_model = Some(InstalledModel {
         projector: None,
         file: "quality.gguf".into(),
         name: "Quality model".into(),

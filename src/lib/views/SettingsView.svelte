@@ -32,11 +32,12 @@
     t,
     type LocalePref,
   } from "$lib/i18n.svelte";
-  import { Cpu, Search, BadgeCheck, Stethoscope, Save } from "@lucide/svelte";
+  import { Cpu, Search, Stethoscope, Save } from "@lucide/svelte";
   import DownloadProgress from "$lib/components/DownloadProgress.svelte";
   import ResetWorkspaceModal from "$lib/components/ResetWorkspaceModal.svelte";
   import ExploreModelsModal from "$lib/components/ExploreModelsModal.svelte";
   import ModelSuggestionCards from "$lib/components/ModelSuggestionCards.svelte";
+  import InstalledModels from "$lib/components/InstalledModels.svelte";
   import icon from "../../assets/rebost-icon.png";
 
   let machine = $state<MachineView | null>(null);
@@ -113,6 +114,7 @@
 
   $effect(() => {
     void app.settings?.activeModel?.reference;
+    void app.settings?.otherModels?.length;
     let cancelled = false;
     api
       .machineProfile()
@@ -209,14 +211,6 @@
           language: t(`locale.name_${parseAppLocale(app.settings?.resolvedLocale)}`),
         })
       : t("locale.help"),
-  );
-
-  const engineStatusLabel = $derived(
-    app.engine.state === "ready"
-      ? t("settings.engineReady")
-      : app.engine.state === "starting"
-        ? t("settings.engineWarming")
-        : t("settings.engineIdle"),
   );
 
   async function saveOnline() {
@@ -446,52 +440,30 @@
         </div>
       {/if}
 
-      {#if app.settings?.activeModel}
-        {@const model = app.settings.activeModel}
-        <div
-          class="flex flex-wrap items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 px-4 py-3"
-        >
-          <BadgeCheck size={18} class="shrink-0 text-navy-600 dark:text-navy-400" />
-          <div class="min-w-0 flex-1">
-            <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
-            <p class="text-[11.5px] text-ink-soft">
-              {formatBytes(model.sizeBytes + (model.projector?.sizeBytes ?? 0))}{model.license
-                ? ` · ${model.license}`
-                : ""} ·
-              {t("settings.installedHere")}
-            </p>
-          </div>
-          <span
-            class="rounded-full px-2 py-1 text-[10.5px] font-semibold
-          {app.engine.state === 'ready'
-              ? 'bg-ready text-ready-ink dark:bg-navy-200/20 dark:text-navy-200'
-              : app.engine.state === 'starting'
-                ? 'bg-amber-350/50 text-amber-550'
-                : 'bg-paper-soft text-ink-faint'}"
-          >
-            {engineStatusLabel}
-          </span>
-        </div>
-      {/if}
-
-      {#if app.engine.vision}
-        <p class="mt-3 text-sm text-ink-soft">
-          {t("images.ready", { count: app.engine.vision.maxImages })}
-        </p>
-      {:else if visionOffer}
-        <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <p class="min-w-0 text-ink-soft">
-            {t("images.enableDescription", { size: formatBytes(visionOffer) })}
+      <InstalledModels
+        active={app.settings?.activeModel}
+        others={app.settings?.otherModels ?? []}
+        busy={!!modelDownload}
+      >
+        {#if app.engine.vision}
+          <p class="mt-3 text-sm text-ink-soft">
+            {t("images.ready", { count: app.engine.vision.maxImages })}
           </p>
-          <button
-            type="button"
-            class="btn-outline shrink-0"
-            onclick={enableVision}
-            disabled={enablingVision || chatBusy || !!modelDownload}
-            >{t(enablingVision ? "images.enabling" : "images.enable")}</button
-          >
-        </div>
-      {/if}
+        {:else if visionOffer}
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <p class="min-w-0 text-ink-soft">
+              {t("images.enableDescription", { size: formatBytes(visionOffer) })}
+            </p>
+            <button
+              type="button"
+              class="btn-outline shrink-0"
+              onclick={enableVision}
+              disabled={enablingVision || chatBusy || !!modelDownload}
+              >{t(enablingVision ? "images.enabling" : "images.enable")}</button
+            >
+          </div>
+        {/if}
+      </InstalledModels>
       {#if machine && machine.suggestions.length > 0}
         <div class="mt-5">
           <ModelSuggestionCards
@@ -660,6 +632,13 @@
     onInstall={(result) => {
       installFrom(result);
       showExplore = false;
+    }}
+    onUse={(file) => {
+      showExplore = false;
+      void api
+        .modelUse(file)
+        .catch(notifyInvokeError)
+        .finally(() => void refreshSettings().catch(notifyInvokeError));
     }}
   />
 {/if}

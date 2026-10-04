@@ -116,7 +116,19 @@
     "measureAgain": "Misura di nuovo la velocità",
     "measuring": "Misurazione…",
     "measureDone": "Misurazione della velocità aggiornata.",
-    "measureFailed": "Impossibile misurare la velocità. Riprova quando Chat è inattivo."
+    "measureFailed": "Impossibile misurare la velocità. Riprova quando Chat è inattivo.",
+    "alsoInstalled": "Anche su questo computer",
+    "useAi": "Usa",
+    "useAiNamed": "Usa %{name}",
+    "switchingAi": "Cambio in corso…",
+    "inUse": "In uso",
+    "aiActions": "Altre opzioni per %{name}",
+    "removeAi": "Rimuovi…",
+    "removeAiConfirm": "Rimuovere %{name} da questo computer? Si liberano %{size}. Potrai scaricarla di nuovo più avanti.",
+    "removeAiAction": "Rimuovi",
+    "installedOne": "1 IA · %{size} su questo computer",
+    "installedMany": "%{count} IA · %{size} su questo computer",
+    "openAiFolder": "Apri cartella"
   },
   "onboarding": {
     "welcome": "Ti diamo il benvenuto in Rebost",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Il registro non è ancora su questo computer.",
     "folderNotFound": "Cartella non trovata.",
     "promptTooLong": "La domanda e le House rules sono troppo lunghe perché questa IA le legga tutte insieme. Accorciale o scegli un'IA in grado di leggere più testo.",
-    "attachmentsFailed": "Non è stato possibile leggere alcuni allegati. Elaborali di nuovo prima di fare domande su di essi."
+    "attachmentsFailed": "Non è stato possibile leggere alcuni allegati. Elaborali di nuovo prima di fare domande su di essi.",
+    "aiBusy": "Attendi la fine del download, poi riprova.",
+    "aiInUse": "Passa a un'altra IA prima di rimuovere questa.",
+    "aiMissing": "Questa IA non è più su questo computer."
   },
   "pii": {
     "heading": "Informazioni personali",

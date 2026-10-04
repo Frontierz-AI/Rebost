@@ -516,14 +516,16 @@ pub fn smaller_alternatives(profile: &MachineProfile, n: usize) -> Vec<Recommend
 /// smaller alternatives from other families.
 pub fn uninstalled_suggestions(
     profile: &MachineProfile,
-    installed_reference: Option<&str>,
+    installed_references: &[&str],
     n: usize,
 ) -> Vec<Recommendation> {
     if n == 0 {
         return Vec::new();
     }
     let skip = |reference: &str| {
-        installed_reference.is_some_and(|installed| installed.eq_ignore_ascii_case(reference))
+        installed_references
+            .iter()
+            .any(|installed| installed.eq_ignore_ascii_case(reference))
     };
     let mut out = Vec::new();
     let primary = recommend(profile);
@@ -650,7 +652,7 @@ mod tests {
     }
 
     #[test]
-    fn uninstalled_suggestions_skip_the_active_model() {
+    fn uninstalled_suggestions_skip_installed_models() {
         let mk = |gb: u64| MachineProfile {
             total_ram_bytes: gb * GIB,
             cpu: "test".into(),
@@ -659,19 +661,29 @@ mod tests {
             process_arch: "test".into(),
             os_arch: "test".into(),
         };
-        let none: Vec<_> = uninstalled_suggestions(&mk(48), None, 2)
+        let none: Vec<_> = uninstalled_suggestions(&mk(48), &[], 2)
             .into_iter()
             .map(|r| r.name)
             .collect();
         assert_eq!(none, ["Qwen3.8 27B", "Ornith-1.5 9B"]);
 
         let installed = recommend(&mk(48)).reference;
-        let skipped: Vec<_> = uninstalled_suggestions(&mk(48), Some(&installed), 2)
+        let skipped: Vec<_> = uninstalled_suggestions(&mk(48), &[&installed], 2)
             .into_iter()
             .map(|r| r.name)
             .collect();
         assert_eq!(skipped, ["Ornith-1.5 9B", "Muse Glimmer"]);
-        assert!(uninstalled_suggestions(&mk(4), None, 2).is_empty());
+
+        let kept = uninstalled_suggestions(&mk(48), &[&installed], 1)
+            .remove(0)
+            .reference;
+        let both: Vec<_> = uninstalled_suggestions(&mk(48), &[&installed, &kept], 2)
+            .into_iter()
+            .map(|r| r.name)
+            .collect();
+        assert!(!both.iter().any(|name| name == "Ornith-1.5 9B"));
+        assert!(!both.iter().any(|name| name == "Qwen3.8 27B"));
+        assert!(uninstalled_suggestions(&mk(4), &[], 2).is_empty());
     }
 
     #[test]

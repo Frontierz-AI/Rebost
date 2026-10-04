@@ -116,7 +116,19 @@
     "measureAgain": "Mesurer à nouveau la vitesse",
     "measuring": "Mesure en cours…",
     "measureDone": "Mesure de vitesse mise à jour.",
-    "measureFailed": "Impossible de mesurer la vitesse. Réessayez lorsque Chat est inactif."
+    "measureFailed": "Impossible de mesurer la vitesse. Réessayez lorsque Chat est inactif.",
+    "alsoInstalled": "Aussi sur cet ordinateur",
+    "useAi": "Utiliser",
+    "useAiNamed": "Utiliser %{name}",
+    "switchingAi": "Changement…",
+    "inUse": "Utilisée",
+    "aiActions": "Plus d'options pour %{name}",
+    "removeAi": "Supprimer…",
+    "removeAiConfirm": "Supprimer %{name} de cet ordinateur ? Cela libère %{size}. Vous pourrez la télécharger à nouveau plus tard.",
+    "removeAiAction": "Supprimer",
+    "installedOne": "1 IA · %{size} sur cet ordinateur",
+    "installedMany": "%{count} IA · %{size} sur cet ordinateur",
+    "openAiFolder": "Ouvrir le dossier"
   },
   "onboarding": {
     "welcome": "Bienvenue dans Rebost",
@@ -549,7 +561,10 @@
     "engineLogMissing": "Le journal n’est pas encore sur cet ordinateur.",
     "folderNotFound": "Dossier introuvable.",
     "promptTooLong": "La question et les House rules sont trop longues pour que cette IA les lise en une seule fois. Raccourcissez-les ou choisissez une IA capable de lire davantage de texte.",
-    "attachmentsFailed": "Certains fichiers joints n'ont pas pu être lus. Relancez leur traitement avant de poser une question à leur sujet."
+    "attachmentsFailed": "Certains fichiers joints n'ont pas pu être lus. Relancez leur traitement avant de poser une question à leur sujet.",
+    "aiBusy": "Attendez la fin du téléchargement, puis réessayez.",
+    "aiInUse": "Passez à une autre IA avant de supprimer celle-ci.",
+    "aiMissing": "Cette IA n'est plus sur cet ordinateur."
   },
   "pii": {
     "heading": "Informations personnelles",
