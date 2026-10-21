@@ -10,7 +10,15 @@ yanked = "warn"
 # Transitive GTK/unic/paste from Tauri/xberg; we cannot patch them here.
 unmaintained = "workspace"
 unsound = "workspace"
-ignore = []
+# zip < 9 `extract()` follows symlinks and keeps SUID/SGID bits. Rebost unpacks with
+# zip 9; zip 8 remains only in xberg, calamine (pinned ^0.36 by xberg) and the
+# xberg-tesseract build script, which read entries and never call `extract()`.
+# Drop these once xberg moves to calamine 0.37.
+ignore = [
+    { id = "RUSTSEC-2026-0367", reason = "zip 8 left only in xberg/calamine readers; no extract()" },
+    { id = "RUSTSEC-2026-0368", reason = "zip 8 left only in xberg/calamine readers; no extract()" },
+    { id = "RUSTSEC-2026-0369", reason = "zip 8 left only in xberg/calamine readers; no extract()" },
+]
 
 [licenses]
 version = 2
