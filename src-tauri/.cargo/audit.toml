@@ -1,3 +1,4 @@
 # Keep in sync with deny.toml [advisories] ignore.
 [advisories]
-ignore = []
+# zip 8 `extract()` advisories; see deny.toml for why they cannot reach Rebost.
+ignore = ["RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369"]
