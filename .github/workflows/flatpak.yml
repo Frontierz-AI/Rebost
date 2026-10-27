@@ -70,7 +70,10 @@ jobs:
       - name: Lint the manifest and metadata
         run: |
           set -eu
-          flatpak-builder-lint manifest packaging/flatpak/ai.rebost.Rebost.yml
+          # --filesystem=home needs an exception from Flathub's reviewers
+          # (packaging/flatpak/README.md, Permissions). Nothing else is excused.
+          flatpak-builder-lint --exceptions --user-exceptions packaging/flatpak/lint-exceptions.json \
+            manifest packaging/flatpak/ai.rebost.Rebost.yml
           appstreamcli validate --no-net --explain packaging/flatpak/ai.rebost.Rebost.metainfo.xml
           desktop-file-validate packaging/flatpak/ai.rebost.Rebost.desktop
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
@@ -83,7 +86,7 @@ jobs:
       - name: Lint the build
         run: |
           set -eu
-          flatpak-builder-lint repo repo
+          flatpak-builder-lint --exceptions --user-exceptions packaging/flatpak/lint-exceptions.json repo repo
 
   smoke:
     name: Install and launch (${{ matrix.arch }})

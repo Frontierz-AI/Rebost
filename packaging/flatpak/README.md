@@ -35,6 +35,8 @@ Only the Flatpak uses the new ID: the desktop entry, icon and metainfo are named
 | `--filesystem=home`                                        | A Shelf is a folder Rebost reads and keeps watching. A folder chosen through the document portal arrives as a FUSE path under `/run/user/…/doc` that delivers no inotify events, so new and changed files would never reach the Shelf. The folder chosen for AIs is written to. Read-only access would break that and the move of installed AIs. |
 | `--filesystem=/media`, `--filesystem=/run/media`           | The same for external drives, where people keep documents and large AI files (Debian and Ubuntu mount them under `/media`, Fedora and Arch under `/run/media`).                                                                                                                                                                                  |
 
+`--filesystem=home` is an error in Flathub's linter (`finish-args-home-filesystem-access`) unless Flathub grants an exception. Ask for it in the submission with the reason above. CI lints with only that exception (`lint-exceptions.json`).
+
 ## Dependency sources
 
 ```bash
