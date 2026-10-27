@@ -368,6 +368,7 @@ impl Ingestor {
                     .await;
             }
         }
+        self.ctx.ingest_queue.mark_synced();
     }
 }
 

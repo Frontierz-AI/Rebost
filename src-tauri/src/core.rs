@@ -11,7 +11,7 @@ use crate::shelf::Library;
 use crate::types::ShelfStats;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::{Duration, Instant};
 
@@ -58,6 +58,9 @@ pub struct IngestQueue {
     generation: AtomicU64,
     shelf_cutoff: Mutex<HashMap<String, u64>>,
     source_cutoff: Mutex<HashMap<(String, String), u64>>,
+    /// Set once a full sync has queued every Shelf's files. Before that,
+    /// files left Reading by the last session are not queued yet.
+    synced: AtomicBool,
 }
 
 pub struct IngestWork<'a> {
@@ -98,7 +101,16 @@ impl IngestQueue {
             generation: AtomicU64::new(0),
             shelf_cutoff: Mutex::new(HashMap::new()),
             source_cutoff: Mutex::new(HashMap::new()),
+            synced: AtomicBool::new(false),
         }
+    }
+
+    pub fn mark_synced(&self) {
+        self.synced.store(true, Ordering::Release);
+    }
+
+    pub fn synced(&self) -> bool {
+        self.synced.load(Ordering::Acquire)
     }
 
     /// Stamp a job so a later delete or unlink can invalidate it.
