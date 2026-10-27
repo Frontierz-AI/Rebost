@@ -28,6 +28,7 @@
   import ShelfDocumentTable from "$lib/components/ShelfDocumentTable.svelte";
   import SyncedFoldersRow from "$lib/components/SyncedFoldersRow.svelte";
   import ThinkLevelSlider from "$lib/components/ThinkLevelSlider.svelte";
+  import FileLimitSelect from "$lib/components/FileLimitSelect.svelte";
   import DocumentDrawer from "$lib/components/DocumentDrawer.svelte";
   import { confirmDanger } from "$lib/native-dialog";
   import { t } from "$lib/i18n.svelte";
@@ -100,7 +101,12 @@
         api
           .shelfImportPaths(shelfId, [])
           .then(async (result) => {
-            const message = importFeedback(result.queued, result.atLimit, result.skippedLong ?? 0);
+            const message = importFeedback(
+              result.queued,
+              result.atLimit,
+              result.skippedLong ?? 0,
+              app.shelves.find((s) => s.id === shelfId)?.fileLimit,
+            );
             if (message) notify(message);
             if (result.queued > 0) await bindLibraryShelfIfUnset(shelfId);
           })
@@ -261,7 +267,12 @@
     try {
       const result = await api.shelfImportDialog(shelf.id);
       if (result.cancelled) return;
-      const message = importFeedback(result.queued, result.atLimit, result.skippedLong ?? 0);
+      const message = importFeedback(
+        result.queued,
+        result.atLimit,
+        result.skippedLong ?? 0,
+        shelf.fileLimit,
+      );
       if (message) notify(message);
       await bindLibraryShelfIfUnset(shelf.id);
     } catch (error) {
@@ -275,7 +286,7 @@
       const result = await api.shelfAddLinked(shelf.id);
       if (!result) return;
       await refreshShelves();
-      const message = importFeedback(result.queued, result.atLimit);
+      const message = importFeedback(result.queued, result.atLimit, 0, result.shelf.fileLimit);
       if (message) notify(message);
       await bindLibraryShelfIfUnset(shelf.id);
     } catch (error) {
@@ -505,8 +516,17 @@
               </button>
             </div>
           {/if}
-          <div class="mt-3 w-full max-w-sm min-w-[220px]">
-            <ThinkLevelSlider shelfId={shelf.id} value={shelf.thinkLevel ?? "off"} />
+          <div class="mt-3 flex flex-wrap items-start gap-x-8 gap-y-4">
+            <div class="w-full max-w-sm min-w-[220px]">
+              <ThinkLevelSlider shelfId={shelf.id} value={shelf.thinkLevel ?? "off"} />
+            </div>
+            <div class="w-fit max-w-xs">
+              <FileLimitSelect
+                shelfId={shelf.id}
+                value={shelf.fileLimit}
+                files={shelf.stats.files}
+              />
+            </div>
           </div>
         </div>
 

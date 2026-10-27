@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { importFeedback, shelfCapMessage, waitingMessage } from "./shelf-cap";
 
 describe("shelfCapMessage", () => {
-  it("explains a full Shelf when nothing was added", () => {
+  it("explains a full Shelf and points to the setting", () => {
     expect(shelfCapMessage(0)).toContain("1,000");
-    expect(shelfCapMessage(0).toLowerCase()).toContain("remove");
+    expect(shelfCapMessage(0)).toContain("Files this Shelf reads");
   });
 
   it("mentions how many were added when some fit", () => {
@@ -12,9 +12,30 @@ describe("shelfCapMessage", () => {
     expect(shelfCapMessage(40)).toContain("40 files");
     expect(shelfCapMessage(1000)).toContain("1,000 files");
   });
+
+  it("uses the Shelf's own limit", () => {
+    expect(shelfCapMessage(0, 5_000)).toContain("5,000");
+    expect(shelfCapMessage(12, 2_500)).toContain("up to 2,500 files");
+  });
+
+  it("asks to remove files once the limit can't go higher", () => {
+    expect(shelfCapMessage(0, 10_000).toLowerCase()).toContain("remove");
+    expect(shelfCapMessage(0, 10_000)).not.toContain("Files this Shelf reads");
+    expect(shelfCapMessage(3, 10_000)).not.toContain("Files this Shelf reads");
+  });
+
+  it("has no setting to point to for a conversation's files", () => {
+    expect(shelfCapMessage(0, 1_000, false)).toContain("conversation");
+    expect(shelfCapMessage(0, 1_000, false)).not.toContain("Files this Shelf reads");
+    expect(shelfCapMessage(5, 1_000, false)).toContain("5 files");
+  });
 });
 
 describe("importFeedback", () => {
+  it("passes the Shelf's limit to the cap message", () => {
+    expect(importFeedback(0, true, 0, 2_500)).toContain("2,500");
+  });
+
   it("stays quiet when files were added under the cap", () => {
     expect(importFeedback(12, false)).toBeNull();
   });

@@ -244,6 +244,7 @@ pub fn run() {
             commands::shelf_rename,
             commands::shelf_remove,
             commands::shelf_set_think_level,
+            commands::shelf_set_file_limit,
             commands::shelf_add_linked,
             commands::shelf_remove_source,
             commands::shelf_import_paths,

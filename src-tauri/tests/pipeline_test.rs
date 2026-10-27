@@ -350,7 +350,7 @@ async fn a_full_shelf_does_not_take_another_file() {
     let shelf_id = make_shelf(&app, "Full");
     {
         let mut library = app.ctx.library.write().unwrap();
-        for i in 0..rebost::shelf::MAX_FILES_PER_SHELF {
+        for i in 0..rebost::shelf::DEFAULT_FILE_LIMIT {
             library.upsert_document(rebost::types::DocumentMeta {
                 id: format!("d_fill{i}"),
                 shelf_id: shelf_id.clone(),
@@ -392,7 +392,7 @@ async fn a_full_shelf_does_not_take_another_file() {
         .expect("skip when full");
     assert_eq!(
         app.ctx.library.read().unwrap().document_count(&shelf_id),
-        rebost::shelf::MAX_FILES_PER_SHELF
+        rebost::shelf::DEFAULT_FILE_LIMIT
     );
 }
 

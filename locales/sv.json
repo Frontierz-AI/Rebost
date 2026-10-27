@@ -311,6 +311,15 @@
     "thinkLight": "Lätt",
     "thinkDeep": "Grundlig",
     "thinkHint": "Nivåerna Lätt och Grundlig tar längre tid.",
+    "fileLimit": "Filer som den här hyllan läser",
+    "fileLimitChoice": "Upp till %{count} filer",
+    "fileLimitHint": "Fler filer tar längre tid att läsa och tar mer diskutrymme.",
+    "fileLimitOver": "Den här hyllan har %{count} filer. Alla finns kvar, men inga nya filer läggs till.",
+    "capFull": "Den här hyllan har redan %{limit} filer.",
+    "capAddedOne": "1 fil har lagts till. Den här hyllan läser upp till %{limit} filer; resten lästes inte.",
+    "capAddedMany": "%{count} filer har lagts till. Den här hyllan läser upp till %{limit} filer; resten lästes inte.",
+    "capRaise": "Höj ”%{setting}” högst upp på den här hyllan för att läsa fler.",
+    "capRemove": "Ta bort några filer för att lägga till fler.",
     "noMatch": "Inga filer matchar de här filtren",
     "tryDifferentFilter": "Prova ett annat namn, en annan källa eller typ.",
     "colFile": "Fil",
@@ -644,7 +653,9 @@
   "imports": {
     "addedOne": "Tillagd i det här samtalet.",
     "addedMany": "%{count} filer har lagts till i det här samtalet.",
-    "unsupported": "Dessa filtyper stöds inte."
+    "unsupported": "Dessa filtyper stöds inte.",
+    "capFull": "Det här samtalet har redan %{limit} bifogade filer. Ta bort några för att lägga till fler.",
+    "capRest": "Ett samtal rymmer upp till %{limit} bifogade filer; resten lästes inte."
   },
   "images": {
     "pasted": "Inklistrad bild",

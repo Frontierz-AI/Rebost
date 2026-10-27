@@ -311,6 +311,15 @@
     "thinkLight": "Let",
     "thinkDeep": "Grundig",
     "thinkHint": "Niveauerne Let og Grundig tager længere tid.",
+    "fileLimit": "Filer, som denne hylde læser",
+    "fileLimitChoice": "Op til %{count} filer",
+    "fileLimitHint": "Flere filer tager længere tid at læse og bruger mere diskplads.",
+    "fileLimitOver": "Denne hylde har %{count} filer. De bliver alle, men nye filer bliver ikke tilføjet.",
+    "capFull": "Denne hylde har allerede %{limit} filer.",
+    "capAddedOne": "1 fil er tilføjet. Denne hylde læser op til %{limit} filer; resten blev ikke læst.",
+    "capAddedMany": "%{count} filer er tilføjet. Denne hylde læser op til %{limit} filer; resten blev ikke læst.",
+    "capRaise": "Hæv »%{setting}« øverst på denne hylde for at læse flere.",
+    "capRemove": "Fjern nogle filer for at tilføje flere.",
     "noMatch": "Ingen filer passer til disse filtre",
     "tryDifferentFilter": "Prøv et andet navn, en anden kilde eller en anden type.",
     "colFile": "Fil",
@@ -644,7 +653,9 @@
   "imports": {
     "addedOne": "Føjet til denne samtale.",
     "addedMany": "%{count} filer er føjet til denne samtale.",
-    "unsupported": "Disse filtyper understøttes ikke."
+    "unsupported": "Disse filtyper understøttes ikke.",
+    "capFull": "Denne samtale har allerede %{limit} vedhæftede filer. Fjern nogle for at tilføje flere.",
+    "capRest": "En samtale kan have op til %{limit} vedhæftede filer; resten blev ikke læst."
   },
   "images": {
     "pasted": "Indsat billede",

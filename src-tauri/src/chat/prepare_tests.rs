@@ -23,10 +23,9 @@ async fn shelf_with_file(name: &str, body: &str) -> Fixture {
     };
     let file = dir.path().join(name);
     std::fs::write(&file, body).unwrap();
-    let copied =
-        crate::shelf::import_into_shelf(&shelf, &[file], crate::shelf::MAX_FILES_PER_SHELF)
-            .unwrap()
-            .files;
+    let copied = crate::shelf::import_into_shelf(&shelf, &[file], crate::shelf::DEFAULT_FILE_LIMIT)
+        .unwrap()
+        .files;
     let abs = copied.into_iter().next().unwrap();
     let rel = abs
         .strip_prefix(&shelf.managed_path)
