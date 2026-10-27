@@ -20,17 +20,18 @@ license=('MIT')
 depends=(
   'cairo'
   'dbus'
-  'gcc-libs'
   'gdk-pixbuf2'
   'glib2'
   'glibc'
   'gtk3'
   'hicolor-icon-theme'
+  'libgcc'
   'libsoup3'
+  'libstdc++'
   'webkit2gtk-4.1'
 )
+# vulkan-icd-loader already comes with webkit2gtk-4.1; a driver does not.
 optdepends=(
-  'vulkan-icd-loader: run the AI on the graphics card'
   'vulkan-driver: Vulkan driver for the graphics card (vulkan-radeon, vulkan-intel, nvidia-utils)'
   'xdg-utils: open files and links in the default apps'
 )
