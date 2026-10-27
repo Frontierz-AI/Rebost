@@ -311,6 +311,15 @@
     "thinkLight": "Licht",
     "thinkDeep": "Grondig",
     "thinkHint": "Licht en Grondig kosten meer tijd.",
+    "fileLimit": "Bestanden die deze plank leest",
+    "fileLimitChoice": "Tot %{count} bestanden",
+    "fileLimitHint": "Meer bestanden kosten meer tijd om te lezen en gebruiken meer schijfruimte.",
+    "fileLimitOver": "Deze plank heeft %{count} bestanden. Ze blijven allemaal, maar er worden geen nieuwe bestanden toegevoegd.",
+    "capFull": "Deze plank heeft al %{limit} bestanden.",
+    "capAddedOne": "1 bestand toegevoegd. Deze plank leest tot %{limit} bestanden; de rest is niet gelezen.",
+    "capAddedMany": "%{count} bestanden toegevoegd. Deze plank leest tot %{limit} bestanden; de rest is niet gelezen.",
+    "capRaise": "Verhoog “%{setting}” boven aan deze plank om meer te lezen.",
+    "capRemove": "Haal een paar bestanden weg om er meer toe te voegen.",
     "noMatch": "Geen bestanden die bij deze filters passen",
     "tryDifferentFilter": "Probeer een andere naam, bron of type.",
     "colFile": "Bestand",
@@ -644,7 +653,9 @@
   "imports": {
     "addedOne": "Toegevoegd aan dit gesprek.",
     "addedMany": "%{count} bestanden toegevoegd aan dit gesprek.",
-    "unsupported": "Deze bestandstypen worden niet ondersteund."
+    "unsupported": "Deze bestandstypen worden niet ondersteund.",
+    "capFull": "Dit gesprek heeft al %{limit} bijlagen. Haal er een paar weg om meer toe te voegen.",
+    "capRest": "Een gesprek kan tot %{limit} bijlagen hebben; de rest is niet gelezen."
   },
   "images": {
     "pasted": "Geplakte afbeelding",

@@ -1,15 +1,31 @@
 //! Which files a Shelf will read: skip lists, supported names, and the
-//! per-Shelf cap so a linked home folder cannot stall the app.
+//! per-Shelf file limit so a linked home folder cannot stall the app.
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-/// Hard stop. New files past this are left unread until some are removed.
-pub const MAX_FILES_PER_SHELF: usize = 1_000;
+/// Files a Shelf reads unless its owner picks another limit. New files past
+/// the limit are left unread until some are removed or the limit goes up.
+pub const DEFAULT_FILE_LIMIT: usize = 1_000;
+
+/// The limits a Shelf can pick. The top one is bounded by the document
+/// registry, which is rewritten after every file (about 7 MB at 10,000).
+pub const FILE_LIMIT_CHOICES: [usize; 4] = [1_000, 2_500, 5_000, 10_000];
 
 /// Bound how many directory entries a walk inspects, so a huge tree with
 /// few documents cannot hang Add folder. Not a product-facing quota.
-const MAX_WALK_ENTRIES: usize = 30_000;
+const MIN_WALK_ENTRIES: usize = 30_000;
+
+/// Walk budget per file the walk may meet (new or already on the Shelf), so
+/// a Shelf with a higher limit can still reach every file it may read.
+const WALK_ENTRIES_PER_FILE: usize = 30;
+
+fn walk_budget(max_new: usize, already: usize) -> usize {
+    max_new
+        .saturating_add(already)
+        .saturating_mul(WALK_ENTRIES_PER_FILE)
+        .max(MIN_WALK_ENTRIES)
+}
 
 /// Folder names that are almost never documents: package installs, language
 /// caches, OS trash. Matched case-insensitively on a single path component.
@@ -50,7 +66,7 @@ const SKIP_DIR_NAMES: &[&str] = &[
 #[derive(Debug, Default)]
 pub struct ScanOutcome {
     pub files: Vec<PathBuf>,
-    /// Stopped because another new file would pass `MAX_FILES_PER_SHELF`.
+    /// Stopped because another new file would pass the Shelf's file limit.
     pub hit_file_cap: bool,
 }
 
@@ -76,7 +92,7 @@ pub fn rel_is_skipped(rel: &str) -> bool {
 }
 
 /// Walk `root` for supported files that are not in `already`. Stops after
-/// `max_new` new files or `MAX_WALK_ENTRIES` visits. Does not skip `root`
+/// `max_new` new files or [`walk_budget`] visits. Does not skip `root`
 /// even if its name is on the ignore list (the user linked it on purpose).
 pub fn scan_new_files(root: &Path, max_new: usize, already: &HashSet<PathBuf>) -> ScanOutcome {
     let mut outcome = ScanOutcome::default();
@@ -84,6 +100,7 @@ pub fn scan_new_files(root: &Path, max_new: usize, already: &HashSet<PathBuf>) -
         outcome.hit_file_cap = true;
         return outcome;
     }
+    let max_visits = walk_budget(max_new, already.len());
     let mut stack = vec![root.to_path_buf()];
     let mut visits = 0usize;
     while let Some(dir) = stack.pop() {
@@ -92,7 +109,7 @@ pub fn scan_new_files(root: &Path, max_new: usize, already: &HashSet<PathBuf>) -
         };
         for entry in entries.flatten() {
             visits += 1;
-            if visits >= MAX_WALK_ENTRIES {
+            if visits >= max_visits {
                 outcome.files.sort();
                 return outcome;
             }
@@ -138,7 +155,7 @@ mod tests {
     use super::*;
 
     fn scan_all(root: &Path) -> Vec<PathBuf> {
-        scan_new_files(root, MAX_FILES_PER_SHELF, &HashSet::new()).files
+        scan_new_files(root, DEFAULT_FILE_LIMIT, &HashSet::new()).files
     }
 
     #[test]
@@ -219,6 +236,14 @@ mod tests {
         let outcome = scan_new_files(root, 3, &HashSet::new());
         assert_eq!(outcome.files.len(), 3);
         assert!(outcome.hit_file_cap);
+    }
+
+    #[test]
+    fn walk_budget_grows_with_the_file_limit() {
+        assert_eq!(walk_budget(DEFAULT_FILE_LIMIT, 0), MIN_WALK_ENTRIES);
+        assert_eq!(walk_budget(3, 0), MIN_WALK_ENTRIES);
+        assert_eq!(walk_budget(1_000, 9_000), 300_000);
+        assert_eq!(walk_budget(usize::MAX, 1), usize::MAX);
     }
 
     #[test]

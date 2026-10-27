@@ -1,14 +1,40 @@
-/** Product cap: a Shelf reads this many files, then stops. */
-export const SHELF_FILE_CAP = 1_000;
+import { dateLocale, t } from "./i18n.svelte";
 
-export function shelfCapMessage(queued: number): string {
+/** Files a Shelf reads unless its owner picks another limit. */
+export const DEFAULT_FILE_LIMIT = 1_000;
+
+/** The limits a Shelf can pick. Matches `FILE_LIMIT_CHOICES` in Rust. */
+export const FILE_LIMIT_CHOICES = [1_000, 2_500, 5_000, 10_000] as const;
+
+export const MAX_FILE_LIMIT = 10_000;
+
+/** A file count in the app's language, like 2,500 or 2.500. */
+export function formatCount(n: number): string {
+  return n.toLocaleString(dateLocale());
+}
+
+/**
+ * Toast when a Shelf hit its file limit. `adjustable` is false for a
+ * conversation's attached files, which have no setting to raise.
+ */
+export function shelfCapMessage(
+  queued: number,
+  limit = DEFAULT_FILE_LIMIT,
+  adjustable = true,
+): string {
+  const vars = { count: formatCount(queued), limit: formatCount(limit) };
+  if (!adjustable) {
+    if (queued <= 0) return t("imports.capFull", vars);
+    const added = t(queued === 1 ? "imports.addedOne" : "imports.addedMany", vars);
+    return `${added} ${t("imports.capRest", vars)}`;
+  }
+  const canRaise = limit < MAX_FILE_LIMIT;
+  const next = canRaise ? t("shelves.capRaise", { setting: t("shelves.fileLimit") }) : "";
   if (queued <= 0) {
-    return "This Shelf already has 1,000 files. Remove some to add more.";
+    return `${t("shelves.capFull", vars)} ${next || t("shelves.capRemove")}`;
   }
-  if (queued === 1) {
-    return "Added 1 file. This Shelf stops at 1,000 files; the rest were left unread.";
-  }
-  return `Added ${queued.toLocaleString("en-US")} files. This Shelf stops at 1,000 files; the rest were left unread.`;
+  const added = t(queued === 1 ? "shelves.capAddedOne" : "shelves.capAddedMany", vars);
+  return next ? `${added} ${next}` : added;
 }
 
 export function skippedLongMessage(n: number): string | null {
@@ -20,10 +46,15 @@ export function skippedLongMessage(n: number): string | null {
 }
 
 /** Toast for an import or Add folder result. Null when nothing needs saying. */
-export function importFeedback(queued: number, atLimit: boolean, skippedLong = 0): string | null {
+export function importFeedback(
+  queued: number,
+  atLimit: boolean,
+  skippedLong = 0,
+  limit = DEFAULT_FILE_LIMIT,
+): string | null {
   const longMsg = skippedLongMessage(skippedLong);
   if (atLimit) {
-    const cap = shelfCapMessage(queued);
+    const cap = shelfCapMessage(queued, limit);
     return longMsg ? `${cap} ${longMsg}` : cap;
   }
   if (queued === 0) {

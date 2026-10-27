@@ -37,6 +37,8 @@ export interface ShelfView {
   stats: ShelfStats;
   threadId?: string | null;
   thinkLevel: ThinkLevel;
+  /** How many files this Shelf reads. New files past it are left unread. */
+  fileLimit: number;
 }
 
 export interface DocumentMeta {
@@ -507,6 +509,8 @@ export const api = {
   shelfRemove: (shelfId: string) => invoke<void>("shelf_remove", { shelfId }),
   shelfSetThinkLevel: (shelfId: string, thinkLevel: ThinkLevel) =>
     invoke<ShelfView>("shelf_set_think_level", { shelfId, thinkLevel }),
+  shelfSetFileLimit: (shelfId: string, fileLimit: number) =>
+    invoke<ShelfView>("shelf_set_file_limit", { shelfId, fileLimit }),
   shelfAddLinked: (shelfId: string) =>
     invoke<AddLinkedResult | null>("shelf_add_linked", { shelfId }),
   shelfRemoveSource: (shelfId: string, source: { sourceId?: string; path?: string }) => {
