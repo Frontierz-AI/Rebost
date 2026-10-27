@@ -47,7 +47,7 @@ sudo apt install ./Rebost-X.Y.Z-Linux-amd64.deb
 sudo dnf install ./Rebost-X.Y.Z-Linux-x86_64.rpm
 ```
 
-The AppImage carries its own libraries and runs on other distributions with glibc 2.35 or newer: make it executable (`chmod +x Rebost-X.Y.Z-Linux-x86_64.AppImage`) and open it. The AI uses the graphics card through Vulkan (Mesa for AMD and Intel, or NVIDIA's driver); the packages recommend the Vulkan loader and Mesa drivers, and without them the AI runs on the processor, more slowly.
+The AppImage carries its own WebKitGTK and runs on other desktop distributions with glibc 2.35 or newer: make it executable (`chmod +x Rebost-X.Y.Z-Linux-x86_64.AppImage`) and open it. The AI uses the graphics card through Vulkan (Mesa for AMD and Intel, or NVIDIA's driver); the packages recommend the Vulkan loader and Mesa drivers, and without them the AI runs on the processor, more slowly.
 
 Windows 11 already ships the component Rebost uses to draw its windows; on Windows 10 the installer adds [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) when it is missing. A regular Windows PC, meaning anything other than Windows on ARM, also needs a graphics driver with Vulkan support from NVIDIA, AMD, or Intel.
 

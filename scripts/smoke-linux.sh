@@ -68,12 +68,15 @@ case "$KIND" in
     ;;
   appimage)
     # The AppImage carries WebKitGTK but, like any AppImage, expects the
-    # desktop's own display libraries (Wayland/X11 clients, EGL, fonts).
-    # GTK 3 brings exactly that baseline; WebKitGTK itself is not installed.
+    # desktop's own display stack (Wayland/X11 clients, Mesa EGL/GL, fonts).
+    # GTK 3 and Mesa stand in for a desktop; WebKitGTK itself is not installed.
     case "$ID" in
-      ubuntu | debian) apt-get install -y -qq --no-install-recommends libgtk-3-0t64 >/dev/null 2>&1 ||
-        apt-get install -y -qq --no-install-recommends libgtk-3-0 >/dev/null ;;
-      fedora) dnf install -y -q --setopt=install_weak_deps=False gtk3 ;;
+      ubuntu | debian)
+        gtk=libgtk-3-0t64
+        apt-cache show "$gtk" >/dev/null 2>&1 || gtk=libgtk-3-0
+        apt-get install -y -qq --no-install-recommends "$gtk" libegl1 libegl-mesa0 libgl1 libgbm1 >/dev/null
+        ;;
+      fedora) dnf install -y -q --setopt=install_weak_deps=False gtk3 mesa-libEGL mesa-libGL mesa-libgbm ;;
     esac
     chmod +x "$FILE"
     work="$(mktemp -d)"
