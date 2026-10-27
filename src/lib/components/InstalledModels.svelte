@@ -3,9 +3,10 @@
   import { api, formatBytes, type InstalledModel } from "$lib/api";
   import { app, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
   import { t } from "$lib/i18n.svelte";
+  import { installedBytes } from "$lib/installed-models";
   import { confirmDanger } from "$lib/native-dialog";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
-  import { BadgeCheck, Ellipsis, FolderOpen } from "@lucide/svelte";
+  import { BadgeCheck, Ellipsis } from "@lucide/svelte";
 
   let {
     active,
@@ -37,16 +38,7 @@
   }
 
   const installed = $derived(active ? [active, ...others] : others);
-  const totalBytes = $derived.by(() => {
-    const projectors = new Map<string, number>();
-    let bytes = 0;
-    for (const model of installed) {
-      bytes += model.sizeBytes;
-      if (model.projector) projectors.set(model.projector.file, model.projector.sizeBytes);
-    }
-    for (const size of projectors.values()) bytes += size;
-    return bytes;
-  });
+  const totalBytes = $derived(installedBytes(installed));
 
   function details(model: InstalledModel) {
     return `${formatBytes(footprint(model))}${model.license ? ` · ${model.license}` : ""}`;
@@ -186,22 +178,12 @@
 {/if}
 
 {#if installed.length > 0}
-  <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
-    <p class="text-[12px] text-ink-soft tabular-nums">
-      {installed.length === 1
-        ? t("settings.installedOne", { size: formatBytes(totalBytes) })
-        : t("settings.installedMany", {
-            count: installed.length,
-            size: formatBytes(totalBytes),
-          })}
-    </p>
-    <button
-      type="button"
-      class="btn-ghost -mr-3"
-      onclick={() => void api.modelReveal().catch(notifyInvokeError)}
-    >
-      <FolderOpen size={13} class="shrink-0" aria-hidden="true" />
-      {t("settings.openAiFolder")}
-    </button>
-  </div>
+  <p class="mt-3 text-[12px] text-ink-soft tabular-nums">
+    {installed.length === 1
+      ? t("settings.installedOne", { size: formatBytes(totalBytes) })
+      : t("settings.installedMany", {
+          count: installed.length,
+          size: formatBytes(totalBytes),
+        })}
+  </p>
 {/if}

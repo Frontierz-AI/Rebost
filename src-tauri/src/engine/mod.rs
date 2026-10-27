@@ -17,6 +17,7 @@ mod pin;
 mod process;
 mod ready;
 mod reasoning;
+mod relocate;
 mod stream;
 mod think;
 pub(crate) mod tune;
@@ -28,6 +29,7 @@ pub use pin::{
     current_engine_pin, find_bundled_engine_archive, preferred_engine_pin, ENGINE_BUILD,
     ENGINE_RELEASE,
 };
+pub use relocate::MOVE_ID;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -219,8 +221,23 @@ impl Engine {
     }
 
     pub fn new(ctx: Arc<Ctx>) -> Arc<Self> {
-        let forgot =
-            crate::core::write_lock(&ctx.settings).forget_missing_models(&ctx.paths.models_dir());
+        // A move the last run left half done: finish or undo it, under the
+        // same rule, before anything looks at the models folder.
+        let models_dir = ctx.models_dir();
+        match crate::models_folder::recover(ctx.paths.base(), &models_dir) {
+            Some(crate::models_folder::Recovered::Finished { kept }) => {
+                log::warn!("finished an interrupted AI move; kept {kept} old file(s)");
+                ctx.models_move_kept
+                    .store(kept, std::sync::atomic::Ordering::Relaxed);
+            }
+            Some(crate::models_folder::Recovered::RolledBack) => {
+                log::warn!("undid an interrupted AI move")
+            }
+            None => {}
+        }
+        // An unplugged models drive must not make installed AIs look deleted.
+        let forgot = !ctx.models_folder_missing()
+            && crate::core::write_lock(&ctx.settings).forget_missing_models(&models_dir);
         if forgot {
             ctx.save_settings();
         }

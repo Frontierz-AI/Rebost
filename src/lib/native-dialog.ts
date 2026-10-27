@@ -14,3 +14,17 @@ export async function confirmDanger(message: string, okLabel: string): Promise<b
     return window.confirm(message);
   }
 }
+
+/** OS question dialog (Ok / Cancel) for a safe but slow action. */
+export async function confirmAction(message: string, okLabel: string): Promise<boolean> {
+  try {
+    return await confirm(message, {
+      title: t("appName"),
+      kind: "info",
+      okLabel,
+      cancelLabel: t("dialog.cancel"),
+    });
+  } catch {
+    return window.confirm(message);
+  }
+}

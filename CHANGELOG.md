@@ -12,6 +12,12 @@ The app-data layout may change without a migration.
 - Raising it reads the files that were left unread. Lowering it keeps every file already on the Shelf; only new files stop being added.
 - When a Shelf is full, the message says where to raise the limit.
 - An open Shelf shows how many files are still to be read, next to the file count at the bottom.
+- Choose where AIs are kept. Settings → Where AIs are kept shows the folder and the free space on its drive. Change… picks another folder, on another drive for example, and moves the installed AIs there with a progress bar. A move that fails, is cancelled or is cut short by a restart leaves every AI whole: an old copy is deleted only once Rebost has checked the new one, and when it can't be sure it keeps both and says so. First run shows where the AI will be saved, with a Change link, before the download starts.
+- When the chosen folder is on a drive that isn't connected, Settings says so and offers Try again, another folder, or Rebost's own folder. Installed AIs are not forgotten in the meantime.
+
+### Changed
+
+- The free space Rebost shows and checks is measured on the drive that holds the AIs. A download that can't fit stops before it starts.
 
 ### Fixed
 

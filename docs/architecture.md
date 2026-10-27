@@ -45,13 +45,16 @@ shelves/<id>/{cards,extracted,documents.json}
 search/tantivy/
 conversations/          threads.json + one JSONL per thread
                         + <thread-id>/uploads/ for chat attachments (hidden Shelf)
-models/                 GGUF files (previous file stays until the new AI is Ready)
+models/                 GGUF files (previous file stays until the new AI is Ready);
+                        Settings can keep them in another folder instead
 engine/<release>-<accel>/ llama-server (legacy engine/<release>/ still works)
 recipes.json
 settings.json
 instance.lock           exclusive while Rebost is open
 logs/engine.log
 ```
+
+AI models are the large item, so they can live in a folder the person chooses (`modelsFolder` in `settings.json`, see `src-tauri/src/models_folder.rs` and [models.md](models.md#where-ais-are-kept)). Everything else stays in app data.
 
 The layout can change without a migration. New library Shelves are created under `library/`. Existing Shelves keep the folder already stored in the registry (including older `Documents/Rebost` paths). Settings → Reset Rebost (or `scripts/reset.sh`) returns to first-run without deleting `library/` or Shelf folders outside app data. Replacing the app does not touch this directory.
 
@@ -65,6 +68,7 @@ The layout can change without a migration. New library Shelves are created under
 | `search`                                           | Tantivy + multilingual stem + relevance gate                                      |
 | `chat`                                             | orchestration + prompts + conversations                                           |
 | `engine`                                           | process, download, catalog (standing, first document row that fits), stream split |
+| `models_folder`                                    | where AIs are kept; free space per drive; staged copy-check-delete moves          |
 | `pii`                                              | Privacy Lens                                                                      |
 | `updater`                                          | Silent GitHub `latest.json` check; in-app install                                 |
 | `instance`                                         | Exclusive lock in app data; a second copy focuses the first window                |

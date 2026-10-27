@@ -17,6 +17,7 @@ pub mod ingest;
 pub mod instance;
 pub mod limits;
 pub mod menu;
+pub mod models_folder;
 pub mod paths;
 pub mod pii;
 pub mod recipes;
@@ -141,6 +142,7 @@ pub fn run() {
         .on_menu_event(|app, event| crate::menu::on_menu_event(app, &event))
         .menu(crate::menu::build_menu)
         .manage(commands::PendingImports::new())
+        .manage(commands::PendingModelsFolder::default())
         .on_window_event(|window, event| {
             if window.label() != "main" {
                 return;
@@ -283,6 +285,10 @@ pub fn run() {
             commands::model_use,
             commands::model_remove,
             commands::model_reveal,
+            commands::models_folder_pick,
+            commands::models_folder_apply,
+            commands::models_folder_use_default,
+            commands::models_folder_recheck,
             commands::download_cancel,
             commands::download_skip_verify,
             commands::settings_get,
