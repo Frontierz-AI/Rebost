@@ -56,10 +56,18 @@ pub(crate) fn restore_if_pending(ctx: &Ctx) -> Result<()> {
                 continue;
             }
         };
-        for line in std::io::BufReader::new(file).lines() {
-            let line = line.with_context(|| format!("read conversation {}", thread.id))?;
-            // Match the conversation reader: tolerate a crash-truncated JSONL record.
-            let Ok(message) = serde_json::from_str::<StoredMessage>(&line) else {
+        for line in std::io::BufReader::new(file).split(b'\n') {
+            let line = match line {
+                Ok(line) => line,
+                Err(error) => {
+                    log::warn!("read conversation {}: {error}", thread.id);
+                    failed = true;
+                    // Commit recovered entries and retry this conversation next launch.
+                    break;
+                }
+            };
+            // Match the paged conversation reader, including truncated UTF-8 bytes.
+            let Ok(message) = serde_json::from_slice::<StoredMessage>(&line) else {
                 continue;
             };
             if message.status == "error" || message.text.is_empty() {

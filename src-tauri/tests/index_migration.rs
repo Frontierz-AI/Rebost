@@ -188,6 +188,134 @@ async fn v3_restores_disconnected_documents_and_saved_chats_without_changing_sou
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn invalid_utf8_records_do_not_abort_cached_document_and_chat_restoration() {
+    let dir = tempfile::tempdir().unwrap();
+    let base = dir.path().join("app");
+    let external = dir.path().join("external");
+    let ctx = open_ctx(&base);
+    let (shelf, doc) = linked_document(&ctx, &external).await;
+    let thread = Conversations::create(&ctx.paths, Some(shelf.clone())).unwrap();
+    let first = message(
+        "Migrationoranges before the damaged record.",
+        "user",
+        "done",
+    );
+    let last = message(
+        "Migrationoranges after the damaged record.",
+        "assistant",
+        "done",
+    );
+    Conversations::append(&ctx.paths, &thread.id, &first).unwrap();
+    let thread_path = ctx.paths.thread_path(&thread.id);
+    let mut damaged = serde_json::to_vec(&message("Invalid bytes ?", "assistant", "done")).unwrap();
+    *damaged.iter_mut().find(|byte| **byte == b'?').unwrap() = 0xff;
+    damaged.push(b'\n');
+    std::fs::OpenOptions::new()
+        .append(true)
+        .open(&thread_path)
+        .unwrap()
+        .write_all(&damaged)
+        .unwrap();
+    Conversations::append(&ctx.paths, &thread.id, &last).unwrap();
+    // A crash also left the final record halfway through a four-byte UTF-8 character.
+    std::fs::OpenOptions::new()
+        .append(true)
+        .open(&thread_path)
+        .unwrap()
+        .write_all(b"{\"text\":\"crash-truncated \xf0\x9f")
+        .unwrap();
+    let before = std::fs::read(&thread_path).unwrap();
+    drop(ctx);
+    std::fs::rename(&external, dir.path().join("disconnected-drive")).unwrap();
+    install_v3_index(&base);
+
+    let ctx = open_ctx(&base);
+    assert!(!external.exists());
+    assert!(ctx.search.has_document(&doc.id));
+    assert!(!ctx
+        .search
+        .search_passages("ninety days", &shelf, 8)
+        .unwrap()
+        .is_empty());
+    let hits = ctx
+        .search
+        .search_messages("Migrationoranges", None, Some(&[thread.id]), &[], 8)
+        .unwrap();
+    assert_eq!(hits.len(), 2);
+    assert!(hits.iter().any(|hit| hit.message_id == first.id));
+    assert!(hits.iter().any(|hit| hit.message_id == last.id));
+    assert!(!ctx.paths.search_dir().join(PENDING).exists());
+    assert_eq!(std::fs::read(thread_path).unwrap(), before);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn unreadable_chat_preserves_other_restored_entries_and_retries_without_duplicates() {
+    let dir = tempfile::tempdir().unwrap();
+    let base = dir.path().join("app");
+    let external = dir.path().join("external");
+    let ctx = open_ctx(&base);
+    let (shelf, doc) = linked_document(&ctx, &external).await;
+    let damaged_thread = Conversations::create(&ctx.paths, Some(shelf.clone())).unwrap();
+    let good_thread = Conversations::create(&ctx.paths, Some(shelf.clone())).unwrap();
+    let delayed = message(
+        "Migrationoranges recovered after the read error.",
+        "user",
+        "done",
+    );
+    let available = message(
+        "Migrationoranges remain available during recovery.",
+        "user",
+        "done",
+    );
+    Conversations::append(&ctx.paths, &damaged_thread.id, &delayed).unwrap();
+    Conversations::append(&ctx.paths, &good_thread.id, &available).unwrap();
+    let damaged_path = ctx.paths.thread_path(&damaged_thread.id);
+    let good_path = ctx.paths.thread_path(&good_thread.id);
+    let damaged_bytes = std::fs::read(&damaged_path).unwrap();
+    let good_bytes = std::fs::read(&good_path).unwrap();
+    drop(ctx);
+    std::fs::rename(&external, dir.path().join("disconnected-drive")).unwrap();
+    install_v3_index(&base);
+    std::fs::remove_file(&damaged_path).unwrap();
+    // Unix can open a directory as a file, then reports an error on the first read.
+    std::fs::create_dir(&damaged_path).unwrap();
+
+    let ctx = open_ctx(&base);
+    assert!(!external.exists());
+    assert!(ctx.search.has_document(&doc.id));
+    assert!(!ctx
+        .search
+        .search_passages("ninety days", &shelf, 8)
+        .unwrap()
+        .is_empty());
+    let hits = ctx
+        .search
+        .search_messages("Migrationoranges", None, None, &[], 8)
+        .unwrap();
+    assert_eq!(hits.len(), 1);
+    assert_eq!(hits[0].message_id, available.id);
+    assert!(ctx.paths.search_dir().join(PENDING).exists());
+    let count = ctx.search.num_docs();
+    drop(ctx);
+    std::fs::remove_dir(&damaged_path).unwrap();
+    std::fs::write(&damaged_path, &damaged_bytes).unwrap();
+
+    let ctx = open_ctx(&base);
+    assert!(ctx.search.has_document(&doc.id));
+    let hits = ctx
+        .search
+        .search_messages("Migrationoranges", None, None, &[], 8)
+        .unwrap();
+    assert_eq!(hits.len(), 2);
+    assert!(hits.iter().any(|hit| hit.message_id == delayed.id));
+    assert!(hits.iter().any(|hit| hit.message_id == available.id));
+    assert_eq!(ctx.search.num_docs(), count + 1);
+    assert!(!ctx.paths.search_dir().join(PENDING).exists());
+    assert_eq!(std::fs::read(damaged_path).unwrap(), damaged_bytes);
+    assert_eq!(std::fs::read(good_path).unwrap(), good_bytes);
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn incomplete_restore_retries_after_a_missing_cache_is_recovered() {
     let dir = tempfile::tempdir().unwrap();
     let base = dir.path().join("app");
