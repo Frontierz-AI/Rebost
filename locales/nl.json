@@ -574,7 +574,8 @@
     "attachmentsFailed": "Sommige bijlagen konden niet worden gelezen. Verwerk ze opnieuw voordat je er vragen over stelt.",
     "aiBusy": "Wacht tot de download klaar is en probeer het opnieuw.",
     "aiInUse": "Schakel over naar een andere AI voordat je deze verwijdert.",
-    "aiMissing": "Die AI staat niet meer op deze computer."
+    "aiMissing": "Die AI staat niet meer op deze computer.",
+    "openFailed": "Rebost kon het niet openen. Controleer welke app dit soort bestand opent en probeer het opnieuw."
   },
   "pii": {
     "heading": "Persoonsgegevens",

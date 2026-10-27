@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export type ColorScheme = "light" | "dark";
@@ -36,9 +37,17 @@ export async function watchWindowTheme(): Promise<() => void> {
     const window = getCurrentWindow();
     const theme = await window.theme();
     apply(theme === "dark" ? "dark" : "light");
-    return await window.onThemeChanged(({ payload }) => {
+    const stopWindow = await window.onThemeChanged(({ payload }) => {
       apply(payload === "dark" ? "dark" : "light");
     });
+    // Linux: the desktop's light/dark switch, which the window event misses.
+    const stopDesktop = await listen<string>("rebost://theme", ({ payload }) => {
+      apply(payload === "dark" ? "dark" : "light");
+    });
+    return () => {
+      stopWindow();
+      stopDesktop();
+    };
   } catch {
     return () => {};
   }

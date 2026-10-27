@@ -36,6 +36,7 @@ fi
 if [[ "$(uname -s)" == "Linux" ]]; then
   # Logs and WebKitGTK storage live inside APP_DATA on Linux.
   rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/$APP_ID"      # caches
+  rm -rf "${XDG_CONFIG_HOME:-$HOME/.config}/$APP_ID"    # window state
 else
   rm -rf ~/Library/Caches/$APP_ID                        # caches
   rm -rf ~/Library/WebKit/$APP_ID                        # webview storage

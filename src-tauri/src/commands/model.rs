@@ -84,10 +84,10 @@ pub async fn models_search(
 
 /// Open the public Hugging Face or Ollama page for a catalog AI.
 #[tauri::command]
-pub fn open_model_page(app: AppHandle, source: String, reference: String) -> CmdResult<()> {
+pub async fn open_model_page(app: AppHandle, source: String, reference: String) -> CmdResult<()> {
     let url = models::catalog_page_url(&source, &reference)
         .map_err(|_| "That page isn't available.".to_string())?;
-    app.opener().open_url(url, None::<String>).map_err(friendly)
+    crate::host::open(&app, url).await
 }
 
 /// Install a model (the recommended one or a chosen one). Progress arrives
@@ -161,7 +161,7 @@ pub async fn model_remove(engine: State<'_, Arc<Engine>>, file: String) -> CmdRe
 /// Show an installed AI's file in Finder or Explorer, or open the AI folder
 /// when no file is given. Only installed file names are accepted.
 #[tauri::command]
-pub fn model_reveal(
+pub async fn model_reveal(
     app: AppHandle,
     ctx: State<'_, Arc<Ctx>>,
     file: Option<String>,
@@ -169,10 +169,7 @@ pub fn model_reveal(
     let dir = ctx.paths.models_dir();
     let Some(file) = file else {
         std::fs::create_dir_all(&dir).map_err(friendly)?;
-        return app
-            .opener()
-            .open_path(dir.to_string_lossy().to_string(), None::<String>)
-            .map_err(friendly);
+        return crate::host::open(&app, dir.to_string_lossy().to_string()).await;
     };
     let installed = {
         let settings = crate::core::read_lock(&ctx.settings);

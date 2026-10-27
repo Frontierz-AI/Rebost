@@ -574,7 +574,8 @@
     "attachmentsFailed": "Vissa bilagor kunde inte läsas. Bearbeta dem igen innan du ställer frågor om dem.",
     "aiBusy": "Vänta tills nedladdningen är klar och försök igen.",
     "aiInUse": "Byt till en annan AI innan du tar bort den här.",
-    "aiMissing": "Den AI:n finns inte längre på den här datorn."
+    "aiMissing": "Den AI:n finns inte längre på den här datorn.",
+    "openFailed": "Rebost kunde inte öppna det. Kontrollera vilken app som öppnar den här filtypen och försök igen."
   },
   "pii": {
     "heading": "Personuppgifter",

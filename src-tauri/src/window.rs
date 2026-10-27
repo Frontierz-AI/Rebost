@@ -33,6 +33,7 @@ pub fn place_main_window(window: &WebviewWindow) {
     let Ok(size) = window.outer_size() else {
         return;
     };
+    let inner = window.inner_size().unwrap_or(size);
     let (x, y, w, h) = fit_frame(
         work.position.x,
         work.position.y,
@@ -46,11 +47,47 @@ pub fn place_main_window(window: &WebviewWindow) {
     // Only touch what has to change. GTK can report 0×0 for a window that is
     // not mapped yet; resizing to that would open it at the minimum size.
     if (w, h) != (size.width, size.height) {
+        let (w, h) = content_size(w, h, size, inner);
         let _ = window.set_size(PhysicalSize::new(w, h));
     }
     if (x, y) != (pos.x, pos.y) {
         let _ = window.set_position(PhysicalPosition::new(x, y));
     }
+}
+
+/// Event the webviews get when the desktop switches between light and dark.
+#[cfg(target_os = "linux")]
+pub const THEME_EVENT: &str = "rebost://theme";
+
+/// Tell the webviews when the desktop switches light/dark. tao applies the
+/// portal's colour scheme to GTK (title bar, menus) but reports it for no
+/// window, so the page never hears of it. Call on the main thread.
+#[cfg(target_os = "linux")]
+pub fn follow_desktop_theme(app: &tauri::AppHandle) {
+    use gtk::prelude::GtkSettingsExt;
+    use tauri::Emitter;
+
+    let Some(settings) = gtk::Settings::default() else {
+        return;
+    };
+    let notify = {
+        let app = app.clone();
+        move |settings: &gtk::Settings| {
+            let theme_name = settings
+                .gtk_theme_name()
+                .map(|name| name.to_lowercase())
+                .unwrap_or_default();
+            let dark = settings.is_gtk_application_prefer_dark_theme()
+                || theme_name.ends_with("-dark")
+                || theme_name.ends_with(":dark");
+            if let Err(error) = app.emit(THEME_EVENT, if dark { "dark" } else { "light" }) {
+                log::warn!("emit {THEME_EVENT}: {error}");
+            }
+        }
+    };
+    let on_name = notify.clone();
+    settings.connect_gtk_application_prefer_dark_theme_notify(notify);
+    settings.connect_gtk_theme_name_notify(on_name);
 }
 
 /// Move a window so only a few pixels stay on the work area (right edge).
@@ -102,6 +139,23 @@ pub(crate) fn park_frame(
     let sliver = sliver.max(1);
     let x = work_x.saturating_add(work_w as i32).saturating_sub(sliver);
     (x, work_y, w, h)
+}
+
+/// `set_size` takes the content size; take the title bar and borders off a
+/// frame size measured with them.
+pub(crate) fn content_size(
+    w: u32,
+    h: u32,
+    outer: PhysicalSize<u32>,
+    inner: PhysicalSize<u32>,
+) -> (u32, u32) {
+    if inner.width == 0 || inner.height == 0 {
+        return (w, h);
+    }
+    (
+        w.saturating_sub(outer.width.saturating_sub(inner.width)),
+        h.saturating_sub(outer.height.saturating_sub(inner.height)),
+    )
 }
 
 pub(crate) fn min_size_for_work(work_w: f64, work_h: f64) -> (f64, f64) {
@@ -166,6 +220,15 @@ mod tests {
         assert_eq!((x, y, w, h), (0, 0, 1320, 860));
         let (x, y, w, h) = fit_frame(0, 0, 1280, 720, 100, 100, 1600, 900);
         assert_eq!((x, y, w, h), (0, 0, 1280, 720));
+    }
+
+    #[test]
+    fn content_size_leaves_room_for_the_title_bar() {
+        let outer = PhysicalSize::new(1372, 949);
+        let inner = PhysicalSize::new(1320, 860);
+        assert_eq!(content_size(1280, 720, outer, inner), (1228, 631));
+        let unmapped = PhysicalSize::new(0, 0);
+        assert_eq!(content_size(1280, 720, outer, unmapped), (1280, 720));
     }
 
     #[test]

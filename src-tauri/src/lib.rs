@@ -11,6 +11,7 @@ pub mod chat;
 pub mod commands;
 pub mod core;
 pub mod engine;
+pub mod host;
 pub mod i18n;
 pub mod ids;
 pub mod ingest;
@@ -98,6 +99,19 @@ fn prepare_linux_webview() {
     }
 }
 
+/// On Linux GTK reports the window size with its client-side decorations and
+/// shadow but restores it as the content size, so a saved size grows by the
+/// frame on every launch; Wayland has no window positions at all. Keep only
+/// maximized and full-screen there.
+fn window_state_flags() -> tauri_plugin_window_state::StateFlags {
+    use tauri_plugin_window_state::StateFlags;
+    if cfg!(target_os = "linux") {
+        StateFlags::all() - StateFlags::SIZE - StateFlags::POSITION
+    } else {
+        StateFlags::all()
+    }
+}
+
 pub fn run() {
     #[cfg(target_os = "linux")]
     prepare_linux_webview();
@@ -152,10 +166,10 @@ pub fn run() {
             tauri_plugin_window_state::Builder::default()
                 .skip_initial_state("about")
                 .skip_initial_state("update")
+                .with_state_flags(window_state_flags())
                 .build(),
         )
         .on_menu_event(|app, event| crate::menu::on_menu_event(app, &event))
-        .menu(crate::menu::build_menu)
         .manage(commands::PendingImports::new())
         .on_window_event(|window, event| {
             if window.label() != "main" {
@@ -167,6 +181,10 @@ pub fn run() {
                 }
             }
         });
+    // GNOME and KDE apps do not carry a menu bar. The webview handles the
+    // same shortcuts, and About is in Settings.
+    #[cfg(not(target_os = "linux"))]
+    let builder = builder.menu(crate::menu::build_menu);
 
     builder
         .setup(move |app| {
@@ -245,6 +263,8 @@ pub fn run() {
                     crate::window::place_main_window(&main);
                 }
             }
+            #[cfg(target_os = "linux")]
+            crate::window::follow_desktop_theme(app.handle());
             crate::snapshot::spawn_shot_watcher(app.handle().clone());
 
             let updater_handle = app.handle().clone();

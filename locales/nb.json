@@ -574,7 +574,8 @@
     "attachmentsFailed": "Noen vedlegg kunne ikke leses. Behandle dem på nytt før du spør om dem.",
     "aiBusy": "Vent til nedlastingen er ferdig, og prøv igjen.",
     "aiInUse": "Bytt til en annen KI før du fjerner denne.",
-    "aiMissing": "Den KI-en er ikke lenger på denne datamaskinen."
+    "aiMissing": "Den KI-en er ikke lenger på denne datamaskinen.",
+    "openFailed": "Rebost kunne ikke åpne det. Sjekk hvilken app som åpner denne filtypen, og prøv igjen."
   },
   "pii": {
     "heading": "Personopplysninger",

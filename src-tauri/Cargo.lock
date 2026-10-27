@@ -5344,6 +5344,7 @@ dependencies = [
  "dirs",
  "flate2",
  "futures-util",
+ "gtk",
  "image",
  "log",
  "notify",

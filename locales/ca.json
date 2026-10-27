@@ -573,7 +573,8 @@
     "attachmentsFailed": "No s'han pogut llegir alguns fitxers adjunts. Torna'ls a processar abans de fer preguntes sobre aquests fitxers.",
     "aiBusy": "Espera que acabi la baixada i torna-ho a provar.",
     "aiInUse": "Canvia a una altra IA abans d'eliminar aquesta.",
-    "aiMissing": "Aquesta IA ja no és en aquest ordinador."
+    "aiMissing": "Aquesta IA ja no és en aquest ordinador.",
+    "openFailed": "Rebost no ho ha pogut obrir. Comprova quina aplicació obre aquest tipus de fitxer i torna-ho a provar."
   },
   "pii": {
     "heading": "Informació personal",

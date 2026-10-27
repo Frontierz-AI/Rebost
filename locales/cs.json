@@ -574,7 +574,8 @@
     "attachmentsFailed": "Některé přílohy se nepodařilo přečíst. Než se na ně zeptáš, nech je znovu zpracovat.",
     "aiBusy": "Počkejte na dokončení stahování a zkuste to znovu.",
     "aiInUse": "Před odstraněním této AI přepněte na jinou.",
-    "aiMissing": "Tato AI už na tomto počítači není."
+    "aiMissing": "Tato AI už na tomto počítači není.",
+    "openFailed": "Rebost to nemohl otevřít. Zkontrolujte, která aplikace otevírá tento typ souboru, a zkuste to znovu."
   },
   "pii": {
     "heading": "Osobní údaje",

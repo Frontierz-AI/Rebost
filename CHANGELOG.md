@@ -12,13 +12,15 @@ The app-data layout may change without a migration.
 - Raising it reads the files that were left unread. Lowering it keeps every file already on the Shelf; only new files stop being added.
 - When a Shelf is full, the message says where to raise the limit.
 - An open Shelf shows how many files are still to be read, next to the file count at the bottom.
-- Linux. Each release adds an AppImage, a .deb, and an .rpm for Intel/AMD and ARM computers: the .deb for Ubuntu 22.04 or newer and Debian 12 or newer, the .rpm for Fedora 43 or newer, and the AppImage for other distributions with glibc 2.35 or newer. The AI uses the graphics card through Vulkan and falls back to the processor when Vulkan is missing or will not start. Each package updates itself in its own format. On computers with NVIDIA's driver, Rebost turns off WebKitGTK's DMA-BUF renderer, which otherwise often leaves the window blank.
+- Linux. Each release adds an AppImage, a .deb, and an .rpm for Intel/AMD and ARM computers: the .deb for Ubuntu 22.04 or newer and Debian 12 or newer, the .rpm for Fedora 43 or newer, and the AppImage for other distributions with glibc 2.35 or newer. The AI uses the graphics card through Vulkan and runs on the processor, tuned for it, when there is no graphics card it can use or Vulkan will not start. Each package updates itself in its own format. On computers with NVIDIA's driver, Rebost turns off WebKitGTK's DMA-BUF renderer, which otherwise often leaves the window blank. Rebost follows the desktop's light and dark switch while open, opening a second copy brings the window forward on Wayland (.deb and .rpm), and Linux has no menu bar: the keyboard shortcuts work without it and About is in Settings.
 
 ### Fixed
 
 - Long scanned PDFs get the time they need. The time allowed to read a PDF grows with its pages, so a long scan no longer stops with "Reading took too long". Use Try again on files that stopped before.
 - Opening Shelves no longer marks a file as failed while it is still being read or waiting its turn.
 - Scanned PDFs read at the same time no longer hold each other up.
+- The Personal info column in a Shelf's file list shows its full heading.
+- A file or link that no app opens now says so instead of doing nothing (Linux).
 
 ## [0.9.8] - 2026-10-04
 

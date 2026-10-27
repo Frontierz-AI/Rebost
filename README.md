@@ -87,7 +87,7 @@ House rules are standing instructions kept in Settings: tone, language, and anyt
   <img src="docs/assets/settings.webp" alt="Rebost Settings: House rules and the installed AI." width="880" />
 </p>
 
-Settings opens from the menu, or with ⌘, on a Mac and Ctrl+, on Windows and Linux. Text size can also be changed with ⌘+ and ⌘- on a Mac, or Ctrl+ and Ctrl- on Windows and Linux. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
+Settings opens from the sidebar or the menu (Linux has no menu bar), or with ⌘, on a Mac and Ctrl+, on Windows and Linux. Text size can also be changed with ⌘+ and ⌘- on a Mac, or Ctrl+ and Ctrl- on Windows and Linux. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
 
 ## Getting started
 

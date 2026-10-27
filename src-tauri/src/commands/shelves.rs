@@ -716,11 +716,13 @@ pub(crate) fn ensure_shelf_path(ctx: &Ctx, path: &str) -> CmdResult<()> {
 
 /// Open a shelf file in the system default app.
 #[tauri::command]
-pub fn open_original(app: AppHandle, ctx: State<'_, Arc<Ctx>>, path: String) -> CmdResult<()> {
+pub async fn open_original(
+    app: AppHandle,
+    ctx: State<'_, Arc<Ctx>>,
+    path: String,
+) -> CmdResult<()> {
     ensure_shelf_path(&ctx, &path)?;
-    app.opener()
-        .open_path(path, None::<String>)
-        .map_err(friendly)
+    crate::host::open(&app, path).await
 }
 
 /// Reveal a shelf file in Finder or Explorer.

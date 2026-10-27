@@ -574,7 +574,8 @@
     "attachmentsFailed": "Certains fichiers joints n'ont pas pu être lus. Relancez leur traitement avant de poser une question à leur sujet.",
     "aiBusy": "Attendez la fin du téléchargement, puis réessayez.",
     "aiInUse": "Passez à une autre IA avant de supprimer celle-ci.",
-    "aiMissing": "Cette IA n'est plus sur cet ordinateur."
+    "aiMissing": "Cette IA n'est plus sur cet ordinateur.",
+    "openFailed": "Rebost n'a pas pu l'ouvrir. Vérifiez quelle app ouvre ce type de fichier, puis réessayez."
   },
   "pii": {
     "heading": "Informations personnelles",

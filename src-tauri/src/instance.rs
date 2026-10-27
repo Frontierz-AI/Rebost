@@ -76,6 +76,8 @@ pub fn acquire_for_launch(data_dir: &Path) -> Result<InstanceLock, AcquireError>
     };
     let lock = acquire(data_dir, wait)?;
     let _ = std::fs::remove_file(data_dir.join(RELAUNCH_NAME));
+    // A request left from an earlier session must not raise this one.
+    let _ = std::fs::remove_file(data_dir.join(FOCUS_NAME));
     Ok(lock)
 }
 
@@ -126,9 +128,37 @@ pub fn mark_relaunch(data_dir: &Path) -> io::Result<()> {
 }
 
 /// Tell the process that holds the lock to bring its main window forward.
+/// Passes on this launch's activation token: Wayland compositors only raise
+/// a window for a token the user's click produced.
 pub fn request_focus(data_dir: &Path) {
     let _ = std::fs::create_dir_all(data_dir);
-    let _ = std::fs::write(data_dir.join(FOCUS_NAME), uuid::Uuid::new_v4().to_string());
+    let token = ["XDG_ACTIVATION_TOKEN", "DESKTOP_STARTUP_ID"]
+        .iter()
+        .find_map(|name| std::env::var(name).ok());
+    let _ = std::fs::write(
+        data_dir.join(FOCUS_NAME),
+        focus_request(&uuid::Uuid::new_v4().to_string(), token.as_deref()),
+    );
+}
+
+fn focus_request(nonce: &str, token: Option<&str>) -> String {
+    match token.and_then(clean_token) {
+        Some(token) => format!("{nonce}\n{token}"),
+        None => nonce.to_string(),
+    }
+}
+
+/// Activation token in a focus request, if the launch had one.
+fn activation_token(request: &[u8]) -> Option<String> {
+    let text = std::str::from_utf8(request).ok()?;
+    clean_token(text.split_once('\n')?.1).map(str::to_string)
+}
+
+fn clean_token(token: &str) -> Option<&str> {
+    let token = token.trim();
+    let valid =
+        !token.is_empty() && token.len() <= 512 && token.chars().all(|c| c.is_ascii_graphic());
+    valid.then_some(token)
 }
 
 /// Watch for a second copy asking this window to come forward.
@@ -145,7 +175,11 @@ pub fn spawn_focus_listener(app: AppHandle, data_dir: PathBuf) {
                         last = now;
                     } else {
                         let handle = app.clone();
-                        if app.run_on_main_thread(move || focus_main(&handle)).is_ok() {
+                        let token = activation_token(&now);
+                        if app
+                            .run_on_main_thread(move || focus_main_with(&handle, token.as_deref()))
+                            .is_ok()
+                        {
                             last = now;
                         }
                     }
@@ -157,6 +191,11 @@ pub fn spawn_focus_listener(app: AppHandle, data_dir: PathBuf) {
 
 /// Unminimize, show, and focus the main window.
 pub fn focus_main(app: &AppHandle) {
+    focus_main_with(app, None);
+}
+
+/// [`focus_main`] with the activation token of the launch that asked.
+pub fn focus_main_with(app: &AppHandle, token: Option<&str>) {
     #[cfg(target_os = "macos")]
     {
         let _ = app.show();
@@ -164,6 +203,15 @@ pub fn focus_main(app: &AppHandle) {
     if let Some(window) = app.get_webview_window(MAIN_WINDOW) {
         let _ = window.unminimize();
         let _ = window.show();
+        #[cfg(target_os = "linux")]
+        if let (Some(token), Ok(gtk_window)) = (token, window.gtk_window()) {
+            // GTK hands the token to xdg-activation (Wayland) or uses it as
+            // the startup id and timestamp (X11).
+            use gtk::prelude::GtkWindowExt;
+            gtk_window.set_startup_id(token);
+        }
+        #[cfg(not(target_os = "linux"))]
+        let _ = token;
         let _ = window.set_focus();
     }
 }
@@ -207,6 +255,19 @@ mod tests {
         let second = std::fs::read_to_string(dir.path().join(FOCUS_NAME)).unwrap();
         assert_ne!(first, second);
         assert!(!second.is_empty());
+    }
+
+    #[test]
+    fn focus_request_carries_the_activation_token() {
+        let request = focus_request("nonce", Some(" gnome-shell/Rebost/1234-0-host_TIME5678 "));
+        assert_eq!(
+            activation_token(request.as_bytes()).as_deref(),
+            Some("gnome-shell/Rebost/1234-0-host_TIME5678")
+        );
+        assert_eq!(focus_request("nonce", None), "nonce");
+        assert_eq!(activation_token(b"nonce"), None);
+        assert_eq!(focus_request("nonce", Some("bad token\n")), "nonce");
+        assert_eq!(activation_token(b"nonce\n"), None);
     }
 
     #[test]

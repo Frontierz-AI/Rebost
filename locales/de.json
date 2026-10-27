@@ -574,7 +574,8 @@
     "attachmentsFailed": "Einige Anhänge konnten nicht gelesen werden. Lass Rebost diese Dateien erneut einlesen, bevor du Fragen dazu stellst.",
     "aiBusy": "Warten Sie, bis der Download fertig ist, und versuchen Sie es erneut.",
     "aiInUse": "Wechseln Sie zu einer anderen KI, bevor Sie diese entfernen.",
-    "aiMissing": "Diese KI ist nicht mehr auf diesem Computer."
+    "aiMissing": "Diese KI ist nicht mehr auf diesem Computer.",
+    "openFailed": "Rebost konnte das nicht öffnen. Prüfe, welche App diesen Dateityp öffnet, und versuche es erneut."
   },
   "pii": {
     "heading": "Persönliche Daten",

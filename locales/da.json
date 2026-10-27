@@ -574,7 +574,8 @@
     "attachmentsFailed": "Nogle vedhæftede filer kunne ikke læses. Behandl dem igen, før du spørger om dem.",
     "aiBusy": "Vent, til downloaden er færdig, og prøv igen.",
     "aiInUse": "Skift til en anden AI, før du fjerner denne.",
-    "aiMissing": "Den AI findes ikke længere på denne computer."
+    "aiMissing": "Den AI findes ikke længere på denne computer.",
+    "openFailed": "Rebost kunne ikke åbne det. Tjek, hvilket program der åbner denne filtype, og prøv igen."
   },
   "pii": {
     "heading": "Personoplysninger",

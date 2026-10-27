@@ -573,7 +573,8 @@
     "attachmentsFailed": "No se han podido leer algunos archivos adjuntos. Vuelve a procesarlos antes de preguntar sobre ellos.",
     "aiBusy": "Espera a que termine la descarga y vuelve a intentarlo.",
     "aiInUse": "Cambia a otra IA antes de eliminar esta.",
-    "aiMissing": "Esa IA ya no está en este ordenador."
+    "aiMissing": "Esa IA ya no está en este ordenador.",
+    "openFailed": "Rebost no ha podido abrirlo. Comprueba qué aplicación abre este tipo de archivo y vuelve a intentarlo."
   },
   "pii": {
     "heading": "Información personal",

@@ -573,7 +573,8 @@
     "attachmentsFailed": "Some attached files could not be read. Retry those files before asking about them.",
     "aiBusy": "Wait for the download to finish, then try again.",
     "aiInUse": "Switch to another AI before removing this one.",
-    "aiMissing": "That AI is no longer on this computer."
+    "aiMissing": "That AI is no longer on this computer.",
+    "openFailed": "Rebost couldn't open that. Check which app opens this kind of file, then try again."
   },
   "pii": {
     "heading": "Personal information",

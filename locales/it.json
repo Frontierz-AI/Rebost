@@ -574,7 +574,8 @@
     "attachmentsFailed": "Non è stato possibile leggere alcuni allegati. Elaborali di nuovo prima di fare domande su di essi.",
     "aiBusy": "Attendi la fine del download, poi riprova.",
     "aiInUse": "Passa a un'altra IA prima di rimuovere questa.",
-    "aiMissing": "Questa IA non è più su questo computer."
+    "aiMissing": "Questa IA non è più su questo computer.",
+    "openFailed": "Rebost non è riuscito ad aprirlo. Controlla quale app apre questo tipo di file e riprova."
   },
   "pii": {
     "heading": "Informazioni personali",

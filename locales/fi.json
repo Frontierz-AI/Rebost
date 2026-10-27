@@ -574,7 +574,8 @@
     "attachmentsFailed": "Joitakin liitteitä ei voitu lukea. Käsittele ne uudelleen ennen kuin kysyt niistä.",
     "aiBusy": "Odota, että lataus valmistuu, ja yritä uudelleen.",
     "aiInUse": "Vaihda toiseen tekoälyyn ennen kuin poistat tämän.",
-    "aiMissing": "Tätä tekoälyä ei enää ole tällä tietokoneella."
+    "aiMissing": "Tätä tekoälyä ei enää ole tällä tietokoneella.",
+    "openFailed": "Rebost ei voinut avata sitä. Tarkista, mikä sovellus avaa tämän tiedostotyypin, ja yritä uudelleen."
   },
   "pii": {
     "heading": "Henkilötiedot",

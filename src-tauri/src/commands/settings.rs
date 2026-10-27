@@ -4,8 +4,6 @@ use serde::Serialize;
 use std::sync::Arc;
 use tauri::{AppHandle, State};
 
-use tauri_plugin_opener::OpenerExt;
-
 use super::{friendly, CmdResult};
 use crate::core::Ctx;
 use crate::engine::models::MachineProfile;
@@ -207,11 +205,9 @@ pub(crate) fn require_engine_log(paths: &Paths) -> CmdResult<std::path::PathBuf>
 
 /// Open the engine log in the default app. Path is fixed; the UI never sends one.
 #[tauri::command]
-pub fn open_engine_log(app: AppHandle, ctx: State<'_, Arc<Ctx>>) -> CmdResult<()> {
+pub async fn open_engine_log(app: AppHandle, ctx: State<'_, Arc<Ctx>>) -> CmdResult<()> {
     let log_path = require_engine_log(&ctx.paths)?;
-    app.opener()
-        .open_path(log_path.to_string_lossy().to_string(), None::<String>)
-        .map_err(friendly)
+    crate::host::open(&app, log_path.to_string_lossy().to_string()).await
 }
 
 #[cfg(test)]

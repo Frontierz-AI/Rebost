@@ -409,8 +409,16 @@ impl Engine {
             Err(error) => return Err(SpawnFailed::before_start(false, error)),
         };
         let profile = MachineProfile::detect(self.ctx.paths.base());
+        let no_gpu = cfg!(target_os = "linux")
+            && pin.accelerator == "Vulkan"
+            && super::gpu::vulkan_device_listed(binary).await == Some(false);
+        if no_gpu {
+            log::warn!(
+                "the Vulkan build found no graphics card; running on the CPU (--device none)"
+            );
+        }
         let mut vision_profile = profile.clone();
-        vision_profile.accelerator = pin.accelerator.into();
+        vision_profile.accelerator = if no_gpu { "CPU" } else { pin.accelerator }.into();
         let vision = model
             .projector
             .as_ref()
@@ -423,7 +431,7 @@ impl Engine {
             });
         *crate::core::mutex_lock(&self.vision) = None;
         let hint = ModelHint::from_active(model, &self.ctx.paths.models_dir());
-        let plan = SpawnPlan::for_model(&profile, pin, Some(&hint));
+        let plan = SpawnPlan::for_host(&profile, pin, Some(&hint), no_gpu);
         let vision = vision.and_then(|limits| {
             limits.fit_context(plan.context_tokens, plan.answer_tokens.min(1024))
         });
@@ -436,7 +444,7 @@ impl Engine {
                 model.file
             );
         }
-        if plan.cpu_only {
+        if plan.cpu_only && !no_gpu {
             log::warn!(
                 "this x64 Windows copy is running on ARM; the Vulkan build stays off the GPU (--device none)"
             );
@@ -468,6 +476,7 @@ impl Engine {
         super::process::trim_log_file(&log_path, super::process::ENGINE_LOG_MAX_LINES);
 
         let mut command = Command::new(binary);
+        crate::host::use_desktop_env(command.as_std_mut());
         if let Some(home) = binary.parent() {
             command.current_dir(home);
         }

@@ -106,6 +106,13 @@ if [[ "$KIND" != appimage ]]; then
   find /usr/share/icons/hicolor -name 'rebost.png' | sort
 fi
 
+echo "== bundled resources"
+resources="$(find "$ROOT_DIR" -type d -path '*/Rebost/resources' | head -n 1)"
+[[ -n "$resources" ]] || fail "no resources folder under ${ROOT_DIR}"
+find "$resources" | sed "s|^${resources}|  resources|" | sort
+stray="$(find "$resources" \( -name README.md -o -name .gitkeep \))"
+[[ -z "$stray" ]] || fail "repository notes shipped as resources: ${stray}"
+
 echo "== bundled engine"
 archive="$(find "$ROOT_DIR" -name 'llama-*-bin-ubuntu-*.tar.gz' | head -n 1)"
 [[ -n "$archive" ]] || fail "no llama.cpp archive under ${ROOT_DIR}"
@@ -156,4 +163,13 @@ echo "-- stdout/stderr"
 tail -n 40 "$log"
 kill "$pid" 2>/dev/null || true
 wait "$pid" 2>/dev/null || true
+
+if [[ "$KIND" == rpm ]]; then
+  echo "== uninstall"
+  dnf remove -y -q rebost
+  [[ ! -e /usr/lib/Rebost ]] || {
+    find /usr/lib/Rebost >&2
+    fail "uninstall left /usr/lib/Rebost behind"
+  }
+fi
 echo "OK ${KIND} on ${PRETTY_NAME}"
