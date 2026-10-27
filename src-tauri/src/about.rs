@@ -2,7 +2,6 @@
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_opener::OpenerExt;
 
 use crate::commands::{friendly, CmdResult};
 
@@ -49,10 +48,8 @@ pub async fn show_about_window(app: AppHandle) -> CmdResult<()> {
 
 /// Open an allowlisted URL in the system browser.
 #[tauri::command]
-pub fn open_external(app: AppHandle, link: ExternalLink) -> CmdResult<()> {
-    app.opener()
-        .open_url(link.url(), None::<String>)
-        .map_err(friendly)
+pub async fn open_external(app: AppHandle, link: ExternalLink) -> CmdResult<()> {
+    crate::host::open(&app, link.url().to_string()).await
 }
 
 /// Close About so the next locale can open a fresh window.

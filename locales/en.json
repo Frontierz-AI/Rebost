@@ -608,7 +608,8 @@
     "modelsFolderAppData": "That folder is part of Rebost's own data. Choose one outside it.",
     "modelsFolderNameTaken": "That folder already has a different file with the same name as one of your AIs. Choose another folder.",
     "modelsFolderNoAis": "Your AIs aren't in that folder. Choose the folder that holds them, or use Rebost's own folder.",
-    "modelsFolderNested": "That folder is inside the one your AIs are in now, or holds it. Choose a separate folder."
+    "modelsFolderNested": "That folder is inside the one your AIs are in now, or holds it. Choose a separate folder.",
+    "openFailed": "Rebost couldn't open that. Check which app opens this kind of file, then try again."
   },
   "pii": {
     "heading": "Personal information",

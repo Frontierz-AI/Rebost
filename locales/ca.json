@@ -608,7 +608,8 @@
     "modelsFolderAppData": "Aquesta carpeta forma part de les dades de Rebost. Tria'n una que en quedi fora.",
     "modelsFolderNameTaken": "En aquesta carpeta ja hi ha un altre fitxer amb el mateix nom que una de les teves IA. Tria una altra carpeta.",
     "modelsFolderNoAis": "Les teves IA no són en aquesta carpeta. Tria la carpeta on són o fes servir la de Rebost.",
-    "modelsFolderNested": "Aquesta carpeta és dins de la carpeta actual de les IA, o la conté. Tria'n una de separada."
+    "modelsFolderNested": "Aquesta carpeta és dins de la carpeta actual de les IA, o la conté. Tria'n una de separada.",
+    "openFailed": "Rebost no ho ha pogut obrir. Comprova quina aplicació obre aquest tipus de fitxer i torna-ho a provar."
   },
   "pii": {
     "heading": "Informació personal",

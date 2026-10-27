@@ -95,8 +95,8 @@ pub const ENGINE_PINS: &[EnginePin] = &[
 
 /// Builds downloaded at warmup, never bundled. CUDA (~254 MiB plus a ~373 MiB
 /// runtime zip) and Adreno OpenCL are faster GPU builds for matching hardware.
-/// The Windows x64 CPU build (~19 MiB) is the last resort when the bundled
-/// Vulkan build will not start on a PC's graphics driver.
+/// The CPU builds (~13-19 MiB) are the last resort when the bundled Vulkan
+/// build will not start on a computer's graphics driver.
 pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
     EnginePin {
         os: "windows",
@@ -121,6 +121,22 @@ pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
         sha256: "3b10da78b5d7129bbafd302a95199233d2485536cc438eeb3d8ed1f904852ac0",
         file_name: "llama-b11669-bin-win-opencl-adreno-arm64.zip",
         accelerator: "OpenCL",
+    },
+    EnginePin {
+        os: "linux",
+        arch: "x86_64",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-ubuntu-x64.tar.gz",
+        sha256: "cf07c1c112d709bd67e522017471de57ed0ec8bea031d732c5422351c07f65ac",
+        file_name: "llama-b11669-bin-ubuntu-x64.tar.gz",
+        accelerator: "CPU",
+    },
+    EnginePin {
+        os: "linux",
+        arch: "aarch64",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-ubuntu-arm64.tar.gz",
+        sha256: "9ac6fda2058d35677608a06f751a50122ddfa4ce0ddb7f084466b8e79b6d4a99",
+        file_name: "llama-b11669-bin-ubuntu-arm64.tar.gz",
+        accelerator: "CPU",
     },
 ];
 
@@ -345,6 +361,18 @@ mod tests {
                 .file_name,
             "llama-b11669-bin-win-cpu-arm64.zip"
         );
+        assert_eq!(
+            pin_for_target_triple("x86_64-unknown-linux-gnu")
+                .unwrap()
+                .file_name,
+            "llama-b11669-bin-ubuntu-vulkan-x64.tar.gz"
+        );
+        assert_eq!(
+            pin_for_target_triple("aarch64-unknown-linux-gnu")
+                .unwrap()
+                .file_name,
+            "llama-b11669-bin-ubuntu-vulkan-arm64.tar.gz"
+        );
         assert!(pin_for_target_triple("wasm32-unknown-unknown").is_err());
     }
 
@@ -412,6 +440,13 @@ mod tests {
         assert_eq!(fallback.file_name, "llama-b11669-bin-win-cpu-x64.zip");
         assert!(cpu_fallback_pin_for("windows", "aarch64").is_none());
         assert!(cpu_fallback_pin_for("macos", "aarch64").is_none());
-        assert!(cpu_fallback_pin_for("linux", "x86_64").is_none());
+        for (arch, file_name) in [
+            ("x86_64", "llama-b11669-bin-ubuntu-x64.tar.gz"),
+            ("aarch64", "llama-b11669-bin-ubuntu-arm64.tar.gz"),
+        ] {
+            let fallback = cpu_fallback_pin_for("linux", arch).unwrap();
+            assert_eq!(fallback.accelerator, "CPU");
+            assert_eq!(fallback.file_name, file_name);
+        }
     }
 }

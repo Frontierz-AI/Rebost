@@ -6,7 +6,7 @@ Private AI that works with your files. What happens on your computer stays on yo
   <img src="docs/assets/R.webp" alt="Rebost" width="160" />
 </p>
 
-Rebost is a desktop application for Mac and Windows. It runs an AI on the machine where it is installed and answers questions about documents kept there. Questions go in Chat, the answer is generated locally, and each answer cites the files it drew on.
+Rebost is a desktop application for Mac, Windows, and Linux. It runs an AI on the machine where it is installed and answers questions about documents kept there. Questions go in Chat, the answer is generated locally, and each answer cites the files it drew on.
 
 Documents reach the AI through a Shelf, a folder on the same machine that a conversation can be pointed at. Chat searches the selected Shelf, quotes what it finds, and links each citation back to the file it came from. There are two more ideas to know. A Recipe is a prompt saved for reuse, and House rules are standing instructions that apply to every conversation.
 
@@ -22,20 +22,36 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **0.9.8**. Four installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **0.9.8**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/). Linux packages are published from the first release after 0.9.8.
 
-| Machine                | Installer        |
-| ---------------------- | ---------------- |
-| Mac with an Apple chip | Mac (Apple chip) |
-| Intel Mac              | Mac (Intel)      |
-| Windows 10/11          | Windows          |
-| Windows on ARM         | Windows (ARM)    |
+| Machine                               | Installer                               |
+| ------------------------------------- | --------------------------------------- |
+| Mac with an Apple chip                | Mac (Apple chip)                        |
+| Intel Mac                             | Mac (Intel)                             |
+| Windows 10/11                         | Windows                                 |
+| Windows on ARM                        | Windows (ARM)                           |
+| Ubuntu 22.04+, Debian 12+ (Intel/AMD) | Linux (.deb)                            |
+| Fedora 43+ (Intel/AMD)                | Linux (.rpm)                            |
+| Other Linux distributions (Intel/AMD) | Linux (AppImage)                        |
+| Linux on ARM (64-bit)                 | Linux ARM (.deb), (.rpm), or (AppImage) |
 
 The Mac download is a disk image: open it and drag Rebost into Applications. The Windows download is an installer.
 
+On Linux, the .deb and .rpm packages install Rebost with the distribution's own WebKitGTK and add it to the applications menu. Open them with the software installer, or from a terminal:
+
+```bash
+sudo apt install ./Rebost-X.Y.Z-Linux-amd64.deb
+```
+
+```bash
+sudo dnf install ./Rebost-X.Y.Z-Linux-x86_64.rpm
+```
+
+The AppImage carries its own WebKitGTK and runs on other desktop distributions with glibc 2.35 or newer: make it executable (`chmod +x Rebost-X.Y.Z-Linux-x86_64.AppImage`) and open it. The AI uses the graphics card through Vulkan (Mesa for AMD and Intel, or NVIDIA's driver); the packages recommend the Vulkan loader and Mesa drivers, and without them the AI runs on the processor, more slowly.
+
 Windows 11 already ships the component Rebost uses to draw its windows; on Windows 10 the installer adds [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) when it is missing. A regular Windows PC, meaning anything other than Windows on ARM, also needs a graphics driver with Vulkan support from NVIDIA, AMD, or Intel.
 
-Once installed, Rebost checks GitHub for a newer release and shows it in the sidebar. Nothing is shown when that check fails.
+Once installed, Rebost checks GitHub for a newer release and shows it in the sidebar. Nothing is shown when that check fails. On Linux each package updates itself in its own format; the .deb and .rpm ask for an administrator password to install the update.
 
 ## Chat, Shelves, Recipes, and House rules
 
@@ -71,7 +87,7 @@ House rules are standing instructions kept in Settings: tone, language, and anyt
   <img src="docs/assets/settings.webp" alt="Rebost Settings: House rules and the installed AI." width="880" />
 </p>
 
-Settings opens from the menu, or with ⌘, on a Mac and Ctrl+, on Windows. Text size can also be changed with ⌘+ and ⌘- on a Mac, or Ctrl+ and Ctrl- on Windows. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
+Settings opens from the sidebar or the menu (Linux has no menu bar), or with ⌘, on a Mac and Ctrl+, on Windows and Linux. Text size can also be changed with ⌘+ and ⌘- on a Mac, or Ctrl+ and Ctrl- on Windows and Linux. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
 
 ## Getting started
 
@@ -97,9 +113,9 @@ A team works the same way, one install per person. Each person runs Rebost on th
 
 **Which AI does it run?** The first launch suggests one sized for the machine's memory and hides any that will not run on it. A different AI can be installed later from Settings. Each AI carries its own license, shown before the download starts.
 
-**What hardware is needed?** A Mac with an Apple chip or an Intel processor, or a Windows 10/11 PC including Windows on ARM. Running an AI locally also needs several GB of free disk space for the download.
+**What hardware is needed?** A Mac with an Apple chip or an Intel processor, a Windows 10/11 PC including Windows on ARM, or a 64-bit Linux computer (Intel/AMD or ARM) with a graphical desktop. Running an AI locally also needs several GB of free disk space for the download.
 
-**Are phones or Linux supported?** No. Rebost is a desktop application for Mac and Windows.
+**Are phones or Linux supported?** Linux is, on Ubuntu 22.04 or newer, Debian 12 or newer, Fedora 43 or newer, and other distributions with glibc 2.35 or newer through the AppImage. Phones are not: Rebost is a desktop application.
 
 **Can a team use it?** Yes, with one install per person and a Shelf pointed at a shared folder. There is no Rebost account and nothing to administer. See [how a small team uses Rebost](docs/team.md).
 
@@ -109,7 +125,7 @@ A team works the same way, one install per person. Each person runs Rebost on th
 
 Documents on a Shelf stay on the machine that holds them, and reading, searching, and answering all happen there. Counts of personal information are counts, not a legal opinion.
 
-Rebost does reach the network in a few places. Searching for or installing an AI contacts Hugging Face or Ollama, startup may check GitHub for a newer release, and on some Windows PCs the first chat downloads a faster way to run the AI. Online, in Settings, allows Chat to look things up on the public web and is off until it is turned on. [docs/privacy.md](docs/privacy.md) lists every request.
+Rebost does reach the network in a few places. Searching for or installing an AI contacts Hugging Face or Ollama, startup may check GitHub for a newer release, and on some Windows and Linux PCs the first chat downloads a faster or more compatible way to run the AI. Online, in Settings, allows Chat to look things up on the public web and is off until it is turned on. [docs/privacy.md](docs/privacy.md) lists every request.
 
 The application is MIT licensed. An installed AI carries its own license, shown before the download starts: [docs/licensing.md](docs/licensing.md).
 
@@ -119,11 +135,12 @@ Anything that looks like local files leaking belongs in [SECURITY.md](SECURITY.m
 
 ### Requirements
 
-- macOS (Apple Silicon or Intel), or Windows 10/11 (x64 with Vulkan, or ARM64). Linux is not a supported platform.
+- macOS (Apple Silicon or Intel), Windows 10/11 (x64 with Vulkan, or ARM64), or Linux (x86_64 or aarch64; Ubuntu 22.04+, Debian 12+, Fedora 43+)
 - Disk space for a GGUF model (several GB)
 - Rust 1.99.1, Node 22.22.2+ on the 22.x line, pnpm 12 (`rust-toolchain.toml` and `.nvmrc`)
 - macOS: Xcode Command Line Tools
 - Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The NSIS installer downloads it when it is missing.
+- Linux: WebKitGTK 4.1 and GTK 3 development packages. On Debian and Ubuntu: `sudo apt install build-essential cmake pkg-config file libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev librsvg2-dev libdbus-1-dev`. On Fedora: `sudo dnf install gcc-c++ cmake file webkit2gtk4.1-devel gtk3-devel libsoup3-devel librsvg2-devel dbus-devel`.
 - First OCR build: CMake and a C++ compiler (xberg compiles Tesseract)
 
 ### Run locally
@@ -142,12 +159,12 @@ pnpm check                         # svelte-check
 pnpm format:check
 cargo test --manifest-path src-tauri/Cargo.toml
 pnpm test                          # Vitest
-pnpm tauri build                   # unsigned DMG / NSIS
+pnpm tauri build                   # unsigned DMG / NSIS / AppImage, deb, rpm
 ```
 
-`pnpm tauri build` writes a DMG under `src-tauri/target/release/bundle/dmg/` (Apple Silicon or Intel, matching the build host unless `--target` is passed), or an NSIS installer under `src-tauri/target/release/bundle/nsis/`. Without signing credentials the installer is unsigned, and Gatekeeper will warn on macOS. See [docs/signing.md](docs/signing.md).
+`pnpm tauri build` writes a DMG under `src-tauri/target/release/bundle/dmg/` (Apple Silicon or Intel, matching the build host unless `--target` is passed), an NSIS installer under `src-tauri/target/release/bundle/nsis/`, or on Linux an AppImage, .deb, and .rpm under `src-tauri/target/release/bundle/`. Without signing credentials the installer is unsigned, and Gatekeeper will warn on macOS. See [docs/signing.md](docs/signing.md).
 
-`./scripts/reset.sh` (macOS) or `./scripts/reset.ps1` (Windows) returns the app to first-run state, keeping Shelf folders on disk. Settings → Reset Rebost does the same from the running app. `cargo run --manifest-path src-tauri/Cargo.toml --example seed` loads demo data.
+`./scripts/reset.sh` (macOS and Linux) or `./scripts/reset.ps1` (Windows) returns the app to first-run state, keeping Shelf folders on disk. Settings → Reset Rebost does the same from the running app. `cargo run --manifest-path src-tauri/Cargo.toml --example seed` loads demo data.
 
 Contributing, commands, and architecture: [CONTRIBUTING.md](CONTRIBUTING.md), [docs/development.md](docs/development.md), [docs/releasing.md](docs/releasing.md), [docs/architecture.md](docs/architecture.md), [docs/engine.md](docs/engine.md).
 

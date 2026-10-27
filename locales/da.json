@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Den mappe hører til Rebosts egne data. Vælg en mappe uden for dem.",
     "modelsFolderNameTaken": "Mappen indeholder allerede en anden fil med samme navn som en af dine AI'er. Vælg en anden mappe.",
     "modelsFolderNoAis": "Dine AI'er ligger ikke i den mappe. Vælg mappen, de ligger i, eller brug Rebosts egen mappe.",
-    "modelsFolderNested": "Den mappe ligger inde i mappen med dine AI'er, eller indeholder den. Vælg en separat mappe."
+    "modelsFolderNested": "Den mappe ligger inde i mappen med dine AI'er, eller indeholder den. Vælg en separat mappe.",
+    "openFailed": "Rebost kunne ikke åbne det. Tjek, hvilket program der åbner denne filtype, og prøv igen."
   },
   "pii": {
     "heading": "Personoplysninger",

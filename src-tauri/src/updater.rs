@@ -174,13 +174,9 @@ pub async fn install_update(app: AppHandle, pending: State<'_, PendingUpdate>) -
         if let Ok(data_dir) = app.path().app_data_dir() {
             let _ = crate::instance::mark_relaunch(&data_dir);
         }
-        app.restart();
+        crate::host::restart(&app);
     }
-
-    #[cfg(windows)]
-    {
-        Ok(())
-    }
+    Ok(())
 }
 
 /// Open or focus the update window.

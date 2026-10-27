@@ -1,8 +1,8 @@
 # Local engine
 
-The language model is llama.cpp `llama-server`, managed as a child process. It is not a Tauri `externalBin` sidecar: official builds ship dylibs (macOS) and DLLs (Windows), so Rebost bundles the **pinned archive** as a resource and unpacks it into app data.
+The language model is llama.cpp `llama-server`, managed as a child process. It is not a Tauri `externalBin` sidecar: official builds ship dylibs (macOS), DLLs (Windows), and `.so` files (Linux), so Rebost bundles the **pinned archive** as a resource and unpacks it into app data.
 
-Each installer contains **one** archive for that OS/arch. There is no universal Mac or Windows binary. llama.cpp does not ship fat libraries, and a universal `.app` would carry two engines.
+Each installer contains **one** archive for that OS/arch. There is no universal Mac, Windows, or Linux binary. llama.cpp does not ship fat libraries, and a universal `.app` would carry two engines.
 
 ## Pin
 
@@ -21,7 +21,7 @@ Rebost follows official llama.cpp `v*` releases, not nightlies. The `v*` tag doe
 | macOS x64 | `macos-x64.tar.gz` | Metal | ~11 MiB |
 | Windows x64 | `win-vulkan-x64.zip` | Vulkan | ~31 MiB |
 | Windows arm64 | `win-cpu-arm64.zip` | CPU | ~12 MiB |
-| Linux x64 / arm64 | `ubuntu-vulkan-*.tar.gz` | Vulkan (not a supported platform; pin exists so the crate compiles on Ubuntu CI). There is no Linux installer overlay. | ~23–29 MiB |
+| Linux x64 / arm64 | `ubuntu-vulkan-*.tar.gz` | Vulkan | ~23–29 MiB |
 
 Optional downloads (app data, not the installer):
 
@@ -31,12 +31,13 @@ Optional downloads (app data, not the installer):
 | Windows x64 | The bundled Vulkan build would not start | `win-cpu-x64.zip` (~19 MiB) | — |
 | Windows x64 copy on an ARM PC | Always (native ARM64 under x64 emulation) | `win-cpu-arm64.zip` (~12 MiB), the ARM installer's own pin | — |
 | Windows arm64 | Snapdragon / Adreno | `win-opencl-adreno-arm64.zip` (~13 MiB) | — |
+| Linux x64 / arm64 | The bundled Vulkan build would not start | `ubuntu-x64.tar.gz` (~17 MiB) / `ubuntu-arm64.tar.gz` (~13 MiB) | — |
 
 CUDA 12.4 rather than 13.x so older NVIDIA GPUs still load. If the optional download fails, or llama-server **exits or never becomes healthy** (missing DLL, wrong GPU, hung driver), Rebost uses the bundled Vulkan or CPU build and skips the optional pin for the rest of that session. A slow load of the *bundled* pin is still a timeout, not a reason to fetch CUDA.
 
-If the bundled Vulkan build also exits or never becomes healthy (an old or broken graphics driver), Rebost downloads the x64 CPU build and starts the AI there. `settings.json` keeps `cpuEngineFor` (`<release>/<model file>`) so that AI starts on CPU next time without retrying Vulkan; another AI or a new engine release tries Vulkan again.
+If the bundled Vulkan build also exits or never becomes healthy (an old or broken graphics driver), Rebost downloads the CPU build for that OS and architecture (Windows x64, Linux x64, Linux arm64) and starts the AI there. `settings.json` keeps `cpuEngineFor` (`<release>/<model file>`) so that AI starts on CPU next time without retrying Vulkan; another AI or a new engine release tries Vulkan again.
 
-CI HEAD-checks every URL. `node scripts/fetch-engine.mjs` downloads the **bundled** pin for this build target into `src-tauri/resources/engine/` (gitignored). `pnpm tauri build` runs that fetch first. `--all` fills the cache with macOS + Windows installer pins only; it does not pull CUDA.
+CI HEAD-checks every URL. `node scripts/fetch-engine.mjs` downloads the **bundled** pin for this build target into `src-tauri/resources/engine/` (gitignored). `pnpm tauri build` runs that fetch first. `--all` fills the cache with macOS + Windows installer pins only (`--all --include-linux` adds the Linux ones); it does not pull CUDA or the CPU fallbacks.
 
 Cross-compile:
 
@@ -51,9 +52,13 @@ Windows x64 prefers a working Vulkan driver for the bundled pin and falls back t
 
 An x64 copy running on Windows ARM (the regular installer on a Snapdragon PC) downloads the ARM64 CPU build and runs it natively; `IsWow64Process2` detects the ARM host. If that build is unavailable, it falls back to the bundled Vulkan build with `--device none --no-op-offload`: `-ngl 0` alone still let llama.cpp send prompt batches of 32+ tokens to Adreno Vulkan under emulation, which hung or wrote garbage. The in-app updater of that copy asks for the `windows-aarch64` entry in `latest.json` and accepts the same version, so the next update moves it to the ARM build (both installers use the same per-user folder, and app data stays). Settings links to the same update, and the x64 installer, run by hand on an ARM PC, offers the ARM download page before it installs (`src-tauri/windows/installer-hooks.nsh`).
 
+### Linux
+
+The Linux packages bundle the upstream `ubuntu-vulkan-*` archive. Those builds are compiled on Ubuntu 22.04 and need glibc 2.34 and `GLIBCXX_3.4.30` (libstdc++ from GCC 12), which Ubuntu 22.04, Debian 12, and Fedora 43 and newer have. `llama-server` finds its `.so` files through an `$ORIGIN` rpath, so nothing is installed system-wide. The ggml backends are loaded at run time: without `libvulkan.so.1` (the `libvulkan1` or `vulkan-loader` package, which the .deb and .rpm only recommend) or without a Vulkan driver, the same build runs on the CPU. Before starting it, Rebost runs `llama-server --list-devices` once per launch; when no device is listed (no driver, or only a software one such as lavapipe, which llama.cpp skips) the server gets the CPU flags and the CPU wait for the first token. When the Vulkan build exits instead, for example on a broken driver, Rebost downloads the CPU-only archive as on Windows. Upstream also publishes CUDA, ROCm, SYCL, and OpenVINO Linux builds; Rebost does not use them yet, and NVIDIA cards run through their Vulkan driver.
+
 ## Flags
 
-Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU uses `-ngl 0`. The x64-on-ARM Vulkan copy is tuned as CPU and adds `--device none --no-op-offload`. `--load-mode none` only on discrete Vulkan and CUDA (0.4.1 dropped `--no-mmap`). CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
+Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU uses `-ngl 0`. The x64-on-ARM Vulkan copy, and the Linux Vulkan build on a PC where it lists no device, are tuned as CPU and add `--device none --no-op-offload`. `--load-mode none` only on discrete Vulkan and CUDA (0.4.1 dropped `--no-mmap`). CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
 
 Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.7.0-metal`, `0.7.0-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
 

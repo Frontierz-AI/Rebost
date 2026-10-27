@@ -37,7 +37,7 @@ Chat / Shelves / Recipes / Settings
 
 ## Data on disk
 
-The OS app-data directory (see `src-tauri/src/paths.rs`): macOS `~/Library/Application Support/io.rebost.desktop/`, Windows `%APPDATA%\io.rebost.desktop\`.
+The OS app-data directory (see `src-tauri/src/paths.rs`): macOS `~/Library/Application Support/io.rebost.desktop/`, Windows `%APPDATA%\io.rebost.desktop\`, Linux `~/.local/share/io.rebost.desktop/` (`$XDG_DATA_HOME`).
 
 ```
 library/                managed Shelf folders (user files; kept on Reset)

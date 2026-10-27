@@ -72,7 +72,7 @@
     { header: t("shelves.colSource"), colClass: "w-44", thClass: "px-2.5" },
     { header: t("shelves.colType"), colClass: "w-28", thClass: "px-2.5" },
     { header: t("shelves.colStatus"), colClass: "w-44", thClass: "px-2.5" },
-    { header: t("shelves.colPii"), colClass: "w-14", thClass: "px-2.5 text-right" },
+    { header: t("shelves.colPii"), colClass: "w-32", thClass: "px-2.5 text-right" },
     { header: t("shelves.colUpdated"), colClass: "w-36", thClass: "pr-8 pl-2.5" },
   ]);
 </script>
@@ -102,7 +102,7 @@
   >
     <table
       aria-rowcount={visibleDocs.length + 1}
-      class="w-full min-w-[850px] table-fixed border-separate border-spacing-0 text-[12.8px]"
+      class="w-full min-w-[920px] table-fixed border-separate border-spacing-0 text-[12.8px]"
     >
       <colgroup>
         {#each columns as column}
@@ -114,8 +114,8 @@
           {#each columns as column}
             <th
               scope="col"
-              class="sticky top-0 z-10 border-b border-paper-line bg-paper py-2 font-medium whitespace-nowrap text-ink-faint {column.thClass}"
-              >{column.header}</th
+              class="sticky top-0 z-10 truncate border-b border-paper-line bg-paper py-2 font-medium whitespace-nowrap text-ink-faint {column.thClass}"
+              title={column.header}>{column.header}</th
             >
           {/each}
         </tr>

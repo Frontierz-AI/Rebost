@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Quella cartella fa parte dei dati di Rebost. Scegline una fuori.",
     "modelsFolderNameTaken": "In quella cartella c'è già un altro file con lo stesso nome di una delle tue IA. Scegli un'altra cartella.",
     "modelsFolderNoAis": "Le tue IA non sono in quella cartella. Scegli la cartella che le contiene o usa quella di Rebost.",
-    "modelsFolderNested": "Quella cartella è dentro la cartella attuale delle tue IA, o la contiene. Scegline una separata."
+    "modelsFolderNested": "Quella cartella è dentro la cartella attuale delle tue IA, o la contiene. Scegline una separata.",
+    "openFailed": "Rebost non è riuscito ad aprirlo. Controlla quale app apre questo tipo di file e riprova."
   },
   "pii": {
     "heading": "Informazioni personali",

@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Ta složka patří k vlastním datům Rebostu. Vyber složku mimo ně.",
     "modelsFolderNameTaken": "V té složce už je jiný soubor se stejným názvem jako jedna z tvých AI. Vyber jinou složku.",
     "modelsFolderNoAis": "Tvé AI v té složce nejsou. Vyber složku, kde jsou, nebo použij složku Rebostu.",
-    "modelsFolderNested": "Ta složka je uvnitř složky, kde teď máš AI, nebo ji obsahuje. Vyber samostatnou složku."
+    "modelsFolderNested": "Ta složka je uvnitř složky, kde teď máš AI, nebo ji obsahuje. Vyber samostatnou složku.",
+    "openFailed": "Rebost to nemohl otevřít. Zkontrolujte, která aplikace otevírá tento typ souboru, a zkuste to znovu."
   },
   "pii": {
     "heading": "Osobní údaje",

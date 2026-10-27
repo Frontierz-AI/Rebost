@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Die map hoort bij de eigen gegevens van Rebost. Kies een map daarbuiten.",
     "modelsFolderNameTaken": "In die map staat al een ander bestand met dezelfde naam als een van je AI's. Kies een andere map.",
     "modelsFolderNoAis": "Je AI's staan niet in die map. Kies de map waarin ze staan, of gebruik de map van Rebost.",
-    "modelsFolderNested": "Die map staat in de map met je AI's, of bevat die. Kies een aparte map."
+    "modelsFolderNested": "Die map staat in de map met je AI's, of bevat die. Kies een aparte map.",
+    "openFailed": "Rebost kon het niet openen. Controleer welke app dit soort bestand opent en probeer het opnieuw."
   },
   "pii": {
     "heading": "Persoonsgegevens",

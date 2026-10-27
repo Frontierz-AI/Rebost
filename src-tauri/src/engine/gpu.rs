@@ -37,6 +37,56 @@ fn detected_accelerator() -> Option<&'static str> {
     None
 }
 
+/// Whether the Vulkan build at `binary` would run on a graphics card. On a
+/// Linux PC with no Vulkan driver, or only a software one (llama.cpp skips
+/// those), `--list-devices` lists nothing and the GPU plan would only slow
+/// the CPU down. `None` when the check could not run; the answer is kept per
+/// binary for the life of the process.
+pub(crate) async fn vulkan_device_listed(binary: &std::path::Path) -> Option<bool> {
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+    use std::sync::{Mutex, OnceLock};
+
+    static SEEN: OnceLock<Mutex<HashMap<PathBuf, bool>>> = OnceLock::new();
+    let seen = SEEN.get_or_init(Default::default);
+    if let Some(listed) = crate::core::mutex_lock(seen).get(binary) {
+        return Some(*listed);
+    }
+    let mut command = tokio::process::Command::new(binary);
+    crate::host::use_desktop_env(command.as_std_mut());
+    if let Some(home) = binary.parent() {
+        command.current_dir(home);
+    }
+    command
+        .arg("--list-devices")
+        .stdin(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .kill_on_drop(true);
+    let output = tokio::time::timeout(std::time::Duration::from_secs(20), command.output())
+        .await
+        .ok()?
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let listed = listed_devices(&String::from_utf8_lossy(&output.stdout))? > 0;
+    crate::core::mutex_lock(seen).insert(binary.to_path_buf(), listed);
+    Some(listed)
+}
+
+/// Devices under `Available devices:` in `llama-server --list-devices`.
+fn listed_devices(stdout: &str) -> Option<usize> {
+    let mut lines = stdout.lines();
+    lines.find(|line| line.trim_start().starts_with("Available devices"))?;
+    Some(
+        lines
+            .take_while(|line| line.starts_with(char::is_whitespace))
+            .map(str::trim)
+            .filter(|line| line.contains(": ") && !line.starts_with("(none)"))
+            .count(),
+    )
+}
+
 /// The x64 Windows build running under emulation on an ARM PC.
 pub(crate) fn runs_x64_on_arm() -> bool {
     #[cfg(all(windows, target_arch = "x86_64"))]
@@ -144,6 +194,17 @@ mod tests {
                 assert_eq!((pin.arch, pin.accelerator), ("aarch64", "CPU"));
             }
         }
+    }
+
+    #[test]
+    fn device_list_counts_only_listed_devices() {
+        let gpu = "Available devices:\n  Vulkan0: AMD Radeon 780M (RADV PHOENIX) (16384 MiB, 15000 MiB free)\n";
+        assert_eq!(listed_devices(gpu), Some(1));
+        assert_eq!(listed_devices("Available devices:\n"), Some(0));
+        assert_eq!(listed_devices("Available devices:\n  (none)\n"), Some(0));
+        let trailing = "load_backend: loaded CPU backend\nAvailable devices:\n  Vulkan0: Intel(R) Graphics (ADL GT2) (8000 MiB, 7000 MiB free)\n  Vulkan1: NVIDIA GeForce RTX 4060 (8188 MiB, 8000 MiB free)\nmain: exiting\n";
+        assert_eq!(listed_devices(trailing), Some(2));
+        assert_eq!(listed_devices("error: unknown argument"), None);
     }
 
     #[test]

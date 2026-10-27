@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Se kansio kuuluu Rebostin omiin tietoihin. Valitse kansio niiden ulkopuolelta.",
     "modelsFolderNameTaken": "Kansiossa on jo toinen tiedosto, jolla on sama nimi kuin yhdellä tekoälylläsi. Valitse toinen kansio.",
     "modelsFolderNoAis": "Tekoälysi eivät ole siinä kansiossa. Valitse kansio, jossa ne ovat, tai käytä Rebostin omaa kansiota.",
-    "modelsFolderNested": "Kansio on nykyisen tekoälykansiosi sisällä tai sisältää sen. Valitse erillinen kansio."
+    "modelsFolderNested": "Kansio on nykyisen tekoälykansiosi sisällä tai sisältää sen. Valitse erillinen kansio.",
+    "openFailed": "Rebost ei voinut avata sitä. Tarkista, mikä sovellus avaa tämän tiedostotyypin, ja yritä uudelleen."
   },
   "pii": {
     "heading": "Henkilötiedot",

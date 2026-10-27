@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Den mappen hör till Rebosts egna data. Välj en mapp utanför dem.",
     "modelsFolderNameTaken": "Mappen innehåller redan en annan fil med samma namn som en av dina AI:er. Välj en annan mapp.",
     "modelsFolderNoAis": "Dina AI:er ligger inte i den mappen. Välj mappen där de ligger, eller använd Rebosts egen mapp.",
-    "modelsFolderNested": "Den mappen ligger i mappen med dina AI:er, eller innehåller den. Välj en separat mapp."
+    "modelsFolderNested": "Den mappen ligger i mappen med dina AI:er, eller innehåller den. Välj en separat mapp.",
+    "openFailed": "Rebost kunde inte öppna det. Kontrollera vilken app som öppnar den här filtypen och försök igen."
   },
   "pii": {
     "heading": "Personuppgifter",

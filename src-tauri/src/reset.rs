@@ -120,7 +120,16 @@ fn platform_extras(identifier: &str) -> Vec<PathBuf> {
     ]
 }
 
-#[cfg(not(target_os = "macos"))]
+/// Window size and state (`.window-state.json`) live in the config folder.
+#[cfg(target_os = "linux")]
+fn platform_extras(identifier: &str) -> Vec<PathBuf> {
+    dirs::config_dir()
+        .map(|dir| dir.join(identifier))
+        .into_iter()
+        .collect()
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
 fn platform_extras(_identifier: &str) -> Vec<PathBuf> {
     Vec::new()
 }

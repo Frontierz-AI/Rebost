@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Ce dossier fait partie des données de Rebost. Choisissez-en un en dehors.",
     "modelsFolderNameTaken": "Ce dossier contient déjà un autre fichier portant le nom d’une de vos IA. Choisissez un autre dossier.",
     "modelsFolderNoAis": "Vos IA ne sont pas dans ce dossier. Choisissez celui qui les contient, ou utilisez le dossier de Rebost.",
-    "modelsFolderNested": "Ce dossier se trouve dans celui de vos IA, ou le contient. Choisissez un dossier distinct."
+    "modelsFolderNested": "Ce dossier se trouve dans celui de vos IA, ou le contient. Choisissez un dossier distinct.",
+    "openFailed": "Rebost n'a pas pu l'ouvrir. Vérifiez quelle app ouvre ce type de fichier, puis réessayez."
   },
   "pii": {
     "heading": "Informations personnelles",

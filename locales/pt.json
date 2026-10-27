@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Essa pasta faz parte dos dados do Rebost. Escolha uma fora deles.",
     "modelsFolderNameTaken": "Essa pasta já tem outro ficheiro com o mesmo nome de uma das suas IA. Escolha outra pasta.",
     "modelsFolderNoAis": "As suas IA não estão nessa pasta. Escolha a pasta onde estão ou use a pasta do Rebost.",
-    "modelsFolderNested": "Essa pasta está dentro da pasta atual das suas IA, ou contém-na. Escolha uma pasta à parte."
+    "modelsFolderNested": "Essa pasta está dentro da pasta atual das suas IA, ou contém-na. Escolha uma pasta à parte.",
+    "openFailed": "O Rebost não conseguiu abrir. Verifique qual aplicação abre este tipo de ficheiro e tente novamente."
   },
   "pii": {
     "heading": "Informação pessoal",

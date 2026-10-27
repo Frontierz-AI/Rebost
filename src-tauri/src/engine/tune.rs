@@ -94,12 +94,26 @@ impl SpawnPlan {
         Self::for_model(profile, pin, None)
     }
 
+    #[cfg(test)]
     pub fn for_model(profile: &MachineProfile, pin: &EnginePin, model: Option<&ModelHint>) -> Self {
-        let cpu_only = pin.accelerator == "Vulkan" && super::gpu::windows_host_is_arm64();
+        Self::for_host(profile, pin, model, false)
+    }
+
+    /// `no_gpu`: the Vulkan build found no graphics card it would use (a
+    /// Linux PC without a Vulkan driver, or only a software one).
+    pub fn for_host(
+        profile: &MachineProfile,
+        pin: &EnginePin,
+        model: Option<&ModelHint>,
+        no_gpu: bool,
+    ) -> Self {
+        let cpu_only =
+            pin.accelerator == "Vulkan" && (no_gpu || super::gpu::windows_host_is_arm64());
         let cpu_view;
         let pin = if cpu_only {
             // The x64 Windows copy on an ARM PC: Adreno Vulkan under emulation
-            // hangs or returns garbage, so tune it like the CPU build.
+            // hangs or returns garbage. Without a GPU there is nothing to
+            // offload to. Either way, tune it like the CPU build.
             cpu_view = EnginePin {
                 accelerator: "CPU",
                 ..*pin
@@ -588,6 +602,39 @@ mod tests {
             chat_stall_timeout(&vulkan_plan),
             std::time::Duration::from_secs(90)
         );
+    }
+
+    #[test]
+    fn vulkan_without_a_gpu_is_tuned_like_the_cpu_build() {
+        let machine = profile(16, "Vulkan");
+        let vulkan = pin_for("linux", "x86_64").unwrap();
+        let cpu = crate::engine::pin::optional_pin_for("linux", "x86_64", "CPU").unwrap();
+        let plan = SpawnPlan::for_host(&machine, vulkan, None, true);
+        assert!(plan.cpu_only);
+        assert!(!plan.no_mmap);
+        assert_eq!(plan.gpu_layers, 0);
+        assert_eq!(
+            chat_stall_timeout(&plan),
+            std::time::Duration::from_secs(180)
+        );
+        let cpu_plan = SpawnPlan::from_profile(&machine, cpu);
+        assert_eq!(
+            (
+                plan.batch,
+                plan.ubatch,
+                plan.context_tokens,
+                plan.flash_attn
+            ),
+            (
+                cpu_plan.batch,
+                cpu_plan.ubatch,
+                cpu_plan.context_tokens,
+                cpu_plan.flash_attn
+            )
+        );
+        let with_gpu = SpawnPlan::for_host(&machine, vulkan, None, false);
+        assert!(!with_gpu.cpu_only);
+        assert_eq!(with_gpu.gpu_layers, 99);
     }
 
     #[test]

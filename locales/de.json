@@ -609,7 +609,8 @@
     "modelsFolderAppData": "Dieser Ordner gehört zu Rebosts eigenen Daten. Wähle einen Ordner außerhalb davon.",
     "modelsFolderNameTaken": "In diesem Ordner liegt schon eine andere Datei mit dem Namen einer deiner KIs. Wähle einen anderen Ordner.",
     "modelsFolderNoAis": "Deine KIs sind nicht in diesem Ordner. Wähle den Ordner, in dem sie liegen, oder verwende Rebosts eigenen Ordner.",
-    "modelsFolderNested": "Dieser Ordner liegt im Ordner deiner KIs oder enthält ihn. Wähle einen eigenen Ordner."
+    "modelsFolderNested": "Dieser Ordner liegt im Ordner deiner KIs oder enthält ihn. Wähle einen eigenen Ordner.",
+    "openFailed": "Rebost konnte das nicht öffnen. Prüfe, welche App diesen Dateityp öffnet, und versuche es erneut."
   },
   "pii": {
     "heading": "Persönliche Daten",
