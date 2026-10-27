@@ -829,6 +829,16 @@ fn part_is_untrusted(path: &Path, known_size: Option<u64>) -> bool {
     part_looks_hollow(meta.len(), allocated_bytes(&meta), known_size)
 }
 
+/// Bytes a leftover `.part` for `dest` really holds on disk. A preallocated
+/// file can be full-size with nothing in it, so this counts allocated blocks,
+/// and nothing when the OS can't say.
+pub(crate) fn part_bytes_on_disk(dest: &Path) -> u64 {
+    let Ok(meta) = std::fs::metadata(dest.with_extension("part")) else {
+        return 0;
+    };
+    allocated_bytes(&meta).unwrap_or(0).min(meta.len())
+}
+
 /// Bytes we can resume from. Logical `len()` is not that on Windows.
 fn trusted_part_len(path: &Path, known_size: Option<u64>) -> u64 {
     let Ok(meta) = std::fs::metadata(path) else {
@@ -1154,6 +1164,27 @@ mod tests {
         assert!(part_looks_hollow(10_000_001, None, Some(10_000_000)));
         assert!(!part_looks_hollow(5_000_000, None, Some(10_000_000)));
         assert!(!part_looks_hollow(0, None, Some(10_000_000)));
+    }
+
+    #[test]
+    fn part_bytes_on_disk_ignores_preallocated_holes() {
+        let dir = tempfile::tempdir().unwrap();
+        let dest = dir.path().join("model.gguf");
+        assert_eq!(part_bytes_on_disk(&dest), 0);
+        let part = dest.with_extension("part");
+        std::fs::write(&part, vec![1u8; 64 * 1024]).unwrap();
+        let written = part_bytes_on_disk(&dest);
+        if cfg!(unix) {
+            assert!(written >= 64 * 1024, "{written}");
+        }
+        // Grow to 1 GiB without writing: a hole, not downloaded bytes.
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&part)
+            .unwrap()
+            .set_len(1 << 30)
+            .unwrap();
+        assert!(part_bytes_on_disk(&dest) < 1 << 29);
     }
 
     #[test]

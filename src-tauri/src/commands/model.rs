@@ -172,12 +172,8 @@ pub fn model_reveal(
     ctx: State<'_, Arc<Ctx>>,
     file: Option<String>,
 ) -> CmdResult<()> {
-    let dir = ctx.models_dir();
-    if ctx.models_folder_missing() {
-        return Err(friendly(crate::models_folder::MISSING));
-    }
+    let dir = ctx.ready_models_dir().map_err(friendly)?;
     let Some(file) = file else {
-        std::fs::create_dir_all(&dir).map_err(friendly)?;
         return app
             .opener()
             .open_path(dir.to_string_lossy().to_string(), None::<String>)

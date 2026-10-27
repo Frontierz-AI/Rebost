@@ -281,6 +281,8 @@ mod tests {
         let (engine, _) = engine_with(dir.path(), settings);
         let ctx = engine.ctx().clone();
         assert!(ctx.models_folder_missing());
+        let error = ctx.ready_models_dir().unwrap_err();
+        assert!(error.to_string().contains(models_folder::MISSING));
         assert!(!unplugged.exists(), "a chosen folder is never created");
         assert_eq!(crate::core::read_lock(&ctx.settings).other_models.len(), 1);
         for result in [

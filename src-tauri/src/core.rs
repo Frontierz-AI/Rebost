@@ -341,6 +341,20 @@ impl Ctx {
         chosen && !self.models_dir().is_dir()
     }
 
+    /// The models folder, ready to write into. Rebost's own folder is created
+    /// when needed; a chosen one never is, so a drive unplugged since the last
+    /// check fails here instead of a `/Volumes/<name>` folder appearing on the
+    /// startup disk.
+    pub fn ready_models_dir(&self) -> anyhow::Result<PathBuf> {
+        let dir = self.models_dir();
+        if read_lock(&self.settings).models_folder.is_none() {
+            std::fs::create_dir_all(&dir)?;
+        } else if !dir.is_dir() {
+            anyhow::bail!(crate::models_folder::MISSING);
+        }
+        Ok(dir)
+    }
+
     /// Local-context budget in characters — measured by the installation
     /// benchmark, defaulting conservatively before it runs.
     pub fn context_budget(&self) -> usize {

@@ -169,15 +169,8 @@ impl Engine {
         let total = resolved.size.map(|bytes| {
             bytes.saturating_add(companion.as_ref().and_then(|p| p.size).unwrap_or(0))
         });
-        // A resumed `.part` already holds its space (it may be preallocated).
-        if let Some(total) = total.filter(|_| !dest.with_extension("part").exists()) {
-            let free = crate::models_folder::free_space(&self.ctx.models_dir());
-            if !crate::models_folder::has_room(free, total) {
-                return Err(anyhow!(
-                    crate::models_folder::FolderProblem::NotEnoughSpace.code()
-                ));
-            }
-        }
+        let companion_bytes = companion.as_ref().and_then(|p| p.size).unwrap_or(0);
+        self.require_room(&dest, resolved.size, companion_bytes)?;
         let events: Arc<dyn crate::core::Events> = Arc::new(InstallEvents {
             events: self.ctx.events.clone(),
             offset: 0,
@@ -333,7 +326,8 @@ impl Engine {
             .ok_or_else(|| anyhow!("invalid projector checksum"))?;
         // Digest naming prevents collisions between repositories with mmproj-F16.gguf.
         let file = format!("vision-{sha}.gguf");
-        let dest = self.ctx.models_dir().join(&file);
+        let dest = self.ctx.ready_models_dir()?.join(&file);
+        self.require_room(&dest, resolved.size, 0)?;
         download::download(
             &self.download_client,
             &resolved.url,
@@ -350,6 +344,25 @@ impl Engine {
             file,
             size_bytes: resolved.size.unwrap_or(0),
         })
+    }
+
+    /// Check, right before a download, that the models folder is there and
+    /// that `dest` (plus `extra` bytes still to come) fits on its drive. Only
+    /// what a leftover `.part` really holds counts as already downloaded.
+    fn require_room(&self, dest: &std::path::Path, size: Option<u64>, extra: u64) -> Result<()> {
+        let dir = self.ctx.ready_models_dir()?;
+        let Some(size) = size else {
+            return Ok(());
+        };
+        let needed = size
+            .saturating_sub(download::part_bytes_on_disk(dest))
+            .saturating_add(extra);
+        if !crate::models_folder::has_room(crate::models_folder::free_space(&dir), needed) {
+            return Err(anyhow!(
+                crate::models_folder::FolderProblem::NotEnoughSpace.code()
+            ));
+        }
+        Ok(())
     }
 
     /// Image support was attempted with this AI and did not come up.
