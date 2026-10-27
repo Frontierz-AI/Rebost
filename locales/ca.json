@@ -295,6 +295,7 @@
     "allTypes": "Tots els tipus",
     "clearFilters": "Esborra els filtres",
     "showingOf": "Mostrant %{visible} de %{total}",
+    "stillToRead": "Pendents de llegir: %{count}",
     "delete": "Elimina",
     "removeFolderTitle": "Treu la carpeta",
     "removeFolder": "Vols treure «%{name}» d'aquest estant?\n\nAixò no esborrarà cap fitxer de l'ordinador. Rebost deixarà de fer servir aquesta carpeta.",

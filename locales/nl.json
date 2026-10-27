@@ -296,6 +296,7 @@
     "allTypes": "Alle typen",
     "clearFilters": "Filters wissen",
     "showingOf": "%{visible} van %{total} weergegeven",
+    "stillToRead": "Nog te lezen: %{count}",
     "delete": "Verwijderen",
     "removeFolderTitle": "Map weghalen",
     "removeFolder": "“%{name}” van deze plank halen?\n\nEr worden geen bestanden van je computer verwijderd. Rebost gebruikt deze map dan niet meer.",

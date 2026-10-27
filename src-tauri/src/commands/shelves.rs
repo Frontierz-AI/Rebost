@@ -159,8 +159,13 @@ pub(crate) fn stats_for(ctx: &Ctx, shelf_id: &str) -> ShelfStats {
     )
 }
 
-/// On Shelves visits: Reading files older than five minutes become Error.
+/// On Shelves visits: Reading files older than five minutes that no worker
+/// has (queued or reading) become Error. Waits for the startup sync, which
+/// queues files the last session left Reading.
 fn expire_stale_reading(ctx: &Ctx, shelf_id: &str) {
+    if !ctx.ingest_queue.synced() {
+        return;
+    }
     let now = chrono::Utc::now();
     let changed = {
         let mut library = crate::core::write_lock(&ctx.library);
@@ -170,7 +175,10 @@ fn expire_stale_reading(ctx: &Ctx, shelf_id: &str) {
             .filter(|d| d.status == crate::types::DocStatus::Reading)
             .map(|d| d.id)
             .collect();
-        let changed = library.expire_stale_reading(shelf_id, now);
+        let changed = library.expire_stale_reading(shelf_id, now, |doc| {
+            ctx.ingest_queue
+                .in_flight(shelf_id, std::path::Path::new(&doc.path))
+        });
         if changed > 0 {
             for doc in library.documents(shelf_id).into_iter().filter(|d| {
                 reading_ids.contains(&d.id) && d.status == crate::types::DocStatus::Error
@@ -762,6 +770,62 @@ mod tests {
             ensure_shelf_path(&ctx, "/tmp/not-in-a-shelf.md"),
             Err("That file is not in a Shelf Rebost knows.".into())
         );
+    }
+
+    #[test]
+    fn stale_reading_waits_for_the_startup_sync() {
+        let (dir, ctx) = test_ctx();
+        let shelf = {
+            let mut library = crate::core::write_lock(&ctx.library);
+            library
+                .create_shelf(&ctx.paths, "Scans", &dir.path().join("Rebost"))
+                .unwrap()
+        };
+        let path = shelf.managed_path.join("scan.pdf");
+        let hour_ago = (chrono::Utc::now() - chrono::Duration::hours(1)).to_rfc3339();
+        crate::core::write_lock(&ctx.library).upsert_document(DocumentMeta {
+            id: "d_scan".into(),
+            shelf_id: shelf.id.clone(),
+            source_id: crate::shelf::Shelf::IMPORTED_SOURCE.into(),
+            source_type: SourceType::Imported,
+            path: path.to_string_lossy().into_owned(),
+            rel_path: "scan.pdf".into(),
+            file_name: "scan.pdf".into(),
+            format: "pdf".into(),
+            size_bytes: 1,
+            mtime_ms: 0,
+            hash: String::new(),
+            status: crate::types::DocStatus::Reading,
+            error: None,
+            passage_count: 0,
+            pages: None,
+            pii_total: 0,
+            pii_categories: Default::default(),
+            ocr: false,
+            updated_at: hour_ago,
+            source_label: "Imported".into(),
+        });
+        let status = || {
+            crate::core::read_lock(&ctx.library)
+                .document(&shelf.id, "d_scan")
+                .unwrap()
+                .status
+        };
+        // Launch: left Reading by the last session, not queued yet.
+        expire_stale_reading(&ctx, &shelf.id);
+        assert_eq!(status(), crate::types::DocStatus::Reading);
+        // The startup sync queued it again.
+        let epoch = ctx.ingest_queue.stamp();
+        assert!(ctx
+            .ingest_queue
+            .try_queue(&shelf.id, "imported", path.clone(), false, epoch));
+        ctx.ingest_queue.mark_synced();
+        expire_stale_reading(&ctx, &shelf.id);
+        assert_eq!(status(), crate::types::DocStatus::Reading);
+        // Nothing has it any more: it really is stuck.
+        ctx.ingest_queue.start(&shelf.id, &path, epoch);
+        expire_stale_reading(&ctx, &shelf.id);
+        assert_eq!(status(), crate::types::DocStatus::Error);
     }
 
     #[test]
