@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
@@ -42,6 +43,9 @@ export async function watchWindowTheme(): Promise<() => void> {
     const window = getCurrentWindow();
     const theme = await window.theme();
     apply(theme === "dark" ? "dark" : "light");
+    // Linux: GTK's own setting, which the window theme can miss at startup.
+    const desktop = await invoke<string | null>("desktop_color_scheme").catch(() => null);
+    if (desktop) apply(desktop === "dark" ? "dark" : "light");
     const stopWindow = await window.onThemeChanged(({ payload }) => {
       apply(payload === "dark" ? "dark" : "light");
     });

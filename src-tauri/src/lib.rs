@@ -351,6 +351,7 @@ pub fn run() {
             snapshot::dev_shot_fail,
             about::about_info,
             about::show_about_window,
+            window::desktop_color_scheme,
             about::close_about_window,
             about::open_external,
             updater::update_info,

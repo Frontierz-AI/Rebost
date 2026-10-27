@@ -73,14 +73,7 @@ pub fn follow_desktop_theme(app: &tauri::AppHandle) {
     let notify = {
         let app = app.clone();
         move |settings: &gtk::Settings| {
-            let theme_name = settings
-                .gtk_theme_name()
-                .map(|name| name.to_lowercase())
-                .unwrap_or_default();
-            let dark = settings.is_gtk_application_prefer_dark_theme()
-                || theme_name.ends_with("-dark")
-                || theme_name.ends_with(":dark");
-            if let Err(error) = app.emit(THEME_EVENT, if dark { "dark" } else { "light" }) {
+            if let Err(error) = app.emit(THEME_EVENT, gtk_scheme(settings)) {
                 log::warn!("emit {THEME_EVENT}: {error}");
             }
         }
@@ -88,6 +81,43 @@ pub fn follow_desktop_theme(app: &tauri::AppHandle) {
     let on_name = notify.clone();
     settings.connect_gtk_application_prefer_dark_theme_notify(notify);
     settings.connect_gtk_theme_name_notify(on_name);
+}
+
+#[cfg(target_os = "linux")]
+fn gtk_scheme(settings: &gtk::Settings) -> &'static str {
+    use gtk::prelude::GtkSettingsExt;
+    let theme_name = settings
+        .gtk_theme_name()
+        .map(|name| name.to_string())
+        .unwrap_or_default();
+    scheme_for(settings.is_gtk_application_prefer_dark_theme(), &theme_name)
+}
+
+/// `dark` when GTK prefers dark or the GTK theme is a dark variant.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub(crate) fn scheme_for(prefer_dark: bool, theme_name: &str) -> &'static str {
+    let theme_name = theme_name.to_lowercase();
+    if prefer_dark || theme_name.ends_with("-dark") || theme_name.ends_with(":dark") {
+        "dark"
+    } else {
+        "light"
+    }
+}
+
+/// The desktop's light/dark scheme as GTK sees it (Linux), read once when the
+/// page starts. tao's own window theme only asks the portal, which misses a
+/// dark GTK theme or `gtk-application-prefer-dark-theme` in settings.ini.
+/// `None` elsewhere: the window theme is right there.
+#[tauri::command]
+pub fn desktop_color_scheme() -> Option<&'static str> {
+    #[cfg(target_os = "linux")]
+    {
+        gtk::Settings::default().map(|settings| gtk_scheme(&settings))
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        None
+    }
 }
 
 /// Move a window so only a few pixels stay on the work area (right edge).
@@ -229,6 +259,16 @@ mod tests {
         assert_eq!(content_size(1280, 720, outer, inner), (1228, 631));
         let unmapped = PhysicalSize::new(0, 0);
         assert_eq!(content_size(1280, 720, outer, unmapped), (1280, 720));
+    }
+
+    #[test]
+    fn dark_gtk_settings_mean_a_dark_page() {
+        assert_eq!(scheme_for(true, "Adwaita"), "dark");
+        assert_eq!(scheme_for(false, "Adwaita-dark"), "dark");
+        assert_eq!(scheme_for(false, "Adwaita:dark"), "dark");
+        assert_eq!(scheme_for(false, "Breeze-Dark"), "dark");
+        assert_eq!(scheme_for(false, "Adwaita"), "light");
+        assert_eq!(scheme_for(false, ""), "light");
     }
 
     #[test]
