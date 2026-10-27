@@ -8,6 +8,9 @@ The app-data layout may change without a migration.
 
 ### Added
 
+- Choose how many files each Shelf reads: 1,000 (still the default), 2,500, 5,000, or 10,000. The setting is at the top of the Shelf. More files take longer to read and use more disk space.
+- Raising it reads the files that were left unread. Lowering it keeps every file already on the Shelf; only new files stop being added.
+- When a Shelf is full, the message says where to raise the limit.
 - Choose where AIs are kept. Settings → Where AIs are kept shows the folder and the free space on its drive. Change… picks another folder, on another drive for example, and moves the installed AIs there with a progress bar. A move that fails or is cancelled leaves them where they were. First run shows where the AI will be saved, with a Change link, before the download starts.
 - When the chosen folder is on a drive that isn't connected, Settings says so and offers Try again, another folder, or Rebost's own folder. Installed AIs are not forgotten in the meantime.
 

@@ -337,6 +337,15 @@
     "thinkLight": "Ligero",
     "thinkDeep": "Profundo",
     "thinkHint": "Los niveles Ligero y Profundo necesitan más tiempo.",
+    "fileLimit": "Archivos que lee este estante",
+    "fileLimitChoice": "Hasta %{count} archivos",
+    "fileLimitHint": "Con más archivos, la lectura tarda más y ocupa más espacio en el disco.",
+    "fileLimitOver": "Este estante tiene %{count} archivos. Se quedan todos, pero no se añadirán archivos nuevos.",
+    "capFull": "Este estante ya tiene %{limit} archivos.",
+    "capAddedOne": "Se ha añadido 1 archivo. Este estante lee hasta %{limit} archivos; el resto se ha quedado sin leer.",
+    "capAddedMany": "Se han añadido %{count} archivos. Este estante lee hasta %{limit} archivos; el resto se ha quedado sin leer.",
+    "capRaise": "Para leer más, sube «%{setting}» arriba del todo en este estante.",
+    "capRemove": "Quita algunos archivos para añadir más.",
     "noMatch": "Ningún archivo coincide con estos filtros",
     "tryDifferentFilter": "Prueba otro nombre, origen o tipo.",
     "colFile": "Archivo",
@@ -676,7 +685,9 @@
   "imports": {
     "addedOne": "Añadido a esta conversación.",
     "addedMany": "Se han añadido %{count} archivos a esta conversación.",
-    "unsupported": "El tipo de esos archivos no es compatible."
+    "unsupported": "El tipo de esos archivos no es compatible.",
+    "capFull": "Esta conversación ya tiene %{limit} archivos adjuntos. Quita algunos para añadir más.",
+    "capRest": "Una conversación admite hasta %{limit} archivos adjuntos; el resto se ha quedado sin leer."
   },
   "images": {
     "pasted": "Imagen pegada",

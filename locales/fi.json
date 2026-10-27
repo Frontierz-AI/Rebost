@@ -338,6 +338,15 @@
     "thinkLight": "Kevyt",
     "thinkDeep": "Perusteellinen",
     "thinkHint": "Kevyt ja Perusteellinen vievät enemmän aikaa.",
+    "fileLimit": "Montako tiedostoa tämä hylly lukee",
+    "fileLimitChoice": "Enintään %{count} tiedostoa",
+    "fileLimitHint": "Useamman tiedoston lukeminen kestää kauemmin ja vie enemmän levytilaa.",
+    "fileLimitOver": "Tällä hyllyllä on %{count} tiedostoa. Ne kaikki säilyvät, mutta uusia tiedostoja ei lisätä.",
+    "capFull": "Tällä hyllyllä on jo %{limit} tiedostoa.",
+    "capAddedOne": "Lisättiin 1 tiedosto. Tämä hylly lukee enintään %{limit} tiedostoa; loput jäivät lukematta.",
+    "capAddedMany": "Lisättiin %{count} tiedostoa. Tämä hylly lukee enintään %{limit} tiedostoa; loput jäivät lukematta.",
+    "capRaise": "Jos haluat lukea lisää, nosta kohtaa ”%{setting}” tämän hyllyn yläosassa.",
+    "capRemove": "Poista joitakin tiedostoja, jotta voit lisätä uusia.",
     "noMatch": "Yksikään tiedosto ei vastaa näitä suodattimia",
     "tryDifferentFilter": "Kokeile toista nimeä, lähdettä tai tyyppiä.",
     "colFile": "Tiedosto",
@@ -677,7 +686,9 @@
   "imports": {
     "addedOne": "Lisätty tähän keskusteluun.",
     "addedMany": "Tähän keskusteluun lisättiin %{count} tiedostoa.",
-    "unsupported": "Näitä tiedostotyyppejä ei tueta."
+    "unsupported": "Näitä tiedostotyyppejä ei tueta.",
+    "capFull": "Tässä keskustelussa on jo %{limit} liitetiedostoa. Poista joitakin, jotta voit lisätä uusia.",
+    "capRest": "Keskusteluun mahtuu enintään %{limit} liitetiedostoa; loput jäivät lukematta."
   },
   "images": {
     "pasted": "Liitetty kuva",

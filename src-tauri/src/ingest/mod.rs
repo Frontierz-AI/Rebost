@@ -30,7 +30,7 @@ use tokio::sync::mpsc;
 
 use crate::core::{read_lock, write_lock, Ctx};
 use crate::ids;
-use crate::shelf::{rel_is_skipped, scan_new_files, MAX_FILES_PER_SHELF};
+use crate::shelf::{rel_is_skipped, scan_new_files};
 use crate::types::{DocStatus, DocumentMeta, SourceType};
 
 /// Result of scanning one source onto a Shelf.
@@ -270,7 +270,7 @@ impl Ingestor {
     }
 
     /// Queue supported files of a shelf source. Stops accepting new files
-    /// once the Shelf is at `MAX_FILES_PER_SHELF`.
+    /// once the Shelf is at its file limit.
     pub async fn sync_source(
         &self,
         shelf_id: &str,
@@ -340,35 +340,77 @@ impl Ingestor {
             library.shelves().to_vec()
         };
         for shelf in shelves {
-            let _ = self
-                .sync_source(
-                    &shelf.id,
-                    crate::shelf::Shelf::IMPORTED_SOURCE,
-                    SourceType::Imported,
-                    "Imported",
-                    &shelf.managed_path,
-                    force,
-                )
-                .await;
-            for linked in &shelf.linked_folders {
-                let label = linked
-                    .path
-                    .file_name()
-                    .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_else(|| linked.path.to_string_lossy().to_string());
+            for source in shelf_sources(&shelf) {
                 let _ = self
                     .sync_source(
                         &shelf.id,
-                        &ids::source_id(&linked.path.to_string_lossy()),
-                        SourceType::Linked,
-                        &label,
-                        &linked.path,
+                        &source.id,
+                        source.source_type,
+                        &source.label,
+                        &source.root,
                         force,
                     )
                     .await;
             }
         }
     }
+
+    /// Queue files this Shelf left unread, in every source that is here.
+    /// Used after its file limit goes up.
+    pub async fn queue_unread(&self, shelf_id: &str) -> SyncOutcome {
+        let Some(shelf) = read_lock(&self.ctx.library).shelf(shelf_id).cloned() else {
+            return SyncOutcome::default();
+        };
+        let mut total = SyncOutcome::default();
+        for source in shelf_sources(&shelf) {
+            if !source.root.is_dir() {
+                continue;
+            }
+            let outcome = self
+                .queue_new_under(
+                    &shelf.id,
+                    &source.id,
+                    source.source_type,
+                    &source.label,
+                    &source.root,
+                    &source.root,
+                )
+                .await;
+            total.new_files += outcome.new_files;
+            total.at_limit |= outcome.at_limit;
+        }
+        total
+    }
+}
+
+struct ShelfSource {
+    id: String,
+    source_type: SourceType,
+    label: String,
+    root: PathBuf,
+}
+
+/// The managed folder first, then each linked folder.
+fn shelf_sources(shelf: &crate::shelf::Shelf) -> Vec<ShelfSource> {
+    let mut sources = vec![ShelfSource {
+        id: crate::shelf::Shelf::IMPORTED_SOURCE.to_string(),
+        source_type: SourceType::Imported,
+        label: "Imported".to_string(),
+        root: shelf.managed_path.clone(),
+    }];
+    for linked in &shelf.linked_folders {
+        sources.push(ShelfSource {
+            id: ids::source_id(&linked.path.to_string_lossy()),
+            source_type: SourceType::Linked,
+            label: linked
+                .path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| linked.path.to_string_lossy().to_string()),
+            root: linked.path.clone(),
+        });
+    }
+    sources
 }
 
 pub(crate) fn emit_file_event(ctx: &Ctx, meta: &DocumentMeta) {
@@ -405,11 +447,15 @@ fn process_job_is_registered(ctx: &Ctx, job: &ProcessJob) -> bool {
 }
 
 pub(crate) fn remaining_file_slots(ctx: &Ctx, shelf_id: &str) -> usize {
-    ctx.ingest_queue.remaining_new_files(
-        shelf_id,
-        read_lock(&ctx.library).document_count(shelf_id),
-        MAX_FILES_PER_SHELF,
-    )
+    let (on_shelf, limit) = {
+        let library = read_lock(&ctx.library);
+        (
+            library.document_count(shelf_id),
+            library.file_limit(shelf_id),
+        )
+    };
+    ctx.ingest_queue
+        .remaining_new_files(shelf_id, on_shelf, limit)
 }
 
 fn room_for_new(ctx: &Ctx, shelf_id: &str) -> bool {
@@ -982,6 +1028,100 @@ mod tests {
             updated_at: "2026-01-01T00:00:00Z".into(),
             source_label: "Imported".into(),
         }
+    }
+
+    fn test_ingestor() -> (
+        tempfile::TempDir,
+        Ingestor,
+        mpsc::UnboundedReceiver<Job>,
+        crate::shelf::Shelf,
+    ) {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::Paths::new(dir.path().join("appdata"));
+        let ctx = Ctx::new(
+            paths,
+            Arc::new(crate::core::NoopEvents),
+            extract::ExtractorSettings::default(),
+        )
+        .unwrap();
+        let shelf = write_lock(&ctx.library)
+            .create_shelf(&ctx.paths, "Big", &dir.path().join("Rebost"))
+            .unwrap();
+        let (tx, rx) = mpsc::unbounded_channel();
+        (dir, Ingestor { ctx, tx }, rx, shelf)
+    }
+
+    /// Registry entries for files that are already on the Shelf.
+    fn fill(ingestor: &Ingestor, shelf_id: &str, count: usize) {
+        let mut library = write_lock(&ingestor.ctx.library);
+        for i in 0..count {
+            let mut doc = meta(DocStatus::Ready, 1, 0);
+            doc.id = format!("d_fill{i}");
+            doc.shelf_id = shelf_id.to_string();
+            doc.path = format!("/tmp/fill{i}.md");
+            doc.rel_path = format!("fill{i}.md");
+            library.upsert_document(doc);
+        }
+    }
+
+    fn queued_paths(rx: &mut mpsc::UnboundedReceiver<Job>) -> Vec<PathBuf> {
+        let mut out = Vec::new();
+        while let Ok(job) = rx.try_recv() {
+            if let Job::Process(p) = job {
+                out.push(p.abs_path);
+            }
+        }
+        out.sort();
+        out
+    }
+
+    #[tokio::test]
+    async fn raising_the_file_limit_queues_files_left_unread() {
+        let (_dir, ingestor, mut rx, shelf) = test_ingestor();
+        fill(&ingestor, &shelf.id, crate::shelf::DEFAULT_FILE_LIMIT);
+        for name in ["a.md", "b.md", "c.md"] {
+            std::fs::write(shelf.managed_path.join(name), "new").unwrap();
+        }
+
+        let full = ingestor.queue_unread(&shelf.id).await;
+        assert_eq!(full.new_files, 0);
+        assert!(full.at_limit);
+        assert!(queued_paths(&mut rx).is_empty());
+
+        write_lock(&ingestor.ctx.library)
+            .set_file_limit(&shelf.id, 2_500)
+            .unwrap();
+        let raised = ingestor.queue_unread(&shelf.id).await;
+        assert_eq!(raised.new_files, 3);
+        assert!(!raised.at_limit);
+        let names: Vec<_> = queued_paths(&mut rx)
+            .iter()
+            .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(names, vec!["a.md", "b.md", "c.md"]);
+    }
+
+    #[tokio::test]
+    async fn lowering_the_file_limit_removes_nothing_and_adds_nothing() {
+        let (_dir, ingestor, mut rx, shelf) = test_ingestor();
+        write_lock(&ingestor.ctx.library)
+            .set_file_limit(&shelf.id, 2_500)
+            .unwrap();
+        fill(&ingestor, &shelf.id, 1_200);
+        std::fs::write(shelf.managed_path.join("late.md"), "new").unwrap();
+
+        write_lock(&ingestor.ctx.library)
+            .set_file_limit(&shelf.id, 1_000)
+            .unwrap();
+        let outcome = ingestor.queue_unread(&shelf.id).await;
+        assert_eq!(outcome.new_files, 0);
+        assert!(outcome.at_limit);
+        assert!(queued_paths(&mut rx).is_empty());
+        assert_eq!(remaining_file_slots(&ingestor.ctx, &shelf.id), 0);
+        assert_eq!(
+            read_lock(&ingestor.ctx.library).document_count(&shelf.id),
+            1_200
+        );
     }
 
     #[test]

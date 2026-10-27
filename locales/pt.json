@@ -338,6 +338,15 @@
     "thinkLight": "Ligeiro",
     "thinkDeep": "Profundo",
     "thinkHint": "Ligeiro e Profundo demoram mais.",
+    "fileLimit": "Ficheiros que esta estante lê",
+    "fileLimitChoice": "Até %{count} ficheiros",
+    "fileLimitHint": "Mais ficheiros demoram mais a ler e ocupam mais espaço no disco.",
+    "fileLimitOver": "Esta estante tem %{count} ficheiros. Ficam todos, mas não serão adicionados ficheiros novos.",
+    "capFull": "Esta estante já tem %{limit} ficheiros.",
+    "capAddedOne": "1 ficheiro adicionado. Esta estante lê até %{limit} ficheiros; os restantes ficaram por ler.",
+    "capAddedMany": "%{count} ficheiros adicionados. Esta estante lê até %{limit} ficheiros; os restantes ficaram por ler.",
+    "capRaise": "Para ler mais, aumente «%{setting}» no topo desta estante.",
+    "capRemove": "Remova alguns ficheiros para adicionar mais.",
     "noMatch": "Nenhum ficheiro corresponde a estes filtros",
     "tryDifferentFilter": "Experimente outro nome, origem ou tipo.",
     "colFile": "Ficheiro",
@@ -677,7 +686,9 @@
   "imports": {
     "addedOne": "Adicionado a esta conversa.",
     "addedMany": "%{count} ficheiros adicionados a esta conversa.",
-    "unsupported": "O tipo destes ficheiros não é suportado."
+    "unsupported": "O tipo destes ficheiros não é suportado.",
+    "capFull": "Esta conversa já tem %{limit} ficheiros anexados. Remova alguns para adicionar mais.",
+    "capRest": "Uma conversa aceita até %{limit} ficheiros anexados; os restantes ficaram por ler."
   },
   "images": {
     "pasted": "Imagem colada",

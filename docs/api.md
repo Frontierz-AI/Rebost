@@ -26,6 +26,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `shelves_list` | — | `ShelfView[]` (`linkedFolders[].available` is false when that folder is not present on the machine) |
 | `shelf_create` | `name` | `ShelfView` |
 | `shelf_remove` | `shelfId` | `()` |
+| `shelf_set_file_limit` | `shelfId`, `fileLimit` (1,000, 2,500, 5,000, or 10,000) | `ShelfView`. Raising it queues files left unread; lowering it keeps every file and only stops new ones. Library Shelves only. |
 | `shelf_add_linked` | `shelfId` | `AddLinkedResult \| null` (`shelf`, `queued`, `atLimit`; null if the folder picker was cancelled) |
 | `shelf_remove_source` | `shelfId`, `sourceId` | `()` |
 | `shelf_import_paths` | `shelfId`, `paths` | `ImportResult` (`queued`, `names`, `cancelled`, `atLimit`, `skippedLong`). Empty `paths` imports the latest native drop. Other paths must already be on the drop/picker allowlist; anything else is ignored. |

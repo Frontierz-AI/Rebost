@@ -337,6 +337,15 @@
     "thinkLight": "Lleuger",
     "thinkDeep": "Profund",
     "thinkHint": "Els nivells Lleuger i Profund necessiten més temps.",
+    "fileLimit": "Fitxers que llegeix aquest estant",
+    "fileLimitChoice": "Fins a %{count} fitxers",
+    "fileLimitHint": "Amb més fitxers, la lectura triga més i ocupa més espai al disc.",
+    "fileLimitOver": "Aquest estant té %{count} fitxers. Es queden tots, però no se n'afegiran de nous.",
+    "capFull": "Aquest estant ja té %{limit} fitxers.",
+    "capAddedOne": "S'ha afegit 1 fitxer. Aquest estant llegeix fins a %{limit} fitxers; la resta s'han quedat sense llegir.",
+    "capAddedMany": "S'han afegit %{count} fitxers. Aquest estant llegeix fins a %{limit} fitxers; la resta s'han quedat sense llegir.",
+    "capRaise": "Per llegir-ne més, puja «%{setting}» a dalt de tot d'aquest estant.",
+    "capRemove": "Treu alguns fitxers per afegir-ne més.",
     "noMatch": "Cap fitxer no coincideix amb aquests filtres",
     "tryDifferentFilter": "Prova un altre nom, origen o tipus.",
     "colFile": "Fitxer",
@@ -676,7 +685,9 @@
   "imports": {
     "addedOne": "Afegit a aquesta conversa.",
     "addedMany": "S'han afegit %{count} fitxers a aquesta conversa.",
-    "unsupported": "El tipus d'aquests fitxers no és compatible."
+    "unsupported": "El tipus d'aquests fitxers no és compatible.",
+    "capFull": "Aquesta conversa ja té %{limit} fitxers adjunts. Treu-ne alguns per afegir-ne més.",
+    "capRest": "Una conversa admet fins a %{limit} fitxers adjunts; la resta s'han quedat sense llegir."
   },
   "images": {
     "pasted": "Imatge enganxada",
