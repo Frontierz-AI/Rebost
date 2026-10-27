@@ -63,6 +63,8 @@ modules:
   # and newer processors, like the upstream Linux builds. The app unpacks an
   # archive named like the upstream one, so the same code finds it: the
   # Vulkan build, and the same files without Vulkan as the CPU fallback.
+  # No web UI: the server's UI would be downloaded at build time, and Rebost
+  # only talks to its API.
   - name: llama-cpp
     buildsystem: simple
     build-commands:
@@ -86,7 +88,8 @@ modules:
           -DLLAMA_CURL=OFF \
           -DLLAMA_BUILD_TESTS=OFF \
           -DLLAMA_BUILD_EXAMPLES=OFF \
-          -DLLAMA_BUILD_SERVER=ON
+          -DLLAMA_BUILD_SERVER=ON \
+          -DLLAMA_USE_PREBUILT_UI=OFF
         cmake --build build -j "$FLATPAK_BUILDER_N_JOBS"
         ls -l build/bin
         stage="$PWD/stage/build/bin"
@@ -117,6 +120,11 @@ modules:
       - |
         set -eu
         export TESSERACT_RS_CACHE_DIR="$PWD/tesseract-cache"
+        # xberg-tesseract links -lstdc++fs, which GCC 9 folded into
+        # libstdc++ and this SDK no longer ships. An empty archive satisfies it.
+        mkdir -p "$PWD/link-shims"
+        ar rcs "$PWD/link-shims/libstdc++fs.a"
+        export LIBRARY_PATH="$PWD/link-shims${LIBRARY_PATH:+:$LIBRARY_PATH}"
         export PATH="$PWD/pnpm-bin:$PATH"
         pnpm install --offline --frozen-lockfile --trust-lockfile
         pnpm build
