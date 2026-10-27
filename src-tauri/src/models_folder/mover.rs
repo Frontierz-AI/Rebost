@@ -325,7 +325,8 @@ fn copy_checked(
         .with_context(|| format!("create {}", dst.display()))?;
     let (copied, expected) =
         copy_stream(&mut input, &mut output, &mut |n| progress(n / 2), cancelled)?;
-    output.sync_all()?;
+    // A full disk can surface only when the data is flushed.
+    output.sync_all().map_err(write_error)?;
     drop(output);
     if copied != bytes {
         return Err(anyhow!("model changed while it was being moved"));
@@ -357,17 +358,21 @@ pub(crate) fn copy_stream(
             break;
         }
         hasher.update(&buf[..n]);
-        output
-            .write_all(&buf[..n])
-            .map_err(|error| match is_disk_full(&error) {
-                true => anyhow!(FolderProblem::NotEnoughSpace.code()),
-                false => anyhow!(error).context("write copy"),
-            })?;
+        output.write_all(&buf[..n]).map_err(write_error)?;
         copied += n as u64;
         progress(copied);
     }
-    output.flush()?;
+    output.flush().map_err(write_error)?;
     Ok((copied, hasher.finalize().to_vec()))
+}
+
+/// A full disk becomes [`FolderProblem::NotEnoughSpace`].
+fn write_error(error: std::io::Error) -> anyhow::Error {
+    if is_disk_full(&error) {
+        anyhow!(FolderProblem::NotEnoughSpace.code())
+    } else {
+        anyhow!(error).context("write copy")
+    }
 }
 
 fn is_disk_full(error: &std::io::Error) -> bool {

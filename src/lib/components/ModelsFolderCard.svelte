@@ -274,7 +274,9 @@
 
   {#if error}
     <p role="alert" class="mt-2 text-sm text-red-700 dark:text-red-400">{error}</p>
-  {:else if notice}
-    <p role="status" class="mt-2 text-sm text-ink-soft">{notice}</p>
+  {:else if notice || folder.keptOldCopies}
+    <p role="status" class="mt-2 text-sm text-ink-soft">
+      {notice || t("modelsFolder.keptCopies")}
+    </p>
   {/if}
 </section>

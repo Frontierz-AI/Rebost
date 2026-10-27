@@ -743,3 +743,25 @@ fn a_restart_mid_move_finishes_or_undoes_it() {
         }
     }
 }
+
+#[test]
+fn a_folder_holding_app_data_is_fine_one_inside_it_is_not() {
+    let dir = tempfile::tempdir().unwrap();
+    let home = dir.path().join("home");
+    let paths = crate::paths::Paths::new(home.join("Library").join("io.rebost.desktop"));
+    paths.ensure().unwrap();
+    let current = dir.path().join("Drive");
+    write(&current, "a.gguf", b"aaaa");
+    let installed = files(&["a.gguf"]);
+    let check = |to: &Path| Preflight::check(&paths, to, &installed, &current, false).problem;
+    assert_eq!(
+        check(&home),
+        None,
+        "the home folder holds app data; that's fine"
+    );
+    assert_eq!(check(paths.base()), Some(FolderProblem::InsideAppData));
+    assert_eq!(
+        check(&paths.shelves_dir()),
+        Some(FolderProblem::InsideAppData)
+    );
+}

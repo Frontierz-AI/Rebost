@@ -253,6 +253,8 @@ export interface ModelsFolderView {
   custom: boolean;
   /** The chosen folder can't be found (an unplugged drive). */
   missing: boolean;
+  /** A restart finished an interrupted move but kept some old copies. */
+  keptOldCopies: boolean;
 }
 
 /** A folder picked for AIs, and what using it would involve. */

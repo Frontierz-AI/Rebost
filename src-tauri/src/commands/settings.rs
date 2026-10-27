@@ -38,6 +38,8 @@ pub struct ModelsFolderView {
     pub custom: bool,
     /// The chosen folder can't be found (an unplugged drive).
     pub missing: bool,
+    /// A restart finished an interrupted move but kept some old copies.
+    pub kept_old_copies: bool,
 }
 
 fn settings_view(ctx: &Ctx) -> SettingsView {
@@ -47,6 +49,10 @@ fn settings_view(ctx: &Ctx) -> SettingsView {
             .models_folder
             .is_some(),
         missing: ctx.models_folder_missing(),
+        kept_old_copies: ctx
+            .models_move_kept
+            .load(std::sync::atomic::Ordering::Relaxed)
+            > 0,
     };
     let settings = crate::core::read_lock(&ctx.settings);
     let resolved_locale = crate::i18n::resolve(

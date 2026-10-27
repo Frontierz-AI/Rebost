@@ -226,7 +226,9 @@ impl Engine {
         let models_dir = ctx.models_dir();
         match crate::models_folder::recover(ctx.paths.base(), &models_dir) {
             Some(crate::models_folder::Recovered::Finished { kept }) => {
-                log::warn!("finished an interrupted AI move; kept {kept} old file(s)")
+                log::warn!("finished an interrupted AI move; kept {kept} old file(s)");
+                ctx.models_move_kept
+                    .store(kept, std::sync::atomic::Ordering::Relaxed);
             }
             Some(crate::models_folder::Recovered::RolledBack) => {
                 log::warn!("undid an interrupted AI move")

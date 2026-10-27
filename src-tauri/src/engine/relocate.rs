@@ -59,10 +59,16 @@ impl Engine {
         let control = download::DownloadControl::new();
         crate::core::mutex_lock(&self.downloads).insert(MOVE_ID.into(), control.clone());
         let result = async {
-            if !plan.to_move.is_empty() {
+            // Holding the start lock keeps Chat from starting the engine on
+            // the old files mid-move; it waits, as the confirm says.
+            let _no_start = if plan.to_move.is_empty() {
+                None
+            } else {
                 self.wait_until_chat_idle().await;
+                let no_start = self.start_lock.lock().await;
                 self.stop().await;
-            }
+                Some(no_start)
+            };
             let events = self.ctx.events.clone();
             let staging = plan.clone();
             let journal = models_folder::journal_path(self.ctx.paths.base());

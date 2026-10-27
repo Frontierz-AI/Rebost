@@ -49,16 +49,30 @@ pub const MISSING: &str = "models-folder-missing";
 /// left with a full disk.
 pub const SPARE_BYTES: u64 = 1024 * 1024 * 1024;
 
+/// Mounted disks and their free space, read once.
+struct DiskList(Vec<(PathBuf, u64)>);
+
+impl DiskList {
+    fn read() -> Self {
+        let disks = sysinfo::Disks::new_with_refreshed_list();
+        Self(
+            disks
+                .iter()
+                .map(|d| (d.mount_point().to_path_buf(), d.available_space()))
+                .collect(),
+        )
+    }
+
+    fn disk_of(&self, path: &Path) -> Option<(&Path, u64)> {
+        let probe = existing_ancestor(path);
+        disk_for(&probe, self.0.iter().map(|(m, free)| (m.as_path(), *free)))
+    }
+}
+
 /// Free space on the disk that holds `path`, when the OS reports it. A path
 /// that does not exist yet is measured on its nearest existing parent.
 pub fn free_space(path: &Path) -> Option<u64> {
-    let probe = existing_ancestor(path);
-    let disks = sysinfo::Disks::new_with_refreshed_list();
-    disk_for(
-        &probe,
-        disks.iter().map(|d| (d.mount_point(), d.available_space())),
-    )
-    .map(|(_, free)| free)
+    DiskList::read().disk_of(path).map(|(_, free)| free)
 }
 
 /// Whether `needed` bytes fit. An unknown free space never blocks: a wrong
@@ -69,11 +83,9 @@ pub fn has_room(free: Option<u64>, needed: u64) -> bool {
 
 /// Whether two folders sit on the same disk (so a move needs no extra room).
 pub fn same_disk(a: &Path, b: &Path) -> bool {
-    let disks = sysinfo::Disks::new_with_refreshed_list();
-    let mounts: Vec<_> = disks.iter().map(|d| (d.mount_point(), 0)).collect();
-    let a = disk_for(&existing_ancestor(a), mounts.iter().copied()).map(|(m, _)| m);
-    let b = disk_for(&existing_ancestor(b), mounts.iter().copied()).map(|(m, _)| m);
-    a.is_some() && a == b
+    let disks = DiskList::read();
+    let (a, b) = (disks.disk_of(a), disks.disk_of(b));
+    a.is_some() && a.map(|(m, _)| m) == b.map(|(m, _)| m)
 }
 
 /// The disk that holds `path`: the mount point that is its longest prefix.
@@ -260,14 +272,21 @@ impl Preflight {
         current_missing: bool,
     ) -> Self {
         let plan = MovePlan::new(files, current, to);
-        let free = free_space(to);
+        let disks = DiskList::read();
+        let free = disks.disk_of(to).map(|(_, free)| free);
+        let one_disk = disks
+            .disk_of(current)
+            .is_some_and(|(mount, _)| disks.disk_of(to).is_some_and(|(other, _)| other == mount));
         let default = relation(to, &paths.default_models_dir()) == Relation::Same;
         let here = relation(to, current);
         let problem = if here == Relation::Same {
             None
         } else if here == Relation::Nested {
             Some(FolderProblem::Nested)
-        } else if !default && relation(to, paths.base()) != Relation::Separate {
+        } else if !default
+            && (relation(to, paths.base()) == Relation::Same || within(to, paths.base()))
+        {
+            // Folders that merely hold app data (the home folder) are fine.
             Some(FolderProblem::InsideAppData)
         } else if let Err(problem) = check_writable_or_default(default, to) {
             Some(problem)
@@ -278,7 +297,7 @@ impl Preflight {
                 .is_ok_and(|m| !m.is_file() || m.len() != *bytes)
         }) {
             Some(FolderProblem::NameTaken)
-        } else if !has_room(free, plan.bytes_needed(same_disk(current, to))) {
+        } else if !has_room(free, plan.bytes_needed(one_disk)) {
             Some(FolderProblem::NotEnoughSpace)
         } else if current_missing
             && !default

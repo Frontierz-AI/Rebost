@@ -306,6 +306,8 @@ pub struct Ctx {
     pub extractor: ExtractorSettings,
     pub ingest_queue: IngestQueue,
     pub(crate) runtime_plan: RwLock<Option<crate::engine::tune::SpawnPlan>>,
+    /// Old AI files a restart kept while finishing an interrupted move.
+    pub models_move_kept: std::sync::atomic::AtomicUsize,
 }
 
 impl Ctx {
@@ -328,6 +330,7 @@ impl Ctx {
             extractor,
             ingest_queue: IngestQueue::new(),
             runtime_plan: RwLock::new(None),
+            models_move_kept: std::sync::atomic::AtomicUsize::new(0),
         });
         if let Err(error) = crate::search::restore::restore_if_pending(&ctx) {
             log::warn!("restore search index: {error:#}; will retry on next launch");
