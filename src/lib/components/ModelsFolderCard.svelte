@@ -114,9 +114,9 @@
     }
     try {
       const outcome = await action();
+      // Kept copies show from `folder.keptOldCopies`, which outlives this view.
       if (outcome === "cancelled") notice = t("modelsFolder.cancelled");
-      else if (outcome === "kept-copies") notice = t("modelsFolder.keptCopies");
-      else if (bytes > 0) notify(t("modelsFolder.moved"));
+      else if (outcome === "done" && bytes > 0) notify(t("modelsFolder.moved"));
     } catch (err) {
       error = userFacingError(err);
     } finally {

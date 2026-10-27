@@ -113,6 +113,12 @@ impl Engine {
         }
         .await;
         crate::core::mutex_lock(&self.downloads).remove(MOVE_ID);
+        if let Ok(kept) = &result {
+            // Settings tells of the latest folder change only.
+            self.ctx
+                .models_move_kept
+                .store(*kept, std::sync::atomic::Ordering::Relaxed);
+        }
         if let Err(error) = &result {
             log::error!("moving AI models to {} failed: {error:#}", to.display());
         }
@@ -277,6 +283,38 @@ mod tests {
             Settings::load(&engine.ctx().paths.settings_path()).models_folder,
             None
         );
+    }
+
+    #[cfg(unix)]
+    #[tokio::test(flavor = "multi_thread")]
+    async fn settings_hear_about_kept_copies_from_the_latest_move_only() {
+        use std::os::unix::fs::PermissionsExt;
+        use std::sync::atomic::Ordering;
+        let dir = tempfile::tempdir().unwrap();
+        let default = dir.path().join("appdata").join("models");
+        write(&default, "a.gguf", b"weights");
+        let settings = Settings {
+            other_models: vec![model("a.gguf")],
+            ..Default::default()
+        };
+        let (engine, _) = engine_with(dir.path(), settings);
+        let kept = || engine.ctx().models_move_kept.load(Ordering::Relaxed);
+        let drive = dir.path().join("Drive");
+        std::fs::create_dir(&drive).unwrap();
+
+        // The old folder won't let go of its file: the copy stays, and is told.
+        std::fs::set_permissions(&default, std::fs::Permissions::from_mode(0o500)).unwrap();
+        let moved = engine.set_models_folder(Some(drive.clone())).await;
+        std::fs::set_permissions(&default, std::fs::Permissions::from_mode(0o700)).unwrap();
+        assert_eq!(moved.unwrap(), 1);
+        assert_eq!(kept(), 1);
+        assert!(default.join("a.gguf").is_file() && drive.join("a.gguf").is_file());
+
+        // A later move that leaves nothing behind clears the note.
+        assert_eq!(engine.set_models_folder(None).await.unwrap(), 0);
+        assert_eq!(kept(), 0);
+        assert!(!drive.join("a.gguf").exists());
+        assert_eq!(std::fs::read(default.join("a.gguf")).unwrap(), b"weights");
     }
 
     #[tokio::test(flavor = "multi_thread")]

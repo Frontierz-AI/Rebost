@@ -306,7 +306,8 @@ pub struct Ctx {
     pub extractor: ExtractorSettings,
     pub ingest_queue: IngestQueue,
     pub(crate) runtime_plan: RwLock<Option<crate::engine::tune::SpawnPlan>>,
-    /// Old AI files a restart kept while finishing an interrupted move.
+    /// Old AI files the latest folder change kept (a move, or a restart
+    /// finishing an interrupted one). Settings mentions them.
     pub models_move_kept: std::sync::atomic::AtomicUsize,
 }
 

@@ -38,7 +38,7 @@ pub struct ModelsFolderView {
     pub custom: bool,
     /// The chosen folder can't be found (an unplugged drive).
     pub missing: bool,
-    /// A restart finished an interrupted move but kept some old copies.
+    /// The latest folder change kept some old copies.
     pub kept_old_copies: bool,
 }
 
