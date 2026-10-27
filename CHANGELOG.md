@@ -8,6 +8,9 @@ The app-data layout may change without a migration.
 
 ### Added
 
+- Choose how many files each Shelf reads: 1,000 (still the default), 2,500, 5,000, or 10,000. The setting is at the top of the Shelf. More files take longer to read and use more disk space.
+- Raising it reads the files that were left unread. Lowering it keeps every file already on the Shelf; only new files stop being added.
+- When a Shelf is full, the message says where to raise the limit.
 - Linux. Each release adds an AppImage, a .deb, and an .rpm for Intel/AMD and ARM computers: the .deb for Ubuntu 22.04 or newer and Debian 12 or newer, the .rpm for Fedora 43 or newer, and the AppImage for other distributions with glibc 2.35 or newer. The AI uses the graphics card through Vulkan and falls back to the processor when Vulkan is missing or will not start. Each package updates itself in its own format. On computers with NVIDIA's driver, Rebost turns off WebKitGTK's DMA-BUF renderer, which otherwise often leaves the window blank.
 
 ## [0.9.8] - 2026-10-04

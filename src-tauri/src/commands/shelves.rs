@@ -38,6 +38,7 @@ pub struct ShelfView {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread_id: Option<String>,
     pub think_level: ThinkLevel,
+    pub file_limit: usize,
 }
 
 #[derive(Serialize)]
@@ -147,6 +148,7 @@ pub(crate) fn shelf_view(shelf: &crate::shelf::Shelf, stats: ShelfStats) -> Shel
         stats,
         thread_id: shelf.thread_id.clone(),
         think_level: shelf.think_level,
+        file_limit: shelf.file_limit,
     }
 }
 
@@ -308,6 +310,35 @@ pub fn shelf_set_think_level(
             .set_think_level(&shelf_id, think_level)
             .map_err(friendly)?
     };
+    ctx.events.emit("rebost://shelves", json!({}));
+    Ok(shelf_view(&shelf, stats_for(&ctx, &shelf.id)))
+}
+
+/// How many files this Shelf reads. Raising it reads files left unread
+/// before; lowering it keeps every file and only stops new ones.
+#[tauri::command]
+pub fn shelf_set_file_limit(
+    ctx: State<'_, Arc<Ctx>>,
+    ingestor: State<'_, Ingestor>,
+    shelf_id: String,
+    file_limit: usize,
+) -> CmdResult<ShelfView> {
+    require_id(&shelf_id)?;
+    let (shelf, raised) = {
+        let mut library = crate::core::write_lock(&ctx.library);
+        let previous = library.file_limit(&shelf_id);
+        let shelf = library
+            .set_file_limit(&shelf_id, file_limit)
+            .map_err(friendly)?;
+        (shelf, file_limit > previous)
+    };
+    if raised {
+        let ingestor = ingestor.inner().clone();
+        let id = shelf.id.clone();
+        tauri::async_runtime::spawn(async move {
+            ingestor.queue_unread(&id).await;
+        });
+    }
     ctx.events.emit("rebost://shelves", json!({}));
     Ok(shelf_view(&shelf, stats_for(&ctx, &shelf.id)))
 }

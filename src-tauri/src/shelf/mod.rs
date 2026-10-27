@@ -6,7 +6,7 @@ pub mod watcher;
 
 mod longpath;
 
-pub use scan::{rel_is_skipped, scan_new_files, MAX_FILES_PER_SHELF};
+pub use scan::{rel_is_skipped, scan_new_files, DEFAULT_FILE_LIMIT, FILE_LIMIT_CHOICES};
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,14 @@ fn think_level_is_off(level: &ThinkLevel) -> bool {
     *level == ThinkLevel::Off
 }
 
+fn default_file_limit() -> usize {
+    DEFAULT_FILE_LIMIT
+}
+
+fn file_limit_is_default(limit: &usize) -> bool {
+    *limit == DEFAULT_FILE_LIMIT
+}
+
 /// `shelf.yml` inside the managed folder — the Shelf's identity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShelfConfig {
@@ -58,6 +66,12 @@ pub struct ShelfConfig {
     pub thread_id: Option<String>,
     #[serde(default, skip_serializing_if = "think_level_is_off")]
     pub think_level: ThinkLevel,
+    /// How many files this Shelf reads. Missing in older yaml means the default.
+    #[serde(
+        default = "default_file_limit",
+        skip_serializing_if = "file_limit_is_default"
+    )]
+    pub file_limit: usize,
 }
 
 impl ShelfConfig {
@@ -80,6 +94,7 @@ pub struct Shelf {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thread_id: Option<String>,
     pub think_level: ThinkLevel,
+    pub file_limit: usize,
 }
 
 impl Shelf {
@@ -143,6 +158,7 @@ impl Library {
                     linked_folders: config.linked_folders,
                     thread_id: config.thread_id.or(entry.thread_id.clone()),
                     think_level: config.think_level,
+                    file_limit: config.file_limit,
                 },
                 Err(error) if restoring => {
                     return Err(error).with_context(|| {
@@ -161,6 +177,7 @@ impl Library {
                         linked_folders: Vec::new(),
                         thread_id: entry.thread_id.clone(),
                         think_level: ThinkLevel::Off,
+                        file_limit: DEFAULT_FILE_LIMIT,
                     }
                 }
             };
@@ -252,6 +269,7 @@ impl Library {
             linked_folders: Vec::new(),
             thread_id: None,
             think_level: ThinkLevel::Deep,
+            file_limit: DEFAULT_FILE_LIMIT,
         };
         write_shelf_config(&shelf)?;
         std::fs::create_dir_all(paths.cards_dir(&shelf.id))?;
@@ -293,6 +311,7 @@ impl Library {
             linked_folders: Vec::new(),
             thread_id: Some(thread_id.to_string()),
             think_level: ThinkLevel::Deep,
+            file_limit: DEFAULT_FILE_LIMIT,
         };
         write_shelf_config(&shelf)?;
         std::fs::create_dir_all(paths.cards_dir(&shelf.id))?;
@@ -429,6 +448,29 @@ impl Library {
         Ok(snap)
     }
 
+    /// Change how many files a library Shelf reads. Lowering it below the
+    /// current count keeps every file; only new ones stop being added.
+    pub fn set_file_limit(&mut self, shelf_id: &str, limit: usize) -> Result<Shelf> {
+        if !FILE_LIMIT_CHOICES.contains(&limit) {
+            return Err(anyhow!("That file limit isn't one of the choices."));
+        }
+        let shelf = self
+            .shelf_mut(shelf_id)
+            .ok_or_else(|| anyhow!("Shelf not found"))?;
+        if shelf.thread_id.is_some() {
+            return Err(anyhow!("{}", rust_i18n::t!("errors.libraryShelvesOnly")));
+        }
+        shelf.file_limit = limit;
+        let snap = shelf.clone();
+        write_shelf_config(&snap)?;
+        Ok(snap)
+    }
+
+    /// How many files this Shelf reads (0 when the Shelf is gone).
+    pub fn file_limit(&self, shelf_id: &str) -> usize {
+        self.shelf(shelf_id).map(|s| s.file_limit).unwrap_or(0)
+    }
+
     pub fn documents(&self, shelf_id: &str) -> Vec<DocumentMeta> {
         self.documents
             .get(shelf_id)
@@ -440,15 +482,16 @@ impl Library {
         self.documents.get(shelf_id).map(|m| m.len()).unwrap_or(0)
     }
 
-    /// True when this file is already on the Shelf, or there is still room.
+    /// True when this file is already on the Shelf, or there is still room
+    /// under the Shelf's file limit.
     pub fn accepts_document(&self, shelf_id: &str, doc_id: &str) -> bool {
-        if self.shelf(shelf_id).is_none() {
+        let Some(shelf) = self.shelf(shelf_id) else {
             return false;
-        }
+        };
         if self.document(shelf_id, doc_id).is_some() {
             return true;
         }
-        self.document_count(shelf_id) < MAX_FILES_PER_SHELF
+        self.document_count(shelf_id) < shelf.file_limit
     }
 
     /// True while this source still belongs to the Shelf (imported, or a
@@ -765,6 +808,7 @@ fn write_shelf_config(shelf: &Shelf) -> Result<()> {
         linked_folders: shelf.linked_folders.clone(),
         thread_id: shelf.thread_id.clone(),
         think_level: shelf.think_level,
+        file_limit: shelf.file_limit,
     };
     let text = serde_yaml_ng::to_string(&config)?;
     std::fs::write(shelf.managed_path.join("shelf.yml"), text)?;
@@ -969,6 +1013,101 @@ mod tests {
         );
     }
 
+    fn fill_documents(library: &mut Library, shelf_id: &str, count: usize) {
+        for i in 0..count {
+            library.upsert_document(crate::types::DocumentMeta {
+                id: format!("d_fill{i}"),
+                shelf_id: shelf_id.to_string(),
+                source_id: Shelf::IMPORTED_SOURCE.into(),
+                source_type: crate::types::SourceType::Imported,
+                path: format!("/tmp/fill{i}.md"),
+                rel_path: format!("fill{i}.md"),
+                file_name: format!("fill{i}.md"),
+                format: "md".into(),
+                size_bytes: 1,
+                mtime_ms: 0,
+                hash: String::new(),
+                status: crate::types::DocStatus::Ready,
+                error: None,
+                passage_count: 1,
+                pages: None,
+                pii_total: 0,
+                pii_categories: Default::default(),
+                ocr: false,
+                updated_at: "2026-01-01T00:00:00Z".into(),
+                source_label: "Imported".into(),
+            });
+        }
+    }
+
+    #[test]
+    fn file_limit_defaults_to_1000_and_persists_when_changed() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().join("appdata"));
+        paths.ensure().unwrap();
+        let root = dir.path().join("Rebost");
+        let mut library = Library::load(&paths).unwrap();
+        let shelf = library.create_shelf(&paths, "Legal", &root).unwrap();
+        assert_eq!(shelf.file_limit, DEFAULT_FILE_LIMIT);
+        let yml = shelf.managed_path.join("shelf.yml");
+        assert!(
+            !std::fs::read_to_string(&yml)
+                .unwrap()
+                .contains("file_limit"),
+            "the default stays out of shelf.yml so older Shelves look the same"
+        );
+
+        library.set_file_limit(&shelf.id, 5_000).unwrap();
+        let reloaded = Library::load(&paths).unwrap();
+        assert_eq!(reloaded.file_limit(&shelf.id), 5_000);
+
+        assert!(library.set_file_limit(&shelf.id, 1_234).is_err());
+        assert!(library.set_file_limit(&shelf.id, 0).is_err());
+        assert_eq!(library.file_limit(&shelf.id), 5_000);
+
+        let upload = library
+            .ensure_conversation_shelf(&paths, &crate::ids::thread_id())
+            .unwrap();
+        assert_eq!(upload.file_limit, DEFAULT_FILE_LIMIT);
+        assert!(library.set_file_limit(&upload.id, 2_500).is_err());
+    }
+
+    #[test]
+    fn raising_the_file_limit_makes_room_for_new_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().join("appdata"));
+        paths.ensure().unwrap();
+        let root = dir.path().join("Rebost");
+        let mut library = Library::load(&paths).unwrap();
+        let shelf = library.create_shelf(&paths, "Big", &root).unwrap();
+        fill_documents(&mut library, &shelf.id, DEFAULT_FILE_LIMIT);
+        assert!(!library.accepts_document(&shelf.id, "d_new"));
+        library.set_file_limit(&shelf.id, 2_500).unwrap();
+        assert!(library.accepts_document(&shelf.id, "d_new"));
+    }
+
+    #[test]
+    fn lowering_the_file_limit_keeps_every_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().join("appdata"));
+        paths.ensure().unwrap();
+        let root = dir.path().join("Rebost");
+        let mut library = Library::load(&paths).unwrap();
+        let shelf = library.create_shelf(&paths, "Big", &root).unwrap();
+        library.set_file_limit(&shelf.id, 2_500).unwrap();
+        fill_documents(&mut library, &shelf.id, 1_200);
+        library.save_documents(&paths, &shelf.id).unwrap();
+
+        library.set_file_limit(&shelf.id, 1_000).unwrap();
+        assert_eq!(library.document_count(&shelf.id), 1_200);
+        assert!(library.accepts_document(&shelf.id, "d_fill7"));
+        assert!(!library.accepts_document(&shelf.id, "d_new"));
+
+        let reloaded = Library::load(&paths).unwrap();
+        assert_eq!(reloaded.document_count(&shelf.id), 1_200);
+        assert_eq!(reloaded.file_limit(&shelf.id), 1_000);
+    }
+
     #[test]
     fn import_creates_stamped_folder_and_copies() {
         let dir = tempfile::tempdir().unwrap();
@@ -981,7 +1120,7 @@ mod tests {
         let source = dir.path().join("invoice.txt");
         std::fs::write(&source, "Invoice INV-1 total 100 EUR").unwrap();
         let first =
-            import_into_shelf(&shelf, std::slice::from_ref(&source), MAX_FILES_PER_SHELF).unwrap();
+            import_into_shelf(&shelf, std::slice::from_ref(&source), DEFAULT_FILE_LIMIT).unwrap();
         assert!(first.dir.starts_with(shelf.managed_path.join("Imports")));
         assert_eq!(first.files.len(), 1);
         // Original untouched.
@@ -989,7 +1128,7 @@ mod tests {
 
         // Second import of the same file gets its own folder — no overwrite.
         let second =
-            import_into_shelf(&shelf, std::slice::from_ref(&source), MAX_FILES_PER_SHELF).unwrap();
+            import_into_shelf(&shelf, std::slice::from_ref(&source), DEFAULT_FILE_LIMIT).unwrap();
         assert_ne!(first.dir, second.dir);
         assert_eq!(second.files.len(), 1);
     }
@@ -1039,7 +1178,7 @@ mod tests {
         std::fs::write(&md, "ok").unwrap();
         std::fs::write(&mp4, "no").unwrap();
         std::fs::write(&json, "{}").unwrap();
-        let copied = import_into_shelf(&shelf, &[md, mp4, json], MAX_FILES_PER_SHELF).unwrap();
+        let copied = import_into_shelf(&shelf, &[md, mp4, json], DEFAULT_FILE_LIMIT).unwrap();
         assert_eq!(copied.files.len(), 1);
         assert_eq!(copied.skipped_long, 0);
         assert_eq!(copied.files[0].file_name().unwrap(), "note.md");
@@ -1120,7 +1259,7 @@ mod tests {
         assert!(!reloaded.allows_open_path(std::path::Path::new(&traversal)));
         let scanned = crate::shelf::scan_new_files(
             &linked,
-            crate::shelf::MAX_FILES_PER_SHELF,
+            crate::shelf::DEFAULT_FILE_LIMIT,
             &HashSet::new(),
         )
         .files;
