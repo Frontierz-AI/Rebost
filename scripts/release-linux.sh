@@ -55,7 +55,22 @@ esac
 VERSION="$(node -p "require('./package.json').version")"
 
 CONFIG="$(mktemp)"
-cleanup() { rm -f "$CONFIG"; }
+# The engine folder's README and .gitkeep keep it in git; they are not app
+# resources. Set them aside while bundling and put them back afterwards.
+ASIDE="$(mktemp -d)"
+ENGINE_DIR=src-tauri/resources/engine
+for note in README.md .gitkeep; do
+  if [[ -e "${ENGINE_DIR}/${note}" ]]; then
+    mv "${ENGINE_DIR}/${note}" "${ASIDE}/"
+  fi
+done
+cleanup() {
+  rm -f "$CONFIG"
+  for note in "$ASIDE"/* "$ASIDE"/.gitkeep; do
+    [[ -e "$note" ]] && mv "$note" "${ENGINE_DIR}/"
+  done
+  rmdir "$ASIDE" 2>/dev/null || true
+}
 trap cleanup EXIT
 if [[ "$UPDATER" -eq 1 ]]; then
   if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" && -z "${TAURI_SIGNING_PRIVATE_KEY_PATH:-}" ]]; then
