@@ -1,6 +1,6 @@
 import { api, type ImportResult } from "./api";
 import { pinFileNames } from "./placeholders";
-import { shelfCapMessage, skippedLongMessage } from "./shelf-cap";
+import { DEFAULT_FILE_LIMIT, shelfCapMessage, skippedLongMessage } from "./shelf-cap";
 import {
   chatState,
   ensureActiveThread,
@@ -17,7 +17,7 @@ export type ChatImportResult = "done" | "cancelled";
 function chatImportNotice(result: ImportResult): string {
   const longMsg = skippedLongMessage(result.skippedLong ?? 0);
   const message = result.atLimit
-    ? shelfCapMessage(result.queued)
+    ? shelfCapMessage(result.queued, DEFAULT_FILE_LIMIT, false)
     : result.queued === 0
       ? t("imports.unsupported")
       : t(result.queued === 1 ? "imports.addedOne" : "imports.addedMany", { count: result.queued });

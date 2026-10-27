@@ -247,6 +247,23 @@ export async function setShelfThinkLevel(shelfId: string, level: ThinkLevel) {
   }
 }
 
+export async function setShelfFileLimit(shelfId: string, limit: number) {
+  const previous = app.shelves.find((shelf) => shelf.id === shelfId)?.fileLimit;
+  if (previous === undefined || previous === limit) return;
+  app.shelves = app.shelves.map((shelf) =>
+    shelf.id === shelfId ? { ...shelf, fileLimit: limit } : shelf,
+  );
+  try {
+    const updated = await api.shelfSetFileLimit(shelfId, limit);
+    app.shelves = app.shelves.map((shelf) => (shelf.id === shelfId ? updated : shelf));
+  } catch (error) {
+    app.shelves = app.shelves.map((shelf) =>
+      shelf.id === shelfId ? { ...shelf, fileLimit: previous } : shelf,
+    );
+    notifyInvokeError(error);
+  }
+}
+
 let threadsLoad = 0;
 export async function refreshThreads() {
   const load = ++threadsLoad;

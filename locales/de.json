@@ -312,6 +312,15 @@
     "thinkLight": "Leicht",
     "thinkDeep": "Gründlich",
     "thinkHint": "Leicht und Gründlich dauern länger.",
+    "fileLimit": "Dateien, die dieses Regal liest",
+    "fileLimitChoice": "Bis zu %{count} Dateien",
+    "fileLimitHint": "Mehr Dateien brauchen länger zum Lesen und belegen mehr Speicherplatz.",
+    "fileLimitOver": "Dieses Regal enthält %{count} Dateien. Alle bleiben, aber neue Dateien werden nicht hinzugefügt.",
+    "capFull": "Dieses Regal enthält bereits %{limit} Dateien.",
+    "capAddedOne": "1 Datei hinzugefügt. Dieses Regal liest bis zu %{limit} Dateien; der Rest wurde nicht gelesen.",
+    "capAddedMany": "%{count} Dateien hinzugefügt. Dieses Regal liest bis zu %{limit} Dateien; der Rest wurde nicht gelesen.",
+    "capRaise": "Um mehr zu lesen, erhöhe „%{setting}“ oben in diesem Regal.",
+    "capRemove": "Entferne einige Dateien, um weitere hinzuzufügen.",
     "noMatch": "Keine Dateien passen zu diesen Filtern",
     "tryDifferentFilter": "Versuche es mit einem anderen Namen, einer anderen Quelle oder einem anderen Typ.",
     "colFile": "Datei",
@@ -645,7 +654,9 @@
   "imports": {
     "addedOne": "Zu dieser Unterhaltung hinzugefügt.",
     "addedMany": "%{count} Dateien zu dieser Unterhaltung hinzugefügt.",
-    "unsupported": "Diese Dateitypen werden nicht unterstützt."
+    "unsupported": "Diese Dateitypen werden nicht unterstützt.",
+    "capFull": "Diese Unterhaltung hat bereits %{limit} angehängte Dateien. Entferne einige, um weitere hinzuzufügen.",
+    "capRest": "Eine Unterhaltung nimmt bis zu %{limit} angehängte Dateien auf; der Rest wurde nicht gelesen."
   },
   "images": {
     "pasted": "Eingefügtes Bild",

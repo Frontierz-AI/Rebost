@@ -312,6 +312,15 @@
     "thinkLight": "Leggero",
     "thinkDeep": "Approfondito",
     "thinkHint": "Leggero e Approfondito richiedono più tempo.",
+    "fileLimit": "File che legge questo scaffale",
+    "fileLimitChoice": "Fino a %{count} file",
+    "fileLimitHint": "Più file richiedono più tempo per la lettura e occupano più spazio su disco.",
+    "fileLimitOver": "Questo scaffale ha %{count} file. Restano tutti, ma non verranno aggiunti nuovi file.",
+    "capFull": "Questo scaffale ha già %{limit} file.",
+    "capAddedOne": "1 file aggiunto. Questo scaffale legge fino a %{limit} file; gli altri non sono stati letti.",
+    "capAddedMany": "%{count} file aggiunti. Questo scaffale legge fino a %{limit} file; gli altri non sono stati letti.",
+    "capRaise": "Per leggerne di più, aumenta «%{setting}» in cima a questo scaffale.",
+    "capRemove": "Rimuovi alcuni file per aggiungerne altri.",
     "noMatch": "Nessun file corrisponde a questi filtri",
     "tryDifferentFilter": "Prova un altro nome, origine o tipo.",
     "colFile": "File",
@@ -645,7 +654,9 @@
   "imports": {
     "addedOne": "Aggiunto a questa conversazione.",
     "addedMany": "%{count} file aggiunti a questa conversazione.",
-    "unsupported": "Il tipo di questi file non è supportato."
+    "unsupported": "Il tipo di questi file non è supportato.",
+    "capFull": "Questa conversazione ha già %{limit} file allegati. Rimuovine alcuni per aggiungerne altri.",
+    "capRest": "Una conversazione accetta fino a %{limit} file allegati; gli altri non sono stati letti."
   },
   "images": {
     "pasted": "Immagine incollata",

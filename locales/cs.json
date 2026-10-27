@@ -312,6 +312,15 @@
     "thinkLight": "Zběžně",
     "thinkDeep": "Do hloubky",
     "thinkHint": "Režimy Zběžně a Do hloubky potřebují více času.",
+    "fileLimit": "Kolik souborů tato police čte",
+    "fileLimitChoice": "Až %{count} souborů",
+    "fileLimitHint": "Více souborů se čte déle a zabere víc místa na disku.",
+    "fileLimitOver": "Tato police má %{count} souborů. Všechny zůstanou, ale nové soubory se už nepřidají.",
+    "capFull": "Tato police už má %{limit} souborů.",
+    "capAddedOne": "Přidán 1 soubor. Tato police čte až %{limit} souborů; zbytek zůstal nepřečtený.",
+    "capAddedMany": "Přidané soubory: %{count}. Tato police čte až %{limit} souborů; zbytek zůstal nepřečtený.",
+    "capRaise": "Chcete-li číst víc, zvyšte „%{setting}“ nahoře na této polici.",
+    "capRemove": "Chcete-li přidat další, odeberte některé soubory.",
     "noMatch": "Těmto filtrům neodpovídá žádný soubor",
     "tryDifferentFilter": "Zkus jiný název, zdroj nebo typ.",
     "colFile": "Soubor",
@@ -645,7 +654,9 @@
   "imports": {
     "addedOne": "Přidáno do této konverzace.",
     "addedMany": "Soubory přidané do této konverzace: %{count}.",
-    "unsupported": "Tyto typy souborů nejsou podporovány."
+    "unsupported": "Tyto typy souborů nejsou podporovány.",
+    "capFull": "Tato konverzace už má %{limit} přiložených souborů. Chcete-li přidat další, některé odeberte.",
+    "capRest": "Konverzace pojme až %{limit} přiložených souborů; zbytek zůstal nepřečtený."
   },
   "images": {
     "pasted": "Vložený obrázek",

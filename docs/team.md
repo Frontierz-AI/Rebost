@@ -10,7 +10,7 @@ Each person runs Rebost on their own machine, Mac or Windows, and points a Shelf
 
 Every install runs its own AI, so conversations stay on the machine they were typed on. The shared folder is what the team has in common; nothing about a conversation is pooled or synchronized.
 
-A Shelf holds up to 1,000 files. When the shared folder is offline, that source pauses until it is reachable again.
+A Shelf reads up to 1,000 files by default; each Shelf can raise that to 2,500, 5,000, or 10,000. When the shared folder is offline, that source pauses until it is reachable again.
 
 Counts of personal information are counts, not a legal opinion.
 

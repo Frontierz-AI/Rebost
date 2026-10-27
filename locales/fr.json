@@ -312,6 +312,15 @@
     "thinkLight": "Léger",
     "thinkDeep": "Approfondi",
     "thinkHint": "Léger et Approfondi prennent plus de temps.",
+    "fileLimit": "Fichiers lus par cette étagère",
+    "fileLimitChoice": "Jusqu’à %{count} fichiers",
+    "fileLimitHint": "Plus il y a de fichiers, plus la lecture est longue et plus elle prend de place sur le disque.",
+    "fileLimitOver": "Cette étagère contient %{count} fichiers. Ils restent tous, mais aucun nouveau fichier ne sera ajouté.",
+    "capFull": "Cette étagère contient déjà %{limit} fichiers.",
+    "capAddedOne": "1 fichier ajouté. Cette étagère lit jusqu’à %{limit} fichiers ; les autres n’ont pas été lus.",
+    "capAddedMany": "%{count} fichiers ajoutés. Cette étagère lit jusqu’à %{limit} fichiers ; les autres n’ont pas été lus.",
+    "capRaise": "Pour en lire plus, augmentez « %{setting} » en haut de cette étagère.",
+    "capRemove": "Retirez quelques fichiers pour en ajouter d’autres.",
     "noMatch": "Aucun fichier ne correspond à ces filtres",
     "tryDifferentFilter": "Essayez un autre nom, une autre origine ou un autre type.",
     "colFile": "Fichier",
@@ -645,7 +654,9 @@
   "imports": {
     "addedOne": "Ajouté à cette conversation.",
     "addedMany": "%{count} fichiers ajoutés à cette conversation.",
-    "unsupported": "Le type de ces fichiers n'est pas pris en charge."
+    "unsupported": "Le type de ces fichiers n'est pas pris en charge.",
+    "capFull": "Cette conversation contient déjà %{limit} fichiers joints. Retirez-en quelques-uns pour en ajouter d’autres.",
+    "capRest": "Une conversation accepte jusqu’à %{limit} fichiers joints ; les autres n’ont pas été lus."
   },
   "images": {
     "pasted": "Image collée",

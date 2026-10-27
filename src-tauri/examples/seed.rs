@@ -210,7 +210,7 @@ async fn import_shelf(ctx: &Arc<Ctx>, name: &str, files: &[PathBuf]) -> anyhow::
         library.create_shelf(&ctx.paths, name, &shelf_root)?
     };
     let copied =
-        rebost::shelf::import_into_shelf(&shelf, files, rebost::shelf::MAX_FILES_PER_SHELF)?.files;
+        rebost::shelf::import_into_shelf(&shelf, files, rebost::shelf::DEFAULT_FILE_LIMIT)?.files;
     for file in copied {
         let rel = file
             .strip_prefix(&shelf.managed_path)

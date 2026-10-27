@@ -311,6 +311,15 @@
     "thinkLight": "Light",
     "thinkDeep": "Deep",
     "thinkHint": "Light and Deep take longer.",
+    "fileLimit": "Files this Shelf reads",
+    "fileLimitChoice": "Up to %{count} files",
+    "fileLimitHint": "More files take longer to read and use more disk space.",
+    "fileLimitOver": "This Shelf has %{count} files. They all stay, but new files won't be added.",
+    "capFull": "This Shelf already has %{limit} files.",
+    "capAddedOne": "Added 1 file. This Shelf reads up to %{limit} files; the rest were left unread.",
+    "capAddedMany": "Added %{count} files. This Shelf reads up to %{limit} files; the rest were left unread.",
+    "capRaise": "To read more, raise “%{setting}” at the top of this Shelf.",
+    "capRemove": "Remove some files to add more.",
     "noMatch": "No files match these filters",
     "tryDifferentFilter": "Try a different name, source, or type.",
     "colFile": "File",
@@ -644,7 +653,9 @@
   "imports": {
     "addedOne": "Added to this conversation.",
     "addedMany": "Added %{count} files to this conversation.",
-    "unsupported": "Those files aren't a supported type."
+    "unsupported": "Those files aren't a supported type.",
+    "capFull": "This conversation already has %{limit} attached files. Remove some to add more.",
+    "capRest": "A conversation holds up to %{limit} attached files; the rest were left unread."
   },
   "images": {
     "pasted": "Pasted image",

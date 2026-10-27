@@ -8,6 +8,9 @@ The app-data layout may change without a migration.
 
 ### Added
 
+- Choose how many files each Shelf reads: 1,000 (still the default), 2,500, 5,000, or 10,000. The setting is at the top of the Shelf. More files take longer to read and use more disk space.
+- Raising it reads the files that were left unread. Lowering it keeps every file already on the Shelf; only new files stop being added.
+- When a Shelf is full, the message says where to raise the limit.
 - An open Shelf shows how many files are still to be read, next to the file count at the bottom.
 
 ### Fixed
