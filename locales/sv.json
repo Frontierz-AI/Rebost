@@ -296,6 +296,7 @@
     "allTypes": "Alla typer",
     "clearFilters": "Rensa filter",
     "showingOf": "Visar %{visible} av %{total}",
+    "stillToRead": "Kvar att läsa: %{count}",
     "delete": "Ta bort",
     "removeFolderTitle": "Ta bort mapp",
     "removeFolder": "Ta bort ”%{name}” från den här hyllan?\n\nInga filer tas bort från din dator. Rebost slutar använda den här mappen.",

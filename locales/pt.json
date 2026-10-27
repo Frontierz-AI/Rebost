@@ -296,6 +296,7 @@
     "allTypes": "Todos os tipos",
     "clearFilters": "Limpar filtros",
     "showingOf": "A mostrar %{visible} de %{total}",
+    "stillToRead": "Por ler: %{count}",
     "delete": "Eliminar",
     "removeFolderTitle": "Remover pasta",
     "removeFolder": "Remover «%{name}» desta estante?\n\nIsto não elimina nenhum ficheiro do computador. O Rebost deixa de usar esta pasta.",

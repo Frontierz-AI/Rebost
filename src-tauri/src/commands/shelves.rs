@@ -157,7 +157,8 @@ pub(crate) fn stats_for(ctx: &Ctx, shelf_id: &str) -> ShelfStats {
     )
 }
 
-/// On Shelves visits: Reading files older than five minutes become Error.
+/// On Shelves visits: Reading files older than five minutes that no worker
+/// has (queued or reading) become Error.
 fn expire_stale_reading(ctx: &Ctx, shelf_id: &str) {
     let now = chrono::Utc::now();
     let changed = {
@@ -168,7 +169,10 @@ fn expire_stale_reading(ctx: &Ctx, shelf_id: &str) {
             .filter(|d| d.status == crate::types::DocStatus::Reading)
             .map(|d| d.id)
             .collect();
-        let changed = library.expire_stale_reading(shelf_id, now);
+        let changed = library.expire_stale_reading(shelf_id, now, |doc| {
+            ctx.ingest_queue
+                .in_flight(shelf_id, std::path::Path::new(&doc.path))
+        });
         if changed > 0 {
             for doc in library.documents(shelf_id).into_iter().filter(|d| {
                 reading_ids.contains(&d.id) && d.status == crate::types::DocStatus::Error

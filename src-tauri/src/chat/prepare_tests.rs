@@ -1283,7 +1283,10 @@ async fn small_context_reclaims_unused_history_without_clipping_the_question() {
 #[tokio::test(flavor = "multi_thread")]
 async fn attachment_wait_includes_the_pre_extraction_stage() {
     let fixture = shelf_with_file("facts.md", "# Facts\n\nThe delivery code is 7391.\n").await;
-    let work = fixture.ctx.ingest_queue.begin_work(&fixture.shelf.id);
+    let work = fixture
+        .ctx
+        .ingest_queue
+        .begin_work(&fixture.shelf.id, std::path::Path::new("facts.md"));
     let ctx = fixture.ctx.clone();
     let shelf = fixture.shelf.id.clone();
     let waiting = tokio::spawn(async move { wait_for_uploads(&ctx, &shelf).await });

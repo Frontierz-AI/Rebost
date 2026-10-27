@@ -6,6 +6,16 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Added
+
+- An open Shelf shows how many files are still to be read, next to the file count at the bottom.
+
+### Fixed
+
+- Long scanned PDFs get the time they need. The time allowed to read a PDF grows with its pages, so a long scan no longer stops with "Reading took too long". Use Try again on files that stopped before.
+- Opening Shelves no longer marks a file as failed while it is still being read or waiting its turn.
+- Scanned PDFs read at the same time no longer hold each other up.
+
 ## [0.9.8] - 2026-10-04
 
 ### Added

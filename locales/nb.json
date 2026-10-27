@@ -296,6 +296,7 @@
     "allTypes": "Alle typer",
     "clearFilters": "Fjern filtre",
     "showingOf": "Viser %{visible} av %{total}",
+    "stillToRead": "Gjenstår å lese: %{count}",
     "delete": "Slett",
     "removeFolderTitle": "Fjern mappe",
     "removeFolder": "Fjerne «%{name}» fra denne hyllen?\n\nDette sletter ingen filer fra datamaskinen din. Rebost slutter å bruke denne mappen.",

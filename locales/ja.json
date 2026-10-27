@@ -296,6 +296,7 @@
     "allTypes": "すべての種類",
     "clearFilters": "絞り込みを解除",
     "showingOf": "%{total}件中%{visible}件を表示",
+    "stillToRead": "読み込み待ち %{count}件",
     "delete": "削除",
     "removeFolderTitle": "フォルダを外す",
     "removeFolder": "「%{name}」をこのシェルフから外しますか？\n\nコンピュータ上のファイルは削除されません。Rebostがこのフォルダを使わなくなるだけです。",

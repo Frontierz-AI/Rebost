@@ -296,6 +296,7 @@
     "allTypes": "Alle Typen",
     "clearFilters": "Filter zurücksetzen",
     "showingOf": "%{visible} von %{total}",
+    "stillToRead": "Noch zu lesen: %{count}",
     "delete": "Löschen",
     "removeFolderTitle": "Ordner entfernen",
     "removeFolder": "„%{name}“ aus diesem Regal entfernen?\n\nDabei werden keine Dateien von deinem Computer gelöscht. Rebost verwendet diesen Ordner dann nicht mehr.",
