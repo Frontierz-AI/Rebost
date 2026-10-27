@@ -39,10 +39,13 @@ impl Engine {
             .install_lock
             .try_lock()
             .map_err(|_| anyhow!("ai-busy"))?;
-        let chosen = chosen.filter(|dir| *dir != self.ctx.paths.default_models_dir());
+        let default = self.ctx.paths.default_models_dir();
+        let chosen = chosen.filter(|dir| !models_folder::same_entry(dir, &default));
         let to = self.ctx.paths.models_dir_for(chosen.as_deref());
         let from = self.ctx.models_dir();
-        if to == from {
+        // Compare places, not spellings: a symlink or junction to the current
+        // folder must not turn into a move that deletes the only copies.
+        if models_folder::same_entry(&to, &from) {
             return Ok(());
         }
         let preflight = self.models_folder_preflight(&to);
@@ -237,6 +240,29 @@ mod tests {
         );
     }
 
+    #[cfg(unix)]
+    #[tokio::test(flavor = "multi_thread")]
+    async fn picking_the_current_folder_by_another_path_moves_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let default = dir.path().join("appdata").join("models");
+        write(&default, "a.gguf", b"only copy");
+        let settings = Settings {
+            other_models: vec![model("a.gguf")],
+            ..Default::default()
+        };
+        let (engine, _) = engine_with(dir.path(), settings);
+        let alias = dir.path().join("Alias");
+        std::os::unix::fs::symlink(&default, &alias).unwrap();
+
+        engine.set_models_folder(Some(alias)).await.unwrap();
+        assert_eq!(std::fs::read(default.join("a.gguf")).unwrap(), b"only copy");
+        assert_eq!(engine.ctx().models_dir(), default);
+        assert_eq!(
+            Settings::load(&engine.ctx().paths.settings_path()).models_folder,
+            None
+        );
+    }
+
     #[tokio::test(flavor = "multi_thread")]
     async fn a_failed_move_leaves_everything_where_it_was() {
         let dir = tempfile::tempdir().unwrap();
@@ -249,7 +275,8 @@ mod tests {
         };
         let (engine, _) = engine_with(dir.path(), settings);
         let drive = dir.path().join("Drive");
-        write(&drive, "b.gguf", b"someone else's file");
+        // Same size, other bytes: only the byte-for-byte check at move time sees it.
+        write(&drive, "b.gguf", b"different 13!");
 
         let error = engine
             .set_models_folder(Some(drive.clone()))
@@ -261,7 +288,7 @@ mod tests {
         assert!(!drive.join("a.gguf").exists(), "the staged copy is removed");
         assert_eq!(
             std::fs::read(drive.join("b.gguf")).unwrap(),
-            b"someone else's file"
+            b"different 13!"
         );
         assert_eq!(
             Settings::load(&engine.ctx().paths.settings_path()).models_folder,

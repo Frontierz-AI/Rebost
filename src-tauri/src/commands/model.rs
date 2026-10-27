@@ -254,8 +254,8 @@ pub async fn models_folder_pick(
     let preflight = engine.models_folder_preflight(&folder);
     let choice = ModelsFolderChoice {
         path: folder.to_string_lossy().into_owned(),
-        is_default: folder == ctx.paths.default_models_dir(),
-        unchanged: folder == ctx.models_dir(),
+        is_default: crate::models_folder::same_entry(&folder, &ctx.paths.default_models_dir()),
+        unchanged: crate::models_folder::same_entry(&folder, &ctx.models_dir()),
         free_bytes: preflight.free,
         move_bytes: preflight.plan.bytes(),
         problem: preflight.problem.map(|problem| problem.code()),

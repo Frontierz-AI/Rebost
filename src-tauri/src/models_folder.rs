@@ -83,6 +83,30 @@ fn existing_ancestor(path: &Path) -> PathBuf {
         .to_path_buf()
 }
 
+/// Whether two paths name the same file or folder: a symlink, junction,
+/// `subst` drive or another casing of the same place. Paths that don't
+/// exist are only the same when they are spelled the same.
+pub fn same_entry(a: &Path, b: &Path) -> bool {
+    if a == b {
+        return true;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        match (std::fs::metadata(a), std::fs::metadata(b)) {
+            (Ok(a), Ok(b)) => a.dev() == b.dev() && a.ino() == b.ino(),
+            _ => false,
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        // The final path resolves junctions and `subst`; NTFS ignores case.
+        let resolved =
+            |p: &Path| std::fs::canonicalize(p).map(|p| p.to_string_lossy().to_lowercase());
+        matches!((resolved(a), resolved(b)), (Ok(a), Ok(b)) if a == b)
+    }
+}
+
 /// Drop the `\\?\` prefix Windows' `canonicalize` adds, so the path reads as
 /// the person sees it in Explorer and matches mount points.
 pub fn plain_path(path: PathBuf) -> PathBuf {
@@ -193,10 +217,15 @@ impl Preflight {
         let default = to == paths.default_models_dir();
         let problem = if !default && to.starts_with(paths.base()) {
             Some(FolderProblem::InsideAppData)
-        } else if to == current {
+        } else if same_entry(to, current) {
             None
         } else if let Err(problem) = check_writable_or_default(paths, to) {
             Some(problem)
+        } else if plan.to_move.iter().any(|(file, bytes)| {
+            // Same-size files are compared byte for byte when the move runs.
+            std::fs::metadata(to.join(file)).is_ok_and(|m| !m.is_file() || m.len() != *bytes)
+        }) {
+            Some(FolderProblem::NameTaken)
         } else if !has_room(free, plan.bytes_needed(same_disk(current, to))) {
             Some(FolderProblem::NotEnoughSpace)
         } else if current_missing
@@ -326,6 +355,15 @@ fn stage_one(
     cancelled: &dyn Fn() -> bool,
 ) -> Result<Option<PathBuf>> {
     if dst.exists() {
+        // The same file under another path (the folders are one folder):
+        // "reusing" it would delete the only copy.
+        if same_entry(src, dst) {
+            return Err(anyhow!(
+                "{} and {} are the same file",
+                src.display(),
+                dst.display()
+            ));
+        }
         // Picked a folder that already holds this AI (an earlier copy).
         if dst.is_file() && files_identical(src, dst, progress, cancelled)? {
             return Ok(None);
@@ -607,6 +645,48 @@ mod tests {
         );
         assert_eq!(back.plan.missing, ["a.gguf"]);
         assert!(default.is_dir());
+    }
+
+    #[test]
+    fn preflight_spots_a_different_file_with_an_ai_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::Paths::new(dir.path().join("io.rebost.desktop"));
+        paths.ensure().unwrap();
+        let current = paths.default_models_dir();
+        write(&current, "a.gguf", b"aaaa");
+        let drive = dir.path().join("Drive");
+        write(&drive, "a.gguf", b"someone else's");
+        let check = Preflight::check(&paths, &drive, &files(&["a.gguf"]), &current, false);
+        assert_eq!(check.problem, Some(FolderProblem::NameTaken));
+        // Same size could be the same AI: the move compares it then.
+        write(&drive, "a.gguf", b"aaaa");
+        let check = Preflight::check(&paths, &drive, &files(&["a.gguf"]), &current, false);
+        assert_eq!(check.problem, None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_same_folder_under_another_path_is_never_a_move() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::Paths::new(dir.path().join("io.rebost.desktop"));
+        let real = dir.path().join("Real");
+        write(&real, "a.gguf", b"only copy");
+        let alias = dir.path().join("Alias");
+        std::os::unix::fs::symlink(&real, &alias).unwrap();
+        assert!(same_entry(&real, &alias));
+        assert!(same_entry(&real.join("a.gguf"), &alias.join("a.gguf")));
+        assert!(!same_entry(&real, dir.path()));
+        assert!(!same_entry(&dir.path().join("x"), &dir.path().join("y")));
+
+        let installed = files(&["a.gguf"]);
+        assert_eq!(
+            Preflight::check(&paths, &alias, &installed, &real, false).problem,
+            None
+        );
+        // Even if a caller got this far, staging refuses and keeps the file.
+        let plan = MovePlan::new(&installed, &real, &alias);
+        assert!(stage(&plan, &mut |_, _| {}, &|| false).is_err());
+        assert_eq!(std::fs::read(real.join("a.gguf")).unwrap(), b"only copy");
     }
 
     #[test]
