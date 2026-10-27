@@ -43,8 +43,14 @@ pub fn place_main_window(window: &WebviewWindow) {
         size.width,
         size.height,
     );
-    let _ = window.set_size(PhysicalSize::new(w, h));
-    let _ = window.set_position(PhysicalPosition::new(x, y));
+    // Only touch what has to change. GTK can report 0×0 for a window that is
+    // not mapped yet; resizing to that would open it at the minimum size.
+    if (w, h) != (size.width, size.height) {
+        let _ = window.set_size(PhysicalSize::new(w, h));
+    }
+    if (x, y) != (pos.x, pos.y) {
+        let _ = window.set_position(PhysicalPosition::new(x, y));
+    }
 }
 
 /// Move a window so only a few pixels stay on the work area (right edge).

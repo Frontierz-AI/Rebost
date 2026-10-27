@@ -67,10 +67,24 @@ case "$KIND" in
     ROOT_DIR=/usr/lib
     ;;
   appimage)
+    # The AppImage carries WebKitGTK but, like any AppImage, expects the
+    # desktop's own display libraries (Wayland/X11 clients, EGL, fonts).
+    # GTK 3 brings exactly that baseline; WebKitGTK itself is not installed.
+    case "$ID" in
+      ubuntu | debian) apt-get install -y -qq --no-install-recommends libgtk-3-0t64 >/dev/null 2>&1 ||
+        apt-get install -y -qq --no-install-recommends libgtk-3-0 >/dev/null ;;
+      fedora) dnf install -y -q --setopt=install_weak_deps=False gtk3 ;;
+    esac
     chmod +x "$FILE"
     work="$(mktemp -d)"
     (cd "$work" && "$FILE" --appimage-extract >/dev/null)
     ROOT_DIR="$work/squashfs-root"
+    echo "-- libraries the AppImage takes from the host"
+    LD_LIBRARY_PATH="$ROOT_DIR/usr/lib" ldd "$ROOT_DIR/usr/bin/rebost" |
+      awk -v root="$ROOT_DIR" '/=>/ && index($3, root) != 1 {print "  " $1}' | sort
+    LD_LIBRARY_PATH="$ROOT_DIR/usr/lib" missing_libs "$ROOT_DIR/usr/bin/rebost"
+    echo "-- bundled libvulkan: $(find "$ROOT_DIR" -name 'libvulkan*' | sed "s|$ROOT_DIR||" | tr '\n' ' ')"
+    file -L "$FILE" | cut -c1-160
     # No FUSE in a container; the runtime unpacks to /tmp instead.
     export APPIMAGE_EXTRACT_AND_RUN=1
     BIN="$FILE"
