@@ -1,4 +1,5 @@
-# Linux AppImage, .deb and .rpm (x86_64 + aarch64). Does not run on push.
+# Linux AppImage, .deb and .rpm (x86_64 + aarch64). Does not run on push;
+# pull requests that touch Linux packaging run it without publishing.
 # Dispatch it once the version bump is on the remote:
 #   gh workflow run release-linux.yml
 #
@@ -15,9 +16,21 @@ name: Release Linux
 
 on:
   workflow_dispatch:
+  # Pull requests that change Linux packaging build and smoke-test it too.
+  pull_request:
+    paths:
+      - ".github/workflows/release-linux.yml"
+      - "scripts/release-linux.sh"
+      - "scripts/smoke-linux.sh"
+      - "src-tauri/tauri.linux.conf.json"
+      - "src-tauri/linux/**"
 
 permissions:
   contents: read
+
+concurrency:
+  group: release-linux-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   packages:
