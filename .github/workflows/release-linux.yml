@@ -23,7 +23,15 @@ on:
       - "scripts/release-linux.sh"
       - "scripts/smoke-linux.sh"
       - "src-tauri/tauri.linux.conf.json"
+      - "src-tauri/tauri.conf.json"
       - "src-tauri/linux/**"
+      - "src-tauri/Cargo.toml"
+      - "src-tauri/Cargo.lock"
+      # Desktop integration that only a real Linux build exercises.
+      - "src-tauri/src/host.rs"
+      - "src-tauri/src/compositor.rs"
+      - "src-tauri/src/instance.rs"
+      - "src-tauri/src/window.rs"
 
 permissions:
   contents: read
