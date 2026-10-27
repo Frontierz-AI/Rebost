@@ -107,6 +107,13 @@ pub fn same_entry(a: &Path, b: &Path) -> bool {
     }
 }
 
+fn same_folder(a: &Path, b: &Path) -> bool {
+    match (a.parent(), b.parent()) {
+        (Some(a), Some(b)) => same_entry(a, b),
+        _ => false,
+    }
+}
+
 /// Drop the `\\?\` prefix Windows' `canonicalize` adds, so the path reads as
 /// the person sees it in Explorer and matches mount points.
 pub fn plain_path(path: PathBuf) -> PathBuf {
@@ -214,12 +221,12 @@ impl Preflight {
     ) -> Self {
         let plan = MovePlan::new(files, current, to);
         let free = free_space(to);
-        let default = to == paths.default_models_dir();
+        let default = same_entry(to, &paths.default_models_dir());
         let problem = if !default && to.starts_with(paths.base()) {
             Some(FolderProblem::InsideAppData)
         } else if same_entry(to, current) {
             None
-        } else if let Err(problem) = check_writable_or_default(paths, to) {
+        } else if let Err(problem) = check_writable_or_default(default, to) {
             Some(problem)
         } else if plan.to_move.iter().any(|(file, bytes)| {
             // Same-size files are compared byte for byte when the move runs.
@@ -247,8 +254,8 @@ impl Preflight {
 }
 
 /// The default folder is Rebost's own and may be created; a chosen one never is.
-fn check_writable_or_default(paths: &crate::paths::Paths, dir: &Path) -> Result<(), FolderProblem> {
-    if dir == paths.default_models_dir() {
+fn check_writable_or_default(default: bool, dir: &Path) -> Result<(), FolderProblem> {
+    if default {
         std::fs::create_dir_all(dir).map_err(|_| FolderProblem::NotWritable)?;
     }
     check_writable(dir)
@@ -355,9 +362,10 @@ fn stage_one(
     cancelled: &dyn Fn() -> bool,
 ) -> Result<Option<PathBuf>> {
     if dst.exists() {
-        // The same file under another path (the folders are one folder):
-        // "reusing" it would delete the only copy.
-        if same_entry(src, dst) {
+        // The same folder under another path: "reusing" the file would
+        // delete the only copy. (A hard link in another folder is a real
+        // second name, left by an earlier move, and is fine to reuse.)
+        if same_entry(src, dst) && same_folder(src, dst) {
             return Err(anyhow!(
                 "{} and {} are the same file",
                 src.display(),
@@ -687,6 +695,33 @@ mod tests {
         let plan = MovePlan::new(&installed, &real, &alias);
         assert!(stage(&plan, &mut |_, _| {}, &|| false).is_err());
         assert_eq!(std::fs::read(real.join("a.gguf")).unwrap(), b"only copy");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rebosts_own_folder_under_another_path_is_still_rebosts() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::Paths::new(dir.path().join("io.rebost.desktop"));
+        paths.ensure().unwrap();
+        let alias = dir.path().join("Alias");
+        std::os::unix::fs::symlink(paths.default_models_dir(), &alias).unwrap();
+        let gone = dir.path().join("Gone");
+        let back = Preflight::check(&paths, &alias, &files(&["a.gguf"]), &gone, true);
+        assert_eq!(back.problem, None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_hard_link_left_in_the_new_folder_is_reused() {
+        let dir = tempfile::tempdir().unwrap();
+        let (from, to) = (dir.path().join("from"), dir.path().join("to"));
+        write(&from, "a.gguf", b"weights");
+        std::fs::create_dir_all(&to).unwrap();
+        std::fs::hard_link(from.join("a.gguf"), to.join("a.gguf")).unwrap();
+        let plan = MovePlan::new(&files(&["a.gguf"]), &from, &to);
+        stage(&plan, &mut |_, _| {}, &|| false).unwrap().finish();
+        assert!(!from.join("a.gguf").exists());
+        assert_eq!(std::fs::read(to.join("a.gguf")).unwrap(), b"weights");
     }
 
     #[test]
