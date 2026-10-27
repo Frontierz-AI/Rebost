@@ -154,7 +154,8 @@
     "savedMain": "Se guarda en el disco principal del ordenador",
     "savedIn": "Se guarda en «%{name}»",
     "changeShort": "Cambiar",
-    "tooSmall": "Aquí no cabe esta IA. Elige una carpeta en otra unidad."
+    "tooSmall": "Aquí no cabe esta IA. Elige una carpeta en otra unidad.",
+    "keptCopies": "Tus IA ya están en la nueva carpeta. Rebost ha dejado una copia de algunas en la carpeta anterior porque no ha podido confirmar que fuera seguro borrarlas. Puedes borrarlas allí tú mismo."
   },
   "onboarding": {
     "welcome": "Te damos la bienvenida a Rebost",
@@ -606,7 +607,8 @@
     "modelsFolderNotWritable": "Rebost no puede guardar archivos en esa carpeta. Elige otra.",
     "modelsFolderAppData": "Esa carpeta forma parte de los datos de Rebost. Elige una que esté fuera.",
     "modelsFolderNameTaken": "En esa carpeta ya hay otro archivo con el mismo nombre que una de tus IA. Elige otra carpeta.",
-    "modelsFolderNoAis": "Tus IA no están en esa carpeta. Elige la carpeta donde están o usa la carpeta de Rebost."
+    "modelsFolderNoAis": "Tus IA no están en esa carpeta. Elige la carpeta donde están o usa la carpeta de Rebost.",
+    "modelsFolderNested": "Esa carpeta está dentro de la carpeta actual de tus IA, o la contiene. Elige una carpeta aparte."
   },
   "pii": {
     "heading": "Información personal",

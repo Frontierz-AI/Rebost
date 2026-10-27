@@ -9,6 +9,7 @@
     userFacingError,
     type ModelsFolderView,
     type ModelsMoveEvent,
+    type ModelsMoveOutcome,
   } from "$lib/api";
   import { app, notify, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
   import { t } from "$lib/i18n.svelte";
@@ -104,7 +105,7 @@
     await run(() => api.modelsFolderUseDefault(), installedBytes);
   }
 
-  async function run(action: () => Promise<boolean>, bytes: number) {
+  async function run(action: () => Promise<ModelsMoveOutcome>, bytes: number) {
     if (bytes > 0) {
       moving = { done: 0, total: bytes };
       stopListening = await events.modelsMove((event) => {
@@ -112,8 +113,9 @@
       });
     }
     try {
-      const finished = await action();
-      if (!finished) notice = t("modelsFolder.cancelled");
+      const outcome = await action();
+      if (outcome === "cancelled") notice = t("modelsFolder.cancelled");
+      else if (outcome === "kept-copies") notice = t("modelsFolder.keptCopies");
       else if (bytes > 0) notify(t("modelsFolder.moved"));
     } catch (err) {
       error = userFacingError(err);

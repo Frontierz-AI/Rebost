@@ -155,7 +155,8 @@
     "savedMain": "Sparas på datorns huvudenhet",
     "savedIn": "Sparas i ”%{name}”",
     "changeShort": "Ändra",
-    "tooSmall": "Det finns inte plats för den här AI:n här. Välj en mapp på en annan enhet."
+    "tooSmall": "Det finns inte plats för den här AI:n här. Välj en mapp på en annan enhet.",
+    "keptCopies": "Dina AI:er ligger nu i den nya mappen. Rebost lämnade en kopia av några i den gamla mappen eftersom det inte gick att bekräfta att de var säkra att radera. Du kan radera dem där själv."
   },
   "onboarding": {
     "welcome": "Välkommen till Rebost",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost kan inte spara filer i den mappen. Välj en annan.",
     "modelsFolderAppData": "Den mappen hör till Rebosts egna data. Välj en mapp utanför dem.",
     "modelsFolderNameTaken": "Mappen innehåller redan en annan fil med samma namn som en av dina AI:er. Välj en annan mapp.",
-    "modelsFolderNoAis": "Dina AI:er ligger inte i den mappen. Välj mappen där de ligger, eller använd Rebosts egen mapp."
+    "modelsFolderNoAis": "Dina AI:er ligger inte i den mappen. Välj mappen där de ligger, eller använd Rebosts egen mapp.",
+    "modelsFolderNested": "Den mappen ligger i mappen med dina AI:er, eller innehåller den. Välj en separat mapp."
   },
   "pii": {
     "heading": "Personuppgifter",

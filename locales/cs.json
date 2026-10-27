@@ -155,7 +155,8 @@
     "savedMain": "Ukládá se na hlavní disk počítače",
     "savedIn": "Ukládá se do „%{name}“",
     "changeShort": "Změnit",
-    "tooSmall": "Tato AI se sem nevejde. Vyber složku na jiném disku."
+    "tooSmall": "Tato AI se sem nevejde. Vyber složku na jiném disku.",
+    "keptCopies": "Tvé AI jsou teď v nové složce. Rebost ve staré složce nechal kopii některých, protože nemohl ověřit, že je bezpečné je smazat. Můžeš je tam smazat sám."
   },
   "onboarding": {
     "welcome": "Vítej v Rebostu",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost do té složky nemůže ukládat soubory. Vyber jinou.",
     "modelsFolderAppData": "Ta složka patří k vlastním datům Rebostu. Vyber složku mimo ně.",
     "modelsFolderNameTaken": "V té složce už je jiný soubor se stejným názvem jako jedna z tvých AI. Vyber jinou složku.",
-    "modelsFolderNoAis": "Tvé AI v té složce nejsou. Vyber složku, kde jsou, nebo použij složku Rebostu."
+    "modelsFolderNoAis": "Tvé AI v té složce nejsou. Vyber složku, kde jsou, nebo použij složku Rebostu.",
+    "modelsFolderNested": "Ta složka je uvnitř složky, kde teď máš AI, nebo ji obsahuje. Vyber samostatnou složku."
   },
   "pii": {
     "heading": "Osobní údaje",

@@ -155,7 +155,8 @@
     "savedMain": "Lagres på datamaskinens hoveddisk",
     "savedIn": "Lagres i «%{name}»",
     "changeShort": "Endre",
-    "tooSmall": "Det er ikke plass til denne KI-en her. Velg en mappe på en annen disk."
+    "tooSmall": "Det er ikke plass til denne KI-en her. Velg en mappe på en annen disk.",
+    "keptCopies": "KI-ene dine ligger nå i den nye mappen. Rebost lot en kopi av noen ligge i den gamle mappen, fordi den ikke kunne bekrefte at det var trygt å slette dem. Du kan slette dem der selv."
   },
   "onboarding": {
     "welcome": "Velkommen til Rebost",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost kan ikke lagre filer i den mappen. Velg en annen.",
     "modelsFolderAppData": "Den mappen hører til Rebosts egne data. Velg en mappe utenfor dem.",
     "modelsFolderNameTaken": "Mappen har allerede en annen fil med samme navn som en av KI-ene dine. Velg en annen mappe.",
-    "modelsFolderNoAis": "KI-ene dine ligger ikke i den mappen. Velg mappen der de ligger, eller bruk Rebosts egen mappe."
+    "modelsFolderNoAis": "KI-ene dine ligger ikke i den mappen. Velg mappen der de ligger, eller bruk Rebosts egen mappe.",
+    "modelsFolderNested": "Den mappen ligger inni mappen med KI-ene dine, eller inneholder den. Velg en egen mappe."
   },
   "pii": {
     "heading": "Personopplysninger",

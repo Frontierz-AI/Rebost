@@ -74,6 +74,7 @@ pub(crate) fn map_user_error(text: &str) -> String {
         ("models-folder-app-data", "errors.modelsFolderAppData"),
         ("models-folder-name-taken", "errors.modelsFolderNameTaken"),
         ("models-folder-no-ais", "errors.modelsFolderNoAis"),
+        ("models-folder-nested", "errors.modelsFolderNested"),
     ] {
         if lower.contains(code) {
             return rust_i18n::t!(key).into();

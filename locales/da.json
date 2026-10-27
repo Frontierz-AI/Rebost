@@ -155,7 +155,8 @@
     "savedMain": "Gemmes på computerens hoveddrev",
     "savedIn": "Gemmes i “%{name}”",
     "changeShort": "Skift",
-    "tooSmall": "Der er ikke plads til denne AI her. Vælg en mappe på et andet drev."
+    "tooSmall": "Der er ikke plads til denne AI her. Vælg en mappe på et andet drev.",
+    "keptCopies": "Dine AI'er ligger nu i den nye mappe. Rebost har ladet en kopi af nogle ligge i den gamle mappe, fordi den ikke kunne bekræfte, at de var sikre at slette. Du kan selv slette dem der."
   },
   "onboarding": {
     "welcome": "Velkommen til Rebost",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost kan ikke gemme filer i den mappe. Vælg en anden.",
     "modelsFolderAppData": "Den mappe hører til Rebosts egne data. Vælg en mappe uden for dem.",
     "modelsFolderNameTaken": "Mappen indeholder allerede en anden fil med samme navn som en af dine AI'er. Vælg en anden mappe.",
-    "modelsFolderNoAis": "Dine AI'er ligger ikke i den mappe. Vælg mappen, de ligger i, eller brug Rebosts egen mappe."
+    "modelsFolderNoAis": "Dine AI'er ligger ikke i den mappe. Vælg mappen, de ligger i, eller brug Rebosts egen mappe.",
+    "modelsFolderNested": "Den mappe ligger inde i mappen med dine AI'er, eller indeholder den. Vælg en separat mappe."
   },
   "pii": {
     "heading": "Personoplysninger",

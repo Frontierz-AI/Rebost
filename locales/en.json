@@ -154,7 +154,8 @@
     "savedMain": "Saved on this computer's main drive",
     "savedIn": "Saved in “%{name}”",
     "changeShort": "Change",
-    "tooSmall": "There isn't enough room here for this AI. Choose a folder on another drive."
+    "tooSmall": "There isn't enough room here for this AI. Choose a folder on another drive.",
+    "keptCopies": "Your AIs are in the new folder. Rebost left a copy of some in the old folder because it couldn't confirm they were safe to delete. You can delete them there yourself."
   },
   "onboarding": {
     "welcome": "Welcome to Rebost",
@@ -606,7 +607,8 @@
     "modelsFolderNotWritable": "Rebost can't save files in that folder. Choose another one.",
     "modelsFolderAppData": "That folder is part of Rebost's own data. Choose one outside it.",
     "modelsFolderNameTaken": "That folder already has a different file with the same name as one of your AIs. Choose another folder.",
-    "modelsFolderNoAis": "Your AIs aren't in that folder. Choose the folder that holds them, or use Rebost's own folder."
+    "modelsFolderNoAis": "Your AIs aren't in that folder. Choose the folder that holds them, or use Rebost's own folder.",
+    "modelsFolderNested": "That folder is inside the one your AIs are in now, or holds it. Choose a separate folder."
   },
   "pii": {
     "heading": "Personal information",

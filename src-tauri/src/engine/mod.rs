@@ -221,8 +221,19 @@ impl Engine {
     }
 
     pub fn new(ctx: Arc<Ctx>) -> Arc<Self> {
-        // An unplugged models drive must not make installed AIs look deleted.
+        // A move the last run left half done: finish or undo it, under the
+        // same rule, before anything looks at the models folder.
         let models_dir = ctx.models_dir();
+        match crate::models_folder::recover(ctx.paths.base(), &models_dir) {
+            Some(crate::models_folder::Recovered::Finished { kept }) => {
+                log::warn!("finished an interrupted AI move; kept {kept} old file(s)")
+            }
+            Some(crate::models_folder::Recovered::RolledBack) => {
+                log::warn!("undid an interrupted AI move")
+            }
+            None => {}
+        }
+        // An unplugged models drive must not make installed AIs look deleted.
         let forgot = !ctx.models_folder_missing()
             && crate::core::write_lock(&ctx.settings).forget_missing_models(&models_dir);
         if forgot {

@@ -155,7 +155,8 @@
     "savedMain": "Opgeslagen op de hoofdschijf van deze computer",
     "savedIn": "Opgeslagen in ‘%{name}’",
     "changeShort": "Wijzigen",
-    "tooSmall": "Hier is niet genoeg ruimte voor deze AI. Kies een map op een andere schijf."
+    "tooSmall": "Hier is niet genoeg ruimte voor deze AI. Kies een map op een andere schijf.",
+    "keptCopies": "Je AI's staan nu in de nieuwe map. Rebost heeft van sommige een kopie in de oude map laten staan, omdat het niet kon bevestigen dat verwijderen veilig was. Je kunt ze daar zelf verwijderen."
   },
   "onboarding": {
     "welcome": "Welkom bij Rebost",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost kan geen bestanden in die map opslaan. Kies een andere.",
     "modelsFolderAppData": "Die map hoort bij de eigen gegevens van Rebost. Kies een map daarbuiten.",
     "modelsFolderNameTaken": "In die map staat al een ander bestand met dezelfde naam als een van je AI's. Kies een andere map.",
-    "modelsFolderNoAis": "Je AI's staan niet in die map. Kies de map waarin ze staan, of gebruik de map van Rebost."
+    "modelsFolderNoAis": "Je AI's staan niet in die map. Kies de map waarin ze staan, of gebruik de map van Rebost.",
+    "modelsFolderNested": "Die map staat in de map met je AI's, of bevat die. Kies een aparte map."
   },
   "pii": {
     "heading": "Persoonsgegevens",

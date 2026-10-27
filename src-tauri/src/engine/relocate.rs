@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use super::{download, Engine};
-use crate::models_folder::{self, Preflight};
+use crate::models_folder::{self, Preflight, Relation};
 
 /// Id of the move in the download controls, so `download_cancel` stops it.
 pub const MOVE_ID: &str = "move:models";
@@ -32,21 +32,23 @@ impl Engine {
     }
 
     /// Keep AI models in `chosen` (`None`: the default folder). Installed AIs
-    /// move there first; a failure or cancel leaves them where they were.
-    /// Progress arrives as `rebost://models-move` events.
-    pub async fn set_models_folder(self: &Arc<Self>, chosen: Option<PathBuf>) -> Result<()> {
+    /// move there first under the rule in [`models_folder`]; a failure or
+    /// cancel leaves them where they were. Returns how many old copies were
+    /// kept because the rule couldn't prove them redundant. Progress arrives
+    /// as `rebost://models-move` events.
+    pub async fn set_models_folder(self: &Arc<Self>, chosen: Option<PathBuf>) -> Result<usize> {
         let _install = self
             .install_lock
             .try_lock()
             .map_err(|_| anyhow!("ai-busy"))?;
         let default = self.ctx.paths.default_models_dir();
-        let chosen = chosen.filter(|dir| !models_folder::same_entry(dir, &default));
+        let chosen = chosen.filter(|dir| models_folder::relation(dir, &default) != Relation::Same);
         let to = self.ctx.paths.models_dir_for(chosen.as_deref());
         let from = self.ctx.models_dir();
-        // Compare places, not spellings: a symlink or junction to the current
-        // folder must not turn into a move that deletes the only copies.
-        if models_folder::same_entry(&to, &from) {
-            return Ok(());
+        // Places, not spellings: the current folder under another path is no
+        // change. (A folder inside it, or holding it, fails the preflight.)
+        if models_folder::relation(&to, &from) == Relation::Same {
+            return Ok(0);
         }
         let preflight = self.models_folder_preflight(&to);
         if let Some(problem) = preflight.problem {
@@ -63,7 +65,11 @@ impl Engine {
             }
             let events = self.ctx.events.clone();
             let staging = plan.clone();
-            let staged = tokio::task::spawn_blocking(move || {
+            let journal = models_folder::journal_path(self.ctx.paths.base());
+            let mover = tokio::task::spawn_blocking(move || {
+                if staging.to_move.is_empty() {
+                    return Ok(None);
+                }
                 let mut last: Option<Instant> = None;
                 let mut progress = |done: u64, total: u64| {
                     if done < total && last.is_some_and(|at| at.elapsed() < PROGRESS_GAP) {
@@ -75,9 +81,10 @@ impl Engine {
                         json!({ "done": done, "total": total }),
                     );
                 };
-                models_folder::stage(&staging, &mut progress, &|| {
+                models_folder::stage(&staging, &journal, &mut progress, &|| {
                     control.check_cancelled().is_err()
                 })
+                .map(Some)
             })
             .await??;
             let missing = plan.missing.clone();
@@ -85,15 +92,18 @@ impl Engine {
                 settings.models_folder = chosen.clone();
                 forget_files(settings, &missing);
             });
+            let Some(mover) = mover else {
+                return saved.map(|()| 0);
+            };
             if let Err(error) = saved {
-                staged.roll_back();
+                tokio::task::spawn_blocking(move || mover.roll_back()).await?;
                 return Err(error);
             }
-            let left = tokio::task::spawn_blocking(move || staged.finish()).await?;
-            if left > 0 {
-                log::warn!("{left} moved AI file(s) are still in {}", from.display());
+            let kept = tokio::task::spawn_blocking(move || mover.finish()).await?;
+            if kept > 0 {
+                log::warn!("kept {kept} old AI file(s) in {}", from.display());
             }
-            Ok(())
+            Ok(kept)
         }
         .await;
         crate::core::mutex_lock(&self.downloads).remove(MOVE_ID);

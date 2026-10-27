@@ -251,11 +251,12 @@ pub async fn models_folder_pick(
     };
     let folder: PathBuf = folder.into_path().map_err(friendly)?;
     let folder = crate::models_folder::plain_path(folder.canonicalize().unwrap_or(folder));
+    use crate::models_folder::{relation, Relation};
     let preflight = engine.models_folder_preflight(&folder);
     let choice = ModelsFolderChoice {
         path: folder.to_string_lossy().into_owned(),
-        is_default: crate::models_folder::same_entry(&folder, &ctx.paths.default_models_dir()),
-        unchanged: crate::models_folder::same_entry(&folder, &ctx.models_dir()),
+        is_default: relation(&folder, &ctx.paths.default_models_dir()) == Relation::Same,
+        unchanged: relation(&folder, &ctx.models_dir()) == Relation::Same,
         free_bytes: preflight.free,
         move_bytes: preflight.plan.bytes(),
         problem: preflight.problem.map(|problem| problem.code()),
@@ -267,22 +268,33 @@ pub async fn models_folder_pick(
 /// Keep AIs in the folder picked last, moving installed ones there.
 /// Progress arrives as `rebost://models-move`; `download_cancel` with
 /// `move:models` stops it and leaves everything where it was.
-/// Resolves `false` when the move was cancelled.
+/// How a models-folder change ended.
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum MoveOutcome {
+    Done,
+    Cancelled,
+    /// In the new folder, but some old copies were kept (the rule couldn't
+    /// prove them redundant).
+    KeptCopies,
+}
+
 #[tauri::command]
 pub async fn models_folder_apply(
     engine: State<'_, Arc<Engine>>,
     pending: State<'_, PendingModelsFolder>,
-) -> CmdResult<bool> {
+) -> CmdResult<MoveOutcome> {
     let folder = crate::core::mutex_lock(&pending.0)
         .take()
         .ok_or_else(|| friendly(crate::models_folder::MISSING))?;
     finished_move(engine.inner().clone().set_models_folder(Some(folder)).await)
 }
 
-fn finished_move(result: anyhow::Result<()>) -> CmdResult<bool> {
+fn finished_move(result: anyhow::Result<usize>) -> CmdResult<MoveOutcome> {
     match result {
-        Ok(()) => Ok(true),
-        Err(error) if error.to_string() == "cancelled" => Ok(false),
+        Ok(0) => Ok(MoveOutcome::Done),
+        Ok(_) => Ok(MoveOutcome::KeptCopies),
+        Err(error) if error.to_string() == "cancelled" => Ok(MoveOutcome::Cancelled),
         Err(error) => Err(friendly(error)),
     }
 }
@@ -291,7 +303,7 @@ fn finished_move(result: anyhow::Result<()>) -> CmdResult<bool> {
 /// be reached. While the chosen folder is unavailable, the AIs in it are
 /// forgotten (their files are not touched).
 #[tauri::command]
-pub async fn models_folder_use_default(engine: State<'_, Arc<Engine>>) -> CmdResult<bool> {
+pub async fn models_folder_use_default(engine: State<'_, Arc<Engine>>) -> CmdResult<MoveOutcome> {
     finished_move(engine.inner().clone().set_models_folder(None).await)
 }
 

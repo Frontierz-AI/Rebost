@@ -155,7 +155,8 @@
     "savedMain": "Enregistré sur le disque principal de l’ordinateur",
     "savedIn": "Enregistré dans « %{name} »",
     "changeShort": "Modifier",
-    "tooSmall": "Il n’y a pas assez de place ici pour cette IA. Choisissez un dossier sur un autre disque."
+    "tooSmall": "Il n’y a pas assez de place ici pour cette IA. Choisissez un dossier sur un autre disque.",
+    "keptCopies": "Vos IA sont dans le nouveau dossier. Rebost a laissé une copie de certaines dans l’ancien dossier, faute de pouvoir confirmer qu’on pouvait les supprimer sans risque. Vous pouvez les y supprimer vous-même."
   },
   "onboarding": {
     "welcome": "Bienvenue dans Rebost",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost ne peut pas enregistrer de fichiers dans ce dossier. Choisissez-en un autre.",
     "modelsFolderAppData": "Ce dossier fait partie des données de Rebost. Choisissez-en un en dehors.",
     "modelsFolderNameTaken": "Ce dossier contient déjà un autre fichier portant le nom d’une de vos IA. Choisissez un autre dossier.",
-    "modelsFolderNoAis": "Vos IA ne sont pas dans ce dossier. Choisissez celui qui les contient, ou utilisez le dossier de Rebost."
+    "modelsFolderNoAis": "Vos IA ne sont pas dans ce dossier. Choisissez celui qui les contient, ou utilisez le dossier de Rebost.",
+    "modelsFolderNested": "Ce dossier se trouve dans celui de vos IA, ou le contient. Choisissez un dossier distinct."
   },
   "pii": {
     "heading": "Informations personnelles",

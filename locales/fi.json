@@ -155,7 +155,8 @@
     "savedMain": "Tallennetaan tietokoneen pääasemalle",
     "savedIn": "Tallennetaan kansioon ”%{name}”",
     "changeShort": "Vaihda",
-    "tooSmall": "Tämä tekoäly ei mahdu tänne. Valitse kansio toiselta asemalta."
+    "tooSmall": "Tämä tekoäly ei mahdu tänne. Valitse kansio toiselta asemalta.",
+    "keptCopies": "Tekoälysi ovat nyt uudessa kansiossa. Rebost jätti joistakin kopion vanhaan kansioon, koska se ei voinut varmistaa, että niiden poistaminen on turvallista. Voit poistaa ne sieltä itse."
   },
   "onboarding": {
     "welcome": "Tervetuloa Rebostiin",
@@ -607,7 +608,8 @@
     "modelsFolderNotWritable": "Rebost ei voi tallentaa tiedostoja siihen kansioon. Valitse toinen.",
     "modelsFolderAppData": "Se kansio kuuluu Rebostin omiin tietoihin. Valitse kansio niiden ulkopuolelta.",
     "modelsFolderNameTaken": "Kansiossa on jo toinen tiedosto, jolla on sama nimi kuin yhdellä tekoälylläsi. Valitse toinen kansio.",
-    "modelsFolderNoAis": "Tekoälysi eivät ole siinä kansiossa. Valitse kansio, jossa ne ovat, tai käytä Rebostin omaa kansiota."
+    "modelsFolderNoAis": "Tekoälysi eivät ole siinä kansiossa. Valitse kansio, jossa ne ovat, tai käytä Rebostin omaa kansiota.",
+    "modelsFolderNested": "Kansio on nykyisen tekoälykansiosi sisällä tai sisältää sen. Valitse erillinen kansio."
   },
   "pii": {
     "heading": "Henkilötiedot",

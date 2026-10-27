@@ -222,7 +222,7 @@ pub fn atomic_write(path: &Path, contents: impl AsRef<[u8]>) -> std::io::Result<
     result
 }
 
-fn backup_path(path: &Path) -> PathBuf {
+pub(crate) fn backup_path(path: &Path) -> PathBuf {
     path.with_file_name(format!(
         "{}.bak",
         path.file_name().unwrap_or_default().to_string_lossy()

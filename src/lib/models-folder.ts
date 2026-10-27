@@ -13,6 +13,7 @@ const PROBLEM_KEYS: Record<string, string> = {
   "models-folder-app-data": "errors.modelsFolderAppData",
   "models-folder-name-taken": "errors.modelsFolderNameTaken",
   "models-folder-no-ais": "errors.modelsFolderNoAis",
+  "models-folder-nested": "errors.modelsFolderNested",
   "models-folder-missing": "errors.modelsFolderMissing",
 };
 

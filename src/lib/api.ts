@@ -268,6 +268,9 @@ export interface ModelsFolderChoice {
   problem: string | null;
 }
 
+/** `kept-copies`: moved, but some old copies stayed (never removed unless provably redundant). */
+export type ModelsMoveOutcome = "done" | "cancelled" | "kept-copies";
+
 export interface ModelsMoveEvent {
   done: number;
   total: number;
@@ -624,9 +627,8 @@ export const api = {
     invoke<void>("open_model_page", { source, reference }),
   downloadCancel: (id: string) => invoke<void>("download_cancel", { id }),
   modelsFolderPick: () => invoke<ModelsFolderChoice | null>("models_folder_pick"),
-  /** Resolves false when the move was cancelled. */
-  modelsFolderApply: () => invoke<boolean>("models_folder_apply"),
-  modelsFolderUseDefault: () => invoke<boolean>("models_folder_use_default"),
+  modelsFolderApply: () => invoke<ModelsMoveOutcome>("models_folder_apply"),
+  modelsFolderUseDefault: () => invoke<ModelsMoveOutcome>("models_folder_use_default"),
   modelsFolderRecheck: () => invoke<boolean>("models_folder_recheck"),
   downloadSkipVerify: (id: string) => invoke<void>("download_skip_verify", { id }),
 

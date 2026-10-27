@@ -154,7 +154,8 @@
     "savedMain": "Es desa al disc principal de l'ordinador",
     "savedIn": "Es desa a «%{name}»",
     "changeShort": "Canvia",
-    "tooSmall": "Aquí no hi cap aquesta IA. Tria una carpeta en una altra unitat."
+    "tooSmall": "Aquí no hi cap aquesta IA. Tria una carpeta en una altra unitat.",
+    "keptCopies": "Les IA ja són a la carpeta nova. Rebost n'ha deixat una còpia d'algunes a la carpeta anterior perquè no ha pogut confirmar que fos segur esborrar-les. Les pots esborrar tu mateix d'allà."
   },
   "onboarding": {
     "welcome": "Et donem la benvinguda a Rebost",
@@ -606,7 +607,8 @@
     "modelsFolderNotWritable": "Rebost no pot desar fitxers en aquesta carpeta. Tria'n una altra.",
     "modelsFolderAppData": "Aquesta carpeta forma part de les dades de Rebost. Tria'n una que en quedi fora.",
     "modelsFolderNameTaken": "En aquesta carpeta ja hi ha un altre fitxer amb el mateix nom que una de les teves IA. Tria una altra carpeta.",
-    "modelsFolderNoAis": "Les teves IA no són en aquesta carpeta. Tria la carpeta on són o fes servir la de Rebost."
+    "modelsFolderNoAis": "Les teves IA no són en aquesta carpeta. Tria la carpeta on són o fes servir la de Rebost.",
+    "modelsFolderNested": "Aquesta carpeta és dins de la carpeta actual de les IA, o la conté. Tria'n una de separada."
   },
   "pii": {
     "heading": "Informació personal",
