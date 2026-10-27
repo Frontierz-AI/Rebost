@@ -11,9 +11,9 @@ use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 
 /// Official llama.cpp semver. Bump only when they cut a new `v*` release.
-pub const ENGINE_RELEASE: &str = "0.5.0";
+pub const ENGINE_RELEASE: &str = "0.7.0";
 /// GitHub tag that hosts the archives for [`ENGINE_RELEASE`].
-pub const ENGINE_BUILD: &str = "b11146";
+pub const ENGINE_BUILD: &str = "b11669";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EnginePin {
@@ -46,80 +46,80 @@ pub const ENGINE_PINS: &[EnginePin] = &[
     EnginePin {
         os: "macos",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-macos-arm64.tar.gz",
-        sha256: "1ad3f9eff80edb9dbef4259ad564d1720612ef7eea48fa4afed0e54f5f3d5711",
-        file_name: "llama-b11146-bin-macos-arm64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-macos-arm64.tar.gz",
+        sha256: "dbed55493d72bc1ba2babc8770d669c2289b5bc4ee9fb2a4dfc158d45b7d13fd",
+        file_name: "llama-b11669-bin-macos-arm64.tar.gz",
         accelerator: "Metal",
     },
     EnginePin {
         os: "macos",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-macos-x64.tar.gz",
-        sha256: "305f0e3a17d2c01eb205cd0a62128357f1ec3b55329cb084d94e5ec0115d7a3b",
-        file_name: "llama-b11146-bin-macos-x64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-macos-x64.tar.gz",
+        sha256: "cab28238d78158109b48deb27b05d50e0dcef56275d2e76da9ca8281526c7532",
+        file_name: "llama-b11669-bin-macos-x64.tar.gz",
         accelerator: "Metal",
     },
     EnginePin {
         os: "windows",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-win-vulkan-x64.zip",
-        sha256: "55a378aa095b466979d85075234f66d7655c7a7483222af0c006c0e55b4d7bd6",
-        file_name: "llama-b11146-bin-win-vulkan-x64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-win-vulkan-x64.zip",
+        sha256: "2c07574e7bde71321cb785282b20cc821e951132149eeceeea32ddebdbf0598e",
+        file_name: "llama-b11669-bin-win-vulkan-x64.zip",
         accelerator: "Vulkan",
     },
     EnginePin {
         os: "windows",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-win-cpu-arm64.zip",
-        sha256: "1727d241f3bf6d27360e984e851cf013928fd655bf89f8628e70da027f377b7d",
-        file_name: "llama-b11146-bin-win-cpu-arm64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-win-cpu-arm64.zip",
+        sha256: "9cff39ffed17edcd03a7d876073f74d7b48cd43a1e5eafdd59ee094185ad871b",
+        file_name: "llama-b11669-bin-win-cpu-arm64.zip",
         accelerator: "CPU",
     },
     EnginePin {
         os: "linux",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-ubuntu-vulkan-x64.tar.gz",
-        sha256: "d3ce40fce7403cc93bcf5718fc46c6efb61ed9709f8e5d9f10c86bf0e30e8fb3",
-        file_name: "llama-b11146-bin-ubuntu-vulkan-x64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-ubuntu-vulkan-x64.tar.gz",
+        sha256: "e8709e5ba6c1b093dea7f3de57f4aba842f9a188fba6b465782d65d6fcfa4d9f",
+        file_name: "llama-b11669-bin-ubuntu-vulkan-x64.tar.gz",
         accelerator: "Vulkan",
     },
     EnginePin {
         os: "linux",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-ubuntu-vulkan-arm64.tar.gz",
-        sha256: "5dcebe3ecbcb43a1ed85e3284453f9edf54dcca833e1cb1f54b4022b753c1da5",
-        file_name: "llama-b11146-bin-ubuntu-vulkan-arm64.tar.gz",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-ubuntu-vulkan-arm64.tar.gz",
+        sha256: "d283522e479c0d532e3a04d715dd852ffb2d95925caa6d41ef2ba53a65e46a51",
+        file_name: "llama-b11669-bin-ubuntu-vulkan-arm64.tar.gz",
         accelerator: "Vulkan",
     },
 ];
 
-/// Builds downloaded at warmup, never bundled. CUDA (~250 MB plus a ~370 MB
+/// Builds downloaded at warmup, never bundled. CUDA (~254 MiB plus a ~373 MiB
 /// runtime zip) and Adreno OpenCL are faster GPU builds for matching hardware.
-/// The Windows x64 CPU build (~18 MB) is the last resort when the bundled
+/// The Windows x64 CPU build (~19 MiB) is the last resort when the bundled
 /// Vulkan build will not start on a PC's graphics driver.
 pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
     EnginePin {
         os: "windows",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-win-cpu-x64.zip",
-        sha256: "14cf1303ca9ac3abd94816850532f9f9a69ac66fbaca3776fc6f9061c2fac1d1",
-        file_name: "llama-b11146-bin-win-cpu-x64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-win-cpu-x64.zip",
+        sha256: "37b3efcf962847ca869745fd4ccf7f5e7e8dacfeff9fa3523b4ca8cdc66d632b",
+        file_name: "llama-b11669-bin-win-cpu-x64.zip",
         accelerator: "CPU",
     },
     EnginePin {
         os: "windows",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-win-cuda-12.4-x64.zip",
-        sha256: "3c806a6ceccc3dae1c743ceb1a1fb2cce5b76f40bfbd4c6b7b8afb6ef45a5807",
-        file_name: "llama-b11146-bin-win-cuda-12.4-x64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-win-cuda-12.4-x64.zip",
+        sha256: "c2da1f73ed176ae093ac5aceb978a7b167a16113f6d74c6789eeaee2135cb8dc",
+        file_name: "llama-b11669-bin-win-cuda-12.4-x64.zip",
         accelerator: "CUDA",
     },
     EnginePin {
         os: "windows",
         arch: "aarch64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-win-opencl-adreno-arm64.zip",
-        sha256: "e4f080b1951c80ed5a5f3a4d52bda31839ebdfb8285c39dbc1bd66e4cfc13806",
-        file_name: "llama-b11146-bin-win-opencl-adreno-arm64.zip",
+        url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/llama-b11669-bin-win-opencl-adreno-arm64.zip",
+        sha256: "3b10da78b5d7129bbafd302a95199233d2485536cc438eeb3d8ed1f904852ac0",
+        file_name: "llama-b11669-bin-win-opencl-adreno-arm64.zip",
         accelerator: "OpenCL",
     },
 ];
@@ -128,9 +128,9 @@ pub const ENGINE_OPTIONAL_RUNTIMES: &[EngineRuntimePin] = &[EngineRuntimePin {
     os: "windows",
     arch: "x86_64",
     accelerator: "CUDA",
-    url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/cudart-llama-bin-win-cuda-12.4-x64.zip",
-    sha256: "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6",
-    file_name: "cudart-llama-bin-win-cuda-12.4-x64.zip",
+    url: "https://github.com/ggml-org/llama.cpp/releases/download/b11669/cudart-llama-bin-win-cuda-12.4-x64.zip",
+        sha256: "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6",
+        file_name: "cudart-llama-bin-win-cuda-12.4-x64.zip",
     sidecar: "cudart64_12.dll",
 }];
 
@@ -259,8 +259,8 @@ mod tests {
 
     #[test]
     fn official_release_uses_named_nightly_archives() {
-        assert_eq!(ENGINE_RELEASE, "0.5.0");
-        assert_eq!(ENGINE_BUILD, "b11146");
+        assert_eq!(ENGINE_RELEASE, "0.7.0");
+        assert_eq!(ENGINE_BUILD, "b11669");
     }
 
     #[test]
@@ -325,25 +325,25 @@ mod tests {
             pin_for_target_triple("aarch64-apple-darwin")
                 .unwrap()
                 .file_name,
-            "llama-b11146-bin-macos-arm64.tar.gz"
+            "llama-b11669-bin-macos-arm64.tar.gz"
         );
         assert_eq!(
             pin_for_target_triple("x86_64-apple-darwin")
                 .unwrap()
                 .file_name,
-            "llama-b11146-bin-macos-x64.tar.gz"
+            "llama-b11669-bin-macos-x64.tar.gz"
         );
         assert_eq!(
             pin_for_target_triple("x86_64-pc-windows-msvc")
                 .unwrap()
                 .file_name,
-            "llama-b11146-bin-win-vulkan-x64.zip"
+            "llama-b11669-bin-win-vulkan-x64.zip"
         );
         assert_eq!(
             pin_for_target_triple("aarch64-pc-windows-msvc")
                 .unwrap()
                 .file_name,
-            "llama-b11146-bin-win-cpu-arm64.zip"
+            "llama-b11669-bin-win-cpu-arm64.zip"
         );
         assert!(pin_for_target_triple("wasm32-unknown-unknown").is_err());
     }
@@ -388,7 +388,7 @@ mod tests {
         let native = pin_for(std::env::consts::OS, std::env::consts::ARCH).unwrap();
         assert_eq!(
             extract_dir_name(native),
-            format!("0.5.0-{}", native.accelerator.to_ascii_lowercase())
+            format!("0.7.0-{}", native.accelerator.to_ascii_lowercase())
         );
         let foreign_arch = if std::env::consts::ARCH == "aarch64" {
             "x86_64"
@@ -399,7 +399,7 @@ mod tests {
         assert_eq!(
             extract_dir_name(foreign),
             format!(
-                "0.5.0-{}-{foreign_arch}",
+                "0.7.0-{}-{foreign_arch}",
                 foreign.accelerator.to_ascii_lowercase()
             )
         );
@@ -409,7 +409,7 @@ mod tests {
     fn only_a_gpu_bundle_has_a_cpu_fallback() {
         let fallback = cpu_fallback_pin_for("windows", "x86_64").unwrap();
         assert_eq!(fallback.accelerator, "CPU");
-        assert_eq!(fallback.file_name, "llama-b11146-bin-win-cpu-x64.zip");
+        assert_eq!(fallback.file_name, "llama-b11669-bin-win-cpu-x64.zip");
         assert!(cpu_fallback_pin_for("windows", "aarch64").is_none());
         assert!(cpu_fallback_pin_for("macos", "aarch64").is_none());
         assert!(cpu_fallback_pin_for("linux", "x86_64").is_none());

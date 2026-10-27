@@ -86,7 +86,9 @@ pub fn normalize_lang(tag: &str) -> Option<&'static str> {
     Some(code)
 }
 
-pub(crate) const SCHEMA_VERSION: &str = "rebost-search/v3";
+// Tantivy 0.27 changes index storage and the built-in stemmer implementation.
+// Rebuild derived passages and chat entries from their durable source data.
+pub(crate) const SCHEMA_VERSION: &str = "rebost-search/v4";
 
 /// Ranking weights — implementation constants tuned against the retrieval
 /// eval suite (see `tests/retrieval_eval.rs`), not product settings.

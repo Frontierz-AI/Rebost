@@ -6,31 +6,31 @@ Each installer contains **one** archive for that OS/arch. There is no universal 
 
 ## Pin
 
-Rebost follows official llama.cpp `v*` releases, not nightlies. The `v*` tag does not attach OS archives; those live on the nightly tag named in that release (0.5.0 names `b11146`).
+Rebost follows official llama.cpp `v*` releases, not nightlies. The `v*` tag does not attach OS archives; those live on the nightly tag named in that release. [v0.7.0](https://github.com/ggml-org/llama.cpp/releases/tag/v0.7.0) names `b11669` in its [`nightly-tag.txt`](https://github.com/ggml-org/llama.cpp/releases/download/v0.7.0/nightly-tag.txt). The archive SHA-256 values come from the `digest` fields in the [official build's release metadata](https://api.github.com/repos/ggml-org/llama.cpp/releases/tags/b11669).
 
 `src-tauri/src/engine/pin.rs`:
 
-- `ENGINE_RELEASE` (e.g. `0.5.0`) — official semver; Settings diagnostics and extract folders use this
-- `ENGINE_BUILD` (e.g. `b11146`) — GitHub tag that hosts the archives
+- `ENGINE_RELEASE` (e.g. `0.7.0`) — official semver; Settings diagnostics and extract folders use this
+- `ENGINE_BUILD` (e.g. `b11669`) — GitHub tag that hosts the archives
 - `ENGINE_PINS`: one GitHub archive URL + SHA-256 per OS/arch (what the installer ships)
 - `ENGINE_OPTIONAL_PINS`: faster GPU archives downloaded at first warmup when the hardware matches. Not bundled.
 
 | Host | Archive | Accelerator | Typical archive size |
 |------|---------|-------------|----------------------|
-| macOS arm64 | `macos-arm64.tar.gz` | Metal | ~11 MB |
-| macOS x64 | `macos-x64.tar.gz` | Metal | ~11 MB |
-| Windows x64 | `win-vulkan-x64.zip` | Vulkan | ~33 MB |
-| Windows arm64 | `win-cpu-arm64.zip` | CPU | ~12 MB |
-| Linux x64 / arm64 | `ubuntu-vulkan-*.tar.gz` | Vulkan (not a supported platform; pin exists so the crate compiles on Ubuntu CI). There is no Linux installer overlay. | ~26–32 MB |
+| macOS arm64 | `macos-arm64.tar.gz` | Metal | ~12 MiB |
+| macOS x64 | `macos-x64.tar.gz` | Metal | ~11 MiB |
+| Windows x64 | `win-vulkan-x64.zip` | Vulkan | ~31 MiB |
+| Windows arm64 | `win-cpu-arm64.zip` | CPU | ~12 MiB |
+| Linux x64 / arm64 | `ubuntu-vulkan-*.tar.gz` | Vulkan (not a supported platform; pin exists so the crate compiles on Ubuntu CI). There is no Linux installer overlay. | ~23–29 MiB |
 
 Optional downloads (app data, not the installer):
 
 | Host | When | Archive | Extra |
 |------|------|---------|-------|
-| Windows x64 | NVIDIA driver (`nvcuda.dll`) | `win-cuda-12.4-x64.zip` (~250 MB) | `cudart-llama-bin-win-cuda-12.4-x64.zip` (~370 MB), because llama.cpp does not ship `cudart`/`cublas` in the CUDA zip |
-| Windows x64 | The bundled Vulkan build would not start | `win-cpu-x64.zip` (~18 MB) | — |
-| Windows x64 copy on an ARM PC | Always (native ARM64 under x64 emulation) | `win-cpu-arm64.zip` (~12 MB), the ARM installer's own pin | — |
-| Windows arm64 | Snapdragon / Adreno | `win-opencl-adreno-arm64.zip` (~13 MB) | — |
+| Windows x64 | NVIDIA driver (`nvcuda.dll`) | `win-cuda-12.4-x64.zip` (~254 MiB) | `cudart-llama-bin-win-cuda-12.4-x64.zip` (~373 MiB), because llama.cpp does not ship `cudart`/`cublas` in the CUDA zip |
+| Windows x64 | The bundled Vulkan build would not start | `win-cpu-x64.zip` (~19 MiB) | — |
+| Windows x64 copy on an ARM PC | Always (native ARM64 under x64 emulation) | `win-cpu-arm64.zip` (~12 MiB), the ARM installer's own pin | — |
+| Windows arm64 | Snapdragon / Adreno | `win-opencl-adreno-arm64.zip` (~13 MiB) | — |
 
 CUDA 12.4 rather than 13.x so older NVIDIA GPUs still load. If the optional download fails, or llama-server **exits or never becomes healthy** (missing DLL, wrong GPU, hung driver), Rebost uses the bundled Vulkan or CPU build and skips the optional pin for the rest of that session. A slow load of the *bundled* pin is still a timeout, not a reason to fetch CUDA.
 
@@ -55,7 +55,7 @@ An x64 copy running on Windows ARM (the regular installer on a Snapdragon PC) do
 
 Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU uses `-ngl 0`. The x64-on-ARM Vulkan copy is tuned as CPU and adds `--device none --no-op-offload`. `--load-mode none` only on discrete Vulkan and CUDA (0.4.1 dropped `--no-mmap`). CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
 
-Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.5.0-metal`, `0.5.0-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
+Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.7.0-metal`, `0.7.0-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
 
 ## First run
 

@@ -136,6 +136,15 @@ struct ThreadsFile {
 pub struct Conversations;
 
 impl Conversations {
+    /// Read the restore inventory without hiding metadata errors or rewriting avatars.
+    pub(crate) fn list_for_search_restore(paths: &Paths) -> Result<Vec<ThreadMeta>> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _read = crate::core::mutex_lock(&transaction);
+        let file: ThreadsFile =
+            crate::paths::read_json_checked(&paths.threads_index())?.unwrap_or_default();
+        Ok(file.threads)
+    }
+
     pub fn list(paths: &Paths) -> Vec<ThreadMeta> {
         let transaction = crate::paths::metadata_lock(&paths.threads_index());
         let _write = crate::core::mutex_lock(&transaction);

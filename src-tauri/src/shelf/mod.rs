@@ -115,7 +115,21 @@ pub struct Library {
 
 impl Library {
     pub fn load(paths: &Paths) -> Result<Self> {
-        let registry: RegistryFile = read_json(&paths.shelf_registry()).unwrap_or_default();
+        Self::load_inner(paths, false)
+    }
+
+    /// Keep search restoration pending if a Shelf's metadata cannot be recovered.
+    pub(crate) fn load_for_search_restore(paths: &Paths) -> Result<Self> {
+        Self::load_inner(paths, true)
+    }
+
+    fn load_inner(paths: &Paths, restoring: bool) -> Result<Self> {
+        let registry: RegistryFile = if restoring {
+            crate::paths::read_json_checked(&paths.shelf_registry())?
+        } else {
+            read_json(&paths.shelf_registry())
+        }
+        .unwrap_or_default();
         let mut shelves = Vec::new();
         let mut documents = BTreeMap::new();
         for entry in registry.shelves {
@@ -130,6 +144,11 @@ impl Library {
                     thread_id: config.thread_id.or(entry.thread_id.clone()),
                     think_level: config.think_level,
                 },
+                Err(error) if restoring => {
+                    return Err(error).with_context(|| {
+                        format!("restore Shelf metadata {}", config_path.display())
+                    });
+                }
                 Err(error) => {
                     log::warn!(
                         "shelf.yml unreadable at {} ({error:#}); using registry entry",
@@ -145,8 +164,12 @@ impl Library {
                     }
                 }
             };
-            let docs: DocumentsFile =
-                read_json(&paths.documents_registry(&shelf.id)).unwrap_or_default();
+            let docs: DocumentsFile = if restoring {
+                crate::paths::read_json_checked(&paths.documents_registry(&shelf.id))?
+            } else {
+                read_json(&paths.documents_registry(&shelf.id))
+            }
+            .unwrap_or_default();
             documents.insert(
                 shelf.id.clone(),
                 docs.documents
