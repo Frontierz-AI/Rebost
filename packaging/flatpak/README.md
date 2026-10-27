@@ -20,7 +20,7 @@ Only the Flatpak uses the new ID: the desktop entry, icon and metainfo are named
 - **Frontend:** `org.freedesktop.Sdk.Extension.node24`, pnpm's own Linux binary (`@pnpm/exe.linux-*`), and `node-sources.json`, which fills an offline pnpm store from `pnpm-lock.yaml`.
 - **Crates:** `cargo-sources.json` vendors every crate in `src-tauri/Cargo.lock`.
 - **Tesseract and Leptonica:** xberg-tesseract's build script downloads them; the manifest declares the same archives with their checksums and seeds its cache (`TESSERACT_RS_CACHE_DIR`), so the build stays offline.
-- **llama.cpp:** built at the tag pinned in `src-tauri/src/engine/pin.rs` (`ENGINE_BUILD`), with the Vulkan and CPU backends as loadable modules and CPU variants per processor generation. It is packed under the upstream Linux archive names, so the app unpacks it like the bundled engine of the other packages. The same build without the Vulkan module is the CPU fallback, so the Flatpak never downloads an engine.
+- **llama.cpp:** built (with SPIRV-Headers, needed only at build time) at the tag pinned in `src-tauri/src/engine/pin.rs` (`ENGINE_BUILD`), with the Vulkan and CPU backends as loadable modules and CPU variants per processor generation. It is packed under the upstream Linux archive names, so the app unpacks it like the bundled engine of the other packages. The same build without the Vulkan module is the CPU fallback, so the Flatpak never downloads an engine.
 - **Updates:** inside a Flatpak the app finds `/.flatpak-info`, never checks GitHub, and About says updates come from the software centre.
 
 `src/lib/packaging.test.ts` fails when the metainfo's newest release is not the version in `package.json`, or the manifest's llama.cpp tag or archive names drift from `pin.rs`.

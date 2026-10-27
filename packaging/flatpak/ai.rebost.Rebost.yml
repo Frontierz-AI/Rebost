@@ -44,6 +44,20 @@ build-options:
   append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin
 
 modules:
+  # Build-time only: llama.cpp's Vulkan backend asks for SPIRV-Headers' CMake
+  # package, which the SDK does not install. Nothing of it ships.
+  - name: spirv-headers
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DSPIRV_HEADERS_ENABLE_TESTS=OFF
+    cleanup:
+      - '*'
+    sources:
+      - type: git
+        url: https://github.com/KhronosGroup/SPIRV-Headers.git
+        tag: vulkan-sdk-1.4.363.0
+        commit: 496543121ce6419f23d6fa5d7194ba66c36212d2
+
   # llama.cpp at the release Rebost pins (src-tauri/src/engine/pin.rs), with
   # the Vulkan and CPU backends as loadable modules and CPU variants for older
   # and newer processors, like the upstream Linux builds. The app unpacks an
@@ -61,6 +75,7 @@ modules:
         esac
         cmake -S . -B build -G Ninja \
           -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_PREFIX_PATH=/app \
           -DBUILD_SHARED_LIBS=ON \
           -DCMAKE_INSTALL_RPATH='$ORIGIN' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
