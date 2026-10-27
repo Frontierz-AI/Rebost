@@ -95,7 +95,7 @@ pub const ENGINE_PINS: &[EnginePin] = &[
 
 /// Builds downloaded at warmup, never bundled. CUDA (~254 MiB plus a ~373 MiB
 /// runtime zip) and Adreno OpenCL are faster GPU builds for matching hardware.
-/// The CPU builds (~14-19 MiB) are the last resort when the bundled Vulkan
+/// The CPU builds (~13-19 MiB) are the last resort when the bundled Vulkan
 /// build will not start on a computer's graphics driver.
 pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
     EnginePin {
