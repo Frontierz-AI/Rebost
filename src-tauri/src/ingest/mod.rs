@@ -126,7 +126,7 @@ impl Ingestor {
                     let Some(job) = job else { break };
                     match job {
                         Job::Process(job) => {
-                            let _work = ctx.ingest_queue.begin_work(&job.shelf_id);
+                            let _work = ctx.ingest_queue.begin_work(&job.shelf_id, &job.abs_path);
                             ctx.ingest_queue
                                 .start(&job.shelf_id, &job.abs_path, job.epoch);
                             if !job_still_wanted(&ctx, &job) {
@@ -353,6 +353,7 @@ impl Ingestor {
                     .await;
             }
         }
+        self.ctx.ingest_queue.mark_synced();
     }
 
     /// Queue files this Shelf left unread, in every source that is here.

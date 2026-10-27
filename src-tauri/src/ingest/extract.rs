@@ -158,8 +158,36 @@ pub struct ExtractorSettings {
     pub tessdata_dir: Option<PathBuf>,
     /// Bundled packs copied into `tessdata_dir` on the first extract.
     pub tessdata_bundle: Option<PathBuf>,
-    /// Extraction timeout per file.
+    /// Extraction timeout per file. Long PDFs get more, see [`timeout_for`].
     pub timeout_secs: u64,
+}
+
+/// Time allowed per PDF page, enough for a scanned page through OCR in
+/// every bundled language while other files are being read too.
+const SECS_PER_PDF_PAGE: u64 = 20;
+
+/// Upper bound for one file, however many pages it has.
+const MAX_TIMEOUT_SECS: u64 = 4 * 60 * 60;
+
+/// Extraction timeout for a file: the base, or a per-page budget for long
+/// PDFs so a big scan isn't cut off half way through OCR.
+pub(crate) fn timeout_for(base_secs: u64, pdf_pages: Option<usize>) -> u64 {
+    let by_pages = (pdf_pages.unwrap_or(0) as u64).saturating_mul(SECS_PER_PDF_PAGE);
+    base_secs.max(by_pages.min(MAX_TIMEOUT_SECS))
+}
+
+/// Page count of a PDF, read without rendering. `None` for other formats or
+/// a PDF that won't open (encrypted, damaged); those keep the base timeout.
+fn pdf_page_count(path: &Path) -> Option<usize> {
+    let is_pdf = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| e.eq_ignore_ascii_case("pdf"));
+    if !is_pdf {
+        return None;
+    }
+    let bytes = std::fs::read(path).ok()?;
+    xberg::pdf_page_count(&bytes, None).ok()
 }
 
 impl Default for ExtractorSettings {
@@ -265,7 +293,7 @@ fn ensure_tessdata(settings: &ExtractorSettings) {
     copy_traineddata(bundle, dest);
 }
 
-fn build_config(settings: &ExtractorSettings) -> ExtractionConfig {
+fn build_config(settings: &ExtractorSettings, timeout_secs: u64) -> ExtractionConfig {
     ExtractionConfig {
         // Rebost keeps its own extracted-text cache keyed by content hash.
         use_cache: false,
@@ -286,7 +314,7 @@ fn build_config(settings: &ExtractorSettings) -> ExtractionConfig {
         }),
         // OCR only the pages that lack a usable text layer.
         ocr_strategy: OcrStrategy::Auto,
-        extraction_timeout_secs: Some(settings.timeout_secs),
+        extraction_timeout_secs: Some(timeout_secs),
         ..Default::default()
     }
 }
@@ -475,13 +503,16 @@ fn prose_for_summary(content: &str, blocks: &[Block]) -> String {
 
 /// Xberg's OCR pipeline needs the same 16 MiB stack budget as its native wrappers.
 /// Keep those stacks off Tauri's runtime, whose workers also handle chat and IPC.
+/// Xberg renders OCR pages on the thread that polls the extraction, so each
+/// ingest worker gets its own thread; with fewer, one file's rendering stalls
+/// another's while its timeout keeps running.
 fn extraction_runtime() -> Result<&'static tokio::runtime::Runtime> {
     static RUNTIME: std::sync::OnceLock<Result<tokio::runtime::Runtime, String>> =
         std::sync::OnceLock::new();
     RUNTIME
         .get_or_init(|| {
             tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(2)
+                .worker_threads(crate::core::MAX_INGEST_WORKERS)
                 .thread_name("rebost-extract")
                 .thread_stack_size(16 * 1024 * 1024)
                 .enable_all()
@@ -495,9 +526,19 @@ fn extraction_runtime() -> Result<&'static tokio::runtime::Runtime> {
 /// Run Xberg on one file and shape the result for the pipeline.
 pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<Extraction> {
     ensure_tessdata(settings);
-    let config = build_config(settings);
+    let runtime = extraction_runtime()?;
+    let pdf_pages = {
+        let path = path.to_path_buf();
+        runtime
+            .spawn_blocking(move || pdf_page_count(&path))
+            .await
+            .unwrap_or(None)
+    };
+    let timeout_secs = timeout_for(settings.timeout_secs, pdf_pages);
+    let config = build_config(settings, timeout_secs);
     let input = ExtractInput::from_uri(path.to_string_lossy().as_ref());
-    let output = extraction_runtime()?
+    let started = std::time::Instant::now();
+    let output = runtime
         .spawn(async move {
             // Build the large extraction future only after reaching its worker stack.
             Box::pin(xberg::extract(input, &config)).await
@@ -505,6 +546,12 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
         .await
         .context("document extraction worker stopped")?
         .with_context(|| format!("extract {}", path.display()))?;
+    log::info!(
+        "extracted {} in {:.1}s (limit {timeout_secs}s, {} PDF pages)",
+        path.file_name().unwrap_or_default().to_string_lossy(),
+        started.elapsed().as_secs_f64(),
+        pdf_pages.map_or_else(|| "no".to_string(), |n| n.to_string()),
+    );
 
     let doc = output
         .results
@@ -787,6 +834,57 @@ fn render_table(grid: &xberg::types::document_structure::TableGrid) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn timeout_grows_with_pdf_pages() {
+        assert_eq!(timeout_for(300, None), 300);
+        assert_eq!(timeout_for(300, Some(3)), 300);
+        assert_eq!(timeout_for(300, Some(100)), 100 * SECS_PER_PDF_PAGE);
+        assert_eq!(timeout_for(300, Some(100_000)), MAX_TIMEOUT_SECS);
+        assert_eq!(timeout_for(300, Some(usize::MAX)), MAX_TIMEOUT_SECS);
+    }
+
+    #[test]
+    fn page_count_reads_pdfs_only() {
+        let dir = tempfile::tempdir().unwrap();
+        let note = dir.path().join("note.md");
+        std::fs::write(&note, "# Note").unwrap();
+        assert_eq!(pdf_page_count(&note), None);
+        let broken = dir.path().join("broken.pdf");
+        std::fs::write(&broken, "not a pdf").unwrap();
+        assert_eq!(pdf_page_count(&broken), None);
+        assert_eq!(pdf_page_count(&dir.path().join("missing.pdf")), None);
+    }
+
+    /// Real OCR timing on a scanned PDF: `REBOST_SCAN_PDF=/path/scan.pdf
+    /// cargo test --lib scanned_pdf_reads_within_its_timeout -- --ignored --nocapture`
+    #[test]
+    #[ignore = "needs a scanned PDF via REBOST_SCAN_PDF; slow"]
+    fn scanned_pdf_reads_within_its_timeout() {
+        let path = PathBuf::from(std::env::var("REBOST_SCAN_PDF").expect("REBOST_SCAN_PDF"));
+        let pages = pdf_page_count(&path).expect("page count");
+        let tessdata = Path::new(env!("CARGO_MANIFEST_DIR")).join("resources/tessdata");
+        let settings = ExtractorSettings {
+            tessdata_dir: Some(tessdata),
+            tessdata_bundle: None,
+            timeout_secs: 300,
+        };
+        let started = std::time::Instant::now();
+        let extraction = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(extract_file(&path, &settings))
+            .expect("extract");
+        let secs = started.elapsed().as_secs_f64();
+        eprintln!(
+            "{pages} pages, {secs:.1}s ({:.1}s/page), ocr={}, {} chars, limit {}s",
+            secs / pages as f64,
+            extraction.ocr_used,
+            extraction.content.len(),
+            timeout_for(300, Some(pages)),
+        );
+        assert!(extraction.ocr_used);
+        assert!(!extraction.content.is_empty());
+    }
 
     #[test]
     fn ocr_languages_fall_back_to_english() {

@@ -296,6 +296,7 @@
     "allTypes": "Kaikki tyypit",
     "clearFilters": "Tyhjennä suodattimet",
     "showingOf": "Näytetään %{visible} / %{total}",
+    "stillToRead": "Vielä luettavana: %{count}",
     "delete": "Poista",
     "removeFolderTitle": "Irrota kansio",
     "removeFolder": "Irrotetaanko ”%{name}” tältä hyllyltä?\n\nTiedostoja ei poisteta tietokoneelta. Rebost ei enää käytä tätä kansiota.",

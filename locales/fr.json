@@ -296,6 +296,7 @@
     "allTypes": "Tous les types",
     "clearFilters": "Effacer les filtres",
     "showingOf": "Affichage de %{visible} sur %{total}",
+    "stillToRead": "Encore à lire : %{count}",
     "delete": "Supprimer",
     "removeFolderTitle": "Retirer le dossier",
     "removeFolder": "Retirer « %{name} » de cette étagère ?\n\nAucun fichier ne sera supprimé de votre ordinateur. Rebost cessera d’utiliser ce dossier.",
