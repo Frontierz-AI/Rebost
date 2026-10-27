@@ -323,6 +323,7 @@
     "allTypes": "Alle typer",
     "clearFilters": "Ryd filtre",
     "showingOf": "Viser %{visible} af %{total}",
+    "stillToRead": "Mangler at blive læst: %{count}",
     "delete": "Slet",
     "removeFolderTitle": "Fjern mappe",
     "removeFolder": "Fjern »%{name}« fra denne hylde?\n\nIngen filer bliver slettet fra din computer. Rebost holder op med at bruge denne mappe.",

@@ -20,8 +20,10 @@ use crate::types::{DocStatus, DocumentMeta, PiiSummaryView, ShelfStats};
 /// Label in the Chat shelf selector for a conversation-only upload shelf.
 pub const UPLOADED_FILES_LABEL: &str = "Uploaded files";
 
-/// How long a file may stay Reading before opening Shelves marks it failed.
-/// Matches the extract timeout. Checked only on user visits — no background timer.
+/// How long a file may stay Reading, with no worker on it, before opening
+/// Shelves marks it failed. Files still queued or being read are never
+/// expired: a long scan can OCR for much longer than this. Checked only on
+/// user visits — no background timer.
 pub const STALE_READING_SECS: i64 = 300;
 
 const STALE_READING_ERROR: &str = "Reading took too long. Try again.";
@@ -532,12 +534,14 @@ impl Library {
             .insert(meta.id.clone(), meta);
     }
 
-    /// Turn Reading files older than [`STALE_READING_SECS`] into Error.
-    /// Returns how many files changed. Caller persists when non-zero.
+    /// Turn Reading files older than [`STALE_READING_SECS`] into Error,
+    /// except those `in_flight` says a worker still has. Returns how many
+    /// files changed. Caller persists when non-zero.
     pub fn expire_stale_reading(
         &mut self,
         shelf_id: &str,
         now: chrono::DateTime<chrono::Utc>,
+        in_flight: impl Fn(&DocumentMeta) -> bool,
     ) -> usize {
         let Some(docs) = self.documents.get_mut(shelf_id) else {
             return 0;
@@ -551,7 +555,7 @@ impl Library {
                 continue;
             };
             let age = now.signed_duration_since(updated.with_timezone(&chrono::Utc));
-            if age.num_seconds() < STALE_READING_SECS {
+            if age.num_seconds() < STALE_READING_SECS || in_flight(doc) {
                 continue;
             }
             doc.status = DocStatus::Error;
@@ -828,7 +832,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn expire_stale_reading_only_touches_old_reading_files() {
+    fn expire_stale_reading_only_touches_old_idle_reading_files() {
         let dir = tempfile::tempdir().unwrap();
         let paths = Paths::new(dir.path().join("appdata"));
         paths.ensure().unwrap();
@@ -840,15 +844,15 @@ mod tests {
             .with_timezone(&chrono::Utc);
         let fresh = (now - chrono::Duration::seconds(60)).to_rfc3339();
         let stale = (now - chrono::Duration::seconds(STALE_READING_SECS + 1)).to_rfc3339();
-        library.upsert_document(crate::types::DocumentMeta {
-            id: "d_fresh".into(),
+        let reading = |id: &str, updated_at: &str| crate::types::DocumentMeta {
+            id: id.into(),
             shelf_id: shelf.id.clone(),
             source_id: Shelf::IMPORTED_SOURCE.into(),
             source_type: crate::types::SourceType::Imported,
-            path: "/tmp/fresh.md".into(),
-            rel_path: "fresh.md".into(),
-            file_name: "fresh.md".into(),
-            format: "md".into(),
+            path: format!("/tmp/{id}.pdf"),
+            rel_path: format!("{id}.pdf"),
+            file_name: format!("{id}.pdf"),
+            format: "pdf".into(),
             size_bytes: 1,
             mtime_ms: 0,
             hash: String::new(),
@@ -859,34 +863,21 @@ mod tests {
             pii_total: 0,
             pii_categories: Default::default(),
             ocr: false,
-            updated_at: fresh,
+            updated_at: updated_at.into(),
             source_label: "Imported".into(),
-        });
-        library.upsert_document(crate::types::DocumentMeta {
-            id: "d_stale".into(),
-            shelf_id: shelf.id.clone(),
-            source_id: Shelf::IMPORTED_SOURCE.into(),
-            source_type: crate::types::SourceType::Imported,
-            path: "/tmp/stale.md".into(),
-            rel_path: "stale.md".into(),
-            file_name: "stale.md".into(),
-            format: "md".into(),
-            size_bytes: 1,
-            mtime_ms: 0,
-            hash: String::new(),
-            status: DocStatus::Reading,
-            error: None,
-            passage_count: 0,
-            pages: None,
-            pii_total: 0,
-            pii_categories: Default::default(),
-            ocr: false,
-            updated_at: stale,
-            source_label: "Imported".into(),
-        });
-        assert_eq!(library.expire_stale_reading(&shelf.id, now), 1);
+        };
+        library.upsert_document(reading("d_fresh", &fresh));
+        library.upsert_document(reading("d_stale", &stale));
+        // A long scan still being OCRed (or queued after a restart).
+        library.upsert_document(reading("d_busy", &stale));
+        let changed = library.expire_stale_reading(&shelf.id, now, |doc| doc.id == "d_busy");
+        assert_eq!(changed, 1);
         assert_eq!(
             library.document(&shelf.id, "d_fresh").unwrap().status,
+            DocStatus::Reading
+        );
+        assert_eq!(
+            library.document(&shelf.id, "d_busy").unwrap().status,
             DocStatus::Reading
         );
         let stale_doc = library.document(&shelf.id, "d_stale").unwrap();

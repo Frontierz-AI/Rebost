@@ -693,6 +693,14 @@
             })}
           </p>
         {/if}
+        {#if shelf.stats.waiting > 0}
+          <p
+            class="mr-1.5 shrink-0 text-[11.5px] whitespace-nowrap text-amber-550 tabular-nums"
+            aria-live="polite"
+          >
+            {t("shelves.stillToRead", { count: shelf.stats.waiting })}
+          </p>
+        {/if}
         {#if shelf.stats.pii.total > 0}
           <PiiCategoriesRow
             filesWithPii={shelf.stats.filesWithPii}

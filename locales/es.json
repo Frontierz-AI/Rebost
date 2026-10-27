@@ -322,6 +322,7 @@
     "allTypes": "Todos los tipos",
     "clearFilters": "Quitar filtros",
     "showingOf": "Mostrando %{visible} de %{total}",
+    "stillToRead": "Pendientes de leer: %{count}",
     "delete": "Eliminar",
     "removeFolderTitle": "Quitar carpeta",
     "removeFolder": "¿Quitar «%{name}» de este estante?\n\nEsto no borrará ningún archivo del ordenador. Rebost dejará de usar esta carpeta.",

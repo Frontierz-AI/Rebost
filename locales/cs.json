@@ -323,6 +323,7 @@
     "allTypes": "Všechny typy",
     "clearFilters": "Zrušit filtry",
     "showingOf": "Zobrazeno %{visible} z %{total}",
+    "stillToRead": "Zbývá přečíst: %{count}",
     "delete": "Smazat",
     "removeFolderTitle": "Odebrat složku",
     "removeFolder": "Odebrat „%{name}“ z této police?\n\nZ počítače se nesmaže žádný soubor. Rebost tuto složku přestane používat.",

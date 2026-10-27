@@ -322,6 +322,7 @@
     "allTypes": "All types",
     "clearFilters": "Clear filters",
     "showingOf": "Showing %{visible} of %{total}",
+    "stillToRead": "Still to read: %{count}",
     "delete": "Delete",
     "removeFolderTitle": "Remove folder",
     "removeFolder": "Remove “%{name}” from this Shelf?\n\nThis won't delete any files from your computer. Rebost will stop using this folder.",

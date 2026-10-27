@@ -323,6 +323,7 @@
     "allTypes": "Tutti i tipi",
     "clearFilters": "Cancella filtri",
     "showingOf": "Visualizzati %{visible} di %{total}",
+    "stillToRead": "Ancora da leggere: %{count}",
     "delete": "Elimina",
     "removeFolderTitle": "Rimuovi cartella",
     "removeFolder": "Rimuovere «%{name}» da questo scaffale?\n\nI file sul computer non verranno eliminati. Rebost smetterà di usare questa cartella.",

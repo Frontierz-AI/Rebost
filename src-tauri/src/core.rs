@@ -11,7 +11,7 @@ use crate::shelf::Library;
 use crate::types::ShelfStats;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::{Duration, Instant};
 
@@ -51,31 +51,39 @@ struct QueuedFile {
 /// Jobs accepted but not yet taken by a worker. Not persisted.
 pub struct IngestQueue {
     waiting: Mutex<HashMap<String, u32>>,
-    active: Mutex<HashMap<String, u32>>,
+    /// Paths a worker is reading right now, per Shelf.
+    active: Mutex<HashMap<(String, PathBuf), u32>>,
     queued: Mutex<HashMap<(String, PathBuf), QueuedFile>>,
     last_emit: Mutex<Option<Instant>>,
     generation: AtomicU64,
     shelf_cutoff: Mutex<HashMap<String, u64>>,
     source_cutoff: Mutex<HashMap<(String, String), u64>>,
+    /// Set once a full sync has queued every Shelf's files. Before that,
+    /// files left Reading by the last session are not queued yet.
+    synced: AtomicBool,
 }
 
 pub struct IngestWork<'a> {
     queue: &'a IngestQueue,
-    shelf_id: String,
+    key: (String, PathBuf),
 }
 impl Drop for IngestWork<'_> {
     fn drop(&mut self) {
         let mut active = mutex_lock(&self.queue.active);
-        if let Some(n) = active.get_mut(&self.shelf_id) {
+        if let Some(n) = active.get_mut(&self.key) {
             *n = n.saturating_sub(1);
             if *n == 0 {
-                active.remove(&self.shelf_id);
+                active.remove(&self.key);
             }
         }
     }
 }
 
 const STATS_EMIT_GAP: Duration = Duration::from_millis(200);
+
+/// Most files read at once. The extraction runtime keeps one thread per
+/// worker, because OCR renders pages on the thread that drives it.
+pub const MAX_INGEST_WORKERS: usize = 4;
 
 impl Default for IngestQueue {
     fn default() -> Self {
@@ -93,7 +101,16 @@ impl IngestQueue {
             generation: AtomicU64::new(0),
             shelf_cutoff: Mutex::new(HashMap::new()),
             source_cutoff: Mutex::new(HashMap::new()),
+            synced: AtomicBool::new(false),
         }
+    }
+
+    pub fn mark_synced(&self) {
+        self.synced.store(true, Ordering::Release);
+    }
+
+    pub fn synced(&self) -> bool {
+        self.synced.load(Ordering::Acquire)
     }
 
     /// Stamp a job so a later delete or unlink can invalidate it.
@@ -166,21 +183,28 @@ impl IngestQueue {
             .unwrap_or(0)
     }
 
-    pub fn begin_work(&self, shelf_id: &str) -> IngestWork<'_> {
-        *mutex_lock(&self.active)
-            .entry(shelf_id.to_string())
-            .or_default() += 1;
-        IngestWork {
-            queue: self,
-            shelf_id: shelf_id.to_string(),
-        }
+    pub fn begin_work(&self, shelf_id: &str, path: &Path) -> IngestWork<'_> {
+        let key = (shelf_id.to_string(), path.to_path_buf());
+        *mutex_lock(&self.active).entry(key.clone()).or_default() += 1;
+        IngestWork { queue: self, key }
     }
 
     pub fn pending(&self, shelf_id: &str) -> bool {
         // Workers increment active before removing the queued job.
         let queued = mutex_lock(&self.queued);
         queued.keys().any(|(id, _)| id == shelf_id)
-            || mutex_lock(&self.active).get(shelf_id).copied().unwrap_or(0) > 0
+            || mutex_lock(&self.active)
+                .keys()
+                .any(|(id, _)| id == shelf_id)
+    }
+
+    /// True while this path waits in the queue or a worker is reading it.
+    pub fn in_flight(&self, shelf_id: &str, path: &Path) -> bool {
+        let key = (shelf_id.to_string(), path.to_path_buf());
+        // Workers mark a path active before it leaves queued, so checking
+        // active while holding queued never misses it.
+        let queued = mutex_lock(&self.queued);
+        queued.contains_key(&key) || mutex_lock(&self.active).contains_key(&key)
     }
 
     /// How many new files this Shelf can still take, counting ones already
@@ -364,12 +388,13 @@ impl Ctx {
     }
 
     /// Ingestion concurrency from available memory: one worker per ~6 GB
-    /// free, between 1 and 4 — index work must never starve the machine.
+    /// free, between 1 and [`MAX_INGEST_WORKERS`] — index work must never
+    /// starve the machine.
     pub fn ingest_concurrency() -> usize {
         let mut sys = sysinfo::System::new();
         sys.refresh_memory();
         let available = sys.available_memory();
-        ((available / (6 * 1024 * 1024 * 1024)) as usize).clamp(1, 4)
+        ((available / (6 * 1024 * 1024 * 1024)) as usize).clamp(1, MAX_INGEST_WORKERS)
     }
 }
 
@@ -383,12 +408,30 @@ mod tests {
         let path = std::path::PathBuf::from("file.md");
         let epoch = queue.stamp();
         assert!(queue.try_queue("shelf", "source", path.clone(), true, epoch));
-        let work = queue.begin_work("shelf");
+        let work = queue.begin_work("shelf", &path);
         queue.start("shelf", &path, epoch);
         assert_eq!(queue.waiting("shelf"), 0);
         assert!(queue.pending("shelf"));
         drop(work);
         assert!(!queue.pending("shelf"));
+    }
+
+    #[test]
+    fn in_flight_covers_queued_and_active_paths_only() {
+        let queue = IngestQueue::new();
+        let reading = PathBuf::from("/tmp/scan.pdf");
+        let other = PathBuf::from("/tmp/other.pdf");
+        assert!(!queue.in_flight("shelf", &reading));
+        let epoch = queue.stamp();
+        assert!(queue.try_queue("shelf", "source", reading.clone(), false, epoch));
+        assert!(queue.in_flight("shelf", &reading));
+        let work = queue.begin_work("shelf", &reading);
+        queue.start("shelf", &reading, epoch);
+        assert!(queue.in_flight("shelf", &reading));
+        assert!(!queue.in_flight("shelf", &other));
+        assert!(!queue.in_flight("elsewhere", &reading));
+        drop(work);
+        assert!(!queue.in_flight("shelf", &reading));
     }
 
     #[test]
