@@ -230,7 +230,9 @@ impl Preflight {
             Some(problem)
         } else if plan.to_move.iter().any(|(file, bytes)| {
             // Same-size files are compared byte for byte when the move runs.
-            std::fs::metadata(to.join(file)).is_ok_and(|m| !m.is_file() || m.len() != *bytes)
+            // A link is never a copy (see `stage_one`).
+            std::fs::symlink_metadata(to.join(file))
+                .is_ok_and(|m| !m.is_file() || m.len() != *bytes)
         }) {
             Some(FolderProblem::NameTaken)
         } else if !has_room(free, plan.bytes_needed(same_disk(current, to))) {
@@ -361,7 +363,13 @@ fn stage_one(
     progress: &mut dyn FnMut(u64),
     cancelled: &dyn Fn() -> bool,
 ) -> Result<Option<PathBuf>> {
-    if dst.exists() {
+    // `symlink_metadata`, not `exists`: a link (even a dangling one) is a name.
+    if let Ok(meta) = std::fs::symlink_metadata(dst) {
+        // Only a regular file can be a copy. A symlink to the original would
+        // dangle once the original is removed.
+        if !meta.is_file() {
+            return Err(anyhow!(FolderProblem::NameTaken.code()));
+        }
         // The same folder under another path: "reusing" the file would
         // delete the only copy. (A hard link in another folder is a real
         // second name, left by an earlier move, and is fine to reuse.)
@@ -373,7 +381,7 @@ fn stage_one(
             ));
         }
         // Picked a folder that already holds this AI (an earlier copy).
-        if dst.is_file() && files_identical(src, dst, progress, cancelled)? {
+        if files_identical(src, dst, progress, cancelled)? {
             return Ok(None);
         }
         return Err(anyhow!(FolderProblem::NameTaken.code()));
@@ -722,6 +730,26 @@ mod tests {
         stage(&plan, &mut |_, _| {}, &|| false).unwrap().finish();
         assert!(!from.join("a.gguf").exists());
         assert_eq!(std::fs::read(to.join("a.gguf")).unwrap(), b"weights");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_symlink_to_the_original_is_never_taken_for_a_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = crate::paths::Paths::new(dir.path().join("io.rebost.desktop"));
+        let (from, to) = (dir.path().join("from"), dir.path().join("to"));
+        write(&from, "a.gguf", b"only copy");
+        std::fs::create_dir_all(&to).unwrap();
+        std::os::unix::fs::symlink(from.join("a.gguf"), to.join("a.gguf")).unwrap();
+        let installed = files(&["a.gguf"]);
+        assert_eq!(
+            Preflight::check(&paths, &to, &installed, &from, false).problem,
+            Some(FolderProblem::NameTaken)
+        );
+        let plan = MovePlan::new(&installed, &from, &to);
+        let error = stage(&plan, &mut |_, _| {}, &|| false).err().unwrap();
+        assert!(error.to_string().contains(FolderProblem::NameTaken.code()));
+        assert_eq!(std::fs::read(from.join("a.gguf")).unwrap(), b"only copy");
     }
 
     #[test]
