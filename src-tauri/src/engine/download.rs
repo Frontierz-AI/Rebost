@@ -829,14 +829,15 @@ fn part_is_untrusted(path: &Path, known_size: Option<u64>) -> bool {
     part_looks_hollow(meta.len(), allocated_bytes(&meta), known_size)
 }
 
-/// Bytes a leftover `.part` for `dest` really holds on disk. A preallocated
-/// file can be full-size with nothing in it, so this counts allocated blocks,
-/// and nothing when the OS can't say.
+/// Disk space a leftover `.part` for `dest` already takes, so a resume only
+/// needs room for the rest. A sparse file can be full-size with nothing in
+/// it, so allocated blocks count where the OS reports them; a normal Windows
+/// file reserves its whole length, so there the length counts.
 pub(crate) fn part_bytes_on_disk(dest: &Path) -> u64 {
     let Ok(meta) = std::fs::metadata(dest.with_extension("part")) else {
         return 0;
     };
-    allocated_bytes(&meta).unwrap_or(0).min(meta.len())
+    allocated_bytes(&meta).unwrap_or(meta.len()).min(meta.len())
 }
 
 /// Bytes we can resume from. Logical `len()` is not that on Windows.
@@ -1177,14 +1178,19 @@ mod tests {
         if cfg!(unix) {
             assert!(written >= 64 * 1024, "{written}");
         }
-        // Grow to 1 GiB without writing: a hole, not downloaded bytes.
+        // Grow to 1 GiB without writing. On Unix that is a hole, not space
+        // taken; a normal Windows file reserves the whole length.
         std::fs::OpenOptions::new()
             .write(true)
             .open(&part)
             .unwrap()
             .set_len(1 << 30)
             .unwrap();
-        assert!(part_bytes_on_disk(&dest) < 1 << 29);
+        if cfg!(unix) {
+            assert!(part_bytes_on_disk(&dest) < 1 << 29);
+        } else {
+            assert_eq!(part_bytes_on_disk(&dest), 1 << 30);
+        }
     }
 
     #[test]
