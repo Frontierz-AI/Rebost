@@ -69,25 +69,21 @@ fn detect(flatpak_info: &Path, resource_dir: Option<&Path>) -> UpdateSource {
     if flatpak_info.is_file() {
         return UpdateSource::SoftwareCentre;
     }
-    let Some(marker) = resource_dir.map(|dir| dir.join(MARKER_FILE)) else {
+    let Some(marker) = resource_dir
+        .map(|dir| dir.join(MARKER_FILE))
+        .filter(|path| path.is_file())
+    else {
         return UpdateSource::App;
     };
-    match std::fs::read_to_string(&marker) {
-        Ok(text) => {
-            let name = text.lines().next().unwrap_or("").trim();
-            let name = if name.is_empty() {
-                "the package manager"
-            } else {
-                name
-            };
-            UpdateSource::PackageManager(name.to_string())
-        }
-        // An unreadable marker still means someone packaged this copy.
-        Err(error) if error.kind() != std::io::ErrorKind::NotFound => {
-            UpdateSource::PackageManager("the package manager".to_string())
-        }
-        Err(_) => UpdateSource::App,
-    }
+    // An unreadable marker still means someone packaged this copy.
+    let text = std::fs::read_to_string(&marker).unwrap_or_default();
+    let name = text.lines().next().unwrap_or("").trim();
+    let name = if name.is_empty() {
+        "the package manager"
+    } else {
+        name
+    };
+    UpdateSource::PackageManager(name.to_string())
 }
 
 #[cfg(test)]
@@ -144,6 +140,18 @@ mod tests {
             detect(&missing, Some(dir.path())),
             UpdateSource::PackageManager("the package manager".into())
         );
+    }
+
+    #[test]
+    fn only_a_marker_file_counts() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("flatpak-info");
+        std::fs::create_dir(dir.path().join(MARKER_FILE)).unwrap();
+        assert_eq!(detect(&missing, Some(dir.path())), UpdateSource::App);
+        // A resource folder that is not a folder has no marker in it.
+        let file = dir.path().join("not-a-folder");
+        std::fs::write(&file, "").unwrap();
+        assert_eq!(detect(&missing, Some(&file)), UpdateSource::App);
     }
 
     #[test]

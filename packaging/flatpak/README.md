@@ -1,6 +1,6 @@
 # Flatpak (Flathub)
 
-`ai.rebost.Rebost.yml` builds Rebost from source with no network access, the way Flathub builds apps. CI builds it from this checkout (`.github/workflows/flatpak.yml`), lints it with Flathub's linter, opens it on Xvfb, and uploads the bundle as the artifact `rebost-flatpak-x86_64`.
+`ai.rebost.Rebost.yml` builds Rebost from source with no network access, the way Flathub builds apps. CI builds it from this checkout (`.github/workflows/flatpak.yml`), lints it with Flathub's linter, opens it on Xvfb, for x86_64 and aarch64, and uploads the bundles as the artifacts `rebost-flatpak-x86_64` and `rebost-flatpak-aarch64`.
 
 ```bash
 flatpak install --user --bundle rebost.flatpak

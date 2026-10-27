@@ -34,7 +34,8 @@ case "$ID" in
       ImageMagick dbus-daemon dbus-tools desktop-file-utils file findutils procps-ng xorg-x11-server-Xvfb xwd xwininfo
     ;;
   arch)
-    pacman -Syu --noconfirm --needed --quiet \
+    # The image is synced first by whoever built the package in it.
+    pacman -S --noconfirm --needed --quiet \
       dbus desktop-file-utils file imagemagick procps-ng xorg-server-xvfb xorg-xwd xorg-xwininfo >/dev/null
     ;;
   *)

@@ -1,10 +1,10 @@
-# Flatpak (x86_64), built from this checkout the way Flathub builds it:
+# Flatpak (x86_64 and aarch64, as Flathub builds both), built from this checkout the way Flathub builds it:
 # offline, from the dependency sources packaging/flatpak/generate-sources.sh
 # writes. Does not run on push; pull requests that change the Flatpak or its
 # inputs build it, lint it with Flathub's linter, and open it on Xvfb.
 #   gh workflow run flatpak.yml
 #
-# The bundle is uploaded as the artifact rebost-flatpak-x86_64:
+# The bundles are uploaded as the artifacts rebost-flatpak-<arch>:
 #   flatpak install --user --bundle rebost.flatpak
 
 name: Flatpak
@@ -46,9 +46,17 @@ jobs:
           if-no-files-found: error
 
   build:
-    name: Build and lint
+    name: Build and lint (${{ matrix.arch }})
     needs: sources
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
       options: --privileged
@@ -69,23 +77,31 @@ jobs:
         with:
           manifest-path: packaging/flatpak/ai.rebost.Rebost.yml
           bundle: rebost.flatpak
-          artifact-name: rebost-flatpak-x86_64
+          artifact-name: rebost-flatpak-${{ matrix.arch }}
           cache-key: flatpak-builder-${{ hashFiles('packaging/flatpak/ai.rebost.Rebost.yml', 'src-tauri/Cargo.lock', 'pnpm-lock.yaml') }}
-          arch: x86_64
+          arch: ${{ matrix.arch }}
       - name: Lint the build
         run: |
           set -eu
           flatpak-builder-lint repo repo
 
   smoke:
-    name: Install and launch
+    name: Install and launch (${{ matrix.arch }})
     needs: build
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: rebost-flatpak-x86_64
+          name: rebost-flatpak-${{ matrix.arch }}
       - name: Install Flatpak and Xvfb
         run: |
           sudo apt-get update -qq
@@ -122,7 +138,7 @@ jobs:
           done
           sleep 8
           xwininfo -root -tree | grep -i rebost || { cat run.log; exit 1; }
-          xwd -root -silent | convert xwd:- png:shot-flatpak-x86_64.png
+          xwd -root -silent | convert xwd:- "png:shot-flatpak-${{ matrix.arch }}.png"
           log="$HOME/.var/app/ai.rebost.Rebost/data/io.rebost.desktop/logs/rebost.log"
           tail -n 20 "$log"
           grep -q 'updates come from Flatpak' "$log" || { echo "::error::the Flatpak still checks for in-app updates"; exit 1; }
@@ -131,6 +147,6 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: ${{ always() }}
         with:
-          name: smoke-flatpak-x86_64
+          name: smoke-flatpak-${{ matrix.arch }}
           path: shot-*.png
           if-no-files-found: ignore
