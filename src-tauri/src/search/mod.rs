@@ -3,6 +3,7 @@
 
 pub mod gate;
 mod query;
+pub(crate) mod restore;
 pub(crate) mod schema;
 pub(crate) mod stems;
 
@@ -117,6 +118,8 @@ impl SearchIndex {
         let index = if dir.join("meta.json").exists() {
             Index::open_in_dir(dir).context("open tantivy index")?
         } else {
+            // Keep retrying restoration after an interrupted first launch.
+            std::fs::write(dir.join(restore::PENDING_FILE), b"pending")?;
             let index =
                 Index::create_in_dir(dir, schema.clone()).context("create tantivy index")?;
             std::fs::write(&version_file, SCHEMA_VERSION)?;
@@ -191,6 +194,29 @@ impl SearchIndex {
         quality: &str,
         title: &str,
     ) -> Result<()> {
+        self.index_document_deferred(
+            meta,
+            card_summary,
+            keywords,
+            passages,
+            language,
+            quality,
+            title,
+        )?;
+        self.commit()
+    }
+
+    /// Batch cached files during startup restoration instead of committing each file.
+    pub(crate) fn index_document_deferred(
+        &self,
+        meta: &DocumentMeta,
+        card_summary: &str,
+        keywords: &[String],
+        passages: &[Passage],
+        language: Option<&str>,
+        quality: &str,
+        title: &str,
+    ) -> Result<()> {
         let lang = language.and_then(normalize_lang);
         let keywords_joined = keywords.join(" ");
         let filename = searchable_filename(&meta.file_name);
@@ -244,12 +270,25 @@ impl SearchIndex {
                 writer.add_document(document)?;
             }
             Ok(())
-        })?;
-        self.commit()
+        })
     }
 
     /// Index one conversation message for older-conversation memory.
     pub fn index_message(
+        &self,
+        thread_id: &str,
+        message_id: &str,
+        role: &str,
+        text: &str,
+        language: Option<&str>,
+        created_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<()> {
+        self.index_message_deferred(thread_id, message_id, role, text, language, created_at)?;
+        self.commit()
+    }
+
+    /// Restore persisted messages in one commit before startup accepts new work.
+    pub(crate) fn index_message_deferred(
         &self,
         thread_id: &str,
         message_id: &str,
@@ -277,8 +316,7 @@ impl SearchIndex {
             }
             writer.add_document(document)?;
             Ok(())
-        })?;
-        self.commit()
+        })
     }
 
     pub fn remove_document(&self, document_id: &str) -> Result<()> {
@@ -315,7 +353,7 @@ impl SearchIndex {
         self.commit()
     }
 
-    fn commit(&self) -> Result<()> {
+    pub(crate) fn commit(&self) -> Result<()> {
         self.with_writer(|writer| {
             writer.commit()?;
             Ok(())

@@ -473,13 +473,37 @@ fn prose_for_summary(content: &str, blocks: &[Block]) -> String {
         .join("\n")
 }
 
+/// Xberg's OCR pipeline needs the same 16 MiB stack budget as its native wrappers.
+/// Keep those stacks off Tauri's runtime, whose workers also handle chat and IPC.
+fn extraction_runtime() -> Result<&'static tokio::runtime::Runtime> {
+    static RUNTIME: std::sync::OnceLock<Result<tokio::runtime::Runtime, String>> =
+        std::sync::OnceLock::new();
+    RUNTIME
+        .get_or_init(|| {
+            tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(2)
+                .thread_name("rebost-extract")
+                .thread_stack_size(16 * 1024 * 1024)
+                .enable_all()
+                .build()
+                .map_err(|error| error.to_string())
+        })
+        .as_ref()
+        .map_err(|error| anyhow!("create document extraction runtime: {error}"))
+}
+
 /// Run Xberg on one file and shape the result for the pipeline.
 pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<Extraction> {
     ensure_tessdata(settings);
     let config = build_config(settings);
     let input = ExtractInput::from_uri(path.to_string_lossy().as_ref());
-    let output = xberg::extract(input, &config)
+    let output = extraction_runtime()?
+        .spawn(async move {
+            // Build the large extraction future only after reaching its worker stack.
+            Box::pin(xberg::extract(input, &config)).await
+        })
         .await
+        .context("document extraction worker stopped")?
         .with_context(|| format!("extract {}", path.display()))?;
 
     let doc = output

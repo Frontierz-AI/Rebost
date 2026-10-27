@@ -1,8 +1,8 @@
-//! Extra Snowball stemmers for languages Tantivy 0.26 does not ship.
+//! Extra Snowball stemmers for languages Tantivy 0.27 does not ship.
 //!
 //! `tantivy-stemmers` exposes each algorithm as `fn(&str) -> Cow<str>`, but
 //! its `TokenFilter` targets an older `tantivy-tokenizer-api` than tantivy
-//! 0.26 uses. This adapter wraps those functions in a tantivy-0.26 filter.
+//! 0.27 uses. This adapter wraps those functions in a tantivy-0.27 filter.
 
 use std::borrow::Cow;
 use tantivy::tokenizer::{Token, TokenFilter, TokenStream, Tokenizer};

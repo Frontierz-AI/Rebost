@@ -294,7 +294,7 @@ impl Ctx {
         let settings = Settings::load(&paths.settings_path());
         let search = SearchIndex::open(&paths.search_dir())?;
         let library = Library::load(&paths)?;
-        Ok(Arc::new(Self {
+        let ctx = Arc::new(Self {
             paths,
             settings: RwLock::new(settings),
             pii: PiiScanner::new(),
@@ -304,7 +304,11 @@ impl Ctx {
             extractor,
             ingest_queue: IngestQueue::new(),
             runtime_plan: RwLock::new(None),
-        }))
+        });
+        if let Err(error) = crate::search::restore::restore_if_pending(&ctx) {
+            log::warn!("restore search index: {error:#}; will retry on next launch");
+        }
+        Ok(ctx)
     }
 
     pub fn save_settings(&self) {

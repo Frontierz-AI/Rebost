@@ -2,8 +2,7 @@
 //! second copy of the app cannot open the same files. That copy asks the
 //! existing window to come forward instead of starting ingest and the AI.
 
-use fs4::{FileExt, TryLockError};
-use std::fs::{File, OpenOptions};
+use std::fs::{File, OpenOptions, TryLockError};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -63,7 +62,7 @@ impl Drop for InstanceLock {
             .file
             .get_mut()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
-        let _ = FileExt::unlock(&*file);
+        let _ = file.unlock();
     }
 }
 
@@ -102,9 +101,7 @@ fn acquire(data_dir: &Path, wait: Duration) -> Result<InstanceLock, AcquireError
     }
     let deadline = Instant::now() + wait;
     loop {
-        // Called through the trait: std grew its own File::try_lock, and the
-        // inherent method would win over fs4's.
-        match FileExt::try_lock(&file) {
+        match file.try_lock() {
             Ok(()) => {
                 return Ok(InstanceLock {
                     file: Mutex::new(file),

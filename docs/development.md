@@ -42,4 +42,4 @@ Copy `.env.example`. Vite variables:
 
 ## Toolchain
 
-Pinned: Rust 1.99.0, pnpm 11.25.0, Node 22 (`.nvmrc`).
+Pinned: Rust 1.99.1, pnpm 12.15.0, Node 22 (`.nvmrc`; at least 22.22.2). Node 24.15.0+ on the 24.x line is also supported.

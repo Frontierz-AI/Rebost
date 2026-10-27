@@ -245,6 +245,41 @@ pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Option<T> {
     value
 }
 
+/// Read recovery metadata without mistaking unreadable snapshots for empty state.
+/// Only an absent primary and backup are a legitimate first-run absence.
+pub(crate) fn read_json_checked<T: serde::de::DeserializeOwned>(
+    path: &Path,
+) -> anyhow::Result<Option<T>> {
+    use anyhow::Context;
+
+    fn read_snapshot<T: serde::de::DeserializeOwned>(path: &Path) -> anyhow::Result<Option<T>> {
+        match std::fs::read(path) {
+            Ok(bytes) => serde_json::from_slice(&bytes)
+                .map(Some)
+                .with_context(|| format!("parse metadata {}", path.display())),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(error).with_context(|| format!("read metadata {}", path.display())),
+        }
+    }
+
+    let primary_error = match read_snapshot(path) {
+        Ok(Some(value)) => return Ok(Some(value)),
+        Ok(None) => None,
+        Err(error) => Some(error),
+    };
+    match read_snapshot(&backup_path(path)) {
+        Ok(Some(value)) => {
+            log::warn!("using last valid metadata snapshot for {}", path.display());
+            Ok(Some(value))
+        }
+        Ok(None) => match primary_error {
+            Some(error) => Err(error),
+            None => Ok(None),
+        },
+        Err(error) => Err(primary_error.unwrap_or(error)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -257,6 +292,30 @@ mod tests {
         write_json(&path, &vec!["newer"]).unwrap();
         std::fs::write(&path, "{interrupted").unwrap();
         assert_eq!(read_json::<Vec<String>>(&path).unwrap(), vec!["saved"]);
+    }
+
+    #[test]
+    fn checked_metadata_distinguishes_first_run_from_unreadable_snapshots() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("metadata.json");
+        assert!(read_json_checked::<Vec<String>>(&path).unwrap().is_none());
+
+        write_json(&path, &vec!["saved"]).unwrap();
+        write_json(&path, &vec!["newer"]).unwrap();
+        std::fs::write(&path, "{interrupted").unwrap();
+        assert_eq!(
+            read_json_checked::<Vec<String>>(&path).unwrap().unwrap(),
+            vec!["saved"]
+        );
+
+        std::fs::write(backup_path(&path), "{also interrupted").unwrap();
+        assert!(read_json_checked::<Vec<String>>(&path).is_err());
+        std::fs::remove_file(&path).unwrap();
+        assert!(read_json_checked::<Vec<String>>(&path).is_err());
+
+        std::fs::remove_file(backup_path(&path)).unwrap();
+        std::fs::create_dir(&path).unwrap();
+        assert!(read_json_checked::<Vec<String>>(&path).is_err());
     }
 
     #[test]

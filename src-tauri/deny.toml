@@ -11,13 +11,13 @@ yanked = "warn"
 unmaintained = "workspace"
 unsound = "workspace"
 # zip < 9 `extract()` follows symlinks and keeps SUID/SGID bits. Rebost unpacks with
-# zip 9; zip 8 remains only in xberg, calamine (pinned ^0.36 by xberg) and the
-# xberg-tesseract build script, which read entries and never call `extract()`.
+# zip 9; zip 8 remains only in calamine (pinned ^0.36 by xberg), which reads
+# entries and never calls `extract()`. Xberg and its OCR build now use zip 9.
 # Drop these once xberg moves to calamine 0.37.
 ignore = [
-    { id = "RUSTSEC-2026-0367", reason = "zip 8 left only in xberg/calamine readers; no extract()" },
-    { id = "RUSTSEC-2026-0368", reason = "zip 8 left only in xberg/calamine readers; no extract()" },
-    { id = "RUSTSEC-2026-0369", reason = "zip 8 left only in xberg/calamine readers; no extract()" },
+    { id = "RUSTSEC-2026-0367", reason = "zip 8 left only in calamine readers; no extract()" },
+    { id = "RUSTSEC-2026-0368", reason = "zip 8 left only in calamine readers; no extract()" },
+    { id = "RUSTSEC-2026-0369", reason = "zip 8 left only in calamine readers; no extract()" },
 ]
 
 [licenses]

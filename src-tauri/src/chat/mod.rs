@@ -42,10 +42,10 @@ use crate::search::{fold_ws, gate};
 use crate::shelf::ThinkLevel;
 use crate::types::{DocStatus, DocumentMeta, SourcePassage};
 use conversations::{Conversations, StoredMessage};
+pub(crate) use prompts::guess_message_lang;
 use prompts::{
     build_system_prompt, format_citation_legend, format_conversation_inventory,
-    format_retrieved_context, format_shelf_inventory, guess_message_lang, sanitize_citations,
-    shelf_file_labels,
+    format_retrieved_context, format_shelf_inventory, sanitize_citations, shelf_file_labels,
 };
 use queries::extra_search_queries;
 

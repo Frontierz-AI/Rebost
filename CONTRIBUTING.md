@@ -6,7 +6,7 @@ Issues, pull requests, and discussions here are covered by the [Code of Conduct]
 
 ## First 30 minutes
 
-1. Install [Rust](https://rustup.rs/) 1.99.0 (`rust-toolchain.toml` pins this), Node 22+ (`.nvmrc`), [pnpm](https://pnpm.io) 11, and [just](https://github.com/casey/just).
+1. Install [Rust](https://rustup.rs/) 1.99.1 (`rust-toolchain.toml` pins this), Node 22.22.2+ on the 22.x line (`.nvmrc`), [pnpm](https://pnpm.io) 12, and [just](https://github.com/casey/just).
 2. macOS: Xcode Command Line Tools. Windows: MSVC toolchain. First OCR build needs **CMake** and a C++ compiler (Xberg compiles Tesseract). Windows x64 also needs a Vulkan driver from the GPU vendor. Windows 11 includes WebView2; on Windows 10 install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`.
 3. From the repo root:
 
@@ -41,11 +41,11 @@ Needs `REBOST_ENGINE_ARCHIVE` (the **host** archive from [docs/engine.md](docs/e
 cargo test --manifest-path src-tauri/Cargo.toml --test model_catalog -- --ignored
 ```
 
-CI runs frontend checks and `cargo deny` on every push. The Rust job runs only when `src-tauri/`, `rust-toolchain.toml`, or this workflow change. On Ubuntu it does `cargo fmt`, `clippy --lib --tests`, `cargo test --lib` (as `rlib`, so it does not link the desktop library), and a check that llama.cpp pin URLs still exist. Full `cargo test` (integration tests, cdylib) stays on `just test` and before a release. Linux is not a supported product platform. Windows is covered by the manual release workflow, not every push.
+CI runs frontend checks and `cargo deny` on every push. The Rust job runs only when `src-tauri/`, `rust-toolchain.toml`, or this workflow change. On Ubuntu it does `cargo fmt`, `clippy --lib --tests`, `cargo test --lib` (as `rlib`, so it does not link the desktop library), and a check that llama.cpp pin URLs still exist. The desktop-quality jobs run full Rust unit and integration tests on macOS and Windows when Rust paths change. `just test` runs the same full Rust suite locally. Linux is not a supported product platform. Installer and accelerator checks remain part of release validation.
 
-## TypeScript versions
+## TypeScript
 
-`pnpm check` (`svelte-check`) uses **TypeScript 6** (`typescript` in `package.json`). `@typescript/native` is a TypeScript 7 preview for editors. Version-mismatch warnings between those two are expected.
+`pnpm check` (`svelte-check`) and the local `tsc` command use **TypeScript 6** (`typescript` in `package.json`). Keep this version until the checker supports TypeScript 7 through its standard integration.
 
 ## Verification
 

@@ -517,6 +517,12 @@ async fn try_skip_ready(ctx: &Arc<Ctx>, existing: &DocumentMeta) -> Result<bool>
 
 /// Rebuild the search index from Card + extracted text after a schema wipe.
 fn reindex_from_cache(ctx: &Ctx, meta: &DocumentMeta) -> Result<()> {
+    reindex_from_cache_deferred(ctx, meta)?;
+    ctx.search.commit()
+}
+
+/// Startup restores many cached files and commits them with the chat records.
+pub(crate) fn reindex_from_cache_deferred(ctx: &Ctx, meta: &DocumentMeta) -> Result<()> {
     let card = card::read_card(&ctx.paths.card_path(&meta.shelf_id, &meta.id))?;
     let extracted = extract::limit_extracted(std::fs::read_to_string(
         ctx.paths.extracted_path(&meta.shelf_id, &meta.id),
@@ -528,7 +534,7 @@ fn reindex_from_cache(ctx: &Ctx, meta: &DocumentMeta) -> Result<()> {
     if passages.is_empty() {
         anyhow::bail!("no passages from extracted text");
     }
-    ctx.search.index_document(
+    ctx.search.index_document_deferred(
         meta,
         &card.summary,
         &card.keywords,
