@@ -213,6 +213,11 @@ pub fn focus_main_with(app: &AppHandle, token: Option<&str>) {
         #[cfg(not(target_os = "linux"))]
         let _ = token;
         let _ = window.set_focus();
+        // Hyprland and sway ignore a raise without a token; ask them directly.
+        #[cfg(target_os = "linux")]
+        let _ = thread::Builder::new()
+            .name("rebost-raise".into())
+            .spawn(crate::compositor::focus_own_window);
     }
 }
 

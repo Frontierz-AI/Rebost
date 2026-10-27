@@ -9,6 +9,8 @@
 pub mod about;
 pub mod chat;
 pub mod commands;
+#[cfg(unix)]
+pub mod compositor;
 pub mod core;
 pub mod engine;
 pub mod host;

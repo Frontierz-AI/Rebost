@@ -153,7 +153,7 @@ pub async fn settings_reset_workspace(
     }
     #[cfg(not(debug_assertions))]
     {
-        app.request_restart();
+        crate::host::restart(&app);
         Ok(())
     }
 }

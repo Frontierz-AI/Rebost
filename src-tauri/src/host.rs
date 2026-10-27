@@ -68,13 +68,25 @@ pub(crate) fn desktop_env_changes(
             continue;
         };
         if key == OsStr::new("XDG_DATA_DIRS") {
-            // The hook prepends `$APPDIR/usr/share:/usr/share:`; what follows
-            // is the desktop's value, empty when it relied on the default.
-            let prefix = format!("{appdir}/usr/share:/usr/share:");
-            if let Some(desktop) = text.strip_prefix(&prefix) {
-                let desktop = (!desktop.is_empty()).then(|| desktop.into());
-                changes.push((key, desktop));
-                continue;
+            // The hooks prepend the mount's share folders and `/usr/share`
+            // (`$APPDIR/usr/share/:$APPDIR/usr/share:/usr/share:<desktop>`).
+            // What follows is the desktop's value, empty when it relied on
+            // the default.
+            let mut rest = text;
+            let mut prepended = false;
+            while let Some((entry, tail)) = rest.split_once(':') {
+                if !inside(entry) {
+                    break;
+                }
+                rest = tail;
+                prepended = true;
+            }
+            if prepended {
+                if let Some(tail) = rest.strip_prefix("/usr/share:") {
+                    let desktop = (!tail.is_empty()).then(|| tail.into());
+                    changes.push((key, desktop));
+                    continue;
+                }
             }
         }
         if !text.split(':').any(inside) {
@@ -105,6 +117,34 @@ pub fn use_desktop_env(command: &mut Command) {
             None => command.env_remove(key),
         };
     }
+}
+
+/// Quit and start Rebost again. An AppImage starts its file afresh with the
+/// desktop's environment: Tauri's restart passes on this mount's library
+/// paths, so the new copy kept loading from the old mount and the old
+/// AppImage could never unmount and exit.
+pub fn restart(app: &tauri::AppHandle) {
+    #[cfg(target_os = "linux")]
+    if let Some(appimage) = std::env::var_os("APPIMAGE") {
+        use std::os::unix::process::CommandExt;
+        let mut command = Command::new(&appimage);
+        command
+            .args(std::env::args_os().skip(1))
+            .stdin(std::process::Stdio::null())
+            .process_group(0);
+        if let Some(home) = dirs::home_dir() {
+            command.current_dir(home);
+        }
+        use_desktop_env(&mut command);
+        match command.spawn() {
+            Ok(_) => {
+                app.exit(0);
+                return;
+            }
+            Err(error) => log::error!("restart {}: {error}", appimage.to_string_lossy()),
+        }
+    }
+    app.request_restart();
 }
 
 /// Open a file, folder, or URL in the desktop's default app.
@@ -263,6 +303,21 @@ mod tests {
         assert_eq!(change(&changes, "APPIMAGE"), Some(&None));
         assert_eq!(change(&changes, "HOME"), None);
         assert_eq!(change(&changes, "XDG_CONFIG_DIRS"), None);
+    }
+
+    #[test]
+    fn xdg_data_dirs_comes_back_exactly_as_the_desktop_had_it() {
+        let changes = desktop_env_changes(
+            env(&[(
+                "XDG_DATA_DIRS",
+                "/tmp/.mount_RebostNM/usr/share/:/tmp/.mount_RebostNM/usr/share:/usr/share:/usr/local/share:/usr/share",
+            )]),
+            "/tmp/.mount_RebostNM",
+        );
+        assert_eq!(
+            change(&changes, "XDG_DATA_DIRS"),
+            Some(&Some("/usr/local/share:/usr/share".into()))
+        );
     }
 
     #[test]
