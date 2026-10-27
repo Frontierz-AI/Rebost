@@ -465,7 +465,9 @@
     "windowTitle": "Quant a Rebost",
     "version": "Versió %{version}",
     "credits": "Crèdits",
-    "source": "Codi font"
+    "source": "Codi font",
+    "updatesSoftwareCentre": "Les actualitzacions arriben des del teu centre de programari.",
+    "updatesPackageManager": "Les actualitzacions arriben des del teu gestor de paquets."
   },
   "update": {
     "windowTitle": "Actualitza Rebost",

@@ -1,0 +1,127 @@
+# After a release is published: the AUR's rebost-bin and the Flathub update.
+# Runs on its own for each published release that is not a prerelease, or by
+# hand for a tag:
+#   gh workflow run linux-stores.yml -f tag=v0.9.9
+#   gh workflow run linux-stores.yml -f tag=v0.9.9 -f pkgrel=2   # AUR packaging fix
+#
+# AUR: builds rebost-bin from the release's own .deb files and SHA256SUMS,
+# checks and installs it on Arch Linux, then pushes PKGBUILD and .SRCINFO to
+# ssh://aur@aur.archlinux.org/rebost-bin.git when the AUR_SSH_KEY secret is
+# set. Without the secret the files are only uploaded as an artifact.
+#
+# Flathub: writes the flathub/ai.rebost.Rebost files for the tag (manifest on
+# the tag's commit, regenerated dependency sources) as the artifact
+# flathub-<tag>. Copy them into a pull request on that repository
+# (packaging/flatpak/README.md).
+
+name: Linux stores
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag, for example v0.9.9
+        required: true
+      pkgrel:
+        description: AUR pkgrel (raise it for a packaging-only change)
+        default: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-stores-${{ github.event.release.tag_name || inputs.tag }}
+
+env:
+  TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  PKGREL: ${{ inputs.pkgrel || '1' }}
+
+jobs:
+  aur:
+    name: AUR rebost-bin
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check the inputs
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "::error::not a release tag: $TAG"; exit 1; }
+          [[ "$PKGREL" =~ ^[1-9][0-9]*$ ]] || { echo "::error::pkgrel must be a positive number: $PKGREL"; exit 1; }
+      - name: Install makepkg and namcap
+        run: pacman -Syu --noconfirm --needed --quiet base-devel git namcap openssh >/dev/null
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+      - name: Build from the release
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          useradd -m builder
+          build=/home/builder/rebost-bin
+          install -d -o builder "$build"
+          su builder -c "packaging/aur/update.sh ${version} --pkgrel ${PKGREL} --out ${build}"
+          cat "$build/PKGBUILD"
+          # shellcheck disable=SC1091
+          deps="$(cd "$build" && source PKGBUILD && printf '%s ' "${depends[@]}")"
+          pacman -S --noconfirm --needed --quiet $deps >/dev/null
+          su builder -c "cd ${build} && makepkg --noconfirm --cleanbuild"
+          echo "BUILD=$build" >>"$GITHUB_ENV"
+          echo "PKG=$(ls "$build"/rebost-bin-*-x86_64.pkg.tar.zst)" >>"$GITHUB_ENV"
+      - name: namcap
+        run: |
+          set -euo pipefail
+          out="$(namcap "$BUILD/PKGBUILD"; namcap "$PKG")"
+          echo "$out"
+          if grep -E ' E: ' <<<"$out"; then
+            echo "::error::namcap reported errors"
+            exit 1
+          fi
+      - name: Install and launch
+        run: bash scripts/smoke-linux.sh pacman "$PKG" shot-archlinux-pacman-x86_64.png
+      - uses: actions/upload-artifact@v7
+        with:
+          name: aur-${{ env.TAG }}
+          path: |
+            ${{ env.BUILD }}/PKGBUILD
+            ${{ env.BUILD }}/.SRCINFO
+          include-hidden-files: true
+          if-no-files-found: error
+      - name: Push to the AUR
+        env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$AUR_SSH_KEY" ]]; then
+            echo "::warning::No AUR_SSH_KEY secret; rebost-bin was not pushed. The files are in the aur-${TAG} artifact."
+            exit 0
+          fi
+          # Rewritten from the same release and sums, so it matches what was tested.
+          su builder --whitelist-environment=AUR_SSH_KEY \
+            -c "packaging/aur/update.sh '${TAG#v}' --pkgrel '${PKGREL}' --out '${BUILD}' --push"
+
+  flathub:
+    name: Flathub files
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check the inputs
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "::error::not a release tag: $TAG"; exit 1; }
+          [[ "$PKGREL" =~ ^[1-9][0-9]*$ ]] || { echo "::error::pkgrel must be a positive number: $PKGREL"; exit 1; }
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+      - run: packaging/flatpak/flathub.sh --out flathub
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flathub-${{ env.TAG }}
+          path: flathub/
+          if-no-files-found: error

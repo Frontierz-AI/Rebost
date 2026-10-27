@@ -44,4 +44,17 @@ The smoke jobs install each package without recommended packages in clean `ubunt
 
 On a Linux machine, `./scripts/release-linux.sh --no-updater` builds the same packages without the updater key.
 
+`release-linux.yml` also builds the AUR package `rebost-bin` from its own x86_64 .deb on `archlinux:latest`: `packaging/aur/update.sh` writes the PKGBUILD with both architectures' checksums from the run's `SHA256SUMS`, makepkg builds it, namcap checks it, pacman installs it, and `scripts/smoke-linux.sh pacman` opens it and checks that it leaves updates to pacman. The artifact `rebost-aur-x86_64` holds the package, PKGBUILD and .SRCINFO.
+
+## AUR and Flathub
+
+The publisher uploads a `SHA256SUMS` asset covering every installer. When a release that is not a prerelease is published, `linux-stores.yml` runs on its own (or `gh workflow run linux-stores.yml -f tag=vX.Y.Z`):
+
+- **AUR:** rewrites `rebost-bin` for the tag from that `SHA256SUMS`, builds it from the release's own .deb files, runs namcap, installs it and runs the smoke test, then pushes `PKGBUILD` and `.SRCINFO` to `ssh://aur@aur.archlinux.org/rebost-bin.git` with the `AUR_SSH_KEY` secret. Without the secret it only uploads them as the artifact `aur-vX.Y.Z`. Setup: [packaging/aur/README.md](../packaging/aur/README.md).
+- **Flathub:** writes the manifest for the tag's commit and regenerates `cargo-sources.json` and `node-sources.json` from the tag's lockfiles (`packaging/flatpak/flathub.sh`), uploaded as the artifact `flathub-vX.Y.Z`. A maintainer opens the pull request with those files on `flathub/ai.rebost.Rebost`; Flathub's rules do not allow an AI tool to open it. See [packaging/flatpak/README.md](../packaging/flatpak/README.md), including Flathub's policy on AI-written manifests.
+
+Each version bump also adds a `<release>` to `packaging/flatpak/ai.rebost.Rebost.metainfo.xml` (newest first); `pnpm test` fails when its newest release is not the version in `package.json`. `flatpak.yml` builds the Flatpak from the checkout on pull requests that change it or its lockfiles, lints it with Flathub's linter, opens it on Xvfb, and uploads `rebost-flatpak-x86_64`.
+
+Installs from the AUR or Flathub never run the in-app updater (`src-tauri/src/distribution.rs`): a Flatpak is recognised by `/.flatpak-info`, and the AUR package installs `/usr/lib/Rebost/package-manager`. Neither asks GitHub for `latest.json`, so its `linux-*` entries only serve the GitHub packages.
+
 The in-app updater endpoint is `{Cargo.toml package.repository}/releases/latest/download/latest.json`. Change the repository URL in `src-tauri/Cargo.toml` if the GitHub repo moves; do not hardcode it elsewhere. Installed copies fetch that file without credentials, so the GitHub repository must be public or the check is ignored. `pnpm tauri dev` does not check.

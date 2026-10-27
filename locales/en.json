@@ -465,7 +465,9 @@
     "windowTitle": "About Rebost",
     "version": "Version %{version}",
     "credits": "Credits",
-    "source": "Source code"
+    "source": "Source code",
+    "updatesSoftwareCentre": "Updates come from your software centre.",
+    "updatesPackageManager": "Updates come from your package manager."
   },
   "update": {
     "windowTitle": "Update Rebost",

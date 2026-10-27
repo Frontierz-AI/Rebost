@@ -466,7 +466,9 @@
     "windowTitle": "Informazioni su Rebost",
     "version": "Versione %{version}",
     "credits": "Crediti",
-    "source": "Codice sorgente"
+    "source": "Codice sorgente",
+    "updatesSoftwareCentre": "Gli aggiornamenti arrivano dal tuo centro software.",
+    "updatesPackageManager": "Gli aggiornamenti arrivano dal tuo gestore di pacchetti."
   },
   "update": {
     "windowTitle": "Aggiorna Rebost",

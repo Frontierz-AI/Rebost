@@ -6,13 +6,15 @@
 #   scripts/smoke-linux.sh deb Rebost-X.Y.Z-Linux-amd64.deb shot.png
 #   scripts/smoke-linux.sh rpm Rebost-X.Y.Z-Linux-x86_64.rpm shot.png
 #   scripts/smoke-linux.sh appimage Rebost-X.Y.Z-Linux-x86_64.AppImage shot.png
+#   scripts/smoke-linux.sh pacman rebost-bin-X.Y.Z-1-x86_64.pkg.tar.zst shot.png
 #
 # Packages are installed without recommended packages, so the hard
 # dependencies alone must be enough to start (no Vulkan loader either).
+# The pacman package (the AUR's rebost-bin) must also leave updates to pacman.
 
 set -euo pipefail
 
-KIND="${1:?deb, rpm or appimage}"
+KIND="${1:?deb, rpm, appimage or pacman}"
 FILE="$(realpath "${2:?package file}")"
 SHOT="${3:-}"
 
@@ -30,6 +32,10 @@ case "$ID" in
   fedora)
     dnf install -y -q --setopt=install_weak_deps=False \
       ImageMagick dbus-daemon dbus-tools desktop-file-utils file findutils procps-ng xorg-x11-server-Xvfb xwd xwininfo
+    ;;
+  arch)
+    pacman -Syu --noconfirm --needed --quiet \
+      dbus desktop-file-utils file imagemagick procps-ng xorg-server-xvfb xorg-xwd xorg-xwininfo >/dev/null
     ;;
   *)
     echo "No smoke recipe for ${ID}" >&2
@@ -63,6 +69,12 @@ case "$KIND" in
     dnf install -y -q --setopt=install_weak_deps=False "$FILE"
     rpm -q --requires rebost | grep -v '^rpmlib' | tr '\n' ' '
     echo
+    BIN=/usr/bin/rebost
+    ROOT_DIR=/usr/lib
+    ;;
+  pacman)
+    pacman -U --noconfirm "$FILE" >/dev/null
+    pacman -Qi rebost-bin | sed -n '/^Name/p;/^Version/p;/^Depends On/p;/^Optional Deps/,/^Required By/p'
     BIN=/usr/bin/rebost
     ROOT_DIR=/usr/lib
     ;;
@@ -157,6 +169,9 @@ fi
 app_log="$HOME/.local/share/io.rebost.desktop/logs/rebost.log"
 [[ -f "$app_log" ]] || fail "no app log at ${app_log}"
 tail -n 20 "$app_log"
+if [[ "$KIND" == pacman ]]; then
+  grep -q 'updates come from pacman' "$app_log" || fail "the AUR package still checks for in-app updates"
+fi
 echo "-- files written under HOME"
 find "$HOME" -maxdepth 4 -type d | sed "s|^$HOME|~|" | sort
 echo "-- stdout/stderr"
@@ -164,9 +179,13 @@ tail -n 40 "$log"
 kill "$pid" 2>/dev/null || true
 wait "$pid" 2>/dev/null || true
 
-if [[ "$KIND" == rpm ]]; then
+if [[ "$KIND" == rpm || "$KIND" == pacman ]]; then
   echo "== uninstall"
-  dnf remove -y -q rebost
+  if [[ "$KIND" == rpm ]]; then
+    dnf remove -y -q rebost
+  else
+    pacman -R --noconfirm rebost-bin >/dev/null
+  fi
   [[ ! -e /usr/lib/Rebost ]] || {
     find /usr/lib/Rebost >&2
     fail "uninstall left /usr/lib/Rebost behind"

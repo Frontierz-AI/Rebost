@@ -117,7 +117,8 @@ impl Engine {
     }
 
     /// Make sure one llama.cpp build is present. Preference: already extracted,
-    /// `REBOST_ENGINE_ARCHIVE` / the installer bundle (bundled pin only), then GitHub.
+    /// `REBOST_ENGINE_ARCHIVE` (bundled pin only), the installer's copy of this
+    /// archive, then GitHub.
     pub(super) async fn ensure_pin_binary(
         &self,
         pin: &'static EnginePin,
@@ -174,17 +175,29 @@ impl Engine {
         target: &Path,
     ) -> Result<()> {
         let download_dest = engine_dir.join(pin.file_name);
-        let env_archive = std::env::var_os("REBOST_ENGINE_ARCHIVE").filter(|p| !p.is_empty());
-        let bundled = self.ctx.paths.bundled_engine_archive();
+        // `REBOST_ENGINE_ARCHIVE` stands in for the bundled pin only. An
+        // optional build is used from the installer when it ships one (the
+        // Flatpak carries its CPU build), and downloaded otherwise.
+        let env_archive =
+            std::env::var_os("REBOST_ENGINE_ARCHIVE").filter(|p| !p.is_empty() && allow_local);
+        let bundled = self.ctx.paths.bundled_engine_archive(pin.file_name);
 
-        let (archive, verify_pin_sha, delete_after_unpack) = if allow_local {
-            if let Some(local) = resolve_local_archive(env_archive, bundled) {
+        let (archive, verify_pin_sha, delete_after_unpack) =
+            if let Some(local) = resolve_local_archive(env_archive, bundled.as_deref()) {
                 log::info!(
-                    "unpacking AI engine {ENGINE_RELEASE} from {}",
+                    "unpacking AI engine {ENGINE_RELEASE} {} from {}",
+                    pin.accelerator.to_ascii_lowercase(),
                     local.path.display()
                 );
                 (local.path, local.verify_pin_sha, local.delete_after_unpack)
             } else {
+                if !allow_local {
+                    log::info!(
+                        "downloading optional {} engine {ENGINE_RELEASE} ({})",
+                        pin.accelerator,
+                        pin.file_name
+                    );
+                }
                 self.download_archive(
                     pin.url,
                     &download_dest,
@@ -194,23 +207,7 @@ impl Engine {
                 )
                 .await?;
                 (download_dest, false, true)
-            }
-        } else {
-            log::info!(
-                "downloading optional {} engine {ENGINE_RELEASE} ({})",
-                pin.accelerator,
-                pin.file_name
-            );
-            self.download_archive(
-                pin.url,
-                &download_dest,
-                pin.sha256,
-                pin.file_name,
-                "AI engine",
-            )
-            .await?;
-            (download_dest, false, true)
-        };
+            };
 
         if verify_pin_sha {
             download::verify_sha256_blocking(&archive, pin.sha256)

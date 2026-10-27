@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Rebost
+Comment=Private AI that works with your files
+Exec=rebost
+Icon=ai.rebost.Rebost
+Terminal=false
+Categories=Office;Utility;
+Keywords=AI;assistant;chat;documents;search;offline;private;
+StartupNotify=true
+StartupWMClass=rebost

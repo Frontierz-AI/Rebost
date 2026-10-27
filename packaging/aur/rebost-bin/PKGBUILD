@@ -1,0 +1,62 @@
+# Maintainer: Pau Garcia-Mila <info-rebost-app at frontierz dot com>
+#
+# Repackages the release's .deb: the same binary, built on Ubuntu 22.04
+# (glibc 2.35), that the Debian and Ubuntu packages install. It links the
+# system WebKitGTK 4.1. The AppImage would carry its own, older WebKitGTK.
+#
+# This file lives in github.com/Frontierz-AI/Rebost under packaging/aur/.
+# packaging/aur/update.sh sets pkgver, pkgrel and the checksums from the
+# release's SHA256SUMS and pushes to the AUR; edit it there, not on the AUR.
+# The copy in that repository keeps SKIP checksums between releases.
+
+pkgname=rebost-bin
+_pkgver=0.9.8
+pkgver=0.9.8
+pkgrel=1
+pkgdesc='Private AI that works with your files'
+arch=('x86_64' 'aarch64')
+url='https://rebost.ai'
+license=('MIT')
+depends=(
+  'cairo'
+  'dbus'
+  'gcc-libs'
+  'gdk-pixbuf2'
+  'glib2'
+  'glibc'
+  'gtk3'
+  'hicolor-icon-theme'
+  'libsoup3'
+  'webkit2gtk-4.1'
+)
+optdepends=(
+  'vulkan-icd-loader: run the AI on the graphics card'
+  'vulkan-driver: Vulkan driver for the graphics card (vulkan-radeon, vulkan-intel, nvidia-utils)'
+  'xdg-utils: open files and links in the default apps'
+)
+provides=('rebost')
+conflicts=('rebost')
+# The binaries are already stripped, and the engine is an upstream archive.
+options=('!strip' '!debug')
+_release="https://github.com/Frontierz-AI/Rebost/releases/download/v${_pkgver}"
+source=("LICENSE-${_pkgver}::https://raw.githubusercontent.com/Frontierz-AI/Rebost/v${_pkgver}/LICENSE")
+source_x86_64=("Rebost-${_pkgver}-Linux-amd64.deb::${_release}/Rebost-${_pkgver}-Linux-amd64.deb")
+source_aarch64=("Rebost-${_pkgver}-Linux-arm64.deb::${_release}/Rebost-${_pkgver}-Linux-arm64.deb")
+noextract=("Rebost-${_pkgver}-Linux-amd64.deb" "Rebost-${_pkgver}-Linux-arm64.deb")
+sha256sums=('SKIP')
+sha256sums_x86_64=('SKIP')
+sha256sums_aarch64=('SKIP')
+
+package() {
+  local deb="Rebost-${_pkgver}-Linux-amd64.deb"
+  [[ "$CARCH" == aarch64 ]] && deb="Rebost-${_pkgver}-Linux-arm64.deb"
+
+  # /usr/bin/rebost, /usr/lib/Rebost (OCR data and the llama.cpp engine),
+  # the desktop entry and hicolor icons.
+  bsdtar -xOf "$deb" 'data.tar.*' | bsdtar -xf - -C "$pkgdir" --no-same-owner
+
+  # Updates come from pacman: the app reads this and never runs its own updater.
+  echo 'pacman (AUR rebost-bin)' >"$pkgdir/usr/lib/Rebost/package-manager"
+
+  install -Dm644 "LICENSE-${_pkgver}" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

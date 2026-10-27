@@ -68,6 +68,10 @@ pub fn latest_json_url(repository: &str) -> Option<String> {
 
 /// Startup check. Never toasts, never warns; a failure is the same as "no update".
 pub async fn check_silently(app: AppHandle) {
+    if let Some(manager) = crate::distribution::current(&app).manager() {
+        log::info!("updates come from {manager}; no in-app update check");
+        return;
+    }
     if cfg!(debug_assertions) {
         return;
     }
@@ -136,6 +140,9 @@ pub fn update_info(pending: State<'_, PendingUpdate>) -> Option<UpdateMeta> {
 /// Download and install the pending update.
 #[tauri::command]
 pub async fn install_update(app: AppHandle, pending: State<'_, PendingUpdate>) -> CmdResult<()> {
+    if crate::distribution::current(&app).manager().is_some() {
+        return Err("Updates for this copy of Rebost come from the package manager.".to_string());
+    }
     let update = mutex_lock(&pending.0)
         .as_ref()
         .map(|stored| stored.update.clone())

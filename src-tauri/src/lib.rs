@@ -12,6 +12,7 @@ pub mod commands;
 #[cfg(unix)]
 pub mod compositor;
 pub mod core;
+pub mod distribution;
 pub mod engine;
 pub mod host;
 pub mod i18n;
@@ -74,8 +75,8 @@ fn find_bundled_tessdata(app: &tauri::App) -> Option<std::path::PathBuf> {
         .find(|dir| crate::ingest::extract::tessdata_has_packs(dir))
 }
 
-fn find_bundled_engine_archive(app: &tauri::App) -> Option<std::path::PathBuf> {
-    let pin = crate::engine::current_engine_pin().ok()?;
+/// Folders that may hold the llama.cpp archives shipped with the app.
+fn bundled_engine_dirs(app: &tauri::App) -> Vec<std::path::PathBuf> {
     let mut roots = Vec::new();
     if let Ok(resource_dir) = app.path().resource_dir() {
         roots.push(resource_dir.join("resources").join("engine"));
@@ -86,7 +87,7 @@ fn find_bundled_engine_archive(app: &tauri::App) -> Option<std::path::PathBuf> {
             .join("resources")
             .join("engine"),
     );
-    crate::engine::find_bundled_engine_archive(roots, pin.file_name)
+    roots
 }
 
 /// NVIDIA's proprietary driver and WebKitGTK's DMA-BUF renderer often leave
@@ -200,7 +201,7 @@ pub fn run() {
                 .expect("app data dir must resolve");
             let tessdata_dir = data_dir.join("engine").join("tessdata");
             let mut paths = Paths::new(&data_dir);
-            paths.set_bundled_engine_archive(find_bundled_engine_archive(app));
+            paths.set_bundled_engine_dirs(bundled_engine_dirs(app));
             let events: Arc<dyn Events> = Arc::new(TauriEvents(app.handle().clone()));
             let ctx = Ctx::new(
                 paths,

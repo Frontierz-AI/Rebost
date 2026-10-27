@@ -466,7 +466,9 @@
     "windowTitle": "Rebostについて",
     "version": "バージョン%{version}",
     "credits": "クレジット",
-    "source": "ソースコード"
+    "source": "ソースコード",
+    "updatesSoftwareCentre": "アップデートはソフトウェアセンターから届きます。",
+    "updatesPackageManager": "アップデートはパッケージマネージャーから届きます。"
   },
   "update": {
     "windowTitle": "Rebostを更新",

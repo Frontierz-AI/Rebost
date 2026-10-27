@@ -88,6 +88,11 @@
     <p class="mt-1 min-h-[1.2em] text-[11.5px] font-medium tracking-wide text-navy-500">
       {#if info}{t("about.version", { version: info.version })}{/if}
     </p>
+    {#if info?.updates === "softwareCentre"}
+      <p class="mt-1 text-[11.5px] text-ink-faint">{t("about.updatesSoftwareCentre")}</p>
+    {:else if info?.updates === "packageManager"}
+      <p class="mt-1 text-[11.5px] text-ink-faint">{t("about.updatesPackageManager")}</p>
+    {/if}
     <p class="mt-3 max-w-[320px] text-[13.5px] leading-relaxed text-ink-soft">
       {t("officialLine")}
     </p>

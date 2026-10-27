@@ -466,7 +466,9 @@
     "windowTitle": "O Rebostu",
     "version": "Verze %{version}",
     "credits": "Poděkování",
-    "source": "Zdrojový kód"
+    "source": "Zdrojový kód",
+    "updatesSoftwareCentre": "Aktualizace přicházejí z vašeho centra softwaru.",
+    "updatesPackageManager": "Aktualizace přicházejí z vašeho správce balíčků."
   },
   "update": {
     "windowTitle": "Aktualizovat Rebost",

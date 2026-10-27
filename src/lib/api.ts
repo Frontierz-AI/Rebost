@@ -305,6 +305,8 @@ export type ExternalLink = "repository" | "releases";
 export interface AboutInfo {
   version: string;
   repositoryUrl: string;
+  /** Who installs updates: Rebost itself, a Flatpak software centre, or a package manager. */
+  updates: "app" | "softwareCentre" | "packageManager";
 }
 
 /** One marketing frame for the debug screenshot runner. */
