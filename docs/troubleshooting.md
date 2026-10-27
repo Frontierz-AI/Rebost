@@ -13,5 +13,9 @@ Chat that will not answer and downloads that will not finish are covered below. 
 | Linked folder not updating | The folder must still exist. Remove the link and add it again. Hidden `.*` paths are ignored. |
 | Disk full during install | AIs are several GB. The suggestion already filters by memory; disk space is not checked. |
 | Tests want a GPU | Default tests do not start the AI. `core_smoke` is ignored and needs env vars. |
+| Linux: blank or white window | Usually the graphics driver and WebKitGTK. Rebost already sets `WEBKIT_DISABLE_DMABUF_RENDERER=1` when NVIDIA's driver is loaded. On other hardware, start it from a terminal with `WEBKIT_DISABLE_DMABUF_RENDERER=1 rebost` (or the AppImage path). On NVIDIA, `__NV_DISABLE_EXPLICIT_SYNC=1` can also help; `WEBKIT_DISABLE_COMPOSITING_MODE=1` is the last resort. |
+| Linux: the AI is slow | Rebost uses the graphics card through Vulkan. Install the Vulkan loader and drivers (`libvulkan1 mesa-vulkan-drivers` on Debian/Ubuntu, `vulkan-loader mesa-vulkan-drivers` on Fedora, or NVIDIA's driver) and restart Rebost. |
+| Linux: linked folder stops updating | A very large folder can exceed the system's file-watch limit. Raise `fs.inotify.max_user_watches` (for example to 524288 with `sysctl`) and restart Rebost. |
+| Linux: AppImage does not open | Make it executable (`chmod +x`). Without FUSE, run it with `--appimage-extract-and-run`. |
 
-Logs: Settings → Diagnostics. On macOS also `~/Library/Logs/io.rebost.desktop/`.
+Logs: Settings → Diagnostics. On macOS also `~/Library/Logs/io.rebost.desktop/`; on Linux `~/.local/share/io.rebost.desktop/logs/`.

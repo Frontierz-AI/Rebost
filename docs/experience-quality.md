@@ -1,6 +1,6 @@
 # Experience quality gate
 
-The normal test suite covers retrieval, file extraction, queued cancellation, UTF-8 stream boundaries, interrupted streams, metadata recovery, import/navigation races, event subscription ordering, and large-table bounds. CI runs frontend checks on Linux and Rust unit/integration checks on macOS and Windows. The existing Linux Rust job remains useful for static checks.
+The normal test suite covers retrieval, file extraction, queued cancellation, UTF-8 stream boundaries, interrupted streams, metadata recovery, import/navigation races, event subscription ordering, and large-table bounds. CI runs frontend checks on Linux and Rust unit/integration checks on macOS and Windows. The Linux Rust job covers static checks and unit tests, and `release-linux.yml` installs and opens the Linux packages on Ubuntu, Debian, and Fedora containers.
 
 Run the real-model gate on each release candidate using a GGUF and the pinned engine archive already on the test computer:
 

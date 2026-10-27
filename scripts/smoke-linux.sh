@@ -133,6 +133,8 @@ fi
 app_log="$HOME/.local/share/io.rebost.desktop/logs/rebost.log"
 [[ -f "$app_log" ]] || fail "no app log at ${app_log}"
 tail -n 20 "$app_log"
+echo "-- files written under HOME"
+find "$HOME" -maxdepth 4 -type d | sed "s|^$HOME|~|" | sort
 echo "-- stdout/stderr"
 tail -n 40 "$log"
 kill "$pid" 2>/dev/null || true

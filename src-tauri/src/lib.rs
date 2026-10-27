@@ -85,7 +85,23 @@ fn find_bundled_engine_archive(app: &tauri::App) -> Option<std::path::PathBuf> {
     crate::engine::find_bundled_engine_archive(roots, pin.file_name)
 }
 
+/// NVIDIA's proprietary driver and WebKitGTK's DMA-BUF renderer often leave
+/// the window blank. Turn that renderer off on those machines unless the
+/// user already chose. Must run before any thread or webview exists.
+#[cfg(target_os = "linux")]
+fn prepare_linux_webview() {
+    const DMABUF: &str = "WEBKIT_DISABLE_DMABUF_RENDERER";
+    if std::env::var_os(DMABUF).is_none()
+        && std::path::Path::new("/proc/driver/nvidia/version").exists()
+    {
+        std::env::set_var(DMABUF, "1");
+    }
+}
+
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    prepare_linux_webview();
+
     let Some(data_dir) = crate::reset::app_data_dir(crate::reset::BUNDLE_IDENTIFIER) else {
         eprintln!("Rebost couldn't find its library folder.");
         return;

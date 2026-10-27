@@ -18,11 +18,11 @@ The first launch suggests one sized for the machine's memory and hides any that 
 
 ## What hardware is needed?
 
-A Mac with an Apple chip or an Intel processor, or a Windows 10/11 PC including Windows on ARM. Running an AI locally also needs several GB of free disk space for the download.
+A Mac with an Apple chip or an Intel processor, a Windows 10/11 PC including Windows on ARM, or a 64-bit Linux computer (Intel/AMD or ARM) with a graphical desktop. Running an AI locally also needs several GB of free disk space for the download.
 
 ## Are phones or Linux supported?
 
-No. Rebost is a desktop application for Mac and Windows.
+Linux is. Rebost ships a .deb for Ubuntu 22.04 or newer and Debian 12 or newer, an .rpm for Fedora 43 or newer, and an AppImage for other distributions with glibc 2.35 or newer, each for Intel/AMD and ARM. Phones are not supported: Rebost is a desktop application.
 
 ## Can a team use it?
 

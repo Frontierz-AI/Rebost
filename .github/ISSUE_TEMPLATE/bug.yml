@@ -28,7 +28,7 @@ body:
     id: os
     attributes:
       label: OS and hardware
-      placeholder: "Mac 15, Apple chip, 24 GB / Windows 11, 32 GB"
+      placeholder: "Mac 15, Apple chip, 24 GB / Windows 11, 32 GB / Ubuntu 24.04 .deb, 16 GB"
     validations:
       required: true
   - type: input

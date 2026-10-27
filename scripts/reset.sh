@@ -9,11 +9,15 @@
 set -u
 APP_ID="io.rebost.desktop"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP_DATA="$HOME/Library/Application Support/$APP_ID"
+if [[ "$(uname -s)" == "Linux" ]]; then
+  APP_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/$APP_ID"
+else
+  APP_DATA="$HOME/Library/Application Support/$APP_ID"
+fi
 
 echo "Stopping Rebost…"
 
-pkill -f "Application Support/$APP_ID/engine/" 2>/dev/null
+pkill -f "$APP_DATA/engine/" 2>/dev/null
 pkill -x rebost 2>/dev/null
 pkill -f "$REPO_ROOT/node_modules/.*vite" 2>/dev/null
 
@@ -29,11 +33,16 @@ if [[ -d "$APP_DATA" ]]; then
     rm -rf "$item"
   done
 fi
-rm -rf ~/Library/Caches/$APP_ID                        # caches
-rm -rf ~/Library/WebKit/$APP_ID                        # webview storage
-rm -rf ~/Library/Logs/$APP_ID                          # diagnostics logs
-rm -f  ~/Library/Preferences/$APP_ID.plist             # window prefs
-rm -rf ~/Library/Saved\ Application\ State/$APP_ID.savedState
+if [[ "$(uname -s)" == "Linux" ]]; then
+  # Logs and WebKitGTK storage live inside APP_DATA on Linux.
+  rm -rf "${XDG_CACHE_HOME:-$HOME/.cache}/$APP_ID"      # caches
+else
+  rm -rf ~/Library/Caches/$APP_ID                        # caches
+  rm -rf ~/Library/WebKit/$APP_ID                        # webview storage
+  rm -rf ~/Library/Logs/$APP_ID                          # diagnostics logs
+  rm -f  ~/Library/Preferences/$APP_ID.plist             # window prefs
+  rm -rf ~/Library/Saved\ Application\ State/$APP_ID.savedState
+fi
 
 echo
 echo "Done. Rebost is back to first-run state —"

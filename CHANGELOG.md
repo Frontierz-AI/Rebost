@@ -6,6 +6,10 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Added
+
+- Linux. Each release adds an AppImage, a .deb, and an .rpm for Intel/AMD and ARM computers: the .deb for Ubuntu 22.04 or newer and Debian 12 or newer, the .rpm for Fedora 43 or newer, and the AppImage for other distributions with glibc 2.35 or newer. The AI uses the graphics card through Vulkan and falls back to the processor when Vulkan is missing or will not start. Each package updates itself in its own format. On computers with NVIDIA's driver, Rebost turns off WebKitGTK's DMA-BUF renderer, which otherwise often leaves the window blank.
+
 ## [0.9.8] - 2026-10-04
 
 ### Added

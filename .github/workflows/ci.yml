@@ -88,8 +88,8 @@ jobs:
           df -h
           df -h /mnt
       - uses: actions/checkout@v7
-      # Linux is not a supported product. Tauri still needs WebKitGTK headers
-      # to compile on Ubuntu. Tesseract needs a C++ toolchain and CMake.
+      # Tauri needs WebKitGTK headers to compile on Ubuntu. Tesseract needs a
+      # C++ toolchain and CMake. Linux packages build in release-linux.yml.
       - name: Install Ubuntu libraries
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -159,8 +159,9 @@ jobs:
           PY
       - run: cargo fmt --check
         working-directory: src-tauri
-      # Linux is not a product. Skip the desktop cdylib/staticlib and
-      # integration tests; those stay on `just test` and the release build.
+      # The runner's disk is too small for the desktop cdylib/staticlib and
+      # integration tests here; those stay on `just test`, the macOS/Windows
+      # desktop-quality jobs, and release-linux.yml.
       - name: Clippy (lib + unit tests, rlib)
         working-directory: src-tauri
         run: cargo clippy --lib --tests --config 'lib.crate-type=["rlib"]' -- -D warnings

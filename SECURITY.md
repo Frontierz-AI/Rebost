@@ -10,7 +10,7 @@ Rebost is MIT licensed and published by Frontierz, the copyright holder named in
 
 Chat, reading Shelf documents, search, and answers all run on the machine where Rebost is installed. Those documents and the installed AI stay on that machine.
 
-Rebost uses the network to **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows machines a faster copy may be downloaded the first time Chat runs.
+Rebost uses the network to **search for or install an AI** (Hugging Face, Ollama). Release builds include what runs the AI. GitHub is contacted if that piece is missing (typically `pnpm tauri dev` without `pnpm fetch-engine`), and on some Windows and Linux machines a faster or more compatible copy may be downloaded the first time Chat runs.
 
 Those requests send a query string, IP address, and the user agent `Rebost/0.9.8 (local-first open-source desktop AI; https://github.com/Frontierz-AI/Rebost)`. They do not include Shelf documents.
 

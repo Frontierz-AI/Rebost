@@ -1,6 +1,6 @@
 # Contributing to Rebost
 
-Rebost is a Tauri 2 + Svelte 5 + Rust desktop app. Supported platforms: macOS (Apple Silicon and Intel) and Windows 10/11 (x64 with Vulkan, ARM64). Linux is not a supported platform.
+Rebost is a Tauri 2 + Svelte 5 + Rust desktop app. Supported platforms: macOS (Apple Silicon and Intel), Windows 10/11 (x64 with Vulkan, ARM64), and Linux (x86_64 and aarch64: Ubuntu 22.04+, Debian 12+, Fedora 43+, AppImage elsewhere).
 
 Issues, pull requests, and discussions here are covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -41,7 +41,7 @@ Needs `REBOST_ENGINE_ARCHIVE` (the **host** archive from [docs/engine.md](docs/e
 cargo test --manifest-path src-tauri/Cargo.toml --test model_catalog -- --ignored
 ```
 
-CI runs frontend checks and `cargo deny` on every push. The Rust job runs only when `src-tauri/`, `rust-toolchain.toml`, or this workflow change. On Ubuntu it does `cargo fmt`, `clippy --lib --tests`, `cargo test --lib` (as `rlib`, so it does not link the desktop library), and a check that llama.cpp pin URLs still exist. The desktop-quality jobs run full Rust unit and integration tests on macOS and Windows when Rust paths change. `just test` runs the same full Rust suite locally. Linux is not a supported product platform. Installer and accelerator checks remain part of release validation.
+CI runs frontend checks and `cargo deny` on every push. The Rust job runs only when `src-tauri/`, `rust-toolchain.toml`, or this workflow change. On Ubuntu it does `cargo fmt`, `clippy --lib --tests`, `cargo test --lib` (as `rlib`, so it does not link the desktop library), and a check that llama.cpp pin URLs still exist. The desktop-quality jobs run full Rust unit and integration tests on macOS and Windows when Rust paths change. `just test` runs the same full Rust suite locally. Linux packages are built and smoke-tested by `release-linux.yml`, which also runs on pull requests that change Linux packaging. Installer and accelerator checks remain part of release validation.
 
 ## TypeScript
 
@@ -116,7 +116,7 @@ Sentence case. Delete anything the name or types already say.
 
 ## Platform policy
 
-Supported platforms: macOS and Windows 10/11. Release installers bundle one llama.cpp archive per OS/arch (`engine/pin.rs`). Linux URLs are in that matrix so the crate compiles on Linux CI. There is no Linux installer. See [docs/engine.md](docs/engine.md).
+Supported platforms: macOS, Windows 10/11, and Linux (x86_64 and aarch64). Release installers bundle one llama.cpp archive per OS/arch (`engine/pin.rs`). Linux packages are built on Ubuntu 22.04 so they run on its glibc (2.35) and newer, which is also what the upstream llama.cpp Linux builds need. See [docs/engine.md](docs/engine.md) and [docs/releasing.md](docs/releasing.md).
 
 ## License
 
