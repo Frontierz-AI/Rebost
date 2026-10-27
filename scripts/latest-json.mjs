@@ -4,7 +4,13 @@
 // Repository URL comes from src-tauri/Cargo.toml (same source the app uses).
 //
 //   node scripts/latest-json.mjs --bundle-dir src-tauri/target/release/bundle/macos --triple aarch64-apple-darwin
+//   node scripts/latest-json.mjs --bundle-dir src-tauri/target/release/bundle --triple x86_64-unknown-linux-gnu
 //   node scripts/latest-json.mjs --combine
+//
+// Linux writes one entry per package (`linux-x86_64-appimage`, `-deb`, `-rpm`).
+// The updater looks for `{os}-{arch}-{bundle}` first, so each install updates
+// with its own format. There is no bare `linux-x86_64` entry: a binary built
+// outside a package has no format to update.
 
 import { copyFile, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -21,7 +27,16 @@ const TRIPLE_TO_PLATFORM = {
   "x86_64-apple-darwin": "darwin-x86_64",
   "x86_64-pc-windows-msvc": "windows-x86_64",
   "aarch64-pc-windows-msvc": "windows-aarch64",
+  "x86_64-unknown-linux-gnu": "linux-x86_64",
+  "aarch64-unknown-linux-gnu": "linux-aarch64",
 };
+
+// Linux package formats: bundle subfolder, file suffix, updater key suffix.
+const LINUX_BUNDLES = [
+  { dir: "appimage", suffix: ".AppImage", key: "appimage" },
+  { dir: "deb", suffix: ".deb", key: "deb" },
+  { dir: "rpm", suffix: ".rpm", key: "rpm" },
+];
 
 function packageField(toml, key) {
   const block = toml.match(/\[package\]([\s\S]*?)(?:\n\[|$)/);
@@ -49,7 +64,7 @@ function assetUrl(repository, version, filename) {
 }
 
 // GitHub asset names. Mac updater archives are both Rebost.app.tar.gz on disk;
-// Windows URLs must match installer-names.sh (the public NSIS filename).
+// Windows and Linux URLs must match installer-names.sh (the public download).
 function publicUpdaterFilename(version, platform) {
   switch (platform) {
     case "darwin-aarch64":
@@ -60,6 +75,18 @@ function publicUpdaterFilename(version, platform) {
       return `Rebost-${version}-Windows.exe`;
     case "windows-aarch64":
       return `Rebost-${version}-Windows-ARM.exe`;
+    case "linux-x86_64-appimage":
+      return `Rebost-${version}-Linux-x86_64.AppImage`;
+    case "linux-x86_64-deb":
+      return `Rebost-${version}-Linux-amd64.deb`;
+    case "linux-x86_64-rpm":
+      return `Rebost-${version}-Linux-x86_64.rpm`;
+    case "linux-aarch64-appimage":
+      return `Rebost-${version}-Linux-aarch64.AppImage`;
+    case "linux-aarch64-deb":
+      return `Rebost-${version}-Linux-arm64.deb`;
+    case "linux-aarch64-rpm":
+      return `Rebost-${version}-Linux-aarch64.rpm`;
     default:
       throw new Error(`No public updater name for ${platform}`);
   }
@@ -87,11 +114,9 @@ function parseArgs(argv) {
   return out;
 }
 
-async function findPair(bundleDir) {
+async function findPair(bundleDir, suffixes = [".app.tar.gz", ".exe"]) {
   const names = await readdir(bundleDir);
-  const archives = names.filter(
-    (name) => name.endsWith(".app.tar.gz") || (name.endsWith(".exe") && !name.endsWith(".sig")),
-  );
+  const archives = names.filter((name) => suffixes.some((suffix) => name.endsWith(suffix)));
   for (const name of archives) {
     const sig = `${name}.sig`;
     if (names.includes(sig)) {
@@ -130,6 +155,9 @@ async function addPlatform({ bundleDir, triple, notes }) {
   if (!platform) {
     throw new Error(`Unsupported triple: ${triple}`);
   }
+  if (platform.startsWith("linux-")) {
+    return addLinuxPlatforms({ bundleDir, platform, version, repository, notes });
+  }
   const pair = await findPair(bundleDir);
   if (!pair) {
     throw new Error(`No updater artifact + .sig in ${bundleDir}`);
@@ -150,6 +178,44 @@ async function addPlatform({ bundleDir, triple, notes }) {
   await stageMacUpdaterArchive(pair, version, platform);
   await combine({ notes });
   return { fragmentPath, platform, filename: publicName, endpoint: latestJsonUrl(repository) };
+}
+
+// bundleDir is the `bundle` folder that holds appimage/, deb/ and rpm/.
+async function addLinuxPlatforms({ bundleDir, platform, version, repository, notes }) {
+  const fragment = emptyManifest(version, notes);
+  const filenames = [];
+  for (const bundle of LINUX_BUNDLES) {
+    const dir = path.join(bundleDir, bundle.dir);
+    let pair = null;
+    try {
+      pair = await findPair(dir, [bundle.suffix]);
+    } catch {
+      pair = null;
+    }
+    if (!pair) {
+      throw new Error(`No ${bundle.suffix} + .sig in ${dir}`);
+    }
+    const signature = (await readFile(pair.sig, "utf8")).trim();
+    if (!signature) {
+      throw new Error(`Empty signature file: ${pair.sig}`);
+    }
+    const key = `${platform}-${bundle.key}`;
+    const publicName = publicUpdaterFilename(version, key);
+    fragment.platforms[key] = {
+      signature,
+      url: assetUrl(repository, version, publicName),
+    };
+    filenames.push(publicName);
+  }
+  const fragmentPath = path.join(OUT_DIR, `latest-${platform}.json`);
+  await writeJson(fragmentPath, fragment);
+  await combine({ notes });
+  return {
+    fragmentPath,
+    platform,
+    filename: filenames.join(", "),
+    endpoint: latestJsonUrl(repository),
+  };
 }
 
 async function combine({ notes }) {

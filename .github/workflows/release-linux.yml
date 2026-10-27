@@ -1,0 +1,157 @@
+# Linux AppImage, .deb and .rpm (x86_64 + aarch64). Does not run on push.
+# Dispatch it once the version bump is on the remote:
+#   gh workflow run release-linux.yml
+#
+# Packages build in an Ubuntu 22.04 container: the binary needs that glibc
+# (2.35) or newer, which matches the upstream llama.cpp Linux builds
+# (glibc 2.34, built on 22.04). The smoke jobs install each package in clean
+# containers of the supported distributions and open the app on Xvfb.
+#
+# Secrets for the in-app updater:
+#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (optional)
+# Without them the packages build unsigned and there is no updater fragment.
+
+name: Release Linux
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  packages:
+    name: Packages (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    container: ubuntu:22.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CARGO_INCREMENTAL: "0"
+    steps:
+      # Build dependencies: Tauri's Linux prerequisites (WebKitGTK 4.1, GTK 3,
+      # libsoup 3, librsvg for the AppImage icon loader), CMake and a C++
+      # toolchain for the vendored Tesseract, and `file` for linuxdeploy.
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential ca-certificates cmake curl file git pkg-config xz-utils \
+            libdbus-1-dev \
+            libgtk-3-dev \
+            libjavascriptcoregtk-4.1-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libwebkit2gtk-4.1-dev
+          dpkg-query -W -f '${Package} ${Version}\n' \
+            libc6 libgtk-3-0 libwebkit2gtk-4.1-0 libsoup-3.0-0 librsvg2-2
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.15.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.99.1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          prefix-key: linux-${{ matrix.arch }}
+          cache-directories: src-tauri/target/xberg-tesseract-cache
+      - name: Reset incomplete Tesseract sources
+        run: |
+          set -euo pipefail
+          cache="src-tauri/target/xberg-tesseract-cache"
+          for lib in leptonica tesseract; do
+            if [ -d "${cache}/third_party/${lib}" ] && [ ! -f "${cache}/third_party/${lib}/CMakeLists.txt" ]; then
+              echo "Incomplete ${lib} source cache; removing ${cache}"
+              rm -rf "${cache}"
+              break
+            fi
+          done
+      - run: pnpm install --frozen-lockfile
+      - name: Build packages
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -n "${TAURI_SIGNING_PRIVATE_KEY}" ]; then
+            ./scripts/release-linux.sh
+          else
+            echo "::warning::No TAURI_SIGNING_PRIVATE_KEY; building without updater signatures."
+            ./scripts/release-linux.sh --no-updater
+          fi
+          df -h .
+      - name: Inspect the binary
+        run: |
+          set -euo pipefail
+          bin=src-tauri/target/release/rebost
+          echo "Needed libraries:"
+          objdump -p "$bin" | awk '/NEEDED/ {print "  " $2}'
+          echo "Newest glibc symbol: $(objdump -T "$bin" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
+          echo "deb control:"
+          dpkg-deb -f src-tauri/target/release-linux/*.deb
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rebost-linux-${{ matrix.arch }}
+          path: |
+            src-tauri/target/release-linux/*
+            src-tauri/target/updater/latest-linux-*.json
+          if-no-files-found: error
+
+  smoke:
+    name: Smoke (${{ matrix.image }}, ${{ matrix.kind }}, ${{ matrix.arch }})
+    needs: packages
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    container: ${{ matrix.image }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { image: "ubuntu:22.04", kind: deb, arch: x86_64 }
+          - { image: "ubuntu:24.04", kind: deb, arch: x86_64 }
+          - { image: "ubuntu:26.04", kind: deb, arch: x86_64 }
+          - { image: "debian:12", kind: deb, arch: x86_64 }
+          - { image: "debian:13", kind: deb, arch: x86_64 }
+          - { image: "fedora:43", kind: rpm, arch: x86_64 }
+          - { image: "fedora:44", kind: rpm, arch: x86_64 }
+          - { image: "ubuntu:24.04", kind: appimage, arch: x86_64 }
+          - { image: "fedora:44", kind: appimage, arch: x86_64 }
+          - { image: "ubuntu:24.04", kind: deb, arch: aarch64 }
+          - { image: "fedora:44", kind: rpm, arch: aarch64 }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: rebost-linux-${{ matrix.arch }}
+          path: packages
+      - name: Install and launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.kind }}" in
+            deb) file=$(ls packages/release-linux/*.deb) ;;
+            rpm) file=$(ls packages/release-linux/*.rpm) ;;
+            appimage) file=$(ls packages/release-linux/*.AppImage) ;;
+          esac
+          name="${{ matrix.image }}-${{ matrix.kind }}-${{ matrix.arch }}"
+          bash scripts/smoke-linux.sh "${{ matrix.kind }}" "$file" "shot-${name//:/-}.png"
+      - uses: actions/upload-artifact@v7
+        if: ${{ always() }}
+        with:
+          name: smoke-${{ matrix.kind }}-${{ matrix.arch }}-${{ strategy.job-index }}
+          path: shot-*.png
+          if-no-files-found: ignore
