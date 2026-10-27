@@ -105,9 +105,12 @@ pub(crate) fn desktop_env_changes(
     changes
 }
 
-/// Give `command` the desktop's environment when Rebost runs as an AppImage.
-/// A no-op everywhere else.
+/// Prepare a program Rebost starts for the desktop: on Linux it gets no open
+/// files past stdin/stdout/stderr, and as an AppImage the desktop's
+/// environment instead of the AppImage's.
 pub fn use_desktop_env(command: &mut Command) {
+    #[cfg(target_os = "linux")]
+    close_inherited_fds(command);
     let Some(appdir) = appimage_dir() else {
         return;
     };
@@ -116,6 +119,55 @@ pub fn use_desktop_env(command: &mut Command) {
             Some(value) => command.env(key, value),
             None => command.env_remove(key),
         };
+    }
+}
+
+/// Mark every file descriptor from 3 up close-on-exec in the child, so the
+/// program gets none of Rebost's. An AppImage process holds its mount's root
+/// open without close-on-exec (as do some GPU and cgroup files); a restarted
+/// AppImage that inherited it kept the old mount busy, so the old AppImage
+/// could never unmount and exit.
+#[cfg(target_os = "linux")]
+fn close_inherited_fds(command: &mut Command) {
+    use std::os::unix::process::CommandExt;
+
+    // SAFETY: sysconf has no preconditions. Read before fork: the child may
+    // only make async-signal-safe calls.
+    let open_max = unsafe { libc::sysconf(libc::_SC_OPEN_MAX) };
+    let limit = if open_max > 0 {
+        open_max.min(1 << 16) as libc::c_int
+    } else {
+        1024
+    };
+    let hook = move || {
+        // SAFETY: close_range and fcntl are async-signal-safe and change only
+        // this forked child's descriptor flags. Descriptors 0-2 are already
+        // the program's stdio.
+        unsafe {
+            let first: libc::c_uint = 3;
+            if libc::syscall(
+                libc::SYS_close_range,
+                first,
+                libc::c_uint::MAX,
+                libc::CLOSE_RANGE_CLOEXEC,
+            ) == 0
+            {
+                return Ok(());
+            }
+            // Kernels before 5.11 (older than any supported distribution):
+            // descriptors up to the open-file limit, capped at 65536.
+            for fd in 3..limit {
+                let flags = libc::fcntl(fd, libc::F_GETFD);
+                if flags >= 0 && flags & libc::FD_CLOEXEC == 0 {
+                    libc::fcntl(fd, libc::F_SETFD, flags | libc::FD_CLOEXEC);
+                }
+            }
+        }
+        Ok(())
+    };
+    // SAFETY: the hook only makes async-signal-safe system calls.
+    unsafe {
+        command.pre_exec(hook);
     }
 }
 
@@ -351,6 +403,43 @@ mod tests {
             change(&changes, "LD_LIBRARY_PATH"),
             Some(&Some("/opt/cuda/lib64".into()))
         );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn children_get_no_descriptors_past_stdio() {
+        // SAFETY: open a directory without O_CLOEXEC and move it to a free
+        // descriptor of 900 or more (F_DUPFD never replaces an open one).
+        let fd = unsafe {
+            let raw = libc::open(c"/".as_ptr(), libc::O_RDONLY | libc::O_DIRECTORY);
+            assert!(raw >= 0);
+            let parked = libc::fcntl(raw, libc::F_DUPFD, 900);
+            libc::close(raw);
+            parked
+        };
+        assert!(fd >= 900);
+        let name = fd.to_string();
+        let listed = |prepare: bool| {
+            let mut command = Command::new("sh");
+            command.args(["-c", "ls /proc/self/fd"]);
+            if prepare {
+                close_inherited_fds(&mut command);
+            }
+            let output = command.output().unwrap();
+            String::from_utf8(output.stdout)
+                .unwrap()
+                .lines()
+                .any(|line| line.trim() == name)
+        };
+        assert!(
+            listed(false),
+            "control: the descriptor is inherited by default"
+        );
+        assert!(!listed(true));
+        // SAFETY: close the descriptor this test opened.
+        unsafe {
+            libc::close(fd);
+        }
     }
 
     #[test]

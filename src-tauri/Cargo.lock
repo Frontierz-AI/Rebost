@@ -5346,6 +5346,7 @@ dependencies = [
  "futures-util",
  "gtk",
  "image",
+ "libc",
  "log",
  "notify",
  "objc2",

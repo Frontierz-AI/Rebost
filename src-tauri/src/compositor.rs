@@ -23,18 +23,25 @@ pub fn focus_own_window() {
         let runtime = std::env::var_os("XDG_RUNTIME_DIR").map(PathBuf::from);
         for socket in hyprland_sockets(runtime.as_deref(), Path::new(&signature)) {
             // Prefer the main window's address; `pid:` alone may pick About.
-            let target = hyprland_request(&socket, "j/clients")
+            let mut targets: Vec<String> = hyprland_request(&socket, "j/clients")
                 .ok()
                 .and_then(|clients| main_window_address(&clients, pid))
-                .map_or_else(
-                    || format!("pid:{pid}"),
-                    |address| format!("address:{address}"),
-                );
-            match hyprland_request(&socket, &format!("/dispatch focuswindow {target}")) {
-                Ok(reply) if reply.trim() == "ok" => return,
-                Ok(reply) => log::warn!("Hyprland did not focus the window: {}", reply.trim()),
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-                Err(error) => log::warn!("Hyprland IPC {}: {error}", socket.display()),
+                .map(|address| format!("address:{address}"))
+                .into_iter()
+                .collect();
+            targets.push(format!("pid:{pid}"));
+            for target in &targets {
+                match hyprland_focus(&socket, target) {
+                    Ok(None) => return,
+                    Ok(Some(reply)) => {
+                        log::warn!("Hyprland did not focus {target}: {reply}");
+                    }
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => break,
+                    Err(error) => {
+                        log::warn!("Hyprland IPC {}: {error}", socket.display());
+                        break;
+                    }
+                }
             }
         }
     }
@@ -46,6 +53,32 @@ pub fn focus_own_window() {
             Err(error) => log::warn!("sway IPC: {error}"),
         }
     }
+}
+
+/// Focus requests for a Hyprland window target (`address:…` or `pid:…`), in
+/// the order to try them: the Lua dispatcher of a Lua-configured Hyprland
+/// (0.56+), then the classic dispatcher, which a Lua config rejects.
+fn hyprland_focus_requests(target: &str) -> [String; 2] {
+    [
+        format!("/dispatch hl.dsp.focus({{ window = \"{target}\" }})"),
+        format!("/dispatch focuswindow {target}"),
+    ]
+}
+
+/// Try each focus request until Hyprland answers `ok`. `Ok(None)` when one
+/// did; otherwise the last reply.
+fn hyprland_focus(socket: &Path, target: &str) -> std::io::Result<Option<String>> {
+    let mut last = Ok(None);
+    for request in hyprland_focus_requests(target) {
+        match hyprland_request(socket, &request) {
+            Ok(reply) if reply.trim() == "ok" => return Ok(None),
+            Ok(reply) => last = Ok(Some(reply.trim().to_string())),
+            // No socket: the other form will not find one either.
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Err(error),
+            Err(error) => last = Err(error),
+        }
+    }
+    last
 }
 
 /// Address of this process's main window in Hyprland's `j/clients` list.
@@ -120,6 +153,67 @@ mod tests {
                 PathBuf::from("/run/user/1000/hypr/abc_1/.socket.sock"),
                 PathBuf::from("/tmp/hypr/abc_1/.socket.sock"),
             ]
+        );
+    }
+
+    #[test]
+    fn hyprland_focus_tries_lua_then_classic() {
+        assert_eq!(
+            hyprland_focus_requests("address:0x5609"),
+            [
+                r#"/dispatch hl.dsp.focus({ window = "address:0x5609" })"#.to_string(),
+                "/dispatch focuswindow address:0x5609".to_string(),
+            ]
+        );
+    }
+
+    /// A fake Hyprland socket that answers each connection from `replies`.
+    fn fake_hyprland(
+        replies: &'static [&'static str],
+    ) -> (
+        tempfile::TempDir,
+        PathBuf,
+        std::thread::JoinHandle<Vec<String>>,
+    ) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(".socket.sock");
+        let listener = UnixListener::bind(&path).unwrap();
+        let server = std::thread::spawn(move || {
+            let mut seen = Vec::new();
+            for reply in replies {
+                let (mut stream, _) = listener.accept().unwrap();
+                let mut buf = [0u8; 256];
+                let n = stream.read(&mut buf).unwrap();
+                seen.push(String::from_utf8_lossy(&buf[..n]).to_string());
+                stream.write_all(reply.as_bytes()).unwrap();
+            }
+            seen
+        });
+        (dir, path, server)
+    }
+
+    #[test]
+    fn classic_hyprland_gets_the_second_form_after_an_error() {
+        let (_dir, path, server) = fake_hyprland(&["error: unknown dispatcher hl.dsp.focus", "ok"]);
+        assert_eq!(hyprland_focus(&path, "pid:42").unwrap(), None);
+        let seen = server.join().unwrap();
+        assert!(seen[0].starts_with("/dispatch hl.dsp.focus("));
+        assert_eq!(seen[1], "/dispatch focuswindow pid:42");
+    }
+
+    #[test]
+    fn lua_hyprland_stops_at_the_first_form() {
+        let (_dir, path, server) = fake_hyprland(&["ok"]);
+        assert_eq!(hyprland_focus(&path, "address:0x1").unwrap(), None);
+        assert_eq!(server.join().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn both_forms_failing_returns_the_last_reply() {
+        let (_dir, path, _server) = fake_hyprland(&["error: a", "error: b"]);
+        assert_eq!(
+            hyprland_focus(&path, "pid:1").unwrap(),
+            Some("error: b".to_string())
         );
     }
 
