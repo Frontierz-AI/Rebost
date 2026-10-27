@@ -5356,6 +5356,7 @@ dependencies = [
  "regex",
  "reqwest",
  "rust-i18n",
+ "same-file",
  "serde",
  "serde_json",
  "serde_yaml_ng",

@@ -165,6 +165,7 @@ pub fn apply_pending(
     if !is_pending(data_dir) {
         return Ok(false);
     }
+    remove_models_in_chosen_folder(data_dir);
     wipe_app_data_contents(data_dir)?;
     for extra in extras {
         if extra == data_dir || extra.starts_with(data_dir) {
@@ -183,6 +184,26 @@ pub fn apply_pending(
         std::fs::remove_file(&marker)?;
     }
     Ok(true)
+}
+
+/// Reset deletes the AI too, wherever it is kept. In a folder the person
+/// chose, only installed AIs' files go; the folder and anything else in it stay.
+fn remove_models_in_chosen_folder(data_dir: &Path) {
+    let settings = crate::settings::Settings::load(&data_dir.join("settings.json"));
+    let Some(folder) = settings.models_folder.as_deref() else {
+        return;
+    };
+    for file in settings.model_files() {
+        // Names come from settings.json; never let one reach outside the folder.
+        if Path::new(&file).file_name() != Some(std::ffi::OsStr::new(&file)) {
+            continue;
+        }
+        if let Err(error) = std::fs::remove_file(folder.join(&file)) {
+            if error.kind() != std::io::ErrorKind::NotFound {
+                log::warn!("could not remove {file} on reset: {error}");
+            }
+        }
+    }
 }
 
 fn wipe_dir_contents(dir: &Path, keep_names: &[&str]) -> std::io::Result<()> {
@@ -280,6 +301,39 @@ mod tests {
         mark_pending(&data).unwrap();
         apply_pending(&data, &[], BUNDLE_IDENTIFIER).unwrap();
         assert_eq!(std::fs::read_to_string(&kept).unwrap(), "keep me");
+    }
+
+    #[test]
+    fn apply_pending_removes_installed_ais_from_a_chosen_folder() {
+        let (root, data) = populated_data_dir();
+        let drive = root.path().join("Drive").join("AI");
+        std::fs::create_dir_all(&drive).unwrap();
+        for file in ["a.gguf", "vision-1.gguf", "mine.gguf"] {
+            std::fs::write(drive.join(file), b"x").unwrap();
+        }
+        let settings = serde_json::json!({
+            "modelsFolder": drive,
+            "activeModel": {
+                "file": "a.gguf", "name": "A", "source": "huggingface",
+                "reference": "org/a", "sizeBytes": 1,
+                "projector": { "file": "vision-1.gguf", "sizeBytes": 1 }
+            },
+            "otherModels": [{
+                "file": "../escape.gguf", "name": "B", "source": "huggingface",
+                "reference": "org/b", "sizeBytes": 1
+            }]
+        });
+        std::fs::write(data.join("settings.json"), settings.to_string()).unwrap();
+        std::fs::write(drive.parent().unwrap().join("escape.gguf"), b"x").unwrap();
+        mark_pending(&data).unwrap();
+        apply_pending(&data, &[], BUNDLE_IDENTIFIER).unwrap();
+        let mut left: Vec<_> = std::fs::read_dir(&drive)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().into_string().unwrap())
+            .collect();
+        left.sort();
+        assert_eq!(left, ["mine.gguf"]);
+        assert!(drive.parent().unwrap().join("escape.gguf").is_file());
     }
 
     #[test]

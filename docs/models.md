@@ -21,13 +21,26 @@ Explore other AIs is a Settings modal. An empty search browses popular Hugging F
 
 ## Installed AIs
 
-Several AIs can be installed; Chat uses one. `settings.json` keeps it in `activeModel` and the rest in `otherModels`, most recently used first. Each entry names its file in `<app-data>/models/` (and its image file, if any).
+Several AIs can be installed; Chat uses one. `settings.json` keeps it in `activeModel` and the rest in `otherModels`, most recently used first. Each entry names its file in the models folder (and its image file, if any).
 
 - **Install** keeps the previous AI in `otherModels`. Reinstalling the same source and reference replaces it instead, once the new process is Ready. A file name already taken by another installed AI gets a `.next` sibling name.
 - **Use** (`model_use`) waits for an answer in progress, swaps the two entries, and starts the chosen AI. Calibration starts over for it. A failed start puts the previous AI back.
 - **Remove** (`model_remove`) deletes an AI that is not in use, after a confirm. Its image file goes too unless another installed AI shares it. The AI in use can't be removed; switch first.
-- **Show in folder** reveals one AI's file; **Open folder** opens `models/` (`model_reveal`). Only installed file names are accepted.
-- Use and Remove refuse while a download holds the install lock. At launch, `otherModels` entries whose file is gone are forgotten.
+- **Show in folder** reveals one AI's file; **Open folder** opens the models folder (`model_reveal`). Only installed file names are accepted.
+- Use and Remove refuse while a download holds the install lock. At launch, `otherModels` entries whose file is gone are forgotten, unless the chosen models folder itself is missing.
+
+## Where AIs are kept
+
+The models folder defaults to `<app-data>/models/`. Settings → Where AIs are kept (and a Change link on the first-run install step) can choose another one, stored as `modelsFolder` in `settings.json`. Logic lives in `src-tauri/src/models_folder/` (`mod.rs`, `mover.rs`) and `engine/relocate.rs`.
+
+**The one rule.** A name of an AI file is removed only when the same bytes stay reachable under another name Rebost checked, in a folder proven to be a different place: both names are regular files (not links) of the same size; the folders differ by file identity (device and inode, or volume serial and file index on Windows, via `same-file`), never by path text; and the other name is the very same file (a hard link) or a copy that was flushed and read back with the original's SHA-256. What can't be proven keeps both names. The rule guards every removal: old names after a move, new names when a move is undone, and both when a restart finds a half-done move.
+
+- **Pick** (`models_folder_pick`) opens the OS folder dialog in Rust and keeps the path; the webview never sends one. Folders are compared as places (`models_folder::relation`): the current folder under another path (symlink, junction, `subst`, `..`, casing) is no change; one inside it or holding it is refused (`models-folder-nested`). The preflight also reports a folder that isn't writable, lacks room (installed AIs plus 1 GiB, unless on the same drive), sits inside Rebost's data, has a different file under an installed AI's name or a link with that name, or (when the current folder is missing) holds none of the installed AIs.
+- **Apply** (`models_folder_apply`, `models_folder_use_default`) takes the install lock, waits for Chat, and stops the engine while holding its start lock, so Chat waits instead of starting it on the old files. `mover::stage` writes a journal (`models-move.json` in app data), then places each file in the new folder: a regular file already there is reused when it is the same file or has the same SHA-256; otherwise a hard link (same drive) or a copy written to a `.rebost-moving` name, flushed, read back and renamed. Each placed file is recorded in the journal. Only after every file is placed is `settings.json` saved; then `Mover::finish` removes the old names the rule allows. A failure or Cancel (`download_cancel` with `move:models`) runs `Mover::roll_back`, which removes only names this move created, again under the rule. The result is `done`, `cancelled` or `kept-copies` (Settings says some old copies stayed). Progress arrives as `rebost://models-move`.
+- **Restart mid-move.** At startup `models_folder::recover` reads a leftover journal: if the setting already points at the new folder it finishes the move, otherwise it undoes it and clears half-written copies. Both go through the rule; old copies a restart had to keep are mentioned in Settings.
+- A chosen folder is never created. When it is missing (an unplugged drive), downloads, image support, Use and Remove refuse with `models-folder-missing`, the engine reports that code, and nothing installed is forgotten. Settings offers Try again (`models_folder_recheck`), another folder (a folder that already holds the files is adopted without copying), or Rebost's own folder, which forgets the AIs it can't reach after a confirm.
+- Free space (`MachineProfile::free_disk_bytes`) is measured on the drive that holds the models folder: the mount point that is the longest prefix of its path. A download (AI or image file) whose remaining bytes don't fit stops before it starts; a leftover `.part` counts only the space it already takes on disk. Right before each download the models folder is checked again, so a drive unplugged mid-install fails cleanly instead of a folder being created in its place.
+- Reset deletes installed AIs' files in a chosen folder by name; the folder and anything else in it stay.
 
 ## Licenses
 

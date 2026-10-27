@@ -306,6 +306,9 @@ pub struct Ctx {
     pub extractor: ExtractorSettings,
     pub ingest_queue: IngestQueue,
     pub(crate) runtime_plan: RwLock<Option<crate::engine::tune::SpawnPlan>>,
+    /// Old AI files the latest folder change kept (a move, or a restart
+    /// finishing an interrupted one). Settings mentions them.
+    pub models_move_kept: std::sync::atomic::AtomicUsize,
 }
 
 impl Ctx {
@@ -328,6 +331,7 @@ impl Ctx {
             extractor,
             ingest_queue: IngestQueue::new(),
             runtime_plan: RwLock::new(None),
+            models_move_kept: std::sync::atomic::AtomicUsize::new(0),
         });
         if let Err(error) = crate::search::restore::restore_if_pending(&ctx) {
             log::warn!("restore search index: {error:#}; will retry on next launch");
@@ -350,6 +354,33 @@ impl Ctx {
         next.save(&self.paths.settings_path())?;
         *settings = next;
         Ok(())
+    }
+
+    /// Folder AI models are read from and downloaded to.
+    pub fn models_dir(&self) -> PathBuf {
+        let settings = read_lock(&self.settings);
+        self.paths.models_dir_for(settings.models_folder.as_deref())
+    }
+
+    /// The chosen models folder is gone (an unplugged drive, a renamed
+    /// folder). Downloads, moves and clean-ups must wait; nothing is forgotten.
+    pub fn models_folder_missing(&self) -> bool {
+        let chosen = read_lock(&self.settings).models_folder.is_some();
+        chosen && !self.models_dir().is_dir()
+    }
+
+    /// The models folder, ready to write into. Rebost's own folder is created
+    /// when needed; a chosen one never is, so a drive unplugged since the last
+    /// check fails here instead of a `/Volumes/<name>` folder appearing on the
+    /// startup disk.
+    pub fn ready_models_dir(&self) -> anyhow::Result<PathBuf> {
+        let dir = self.models_dir();
+        if read_lock(&self.settings).models_folder.is_none() {
+            std::fs::create_dir_all(&dir)?;
+        } else if !dir.is_dir() {
+            anyhow::bail!(crate::models_folder::MISSING);
+        }
+        Ok(dir)
     }
 
     /// Local-context budget in characters — measured by the installation

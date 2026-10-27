@@ -38,7 +38,9 @@ Unencrypted in the app-data directory (mode `0700` on Unix):
 - Chat images (`conversations/<thread>/images/`): normalized local PNGs and thumbnails, deleted with the conversation. Metadata is stripped and orientation corrected. Image bytes go only to the loopback inference server; they are not uploaded or added to Shelf search. Unsent image drafts are reclaimed at the next launch.
 - Cards store **counts**, not the matched strings
 
-Assume anyone with access to the OS user account can read this. Settings → Reset Rebost deletes this app-data directory (and caches), except the folders that hold Shelf files.
+AI model files are public weights. They live in `models/` unless Settings → Where AIs are kept chose another folder.
+
+Assume anyone with access to the OS user account can read this. Settings → Reset Rebost deletes this app-data directory (and caches), except the folders that hold Shelf files. Installed AIs in a chosen folder are deleted by name; the folder stays.
 
 ## Trust boundaries
 

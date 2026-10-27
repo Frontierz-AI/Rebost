@@ -65,6 +65,16 @@ pub(crate) fn map_user_error(text: &str) -> String {
         ("ai-busy", "errors.aiBusy"),
         ("ai-in-use", "errors.aiInUse"),
         ("ai-missing", "errors.aiMissing"),
+        ("models-folder-missing", "errors.modelsFolderMissing"),
+        ("models-folder-full", "errors.modelsFolderFull"),
+        (
+            "models-folder-not-writable",
+            "errors.modelsFolderNotWritable",
+        ),
+        ("models-folder-app-data", "errors.modelsFolderAppData"),
+        ("models-folder-name-taken", "errors.modelsFolderNameTaken"),
+        ("models-folder-no-ais", "errors.modelsFolderNoAis"),
+        ("models-folder-nested", "errors.modelsFolderNested"),
     ] {
         if lower.contains(code) {
             return rust_i18n::t!(key).into();

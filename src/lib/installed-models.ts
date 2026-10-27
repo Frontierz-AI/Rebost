@@ -26,3 +26,15 @@ export function findInstalled(
   const other = settings?.otherModels?.find(same);
   return other ? { model: other, inUse: false } : null;
 }
+
+/** Bytes the installed AIs take on disk. An image file shared by two AIs counts once. */
+export function installedBytes(models: InstalledModel[]): number {
+  const projectors = new Map<string, number>();
+  let bytes = 0;
+  for (const model of models) {
+    bytes += model.sizeBytes;
+    if (model.projector) projectors.set(model.projector.file, model.projector.sizeBytes);
+  }
+  for (const size of projectors.values()) bytes += size;
+  return bytes;
+}

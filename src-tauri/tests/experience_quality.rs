@@ -58,7 +58,7 @@ async fn real_model_experience_gate() {
     assert_eq!(doc.status, rebost::types::DocStatus::Ready);
     let ingest_ms = reading.elapsed().as_millis();
     assert!(ingest_ms < threshold("REBOST_MAX_INGEST_MS", 30_000) as u128);
-    let dest = ctx.paths.models_dir().join("quality.gguf");
+    let dest = ctx.models_dir().join("quality.gguf");
     #[cfg(unix)]
     std::os::unix::fs::symlink(&model, &dest).unwrap();
     #[cfg(windows)]

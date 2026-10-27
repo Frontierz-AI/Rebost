@@ -15,7 +15,8 @@ pub struct MachineProfile {
 }
 
 impl MachineProfile {
-    pub fn detect(data_dir: &std::path::Path) -> Self {
+    /// `models_dir` is where AIs are downloaded: free space is measured there.
+    pub fn detect(models_dir: &std::path::Path) -> Self {
         let mut sys = sysinfo::System::new();
         sys.refresh_memory();
         sys.refresh_cpu_list(sysinfo::CpuRefreshKind::nothing());
@@ -24,12 +25,7 @@ impl MachineProfile {
             .first()
             .map(|c| c.brand().trim().to_string())
             .unwrap_or_else(|| "Unknown CPU".to_string());
-        let free_disk_bytes = sysinfo::Disks::new_with_refreshed_list()
-            .iter()
-            .filter(|d| data_dir.starts_with(d.mount_point()))
-            .map(|d| d.available_space())
-            .max()
-            .unwrap_or(0);
+        let free_disk_bytes = crate::models_folder::free_space(models_dir).unwrap_or(0);
         let (process_arch, os_arch) = host_arch_labels();
         Self {
             total_ram_bytes: sys.total_memory(),

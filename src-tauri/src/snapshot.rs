@@ -20,6 +20,8 @@ pub struct ShotJob {
     pub id: String,
     pub path: String,
     pub locale: Option<String>,
+    pub theme: Option<String>,
+    pub scroll: Option<serde_json::Value>,
     pub onboarding: Option<bool>,
     pub onboard: Option<String>,
     pub onboard_more: Option<bool>,

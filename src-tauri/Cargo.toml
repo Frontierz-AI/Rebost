@@ -87,6 +87,8 @@ serde_json = "1.0.154"
 serde_yaml_ng = "0.10.0"
 sysinfo = { version = "0.39.6", default-features = false, features = ["system", "disk"] }
 sha2 = "0.11.1"
+# File identity (dev+inode, volume serial+file index) for safe model moves.
+same-file = "1.0.6"
 
 # Support
 regex = "1"

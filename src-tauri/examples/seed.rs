@@ -113,9 +113,9 @@ Never put a personal mobile on the door."
                 .unwrap()
                 .to_string_lossy()
                 .to_string();
-            let dest = ctx.paths.models_dir().join(&file_name);
+            let dest = ctx.models_dir().join(&file_name);
             if model_path != dest {
-                std::fs::create_dir_all(ctx.paths.models_dir())?;
+                std::fs::create_dir_all(ctx.models_dir())?;
                 if !dest.exists() {
                     std::fs::copy(&model_path, &dest)?;
                 }

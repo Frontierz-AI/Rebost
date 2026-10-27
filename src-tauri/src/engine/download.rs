@@ -829,6 +829,17 @@ fn part_is_untrusted(path: &Path, known_size: Option<u64>) -> bool {
     part_looks_hollow(meta.len(), allocated_bytes(&meta), known_size)
 }
 
+/// Disk space a leftover `.part` for `dest` already takes, so a resume only
+/// needs room for the rest. A sparse file can be full-size with nothing in
+/// it, so allocated blocks count where the OS reports them; a normal Windows
+/// file reserves its whole length, so there the length counts.
+pub(crate) fn part_bytes_on_disk(dest: &Path) -> u64 {
+    let Ok(meta) = std::fs::metadata(dest.with_extension("part")) else {
+        return 0;
+    };
+    allocated_bytes(&meta).unwrap_or(meta.len()).min(meta.len())
+}
+
 /// Bytes we can resume from. Logical `len()` is not that on Windows.
 fn trusted_part_len(path: &Path, known_size: Option<u64>) -> u64 {
     let Ok(meta) = std::fs::metadata(path) else {
@@ -1154,6 +1165,32 @@ mod tests {
         assert!(part_looks_hollow(10_000_001, None, Some(10_000_000)));
         assert!(!part_looks_hollow(5_000_000, None, Some(10_000_000)));
         assert!(!part_looks_hollow(0, None, Some(10_000_000)));
+    }
+
+    #[test]
+    fn part_bytes_on_disk_ignores_preallocated_holes() {
+        let dir = tempfile::tempdir().unwrap();
+        let dest = dir.path().join("model.gguf");
+        assert_eq!(part_bytes_on_disk(&dest), 0);
+        let part = dest.with_extension("part");
+        std::fs::write(&part, vec![1u8; 64 * 1024]).unwrap();
+        let written = part_bytes_on_disk(&dest);
+        if cfg!(unix) {
+            assert!(written >= 64 * 1024, "{written}");
+        }
+        // Grow to 1 GiB without writing. On Unix that is a hole, not space
+        // taken; a normal Windows file reserves the whole length.
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(&part)
+            .unwrap()
+            .set_len(1 << 30)
+            .unwrap();
+        if cfg!(unix) {
+            assert!(part_bytes_on_disk(&dest) < 1 << 29);
+        } else {
+            assert_eq!(part_bytes_on_disk(&dest), 1 << 30);
+        }
     }
 
     #[test]
