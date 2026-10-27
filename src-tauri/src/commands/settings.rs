@@ -26,9 +26,28 @@ pub struct SettingsView {
     pub text_size: TextSize,
     pub ui_locale: UiLocalePref,
     pub resolved_locale: AppLocale,
+    pub models_folder: ModelsFolderView,
+}
+
+/// Where AIs are kept, for Settings and onboarding.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelsFolderView {
+    pub path: String,
+    /// A folder the person chose, not Rebost's own.
+    pub custom: bool,
+    /// The chosen folder can't be found (an unplugged drive).
+    pub missing: bool,
 }
 
 fn settings_view(ctx: &Ctx) -> SettingsView {
+    let models_folder = ModelsFolderView {
+        path: ctx.models_dir().to_string_lossy().into_owned(),
+        custom: crate::core::read_lock(&ctx.settings)
+            .models_folder
+            .is_some(),
+        missing: ctx.models_folder_missing(),
+    };
     let settings = crate::core::read_lock(&ctx.settings);
     let resolved_locale = crate::i18n::resolve(
         settings.ui_locale,
@@ -43,6 +62,7 @@ fn settings_view(ctx: &Ctx) -> SettingsView {
         text_size: settings.text_size,
         ui_locale: settings.ui_locale,
         resolved_locale,
+        models_folder,
     }
 }
 
@@ -189,7 +209,7 @@ pub fn diagnostics(
         index_records: ctx.search.num_docs(),
         context_budget_chars: ctx.context_budget(),
         benchmark: settings.benchmark.clone(),
-        machine: MachineProfile::detect(ctx.paths.base()),
+        machine: MachineProfile::detect(&ctx.models_dir()),
         engine_log_path: log_path.to_string_lossy().to_string(),
         engine_log_present: log_path.is_file(),
         supported_formats: formats,

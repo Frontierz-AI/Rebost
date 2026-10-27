@@ -14,13 +14,19 @@
 //! ├── search/tantivy/         the one application-level index
 //! ├── conversations/          threads.json + one JSONL per thread
 //! │                           + <thread-id>/uploads/ for chat attachments
-//! ├── models/                 GGUF files
+//! ├── models/                 GGUF files (default; Settings can choose
+//! │                           another folder, kept as `modelsFolder`)
 //! ├── engine/                 pinned llama.cpp build
 //! ├── recipes.json            the saved-prompt library
 //! ├── settings.json
 //! ├── instance.lock           exclusive lock while Rebost is open
 //! └── logs/
 //! ```
+//!
+//! AI models are the one large item, so they may live elsewhere: a folder the
+//! person chose (another drive, say). That folder is never created by Rebost;
+//! when it is missing (an unplugged drive), nothing is downloaded into it and
+//! nothing installed is forgotten. See [`crate::models_folder`].
 
 use std::path::{Path, PathBuf};
 
@@ -58,7 +64,7 @@ impl Paths {
             self.shelves_dir(),
             self.search_dir(),
             self.conversations_dir(),
-            self.models_dir(),
+            self.default_models_dir(),
             self.engine_dir(),
             self.logs_dir(),
         ] {
@@ -134,8 +140,18 @@ impl Paths {
         self.conversations_dir().join(thread_id).join("uploads")
     }
 
-    pub fn models_dir(&self) -> PathBuf {
+    /// `<app-data>/models`, where AI models live unless another folder was chosen.
+    pub fn default_models_dir(&self) -> PathBuf {
         self.base.join("models")
+    }
+
+    /// Where AI models live: the chosen folder, or the default one.
+    /// Callers with a [`crate::core::Ctx`] use `Ctx::models_dir`.
+    pub fn models_dir_for(&self, chosen: Option<&Path>) -> PathBuf {
+        match chosen {
+            Some(dir) if dir.is_absolute() => dir.to_path_buf(),
+            _ => self.default_models_dir(),
+        }
     }
 
     pub fn engine_dir(&self) -> PathBuf {
@@ -343,6 +359,21 @@ mod tests {
         assert_eq!(paths.engine_log_path(), paths.logs_dir().join("engine.log"));
         paths.ensure().unwrap();
         assert!(paths.library_dir().is_dir());
+    }
+
+    #[test]
+    fn models_dir_follows_the_chosen_folder() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().join("io.rebost.desktop"));
+        let default = paths.base().join("models");
+        assert_eq!(paths.default_models_dir(), default);
+        assert_eq!(paths.models_dir_for(None), default);
+        let chosen = dir.path().join("Rebost AI");
+        assert_eq!(paths.models_dir_for(Some(&chosen)), chosen);
+        // A relative path would resolve against wherever the app was started.
+        assert_eq!(paths.models_dir_for(Some(Path::new("models"))), default);
+        paths.ensure().unwrap();
+        assert!(!chosen.exists(), "ensure must not create a chosen folder");
     }
 
     #[test]

@@ -75,6 +75,9 @@ impl Engine {
         let _install = self.install_lock.lock().await;
         let source = models::normalize_source(source)?;
         models::validate_reference(source, reference)?;
+        if self.ctx.models_folder_missing() {
+            return Err(anyhow!(crate::models_folder::MISSING));
+        }
 
         let ticket = download::DownloadTicket {
             kind: "model",
@@ -99,12 +102,13 @@ impl Engine {
             }),
         );
 
+        let models_dir = self.ctx.models_dir();
         let installed = crate::core::read_lock(&self.ctx.settings)
             .other_models
             .iter()
             .find(|model| same_ai(model, source, reference))
             .map(|model| model.file.clone())
-            .filter(|file| self.ctx.paths.models_dir().join(file).is_file());
+            .filter(|file| models_dir.join(file).is_file());
         let result = match installed {
             Some(file) => self.switch_to(&file).await,
             None => {
@@ -152,7 +156,7 @@ impl Engine {
             let settings = crate::core::read_lock(&self.ctx.settings);
             install_file_name(&requested, |name| settings.uses_model_file(name))
         };
-        let dest = self.ctx.paths.models_dir().join(&file_name);
+        let dest = self.ctx.models_dir().join(&file_name);
 
         let companion = self
             .eligible_projector(
@@ -165,6 +169,15 @@ impl Engine {
         let total = resolved.size.map(|bytes| {
             bytes.saturating_add(companion.as_ref().and_then(|p| p.size).unwrap_or(0))
         });
+        // A resumed `.part` already holds its space (it may be preallocated).
+        if let Some(total) = total.filter(|_| !dest.with_extension("part").exists()) {
+            let free = crate::models_folder::free_space(&self.ctx.models_dir());
+            if !crate::models_folder::has_room(free, total) {
+                return Err(anyhow!(
+                    crate::models_folder::FolderProblem::NotEnoughSpace.code()
+                ));
+            }
+        }
         let events: Arc<dyn crate::core::Events> = Arc::new(InstallEvents {
             events: self.ctx.events.clone(),
             offset: 0,
@@ -296,7 +309,7 @@ impl Engine {
                     return Ok(None);
                 }
             };
-        let profile = super::catalog::MachineProfile::detect(self.ctx.paths.base());
+        let profile = super::catalog::MachineProfile::detect(&self.ctx.models_dir());
         if super::vision::limits_for(&profile, weights, resolved.size.unwrap_or(0)).is_none()
             || !resolved.sha256.as_deref().is_some_and(valid_sha256)
         {
@@ -320,7 +333,7 @@ impl Engine {
             .ok_or_else(|| anyhow!("invalid projector checksum"))?;
         // Digest naming prevents collisions between repositories with mmproj-F16.gguf.
         let file = format!("vision-{sha}.gguf");
-        let dest = self.ctx.paths.models_dir().join(&file);
+        let dest = self.ctx.models_dir().join(&file);
         download::download(
             &self.download_client,
             &resolved.url,
@@ -362,7 +375,7 @@ impl Engine {
             settings.vision_failed_for = Some(super::vision::failed_vision_key(model_file));
         }
         self.ctx.save_settings();
-        let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(projector_file));
+        let _ = std::fs::remove_file(self.ctx.models_dir().join(projector_file));
     }
 
     /// Check whether the installed AI can gain vision without replacing its language weights.
@@ -393,7 +406,7 @@ impl Engine {
         else {
             return Ok(None);
         };
-        let profile = super::catalog::MachineProfile::detect(self.ctx.paths.base());
+        let profile = super::catalog::MachineProfile::detect(&self.ctx.models_dir());
         Ok(projector.size.filter(|size| {
             projector.sha256.as_deref().is_some_and(valid_sha256)
                 && super::vision::limits_for(&profile, model.size_bytes, *size).is_some()
@@ -406,6 +419,9 @@ impl Engine {
         let model = self.active_model().ok_or_else(|| anyhow!("no AI model"))?;
         if model.projector.is_some() {
             return Ok(());
+        }
+        if self.ctx.models_folder_missing() {
+            return Err(anyhow!(crate::models_folder::MISSING));
         }
         let ticket = download::DownloadTicket {
             kind: "model",
@@ -473,7 +489,7 @@ impl Engine {
         }
         if let (Err(error), Some(file)) = (&result, downloaded.as_deref()) {
             // The previous AI had no image file, so nothing else uses this one.
-            let _ = std::fs::remove_file(self.ctx.paths.models_dir().join(file));
+            let _ = std::fs::remove_file(self.ctx.models_dir().join(file));
             if started {
                 log::error!(
                     "image support for {} did not start ({error}); {}",
@@ -510,7 +526,10 @@ impl Engine {
             .iter()
             .position(|model| model.file == file)
             .ok_or_else(|| anyhow!("ai-missing"))?;
-        if !self.ctx.paths.models_dir().join(file).is_file() {
+        if self.ctx.models_folder_missing() {
+            return Err(anyhow!(crate::models_folder::MISSING));
+        }
+        if !self.ctx.models_dir().join(file).is_file() {
             crate::core::write_lock(&self.ctx.settings)
                 .other_models
                 .retain(|model| model.file != file);
@@ -573,6 +592,9 @@ impl Engine {
             .install_lock
             .try_lock()
             .map_err(|_| anyhow!("ai-busy"))?;
+        if self.ctx.models_folder_missing() {
+            return Err(anyhow!(crate::models_folder::MISSING));
+        }
         let removed = {
             let mut settings = crate::core::write_lock(&self.ctx.settings);
             if settings
@@ -605,7 +627,7 @@ impl Engine {
             .collect::<Vec<_>>();
         drop(settings);
         for file in files {
-            let path = self.ctx.paths.models_dir().join(&file);
+            let path = self.ctx.models_dir().join(&file);
             if let Err(error) = std::fs::remove_file(&path) {
                 if error.kind() != std::io::ErrorKind::NotFound {
                     log::warn!("could not remove {file}: {error}");
@@ -614,7 +636,7 @@ impl Engine {
         }
     }
 
-    async fn wait_until_chat_idle(&self) {
+    pub(super) async fn wait_until_chat_idle(&self) {
         // A long answer can run well past a few seconds. Switching AI here
         // would kill llama-server under the stream.
         let deadline = tokio::time::Instant::now() + Duration::from_secs(30 * 60);

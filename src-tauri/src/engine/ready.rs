@@ -148,7 +148,7 @@ fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<Stri
 
 impl Engine {
     fn model_path(&self, model: &InstalledModel) -> std::path::PathBuf {
-        self.ctx.paths.models_dir().join(&model.file)
+        self.ctx.models_dir().join(&model.file)
     }
 
     async fn health_ok(&self, port: u16) -> bool {
@@ -207,6 +207,13 @@ impl Engine {
             return Err(anyhow!("no AI model installed yet"));
         };
         let model_path = self.model_path(&model);
+        if !model_path.exists() && self.ctx.models_folder_missing() {
+            self.set_status(
+                EngineState::NoModel,
+                Some(crate::models_folder::MISSING.into()),
+            );
+            return Err(anyhow!(crate::models_folder::MISSING));
+        }
         if !model_path.exists() {
             self.set_status(
                 EngineState::NoModel,
@@ -408,7 +415,7 @@ impl Engine {
             Ok(port) => port,
             Err(error) => return Err(SpawnFailed::before_start(false, error)),
         };
-        let profile = MachineProfile::detect(self.ctx.paths.base());
+        let profile = MachineProfile::detect(&self.ctx.models_dir());
         let mut vision_profile = profile.clone();
         vision_profile.accelerator = pin.accelerator.into();
         let vision = model
@@ -417,12 +424,12 @@ impl Engine {
             .filter(|_| {
                 crate::core::mutex_lock(&self.disabled_vision).as_deref() != Some(&model.file)
             })
-            .filter(|projector| self.ctx.paths.models_dir().join(&projector.file).is_file())
+            .filter(|projector| self.ctx.models_dir().join(&projector.file).is_file())
             .and_then(|projector| {
                 super::vision::limits_for(&vision_profile, model.size_bytes, projector.size_bytes)
             });
         *crate::core::mutex_lock(&self.vision) = None;
-        let hint = ModelHint::from_active(model, &self.ctx.paths.models_dir());
+        let hint = ModelHint::from_active(model, &self.ctx.models_dir());
         let plan = SpawnPlan::for_model(&profile, pin, Some(&hint));
         let vision = vision.and_then(|limits| {
             limits.fit_context(plan.context_tokens, plan.answer_tokens.min(1024))
@@ -481,7 +488,7 @@ impl Engine {
             let projector = model.projector.as_ref().expect("vision projector");
             command
                 .arg("--mmproj")
-                .arg(self.ctx.paths.models_dir().join(&projector.file))
+                .arg(self.ctx.models_dir().join(&projector.file))
                 .arg("--image-max-tokens")
                 .arg(limits.tokens_per_image.to_string());
             // Discrete VRAM is not measured. Keep the encoder on system RAM there.

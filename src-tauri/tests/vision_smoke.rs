@@ -24,14 +24,14 @@ async fn images_reach_the_model_and_survive_reopening() {
     let model = std::env::var("REBOST_VISION_MODEL").expect("vision model path");
     let projector = std::env::var("REBOST_VISION_PROJECTOR").expect("vision projector path");
     let app = test_app();
-    std::fs::create_dir_all(app.ctx.paths.models_dir()).unwrap();
+    std::fs::create_dir_all(app.ctx.models_dir()).unwrap();
     link(
         Path::new(&model),
-        &app.ctx.paths.models_dir().join("vision-test.gguf"),
+        &app.ctx.models_dir().join("vision-test.gguf"),
     );
     link(
         Path::new(&projector),
-        &app.ctx.paths.models_dir().join("vision-projector.gguf"),
+        &app.ctx.models_dir().join("vision-projector.gguf"),
     );
     app.ctx.settings.write().unwrap().active_model = Some(InstalledModel {
         projector: Some(VisionProjector {
@@ -68,7 +68,6 @@ async fn images_reach_the_model_and_survive_reopening() {
         link(
             Path::new(&projector),
             &app.ctx
-                .paths
                 .models_dir()
                 .join(format!("vision-{}.gguf", resolved.sha256.unwrap())),
         );

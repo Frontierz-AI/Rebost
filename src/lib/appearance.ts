@@ -24,6 +24,11 @@ function apply(scheme: ColorScheme) {
   for (const fn of listeners) fn(scheme);
 }
 
+/** Debug screenshots: paint one scheme without changing the OS appearance. */
+export function forceColorScheme(scheme: ColorScheme): void {
+  apply(scheme);
+}
+
 /** Match `prefers-color-scheme` before Tauri's window theme is available. */
 export function applyColorSchemeFromSystem(): void {
   const dark = globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;

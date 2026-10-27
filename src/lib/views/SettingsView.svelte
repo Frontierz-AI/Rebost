@@ -38,6 +38,8 @@
   import ExploreModelsModal from "$lib/components/ExploreModelsModal.svelte";
   import ModelSuggestionCards from "$lib/components/ModelSuggestionCards.svelte";
   import InstalledModels from "$lib/components/InstalledModels.svelte";
+  import ModelsFolderCard from "$lib/components/ModelsFolderCard.svelte";
+  import { installedBytes } from "$lib/installed-models";
   import icon from "../../assets/rebost-icon.png";
 
   let machine = $state<MachineView | null>(null);
@@ -111,20 +113,29 @@
     }
   }
   const hasAi = $derived(!!app.settings?.activeModel);
+  const aiBytes = $derived(
+    installedBytes([
+      ...(app.settings?.activeModel ? [app.settings.activeModel] : []),
+      ...(app.settings?.otherModels ?? []),
+    ]),
+  );
+  let machineLoad = 0;
+
+  function loadMachine() {
+    const load = ++machineLoad;
+    api
+      .machineProfile()
+      .then((m) => {
+        if (load === machineLoad) machine = m;
+      })
+      .catch(notifyInvokeError);
+  }
 
   $effect(() => {
     void app.settings?.activeModel?.reference;
     void app.settings?.otherModels?.length;
-    let cancelled = false;
-    api
-      .machineProfile()
-      .then((m) => {
-        if (!cancelled) machine = m;
-      })
-      .catch(notifyInvokeError);
-    return () => {
-      cancelled = true;
-    };
+    void app.settings?.modelsFolder?.path;
+    loadMachine();
   });
 
   $effect(() => {
@@ -330,7 +341,7 @@
     </div>
   </section>
 
-  {#if hasAi}
+  {#if hasAi && !app.settings?.modelsFolder?.missing}
     {@render houseRulesSection()}
     {@render onlineSection()}
     {@render aiSection()}
@@ -398,13 +409,15 @@
   {/snippet}
 
   {#snippet aiSection()}
+    {#if app.settings?.modelsFolder?.missing}
+      {@render folderSection()}
+    {/if}
     <section class="card mb-6 px-4 py-5 min-[900px]:px-6">
       <h2 class="mb-1 text-[15px] font-semibold text-ink">{t("settings.ai")}</h2>
       {#if machine}
         <p class="mb-4 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-faint">
           <Cpu size={12.5} />
-          {machine.profile.cpu} · {formatBytes(machine.profile.totalRamBytes)} memory ·
-          {formatBytes(machine.profile.freeDiskBytes)} free disk
+          {machine.profile.cpu} · {formatBytes(machine.profile.totalRamBytes)} memory
         </p>
         {#if runsEmulatedOnArm(machine.profile)}
           <div
@@ -500,6 +513,21 @@
         </button>
       </div>
     </section>
+    {#if !app.settings?.modelsFolder?.missing}
+      {@render folderSection()}
+    {/if}
+  {/snippet}
+
+  {#snippet folderSection()}
+    {#if app.settings?.modelsFolder}
+      <ModelsFolderCard
+        folder={app.settings.modelsFolder}
+        freeBytes={machine?.profile.freeDiskBytes}
+        installedBytes={aiBytes}
+        busy={!!modelDownload || !!engineDownload || chatBusy || enablingVision}
+        onChanged={loadMachine}
+      />
+    {/if}
   {/snippet}
 
   <section class="card mb-6 px-4 py-5 min-[900px]:px-6">

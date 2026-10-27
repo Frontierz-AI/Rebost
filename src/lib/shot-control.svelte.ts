@@ -1,6 +1,7 @@
 /** Debug screenshot runner: apply a job, then snapshot the parked window. */
 import { tick } from "svelte";
 import { api, events, invokeError, type ShotJob } from "./api";
+import { forceColorScheme } from "./appearance";
 import { isAppLocale } from "./i18n.svelte";
 import { app, closeConversation, openThread, setUiLocale, type View } from "./stores.svelte";
 
@@ -29,6 +30,8 @@ async function applyShot(job: ShotJob) {
   shot.explore = !!job.explore;
   shot.onboard = job.onboard === "model" ? "model" : "promise";
   shot.onboardMore = !!job.onboardMore;
+
+  if (job.theme) forceColorScheme(job.theme);
 
   if (job.locale && isAppLocale(job.locale)) {
     await setUiLocale(job.locale);
@@ -65,14 +68,26 @@ async function applyShot(job: ShotJob) {
   }
 }
 
+/** Scroll the tallest scrolling pane: to a pixel offset, or "end". */
+function scrollMainPane(to: number | "end") {
+  const panes = [...document.querySelectorAll<HTMLElement>("*")].filter(
+    (el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== "visible",
+  );
+  const pane = panes.sort((a, b) => b.clientHeight - a.clientHeight)[0];
+  if (pane) pane.scrollTop = to === "end" ? pane.scrollHeight : to;
+}
+
 async function runShot(job: ShotJob) {
   try {
     await applyShot(job);
-    await api.devSnapshot(
-      job.path,
-      job.label ?? (job.about ? "about" : "main"),
-      job.settleMs ?? 700,
-    );
+    let settleMs = job.settleMs ?? 700;
+    if (job.scroll !== undefined) {
+      // Scroll once the view has loaded, or the page is still short.
+      await new Promise((resolve) => setTimeout(resolve, settleMs));
+      scrollMainPane(job.scroll);
+      settleMs = 300;
+    }
+    await api.devSnapshot(job.path, job.label ?? (job.about ? "about" : "main"), settleMs);
     if (job.about) {
       await api.closeAboutWindow().catch(() => undefined);
     }

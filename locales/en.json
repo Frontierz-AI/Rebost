@@ -129,6 +129,33 @@
     "installedMany": "%{count} AIs · %{size} on this computer",
     "openAiFolder": "Open folder"
   },
+  "modelsFolder": {
+    "heading": "Where AIs are kept",
+    "help": "Each AI takes several GB. If this drive is running out of space, choose a folder on another one.",
+    "defaultName": "Rebost's own folder",
+    "free": "%{size} free",
+    "change": "Change…",
+    "useDefault": "Use Rebost's own folder",
+    "moveConfirm": "Move your AIs to “%{name}”?\n\nRebost will move %{size}. Chat pauses until it's done.",
+    "moveAction": "Move AIs",
+    "moveBackConfirm": "Move your AIs back to Rebost's own folder?\n\nRebost will move %{size}. Chat pauses until it's done.",
+    "moving": "Moving your AIs…",
+    "movingNote": "Chat is paused until they're in the new folder. If you cancel, they stay where they were.",
+    "cancelled": "Move cancelled. Your AIs stayed where they were.",
+    "moved": "Your AIs are in the new folder.",
+    "missingTitle": "Rebost can't find this folder",
+    "missingHelp": "If it's on a drive that isn't connected, connect it and try again.",
+    "tryAgain": "Try again",
+    "stillMissing": "Still not found. Check that the drive is connected.",
+    "chooseAnother": "Choose another folder…",
+    "forgetConfirm": "Use Rebost's own folder?\n\nRebost will forget the AIs it can't find. Their files stay on that drive, and you can download an AI again.",
+    "forgetAction": "Use Rebost's folder",
+    "full": "That drive doesn't have enough room. It needs about %{size} free.",
+    "savedMain": "Saved on this computer's main drive",
+    "savedIn": "Saved in “%{name}”",
+    "changeShort": "Change",
+    "tooSmall": "There isn't enough room here for this AI. Choose a folder on another drive."
+  },
   "onboarding": {
     "welcome": "Welcome to Rebost",
     "lede": "Rebost is a private AI that works with your files.\nWhat happens on your computer stays on your computer.",
@@ -563,7 +590,13 @@
     "attachmentsFailed": "Some attached files could not be read. Retry those files before asking about them.",
     "aiBusy": "Wait for the download to finish, then try again.",
     "aiInUse": "Switch to another AI before removing this one.",
-    "aiMissing": "That AI is no longer on this computer."
+    "aiMissing": "That AI is no longer on this computer.",
+    "modelsFolderMissing": "Rebost can't find the folder where your AIs are kept. Connect the drive it's on, or choose another folder in Settings.",
+    "modelsFolderFull": "There isn't enough room on that drive. Free up some space, or choose a folder on another drive in Settings.",
+    "modelsFolderNotWritable": "Rebost can't save files in that folder. Choose another one.",
+    "modelsFolderAppData": "That folder is part of Rebost's own data. Choose one outside it.",
+    "modelsFolderNameTaken": "That folder already has a different file with the same name as one of your AIs. Choose another folder.",
+    "modelsFolderNoAis": "Your AIs aren't in that folder. Choose the folder that holds them, or use Rebost's own folder."
   },
   "pii": {
     "heading": "Personal information",

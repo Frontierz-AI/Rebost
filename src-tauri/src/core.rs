@@ -328,6 +328,19 @@ impl Ctx {
         Ok(())
     }
 
+    /// Folder AI models are read from and downloaded to.
+    pub fn models_dir(&self) -> PathBuf {
+        let settings = read_lock(&self.settings);
+        self.paths.models_dir_for(settings.models_folder.as_deref())
+    }
+
+    /// The chosen models folder is gone (an unplugged drive, a renamed
+    /// folder). Downloads, moves and clean-ups must wait; nothing is forgotten.
+    pub fn models_folder_missing(&self) -> bool {
+        let chosen = read_lock(&self.settings).models_folder.is_some();
+        chosen && !self.models_dir().is_dir()
+    }
+
     /// Local-context budget in characters — measured by the installation
     /// benchmark, defaulting conservatively before it runs.
     pub fn context_budget(&self) -> usize {

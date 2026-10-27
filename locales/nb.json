@@ -130,6 +130,33 @@
     "installedMany": "%{count} KI-er · %{size} på denne datamaskinen",
     "openAiFolder": "Åpne mappe"
   },
+  "modelsFolder": {
+    "heading": "Hvor KI-ene lagres",
+    "help": "Hver KI tar flere GB. Hvis det begynner å bli fullt på denne disken, velg en mappe på en annen.",
+    "defaultName": "Rebosts egen mappe",
+    "free": "%{size} ledig",
+    "change": "Endre …",
+    "useDefault": "Bruk Rebosts egen mappe",
+    "moveConfirm": "Flytte KI-ene dine til «%{name}»?\n\nRebost flytter %{size}. Chat tar pause til det er ferdig.",
+    "moveAction": "Flytt KI-er",
+    "moveBackConfirm": "Flytte KI-ene dine tilbake til Rebosts egen mappe?\n\nRebost flytter %{size}. Chat tar pause til det er ferdig.",
+    "moving": "Flytter KI-ene dine …",
+    "movingNote": "Chat tar pause til de er i den nye mappen. Hvis du avbryter, blir de der de var.",
+    "cancelled": "Flyttingen ble avbrutt. KI-ene dine er der de var.",
+    "moved": "KI-ene dine ligger nå i den nye mappen.",
+    "missingTitle": "Rebost finner ikke denne mappen",
+    "missingHelp": "Hvis den ligger på en disk som ikke er koblet til, koble den til og prøv på nytt.",
+    "tryAgain": "Prøv på nytt",
+    "stillMissing": "Fortsatt ikke funnet. Sjekk at disken er koblet til.",
+    "chooseAnother": "Velg en annen mappe …",
+    "forgetConfirm": "Bruke Rebosts egen mappe?\n\nRebost glemmer KI-ene den ikke finner. Filene blir liggende på disken, og du kan laste ned en KI på nytt.",
+    "forgetAction": "Bruk Rebosts mappe",
+    "full": "Det er ikke nok plass på den disken. Den trenger omtrent %{size} ledig.",
+    "savedMain": "Lagres på datamaskinens hoveddisk",
+    "savedIn": "Lagres i «%{name}»",
+    "changeShort": "Endre",
+    "tooSmall": "Det er ikke plass til denne KI-en her. Velg en mappe på en annen disk."
+  },
   "onboarding": {
     "welcome": "Velkommen til Rebost",
     "lede": "Rebost er en privat KI som jobber med filene dine.\nDet som skjer på datamaskinen din, blir på datamaskinen din.",
@@ -564,7 +591,13 @@
     "attachmentsFailed": "Noen vedlegg kunne ikke leses. Behandle dem på nytt før du spør om dem.",
     "aiBusy": "Vent til nedlastingen er ferdig, og prøv igjen.",
     "aiInUse": "Bytt til en annen KI før du fjerner denne.",
-    "aiMissing": "Den KI-en er ikke lenger på denne datamaskinen."
+    "aiMissing": "Den KI-en er ikke lenger på denne datamaskinen.",
+    "modelsFolderMissing": "Rebost finner ikke mappen der KI-ene dine lagres. Koble til disken den ligger på, eller velg en annen mappe i Innstillinger.",
+    "modelsFolderFull": "Det er ikke nok plass på den disken. Frigjør plass, eller velg en mappe på en annen disk i Innstillinger.",
+    "modelsFolderNotWritable": "Rebost kan ikke lagre filer i den mappen. Velg en annen.",
+    "modelsFolderAppData": "Den mappen hører til Rebosts egne data. Velg en mappe utenfor dem.",
+    "modelsFolderNameTaken": "Mappen har allerede en annen fil med samme navn som en av KI-ene dine. Velg en annen mappe.",
+    "modelsFolderNoAis": "KI-ene dine ligger ikke i den mappen. Velg mappen der de ligger, eller bruk Rebosts egen mappe."
   },
   "pii": {
     "heading": "Personopplysninger",

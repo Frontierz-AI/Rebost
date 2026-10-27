@@ -17,6 +17,7 @@ mod pin;
 mod process;
 mod ready;
 mod reasoning;
+mod relocate;
 mod stream;
 mod think;
 pub(crate) mod tune;
@@ -28,6 +29,7 @@ pub use pin::{
     current_engine_pin, find_bundled_engine_archive, preferred_engine_pin, ENGINE_BUILD,
     ENGINE_RELEASE,
 };
+pub use relocate::MOVE_ID;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -219,8 +221,10 @@ impl Engine {
     }
 
     pub fn new(ctx: Arc<Ctx>) -> Arc<Self> {
-        let forgot =
-            crate::core::write_lock(&ctx.settings).forget_missing_models(&ctx.paths.models_dir());
+        // An unplugged models drive must not make installed AIs look deleted.
+        let models_dir = ctx.models_dir();
+        let forgot = !ctx.models_folder_missing()
+            && crate::core::write_lock(&ctx.settings).forget_missing_models(&models_dir);
         if forgot {
             ctx.save_settings();
         }

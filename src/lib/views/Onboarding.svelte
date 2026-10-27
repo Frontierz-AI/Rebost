@@ -1,7 +1,15 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { fade } from "svelte/transition";
-  import { MessageCircle, LibraryBig, ChefHat, Download, Check, ChevronDown } from "@lucide/svelte";
+  import {
+    MessageCircle,
+    LibraryBig,
+    ChefHat,
+    Download,
+    Check,
+    ChevronDown,
+    HardDrive,
+  } from "@lucide/svelte";
   import {
     api,
     downloadErrorMessage,
@@ -13,6 +21,7 @@
   import ModelCatalogInfo from "$lib/components/ModelCatalogInfo.svelte";
   import { accordion, installCard, motionMs } from "$lib/motion";
   import { app, beginModelInstall, notifyInvokeError, refreshSettings } from "$lib/stores.svelte";
+  import { folderName, folderProblemMessage, hasRoom } from "$lib/models-folder";
   import { t } from "$lib/i18n.svelte";
   import { shot } from "$lib/shot-control.svelte";
   import mark from "../../assets/R.webp";
@@ -28,12 +37,46 @@
   let lastRec = $state<Recommendation | null>(null);
   let installHeading = $state<HTMLHeadingElement | null>(null);
 
-  $effect(() => {
+  let folderError = $state("");
+  let choosingFolder = $state(false);
+
+  function loadMachine() {
     api
       .machineProfile()
       .then((m) => (machine = m))
       .catch(notifyInvokeError);
-  });
+  }
+
+  $effect(loadMachine);
+
+  const folder = $derived(app.settings?.modelsFolder);
+  const chosenRec = $derived(machine ? (lastRec ?? machine.recommendation) : null);
+  const roomForChosen = $derived(
+    !chosenRec || hasRoom(machine?.profile.freeDiskBytes, chosenRec.approxBytes),
+  );
+
+  /** Before the first download there is nothing to move: a pick applies at once. */
+  async function chooseFolder() {
+    if (choosingFolder || busy) return;
+    folderError = "";
+    choosingFolder = true;
+    try {
+      const choice = await api.modelsFolderPick();
+      if (!choice || choice.unchanged) return;
+      const problem = folderProblemMessage(choice);
+      if (problem) {
+        folderError = problem;
+        return;
+      }
+      await api.modelsFolderApply();
+      await refreshSettings();
+      loadMachine();
+    } catch (error) {
+      notifyInvokeError(error);
+    } finally {
+      choosingFolder = false;
+    }
+  }
 
   const download = $derived(
     Object.values(app.downloads).find(
@@ -252,6 +295,37 @@
                       size: formatBytes((lastRec ?? machine.recommendation).approxBytes),
                     })}
                   </p>
+                  {#if folder}
+                    <p
+                      class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11.5px] leading-snug text-white/55 tabular-nums"
+                    >
+                      <HardDrive size={12} class="shrink-0" aria-hidden="true" />
+                      <span class="min-w-0 truncate" title={folder.path}>
+                        {folder.custom
+                          ? t("modelsFolder.savedIn", { name: folderName(folder.path) })
+                          : t("modelsFolder.savedMain")}{machine.profile.freeDiskBytes
+                          ? ` · ${t("modelsFolder.free", { size: formatBytes(machine.profile.freeDiskBytes) })}`
+                          : ""}
+                      </span>
+                      <button
+                        type="button"
+                        class="relative rounded-sm font-medium text-white/80 underline decoration-white/30 underline-offset-2 hover:text-white hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 disabled:opacity-50"
+                        onclick={chooseFolder}
+                        disabled={choosingFolder || busy}
+                      >
+                        <span
+                          class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2 pointer-fine:hidden"
+                          aria-hidden="true"
+                        ></span>
+                        {t("modelsFolder.changeShort")}
+                      </button>
+                    </p>
+                  {/if}
+                  {#if folderError || !roomForChosen}
+                    <p class="mt-1 text-[11.5px] leading-snug text-amber-350" role="alert">
+                      {folderError || t("modelsFolder.tooSmall")}
+                    </p>
+                  {/if}
                   {#if failedMessage}
                     <p class="mt-1 text-[11.5px] leading-snug text-red-300" role="alert">
                       {failedMessage}

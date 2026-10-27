@@ -6,6 +6,15 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+### Added
+
+- Choose where AIs are kept. Settings → Where AIs are kept shows the folder and the free space on its drive. Change… picks another folder, on another drive for example, and moves the installed AIs there with a progress bar. A move that fails or is cancelled leaves them where they were. First run shows where the AI will be saved, with a Change link, before the download starts.
+- When the chosen folder is on a drive that isn't connected, Settings says so and offers Try again, another folder, or Rebost's own folder. Installed AIs are not forgotten in the meantime.
+
+### Changed
+
+- The free space Rebost shows and checks is measured on the drive that holds the AIs. A download that can't fit stops before it starts.
+
 ## [0.9.8] - 2026-10-04
 
 ### Added

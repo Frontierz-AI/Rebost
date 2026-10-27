@@ -11,7 +11,8 @@ Chat that will not answer and downloads that will not finish are covered below. 
 | Install refused (no checksum) | That listing has no checksum. Pick another AI. |
 | File shows Error, or no text | A picture-only PDF needs to be readable as a scan. A normal PDF with selectable text should not. Extra language packs live in `resources/tessdata/` when building from source. |
 | Linked folder not updating | The folder must still exist. Remove the link and add it again. Hidden `.*` paths are ignored. |
-| Disk full during install | AIs are several GB. The suggestion already filters by memory; disk space is not checked. |
+| Disk full during install | AIs are several GB. A download that doesn't fit stops before it starts. Settings → Where AIs are kept can move them to a folder on another drive. |
+| "Rebost can't find the folder where your AIs are kept" | The chosen models folder is on a drive that isn't connected, or was renamed. Connect it and use Try again in Settings, or choose another folder. Nothing installed is forgotten until you choose Rebost's own folder. |
 | Tests want a GPU | Default tests do not start the AI. `core_smoke` is ignored and needs env vars. |
 
 Logs: Settings → Diagnostics. On macOS also `~/Library/Logs/io.rebost.desktop/`.

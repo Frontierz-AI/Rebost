@@ -129,6 +129,33 @@
     "installedMany": "%{count} IA · %{size} en aquest ordinador",
     "openAiFolder": "Obre la carpeta"
   },
+  "modelsFolder": {
+    "heading": "On es guarden les IA",
+    "help": "Cada IA ocupa uns quants GB. Si aquesta unitat es queda sense espai, tria una carpeta en una altra.",
+    "defaultName": "Carpeta pròpia de Rebost",
+    "free": "%{size} lliures",
+    "change": "Canvia…",
+    "useDefault": "Fes servir la carpeta de Rebost",
+    "moveConfirm": "Vols moure les IA a «%{name}»?\n\nRebost hi mourà %{size}. Chat queda en pausa fins que acabi.",
+    "moveAction": "Mou les IA",
+    "moveBackConfirm": "Vols tornar les IA a la carpeta de Rebost?\n\nRebost hi mourà %{size}. Chat queda en pausa fins que acabi.",
+    "moving": "S'estan movent les IA…",
+    "movingNote": "Chat queda en pausa fins que siguin a la carpeta nova. Si cancel·les, es queden on eren.",
+    "cancelled": "S'ha cancel·lat. Les IA continuen on eren.",
+    "moved": "Les IA ja són a la carpeta nova.",
+    "missingTitle": "Rebost no troba aquesta carpeta",
+    "missingHelp": "Si és en una unitat desconnectada, connecta-la i torna-ho a provar.",
+    "tryAgain": "Torna-ho a provar",
+    "stillMissing": "Encara no apareix. Comprova que la unitat estigui connectada.",
+    "chooseAnother": "Tria una altra carpeta…",
+    "forgetConfirm": "Vols fer servir la carpeta de Rebost?\n\nRebost oblidarà les IA que no troba. Els fitxers es queden en aquella unitat i podràs tornar a baixar una IA.",
+    "forgetAction": "Fes servir la de Rebost",
+    "full": "Aquesta unitat no té prou espai. Necessita uns %{size} lliures.",
+    "savedMain": "Es desa al disc principal de l'ordinador",
+    "savedIn": "Es desa a «%{name}»",
+    "changeShort": "Canvia",
+    "tooSmall": "Aquí no hi cap aquesta IA. Tria una carpeta en una altra unitat."
+  },
   "onboarding": {
     "welcome": "Et donem la benvinguda a Rebost",
     "lede": "Rebost és una IA privada que treballa amb els teus fitxers.\nEl que passa al teu ordinador es queda al teu ordinador.",
@@ -563,7 +590,13 @@
     "attachmentsFailed": "No s'han pogut llegir alguns fitxers adjunts. Torna'ls a processar abans de fer preguntes sobre aquests fitxers.",
     "aiBusy": "Espera que acabi la baixada i torna-ho a provar.",
     "aiInUse": "Canvia a una altra IA abans d'eliminar aquesta.",
-    "aiMissing": "Aquesta IA ja no és en aquest ordinador."
+    "aiMissing": "Aquesta IA ja no és en aquest ordinador.",
+    "modelsFolderMissing": "Rebost no troba la carpeta on es guarden les IA. Connecta la unitat on és o tria una altra carpeta a Ajustos.",
+    "modelsFolderFull": "No hi ha prou espai en aquesta unitat. Allibera espai o tria una carpeta en una altra unitat a Ajustos.",
+    "modelsFolderNotWritable": "Rebost no pot desar fitxers en aquesta carpeta. Tria'n una altra.",
+    "modelsFolderAppData": "Aquesta carpeta forma part de les dades de Rebost. Tria'n una que en quedi fora.",
+    "modelsFolderNameTaken": "En aquesta carpeta ja hi ha un altre fitxer amb el mateix nom que una de les teves IA. Tria una altra carpeta.",
+    "modelsFolderNoAis": "Les teves IA no són en aquesta carpeta. Tria la carpeta on són o fes servir la de Rebost."
   },
   "pii": {
     "heading": "Informació personal",

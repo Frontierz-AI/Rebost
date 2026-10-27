@@ -1,7 +1,7 @@
 //! `settings.json` — the small amount of durable configuration.
 
 use serde::{Deserialize, Deserializer, Serialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::i18n::UiLocalePref;
 
@@ -36,7 +36,7 @@ pub struct Settings {
     #[serde(alias = "active_model")]
     pub active_model: Option<InstalledModel>,
     /// Installed AIs that are not in use, most recently used first. Each
-    /// keeps its file in `models/` until the person removes it.
+    /// keeps its file in the models folder until the person removes it.
     #[serde(alias = "other_models", skip_serializing_if = "Vec::is_empty")]
     pub other_models: Vec<InstalledModel>,
     /// Measured prompt-processing budget: how many characters of local
@@ -65,6 +65,9 @@ pub struct Settings {
     /// Settings stops offering that download until either changes.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vision_failed_for: Option<String>,
+    /// Folder the person chose for AI models. `None` is `<app-data>/models`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub models_folder: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,7 +75,7 @@ pub struct Settings {
 pub struct InstalledModel {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub projector: Option<VisionProjector>,
-    /// GGUF file name inside `<app-data>/models/`.
+    /// GGUF file name inside the models folder.
     pub file: String,
     /// User-facing model name, e.g. "Gemma 4 12B".
     pub name: String,
@@ -151,6 +154,20 @@ impl Settings {
                         .as_ref()
                         .is_some_and(|projector| projector.file == file)
             })
+    }
+
+    /// Every file installed AIs use (weights and image files), once each.
+    pub fn model_files(&self) -> Vec<String> {
+        let mut files = Vec::new();
+        for model in self.active_model.iter().chain(&self.other_models) {
+            let projector = model.projector.as_ref().map(|p| &p.file);
+            for file in std::iter::once(&model.file).chain(projector) {
+                if !files.contains(file) {
+                    files.push(file.clone());
+                }
+            }
+        }
+        files
     }
 
     /// Forget other AIs whose weights are no longer in `models_dir`, or that
@@ -335,6 +352,44 @@ mod tests {
         assert!(settings.uses_model_file("a.gguf"));
         assert!(settings.uses_model_file("vision-1.gguf"));
         assert!(!settings.uses_model_file("c.gguf"));
+    }
+
+    #[test]
+    fn model_files_list_each_file_once() {
+        let mut active = model("a.gguf");
+        active.projector = Some(VisionProjector {
+            file: "vision-1.gguf".into(),
+            size_bytes: 1,
+        });
+        let mut other = model("b.gguf");
+        other.projector = active.projector.clone();
+        let settings = Settings {
+            active_model: Some(active),
+            other_models: vec![other, model("a.gguf")],
+            ..Default::default()
+        };
+        assert_eq!(
+            settings.model_files(),
+            ["a.gguf", "vision-1.gguf", "b.gguf"]
+        );
+    }
+
+    #[test]
+    fn models_folder_roundtrips_and_defaults_to_none() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        Settings::default().save(&path).unwrap();
+        assert!(!std::fs::read_to_string(&path)
+            .unwrap()
+            .contains("modelsFolder"));
+        let chosen = dir.path().join("AI");
+        Settings {
+            models_folder: Some(chosen.clone()),
+            ..Default::default()
+        }
+        .save(&path)
+        .unwrap();
+        assert_eq!(Settings::load(&path).models_folder, Some(chosen));
     }
 
     #[test]

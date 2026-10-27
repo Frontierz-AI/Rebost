@@ -130,6 +130,33 @@
     "installedMany": "%{count} AI'er · %{size} på denne computer",
     "openAiFolder": "Åbn mappe"
   },
+  "modelsFolder": {
+    "heading": "Hvor AI'erne gemmes",
+    "help": "Hver AI fylder flere GB. Hvis drevet er ved at løbe tør for plads, så vælg en mappe på et andet.",
+    "defaultName": "Rebosts egen mappe",
+    "free": "%{size} ledig",
+    "change": "Skift…",
+    "useDefault": "Brug Rebosts egen mappe",
+    "moveConfirm": "Flyt dine AI'er til “%{name}”?\n\nRebost flytter %{size}. Chat holder pause, til det er færdigt.",
+    "moveAction": "Flyt AI'er",
+    "moveBackConfirm": "Flyt dine AI'er tilbage til Rebosts egen mappe?\n\nRebost flytter %{size}. Chat holder pause, til det er færdigt.",
+    "moving": "Flytter dine AI'er…",
+    "movingNote": "Chat holder pause, til de er i den nye mappe. Hvis du annullerer, bliver de, hvor de var.",
+    "cancelled": "Flytningen blev annulleret. Dine AI'er er, hvor de var.",
+    "moved": "Dine AI'er ligger nu i den nye mappe.",
+    "missingTitle": "Rebost kan ikke finde mappen",
+    "missingHelp": "Hvis den ligger på et drev, der ikke er tilsluttet, så tilslut det og prøv igen.",
+    "tryAgain": "Prøv igen",
+    "stillMissing": "Stadig ikke fundet. Tjek, at drevet er tilsluttet.",
+    "chooseAnother": "Vælg en anden mappe…",
+    "forgetConfirm": "Brug Rebosts egen mappe?\n\nRebost glemmer de AI'er, den ikke kan finde. Filerne bliver på drevet, og du kan hente en AI igen.",
+    "forgetAction": "Brug Rebosts mappe",
+    "full": "Der er ikke plads nok på drevet. Det kræver omkring %{size} ledig plads.",
+    "savedMain": "Gemmes på computerens hoveddrev",
+    "savedIn": "Gemmes i “%{name}”",
+    "changeShort": "Skift",
+    "tooSmall": "Der er ikke plads til denne AI her. Vælg en mappe på et andet drev."
+  },
   "onboarding": {
     "welcome": "Velkommen til Rebost",
     "lede": "Rebost er en privat AI, der arbejder med dine filer.\nDet, der sker på din computer, bliver på din computer.",
@@ -564,7 +591,13 @@
     "attachmentsFailed": "Nogle vedhæftede filer kunne ikke læses. Behandl dem igen, før du spørger om dem.",
     "aiBusy": "Vent, til downloaden er færdig, og prøv igen.",
     "aiInUse": "Skift til en anden AI, før du fjerner denne.",
-    "aiMissing": "Den AI findes ikke længere på denne computer."
+    "aiMissing": "Den AI findes ikke længere på denne computer.",
+    "modelsFolderMissing": "Rebost kan ikke finde mappen med dine AI'er. Tilslut drevet, den ligger på, eller vælg en anden mappe i Indstillinger.",
+    "modelsFolderFull": "Der er ikke plads nok på drevet. Frigør plads, eller vælg en mappe på et andet drev i Indstillinger.",
+    "modelsFolderNotWritable": "Rebost kan ikke gemme filer i den mappe. Vælg en anden.",
+    "modelsFolderAppData": "Den mappe hører til Rebosts egne data. Vælg en mappe uden for dem.",
+    "modelsFolderNameTaken": "Mappen indeholder allerede en anden fil med samme navn som en af dine AI'er. Vælg en anden mappe.",
+    "modelsFolderNoAis": "Dine AI'er ligger ikke i den mappe. Vælg mappen, de ligger i, eller brug Rebosts egen mappe."
   },
   "pii": {
     "heading": "Personoplysninger",

@@ -241,6 +241,34 @@ export interface SettingsView {
   textSize: TextSize;
   uiLocale: LocalePref;
   resolvedLocale: AppLocale;
+  modelsFolder: ModelsFolderView;
+}
+
+/** Where AIs are kept. */
+export interface ModelsFolderView {
+  path: string;
+  /** A folder the person chose, not Rebost's own. */
+  custom: boolean;
+  /** The chosen folder can't be found (an unplugged drive). */
+  missing: boolean;
+}
+
+/** A folder picked for AIs, and what using it would involve. */
+export interface ModelsFolderChoice {
+  path: string;
+  isDefault: boolean;
+  /** Already the folder in use. */
+  unchanged: boolean;
+  freeBytes: number | null;
+  /** Bytes of installed AIs that would move there. */
+  moveBytes: number;
+  /** Error code when the folder can't be used. */
+  problem: string | null;
+}
+
+export interface ModelsMoveEvent {
+  done: number;
+  total: number;
 }
 
 export interface ImportResult {
@@ -277,6 +305,9 @@ export interface ShotJob {
   id: string;
   path: string;
   locale?: string;
+  theme?: "light" | "dark";
+  /** Scroll the main pane before the snapshot: pixels, or "end". */
+  scroll?: number | "end";
   onboarding?: boolean;
   onboard?: "promise" | "model";
   onboardMore?: boolean;
@@ -399,6 +430,7 @@ export function userFacingError(error: unknown): string {
   const lower = trimmed.toLowerCase();
 
   if (lower.includes("invalid id")) return t("errors.invalidId");
+  if (lower.includes("models-folder-missing")) return t("errors.modelsFolderMissing");
   if (lower.includes("not in a shelf") || lower.includes("not allowed")) {
     return t("errors.notInShelf");
   }
@@ -587,6 +619,11 @@ export const api = {
   openModelPage: (source: string, reference: string) =>
     invoke<void>("open_model_page", { source, reference }),
   downloadCancel: (id: string) => invoke<void>("download_cancel", { id }),
+  modelsFolderPick: () => invoke<ModelsFolderChoice | null>("models_folder_pick"),
+  /** Resolves false when the move was cancelled. */
+  modelsFolderApply: () => invoke<boolean>("models_folder_apply"),
+  modelsFolderUseDefault: () => invoke<boolean>("models_folder_use_default"),
+  modelsFolderRecheck: () => invoke<boolean>("models_folder_recheck"),
   downloadSkipVerify: (id: string) => invoke<void>("download_skip_verify", { id }),
 
   settingsGet: () => invoke<SettingsView>("settings_get"),
@@ -706,6 +743,7 @@ export const events = {
   webApproval: (h: (event: WebApproval) => void) => onEvent("rebost://web-approval", h),
   engine: (h: (s: EngineStatus) => void) => onEvent("rebost://engine", h),
   download: (h: (d: DownloadEvent) => void) => onEvent("rebost://download", h),
+  modelsMove: (h: (m: ModelsMoveEvent) => void) => onEvent("rebost://models-move", h),
   ingest: (h: (i: IngestEvent) => void) => onEvent("rebost://ingest", h),
   shelfStats: (h: (s: ShelfStatsEvent) => void) => onEvent("rebost://shelf-stats", h),
   shelves: (h: () => void) => onEvent("rebost://shelves", h),
@@ -784,6 +822,10 @@ export function downloadErrorMessage(error: string): string | null {
       return t("errors.warmupFailed");
     case "incompatible-format":
       return t("errors.incompatible");
+    case "models-folder-missing":
+      return t("errors.modelsFolderMissing");
+    case "models-folder-full":
+      return t("errors.modelsFolderFull");
     default:
       return t("errors.downloadFailed");
   }

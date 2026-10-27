@@ -10,6 +10,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 |------|---------|
 | `rebost://engine` | `EngineStatus` |
 | `rebost://download` | `DownloadEvent` |
+| `rebost://models-move` | `{ done, total }` bytes while installed AIs move to another folder |
 | `rebost://ingest` | per-document status |
 | `rebost://shelf-stats` | `{ shelfId, stats }` (`waiting` is files accepted but not yet being read) |
 | `rebost://shelves` | empty object (reload list) |
@@ -54,7 +55,11 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `models_search` | `query` | `ModelSearchResult[]` |
 | `open_model_page` | `source`, `reference` | `()` (system browser; Hugging Face or Ollama page only) |
 | `model_install` | `source`, `reference`, `name`, `license?` | `()` (progress on `rebost://download`) |
-| `download_cancel` | `id` | `()` |
+| `download_cancel` | `id` | `()` (`move:models` cancels a models-folder move) |
+| `models_folder_pick` | — | `ModelsFolderChoice \| null` (OS folder dialog in Rust; the path is kept for `models_folder_apply`) |
+| `models_folder_apply` | — | `bool` (`false` when cancelled; moves installed AIs, progress on `rebost://models-move`) |
+| `models_folder_use_default` | — | `bool` (back to `<app-data>/models`; forgets AIs it can't reach while the chosen folder is missing) |
+| `models_folder_recheck` | — | `bool` (the chosen folder is back; starts the AI) |
 | `download_skip_verify` | `id` | `()` (model downloads only; finishes install without hashing) |
 | `settings_get` | — | `SettingsView` |
 | `settings_set_house_rules` | `text` | `()` |

@@ -129,6 +129,33 @@
     "installedMany": "%{count} IA · %{size} en este ordenador",
     "openAiFolder": "Abrir carpeta"
   },
+  "modelsFolder": {
+    "heading": "Dónde se guardan las IA",
+    "help": "Cada IA ocupa varios GB. Si esta unidad se está quedando sin espacio, elige una carpeta en otra.",
+    "defaultName": "Carpeta propia de Rebost",
+    "free": "%{size} libres",
+    "change": "Cambiar…",
+    "useDefault": "Usar la carpeta de Rebost",
+    "moveConfirm": "¿Mover tus IA a «%{name}»?\n\nRebost moverá %{size}. Chat se pausa hasta que termine.",
+    "moveAction": "Mover IA",
+    "moveBackConfirm": "¿Devolver tus IA a la carpeta de Rebost?\n\nRebost moverá %{size}. Chat se pausa hasta que termine.",
+    "moving": "Moviendo tus IA…",
+    "movingNote": "Chat está en pausa hasta que estén en la nueva carpeta. Si cancelas, se quedan donde estaban.",
+    "cancelled": "Se ha cancelado. Tus IA siguen donde estaban.",
+    "moved": "Tus IA ya están en la nueva carpeta.",
+    "missingTitle": "Rebost no encuentra esta carpeta",
+    "missingHelp": "Si está en una unidad desconectada, conéctala y vuelve a intentarlo.",
+    "tryAgain": "Reintentar",
+    "stillMissing": "Sigue sin aparecer. Comprueba que la unidad esté conectada.",
+    "chooseAnother": "Elegir otra carpeta…",
+    "forgetConfirm": "¿Usar la carpeta de Rebost?\n\nRebost olvidará las IA que no encuentra. Sus archivos se quedan en esa unidad y podrás volver a descargar una IA.",
+    "forgetAction": "Usar la carpeta de Rebost",
+    "full": "Esa unidad no tiene espacio suficiente. Necesita unos %{size} libres.",
+    "savedMain": "Se guarda en el disco principal del ordenador",
+    "savedIn": "Se guarda en «%{name}»",
+    "changeShort": "Cambiar",
+    "tooSmall": "Aquí no cabe esta IA. Elige una carpeta en otra unidad."
+  },
   "onboarding": {
     "welcome": "Te damos la bienvenida a Rebost",
     "lede": "Rebost es una IA privada que trabaja con tus archivos.\nLo que ocurre en tu ordenador se queda en tu ordenador.",
@@ -563,7 +590,13 @@
     "attachmentsFailed": "No se han podido leer algunos archivos adjuntos. Vuelve a procesarlos antes de preguntar sobre ellos.",
     "aiBusy": "Espera a que termine la descarga y vuelve a intentarlo.",
     "aiInUse": "Cambia a otra IA antes de eliminar esta.",
-    "aiMissing": "Esa IA ya no está en este ordenador."
+    "aiMissing": "Esa IA ya no está en este ordenador.",
+    "modelsFolderMissing": "Rebost no encuentra la carpeta donde se guardan tus IA. Conecta la unidad donde está o elige otra carpeta en Ajustes.",
+    "modelsFolderFull": "No queda espacio suficiente en esa unidad. Libera espacio o elige una carpeta en otra unidad en Ajustes.",
+    "modelsFolderNotWritable": "Rebost no puede guardar archivos en esa carpeta. Elige otra.",
+    "modelsFolderAppData": "Esa carpeta forma parte de los datos de Rebost. Elige una que esté fuera.",
+    "modelsFolderNameTaken": "En esa carpeta ya hay otro archivo con el mismo nombre que una de tus IA. Elige otra carpeta.",
+    "modelsFolderNoAis": "Tus IA no están en esa carpeta. Elige la carpeta donde están o usa la carpeta de Rebost."
   },
   "pii": {
     "heading": "Información personal",
