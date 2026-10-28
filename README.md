@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **0.9.8**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/). Linux packages are published from the first release after 0.9.8.
+The current release is **0.9.9**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine                               | Installer                                  |
 | ------------------------------------- | ------------------------------------------ |
@@ -32,7 +32,7 @@ The current release is **0.9.8**. Installers are published on [GitHub Releases](
 | Windows on ARM                        | Windows (ARM)                              |
 | Ubuntu 22.04+, Debian 12+ (Intel/AMD) | Linux (.deb)                               |
 | Fedora 43+ (Intel/AMD)                | Linux (.rpm)                               |
-| Arch Linux and its derivatives        | AUR: `rebost-bin`                          |
+| Arch Linux and its derivatives        | AUR: `rebost-bin` (coming soon)            |
 | Other Linux distributions (Intel/AMD) | Linux (AppImage), or Flathub (coming soon) |
 | Linux on ARM (64-bit)                 | Linux ARM (.deb), (.rpm), or (AppImage)    |
 
@@ -48,7 +48,7 @@ sudo apt install ./Rebost-X.Y.Z-Linux-amd64.deb
 sudo dnf install ./Rebost-X.Y.Z-Linux-x86_64.rpm
 ```
 
-On Arch Linux, EndeavourOS, CachyOS, Manjaro, and Omarchy, Rebost is in the AUR as `rebost-bin`, the same build as the .deb packaged for pacman:
+On Arch Linux, EndeavourOS, CachyOS, Manjaro, and Omarchy, Rebost will be in the AUR as `rebost-bin`, the same build as the .deb packaged for pacman. Until then, use the AppImage. Once it is published:
 
 ```bash
 yay -S rebost-bin

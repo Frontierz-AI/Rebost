@@ -6,6 +6,8 @@ The app-data layout may change without a migration.
 
 ## [Unreleased]
 
+## [0.9.9] - 2026-10-28
+
 ### Added
 
 - Choose how many files each Shelf reads: 1,000 (still the default), 2,500, 5,000, or 10,000. The setting is at the top of the Shelf. More files take longer to read and use more disk space.
@@ -15,11 +17,13 @@ The app-data layout may change without a migration.
 - Choose where AIs are kept. Settings → Where AIs are kept shows the folder and the free space on its drive. Change… picks another folder, on another drive for example, and moves the installed AIs there with a progress bar. A move that fails, is cancelled or is cut short by a restart leaves every AI whole: an old copy is deleted only once Rebost has checked the new one, and when it can't be sure it keeps both and says so. First run shows where the AI will be saved, with a Change link, before the download starts.
 - When the chosen folder is on a drive that isn't connected, Settings says so and offers Try again, another folder, or Rebost's own folder. Installed AIs are not forgotten in the meantime.
 - Linux. Each release adds an AppImage, a .deb, and an .rpm for Intel/AMD and ARM computers: the .deb for Ubuntu 22.04 or newer and Debian 12 or newer, the .rpm for Fedora 43 or newer, and the AppImage for other distributions with glibc 2.35 or newer. The AI uses the graphics card through Vulkan and runs on the processor, tuned for it, when there is no graphics card it can use or Vulkan will not start. Each package updates itself in its own format. On computers with NVIDIA's driver, Rebost turns off WebKitGTK's DMA-BUF renderer, which otherwise often leaves the window blank. Rebost follows the desktop's light and dark switch while open, opening a second copy brings the window forward (on Wayland through the launch's activation token, and on Hyprland and sway by asking the compositor), and Linux has no menu bar: the keyboard shortcuts work without it and About is in Settings.
-- Arch Linux: Rebost is in the AUR as `rebost-bin` (`yay -S rebost-bin`), for Arch, EndeavourOS, CachyOS, Manjaro, and Omarchy. A Flatpak for Flathub is ready to submit. Both leave updates to pacman or the software centre instead of the in-app updater, and About says where updates come from.
+- Packages for the AUR (`rebost-bin`, for Arch, EndeavourOS, CachyOS, Manjaro, and Omarchy) and for Flathub are ready to publish; until they are, Arch-based distributions use the AppImage. Both leave updates to pacman or the software centre instead of the in-app updater, and About says where updates come from.
 
 ### Changed
 
 - The free space Rebost shows and checks is measured on the drive that holds the AIs. A download that can't fit stops before it starts.
+- What runs the AI is the llama.cpp 0.7.0 release. The toolchain is Rust 1.99.1, with current frontend and Rust packages.
+- Search uses a new index format. On the first start after updating, Rebost rebuilds it from the files and conversations it has already read, including Shelves on drives that aren't connected, so nothing has to be read again.
 
 ### Fixed
 
@@ -28,6 +32,13 @@ The app-data layout may change without a migration.
 - Scanned PDFs read at the same time no longer hold each other up.
 - The Personal info column in a Shelf's file list shows its full heading.
 - A file or link that no app opens now says so instead of doing nothing (Linux).
+- A damaged conversation record no longer keeps the rest of the conversations out of search after the rebuild.
+
+### Security
+
+- rustls 0.23.46, rustls-webpki 0.103.16 and webpki-roots 1.0.10 fix RUSTSEC-2026-0346, -0347, -0348 and -0349, and stop trusting the compromised eMudhra intermediate certificates (RUSTSEC-2026-0381, RUSTSEC-2026-0382).
+- zip 9 fixes RUSTSEC-2026-0367, -0368 and -0369. Rebost never used the affected extract functions; the updater no longer pulls in its unused zip support.
+- source-map-js 1.2.2 (GHSA-68fv-2mgg-jv7q) and vite 8.3.3 fix published advisories in the build tools.
 
 ## [0.9.8] - 2026-10-04
 
@@ -670,7 +681,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.8...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.9...HEAD
+[0.9.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.8...v0.9.9
 [0.9.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.5...v0.9.6
