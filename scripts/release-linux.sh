@@ -8,7 +8,9 @@
 #
 # Writes public-named copies, their .sig files and SHA256SUMS to
 # src-tauri/target/release-linux/, and the updater fragment to
-# src-tauri/target/updater/latest-linux-<arch>.json.
+# src-tauri/target/updater/latest-linux-<arch>.json. Both architectures'
+# SHA256SUMS give the AUR PKGBUILD its checksums (packaging/aur/update.sh,
+# run by the aur job in release-linux.yml).
 # beforeBuildCommand fetches only the llama.cpp pin for this target.
 
 set -euo pipefail
@@ -21,7 +23,7 @@ for arg in "$@"; do
   case "$arg" in
     --no-updater) UPDATER=0 ;;
     -h | --help)
-      sed -n '2,12p' "$0" | sed 's/^# \?//'
+      sed -n '2,14p' "$0" | sed 's/^# \?//'
       exit 0
       ;;
     *)

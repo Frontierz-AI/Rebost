@@ -1,0 +1,162 @@
+# Flatpak (x86_64 and aarch64, as Flathub builds both), built from this checkout the way Flathub builds it:
+# offline, from the dependency sources packaging/flatpak/generate-sources.sh
+# writes. Does not run on push; pull requests that change the Flatpak or its
+# inputs build it, lint it with Flathub's linter, and open it on Xvfb.
+#   gh workflow run flatpak.yml
+#
+# The bundles are uploaded as the artifacts rebost-flatpak-<arch>:
+#   flatpak install --user --bundle rebost.flatpak
+
+name: Flatpak
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/flatpak.yml"
+      - "packaging/flatpak/**"
+      - "pnpm-lock.yaml"
+      - "src-tauri/Cargo.lock"
+      - "src-tauri/tauri.conf.json"
+      - "src-tauri/src/distribution.rs"
+      - "src-tauri/src/engine/pin.rs"
+      - "src-tauri/src/engine/binary.rs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flatpak-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  sources:
+    name: Dependency sources
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - run: packaging/flatpak/generate-sources.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flatpak-sources
+          path: |
+            packaging/flatpak/cargo-sources.json
+            packaging/flatpak/node-sources.json
+          if-no-files-found: error
+
+  build:
+    name: Build and lint (${{ matrix.arch }})
+    needs: sources
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: flatpak-sources
+          path: packaging/flatpak
+      - name: Lint the manifest and metadata
+        run: |
+          set -eu
+          # --filesystem=home needs an exception from Flathub's reviewers
+          # (packaging/flatpak/README.md, Permissions). Nothing else is excused.
+          flatpak-builder-lint --exceptions --user-exceptions packaging/flatpak/lint-exceptions.json \
+            manifest packaging/flatpak/ai.rebost.Rebost.yml
+          appstreamcli validate --no-net --explain packaging/flatpak/ai.rebost.Rebost.metainfo.xml
+          desktop-file-validate packaging/flatpak/ai.rebost.Rebost.desktop
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: packaging/flatpak/ai.rebost.Rebost.yml
+          bundle: rebost.flatpak
+          artifact-name: rebost-flatpak-${{ matrix.arch }}
+          cache-key: flatpak-builder-${{ hashFiles('packaging/flatpak/ai.rebost.Rebost.yml', 'src-tauri/Cargo.lock', 'pnpm-lock.yaml') }}
+          arch: ${{ matrix.arch }}
+      - name: Lint the build
+        run: |
+          set -eu
+          # Flathub's own build mirrors the screenshots into its repository, and
+          # their URLs on main only resolve once a change is merged: CI can
+          # check neither, so it excuses those two as well.
+          python3 -c 'import json, sys
+          data = json.load(open(sys.argv[1]))
+          data["ai.rebost.Rebost"] += ["appstream-screenshots-not-mirrored-in-ostree", "appstream-missing-screenshots"]
+          json.dump(data, open(sys.argv[2], "w"))' packaging/flatpak/lint-exceptions.json "$RUNNER_TEMP/lint-exceptions.json"
+          flatpak-builder-lint --exceptions --user-exceptions "$RUNNER_TEMP/lint-exceptions.json" repo repo
+
+  smoke:
+    name: Install and launch (${{ matrix.arch }})
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: rebost-flatpak-${{ matrix.arch }}
+      - name: Install Flatpak and Xvfb
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends flatpak xvfb x11-utils x11-apps imagemagick dbus-x11 >/dev/null
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub org.gnome.Platform//51
+          flatpak install --user -y --noninteractive --bundle rebost.flatpak
+          flatpak info --user --show-permissions ai.rebost.Rebost
+      - name: Bundled engine
+        run: |
+          set -euo pipefail
+          flatpak run --command=sh ai.rebost.Rebost -c '
+            set -eu
+            ls -l /app/lib/Rebost/resources/engine /app/lib/Rebost/resources/tessdata
+            for archive in /app/lib/Rebost/resources/engine/*.tar.gz; do
+              dir="$(mktemp -d)"
+              tar -xzf "$archive" -C "$dir"
+              echo "== $(basename "$archive")"
+              ls "$dir/build/bin"
+              "$dir/build/bin/llama-server" --version
+              "$dir/build/bin/llama-server" --list-devices
+            done'
+      - name: Launch
+        run: |
+          set -euo pipefail
+          Xvfb :99 -screen 0 1440x900x24 -nolisten tcp >/dev/null 2>&1 &
+          export DISPLAY=:99
+          sleep 2
+          dbus-run-session -- flatpak run ai.rebost.Rebost >run.log 2>&1 &
+          pid=$!
+          for _ in $(seq 1 60); do
+            xwininfo -root -tree 2>/dev/null | grep -q '"Rebost"' && break
+            sleep 1
+          done
+          sleep 8
+          xwininfo -root -tree | grep -i rebost || { cat run.log; exit 1; }
+          xwd -root -silent | convert xwd:- "png:shot-flatpak-${{ matrix.arch }}.png"
+          log="$HOME/.var/app/ai.rebost.Rebost/data/io.rebost.desktop/logs/rebost.log"
+          tail -n 20 "$log"
+          grep -q 'updates come from Flatpak' "$log" || { echo "::error::the Flatpak still checks for in-app updates"; exit 1; }
+          tail -n 40 run.log
+          kill "$pid" 2>/dev/null || true
+      - uses: actions/upload-artifact@v7
+        if: ${{ always() }}
+        with:
+          name: smoke-flatpak-${{ matrix.arch }}
+          path: shot-*.png
+          if-no-files-found: ignore

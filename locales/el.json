@@ -466,7 +466,9 @@
     "windowTitle": "Πληροφορίες για το Rebost",
     "version": "Έκδοση %{version}",
     "credits": "Συντελεστές",
-    "source": "Πηγαίος κώδικας"
+    "source": "Πηγαίος κώδικας",
+    "updatesSoftwareCentre": "Οι ενημερώσεις έρχονται από το κέντρο λογισμικού σας.",
+    "updatesPackageManager": "Οι ενημερώσεις έρχονται από τον διαχειριστή πακέτων σας."
   },
   "update": {
     "windowTitle": "Ενημέρωση του Rebost",

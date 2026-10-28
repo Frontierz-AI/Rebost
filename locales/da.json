@@ -466,7 +466,9 @@
     "windowTitle": "Om Rebost",
     "version": "Version %{version}",
     "credits": "Bidragydere",
-    "source": "Kildekode"
+    "source": "Kildekode",
+    "updatesSoftwareCentre": "Opdateringer kommer fra dit softwarecenter.",
+    "updatesPackageManager": "Opdateringer kommer fra din pakkehåndtering."
   },
   "update": {
     "windowTitle": "Opdater Rebost",

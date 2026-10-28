@@ -6,7 +6,12 @@
 # Packages build in an Ubuntu 22.04 container: the binary needs that glibc
 # (2.35) or newer, which matches the upstream llama.cpp Linux builds
 # (glibc 2.34, built on 22.04). The smoke jobs install each package in clean
-# containers of the supported distributions and open the app on Xvfb.
+# containers of the supported distributions and open the app on Xvfb. The
+# AUR job turns the x86_64 .deb into the rebost-bin package with makepkg on
+# Arch Linux, checks it with namcap, installs it and runs the same smoke test;
+# its PKGBUILD carries this run's checksums, which are the release's when the
+# run is the one a release publishes. linux-stores.yml pushes it to the AUR
+# once the release is out.
 #
 # Secrets for the in-app updater:
 #   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD (optional)
@@ -22,6 +27,7 @@ on:
       - ".github/workflows/release-linux.yml"
       - "scripts/release-linux.sh"
       - "scripts/smoke-linux.sh"
+      - "packaging/aur/**"
       - "src-tauri/tauri.linux.conf.json"
       - "src-tauri/tauri.conf.json"
       - "src-tauri/linux/**"
@@ -32,6 +38,9 @@ on:
       - "src-tauri/src/compositor.rs"
       - "src-tauri/src/instance.rs"
       - "src-tauri/src/window.rs"
+      # Who updates the copy: the AUR package must not self-update.
+      - "src-tauri/src/distribution.rs"
+      - "src-tauri/src/updater.rs"
 
 permissions:
   contents: read
@@ -177,5 +186,78 @@ jobs:
         if: ${{ always() }}
         with:
           name: smoke-${{ matrix.kind }}-${{ matrix.arch }}-${{ strategy.job-index }}
+          path: shot-*.png
+          if-no-files-found: ignore
+
+  aur:
+    name: AUR rebost-bin (x86_64)
+    needs: packages
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Install makepkg and namcap
+        run: pacman -Syu --noconfirm --needed --quiet base-devel git namcap >/dev/null
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: rebost-linux-*
+          path: packages
+      - name: Build the package
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^  "version": "\(.*\)",$/\1/p' package.json | head -n 1)"
+          useradd -m builder
+          build=/home/builder/rebost-bin
+          install -d -o builder "$build"
+          # Both architectures' checksums, as on the release.
+          cat packages/rebost-linux-*/release-linux/SHA256SUMS | sort -k2 >/home/builder/SHA256SUMS
+          # makepkg uses files already beside the PKGBUILD instead of downloading them.
+          cp "packages/rebost-linux-x86_64/release-linux/Rebost-${version}-Linux-amd64.deb" "$build/"
+          cp LICENSE "$build/LICENSE-${version}"
+          chown -R builder "$build" /home/builder/SHA256SUMS
+
+          echo "== the committed .SRCINFO matches the committed PKGBUILD"
+          cp -r packaging/aur/rebost-bin /home/builder/template
+          chown -R builder /home/builder/template
+          su builder -c 'cd ~/template && makepkg --printsrcinfo' | diff -u packaging/aur/rebost-bin/.SRCINFO -
+
+          su builder -c "packaging/aur/update.sh ${version} --sums /home/builder/SHA256SUMS --out ${build}"
+          cat "$build/PKGBUILD"
+          # shellcheck disable=SC1091
+          deps="$(cd "$build" && source PKGBUILD && printf '%s ' "${depends[@]}")"
+          pacman -S --noconfirm --needed --quiet $deps >/dev/null
+          su builder -c "cd ${build} && makepkg --noconfirm --cleanbuild"
+          pkg="$(ls "$build"/rebost-bin-*-x86_64.pkg.tar.zst)"
+          echo "PKG=$pkg" >>"$GITHUB_ENV"
+          echo "BUILD=$build" >>"$GITHUB_ENV"
+          bsdtar -tf "$pkg" | grep -v '/$' | sort
+      - name: namcap
+        run: |
+          set -euo pipefail
+          out="$(namcap "$BUILD/PKGBUILD"; namcap "$PKG")"
+          echo "$out"
+          if grep -E ' E: ' <<<"$out"; then
+            echo "::error::namcap reported errors"
+            exit 1
+          fi
+      - name: Install and launch
+        run: bash scripts/smoke-linux.sh pacman "$PKG" shot-archlinux-pacman-x86_64.png
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rebost-aur-x86_64
+          path: |
+            ${{ env.BUILD }}/PKGBUILD
+            ${{ env.BUILD }}/.SRCINFO
+            ${{ env.PKG }}
+          include-hidden-files: true
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: ${{ always() }}
+        with:
+          name: smoke-pacman-x86_64
           path: shot-*.png
           if-no-files-found: ignore

@@ -37,23 +37,26 @@ pub const LIBRARY_DIR: &str = "library";
 #[derive(Debug, Clone)]
 pub struct Paths {
     base: PathBuf,
-    bundled_engine_archive: Option<PathBuf>,
+    /// Folders that may hold llama.cpp archives shipped with the app.
+    bundled_engine_dirs: Vec<PathBuf>,
 }
 
 impl Paths {
     pub fn new(base: impl Into<PathBuf>) -> Self {
         Self {
             base: base.into(),
-            bundled_engine_archive: None,
+            bundled_engine_dirs: Vec::new(),
         }
     }
 
-    pub fn set_bundled_engine_archive(&mut self, path: Option<PathBuf>) {
-        self.bundled_engine_archive = path;
+    pub fn set_bundled_engine_dirs(&mut self, dirs: Vec<PathBuf>) {
+        self.bundled_engine_dirs = dirs;
     }
 
-    pub fn bundled_engine_archive(&self) -> Option<&Path> {
-        self.bundled_engine_archive.as_deref()
+    /// The installer's copy of one engine archive. GitHub packages ship only
+    /// the bundled pin; the Flatpak also ships its CPU fallback build.
+    pub fn bundled_engine_archive(&self, file_name: &str) -> Option<PathBuf> {
+        crate::engine::find_bundled_engine_archive(&self.bundled_engine_dirs, file_name)
     }
 
     /// Ensure every directory of the layout exists (owner-only on Unix).

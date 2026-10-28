@@ -24,16 +24,17 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 The current release is **0.9.8**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/). Linux packages are published from the first release after 0.9.8.
 
-| Machine                               | Installer                               |
-| ------------------------------------- | --------------------------------------- |
-| Mac with an Apple chip                | Mac (Apple chip)                        |
-| Intel Mac                             | Mac (Intel)                             |
-| Windows 10/11                         | Windows                                 |
-| Windows on ARM                        | Windows (ARM)                           |
-| Ubuntu 22.04+, Debian 12+ (Intel/AMD) | Linux (.deb)                            |
-| Fedora 43+ (Intel/AMD)                | Linux (.rpm)                            |
-| Other Linux distributions (Intel/AMD) | Linux (AppImage)                        |
-| Linux on ARM (64-bit)                 | Linux ARM (.deb), (.rpm), or (AppImage) |
+| Machine                               | Installer                                  |
+| ------------------------------------- | ------------------------------------------ |
+| Mac with an Apple chip                | Mac (Apple chip)                           |
+| Intel Mac                             | Mac (Intel)                                |
+| Windows 10/11                         | Windows                                    |
+| Windows on ARM                        | Windows (ARM)                              |
+| Ubuntu 22.04+, Debian 12+ (Intel/AMD) | Linux (.deb)                               |
+| Fedora 43+ (Intel/AMD)                | Linux (.rpm)                               |
+| Arch Linux and its derivatives        | AUR: `rebost-bin`                          |
+| Other Linux distributions (Intel/AMD) | Linux (AppImage), or Flathub (coming soon) |
+| Linux on ARM (64-bit)                 | Linux ARM (.deb), (.rpm), or (AppImage)    |
 
 The Mac download is a disk image: open it and drag Rebost into Applications. The Windows download is an installer.
 
@@ -47,11 +48,19 @@ sudo apt install ./Rebost-X.Y.Z-Linux-amd64.deb
 sudo dnf install ./Rebost-X.Y.Z-Linux-x86_64.rpm
 ```
 
+On Arch Linux, EndeavourOS, CachyOS, Manjaro, and Omarchy, Rebost is in the AUR as `rebost-bin`, the same build as the .deb packaged for pacman:
+
+```bash
+yay -S rebost-bin
+```
+
+A Flathub release, installable from GNOME Software and KDE Discover on any distribution, is coming soon.
+
 The AppImage carries its own WebKitGTK and runs on other desktop distributions with glibc 2.35 or newer: make it executable (`chmod +x Rebost-X.Y.Z-Linux-x86_64.AppImage`) and open it. The AI uses the graphics card through Vulkan (Mesa for AMD and Intel, or NVIDIA's driver); the packages recommend the Vulkan loader and Mesa drivers, and without them the AI runs on the processor, more slowly.
 
 Windows 11 already ships the component Rebost uses to draw its windows; on Windows 10 the installer adds [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) when it is missing. A regular Windows PC, meaning anything other than Windows on ARM, also needs a graphics driver with Vulkan support from NVIDIA, AMD, or Intel.
 
-Once installed, Rebost checks GitHub for a newer release and shows it in the sidebar. Nothing is shown when that check fails. On Linux each package updates itself in its own format; the .deb and .rpm ask for an administrator password to install the update.
+Once installed, Rebost checks GitHub for a newer release and shows it in the sidebar. Nothing is shown when that check fails. On Linux each package updates itself in its own format; the .deb and .rpm ask for an administrator password to install the update. The AUR package and the Flatpak leave updates to pacman or the software centre, and About says so.
 
 ## Chat, Shelves, Recipes, and House rules
 

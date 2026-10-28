@@ -466,7 +466,9 @@
     "windowTitle": "Tietoja Rebostista",
     "version": "Versio %{version}",
     "credits": "Tekijät",
-    "source": "Lähdekoodi"
+    "source": "Lähdekoodi",
+    "updatesSoftwareCentre": "Päivitykset tulevat ohjelmistokeskuksesta.",
+    "updatesPackageManager": "Päivitykset tulevat paketinhallinnasta."
   },
   "update": {
     "windowTitle": "Päivitä Rebost",

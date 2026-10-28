@@ -78,3 +78,18 @@ src-tauri/resources/engine/*.part
 
 # Local real-model quality measurements
 quality-results.json
+
+# Flatpak: generated dependency sources and local builds
+packaging/flatpak/cargo-sources.json
+packaging/flatpak/node-sources.json
+packaging/flatpak/flathub/
+.flatpak-builder/
+flatpak-build/
+*.flatpak
+
+# AUR: makepkg output when building in place
+packaging/aur/rebost-bin/*.pkg.tar.*
+packaging/aur/rebost-bin/*.deb
+packaging/aur/rebost-bin/LICENSE-*
+packaging/aur/rebost-bin/src/
+packaging/aur/rebost-bin/pkg/

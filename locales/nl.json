@@ -466,7 +466,9 @@
     "windowTitle": "Over Rebost",
     "version": "Versie %{version}",
     "credits": "Credits",
-    "source": "Broncode"
+    "source": "Broncode",
+    "updatesSoftwareCentre": "Updates komen via je softwarecentrum.",
+    "updatesPackageManager": "Updates komen via je pakketbeheerder."
   },
   "update": {
     "windowTitle": "Rebost bijwerken",

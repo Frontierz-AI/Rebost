@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Frontierz -->
+<component type="desktop-application">
+  <id>ai.rebost.Rebost</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>Rebost</name>
+  <summary>Private AI that works with your files</summary>
+  <developer id="ai.rebost">
+    <name>Frontierz</name>
+  </developer>
+
+  <description>
+    <p>
+      Rebost runs an AI on this computer and answers questions about the documents kept here.
+      Questions go in Chat, the answer is generated locally, and each answer cites the files it drew on.
+      What happens on your computer stays on your computer.
+    </p>
+    <ul>
+      <li>Shelves: point a Shelf at a folder and Chat searches it, quotes what it finds and links each citation back to the file</li>
+      <li>Reads PDFs, scanned documents, Office files, spreadsheets, email and web pages</li>
+      <li>Recipes: prompts saved once and reused with any Shelf</li>
+      <li>House rules: standing instructions for every conversation</li>
+      <li>Uses the graphics card through Vulkan, or the processor when there is none</li>
+    </ul>
+    <p>
+      The first launch offers an AI sized for this computer's memory and downloads it. No account is needed.
+      Rebost uses the network to find and install an AI. Documents are not uploaded,
+      and web lookups stay off until they are turned on.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">ai.rebost.Rebost.desktop</launchable>
+  <provides>
+    <binary>rebost</binary>
+  </provides>
+
+  <url type="homepage">https://rebost.ai/</url>
+  <url type="bugtracker">https://github.com/Frontierz-AI/Rebost/issues</url>
+  <url type="vcs-browser">https://github.com/Frontierz-AI/Rebost</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Chat, ready for a question</caption>
+      <image>https://raw.githubusercontent.com/Frontierz-AI/Rebost/main/packaging/flatpak/screenshots/chat.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>An answer with citations from a Shelf</caption>
+      <image>https://raw.githubusercontent.com/Frontierz-AI/Rebost/main/packaging/flatpak/screenshots/conversation.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A Shelf made from a folder</caption>
+      <image>https://raw.githubusercontent.com/Frontierz-AI/Rebost/main/packaging/flatpak/screenshots/shelves.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Recipes: saved prompts to reuse</caption>
+      <image>https://raw.githubusercontent.com/Frontierz-AI/Rebost/main/packaging/flatpak/screenshots/recipes.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Settings: the installed AI and this computer</caption>
+      <image>https://raw.githubusercontent.com/Frontierz-AI/Rebost/main/packaging/flatpak/screenshots/settings.png</image>
+    </screenshot>
+  </screenshots>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#b0efd8</color>
+    <color type="primary" scheme_preference="dark">#103639</color>
+  </branding>
+
+  <content_rating type="oars-1.1" />
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">540</display_length>
+  </requires>
+  <recommends>
+    <memory>8192</memory>
+  </recommends>
+
+  <keywords>
+    <keyword>AI</keyword>
+    <keyword>assistant</keyword>
+    <keyword>chat</keyword>
+    <keyword>documents</keyword>
+    <keyword>search</keyword>
+    <keyword>offline</keyword>
+    <keyword>private</keyword>
+    <keyword>LLM</keyword>
+  </keywords>
+
+  <releases>
+    <release version="0.9.8" date="2026-10-04">
+      <description>
+        <p>Keep more than one AI. Settings lists the other installed AIs under the one in use, and installing a new AI keeps the previous one.</p>
+      </description>
+    </release>
+    <release version="0.9.7" date="2026-10-04">
+      <description>
+        <p>First-run picks use the current open-weight scores, and Chat runs Shelf tool calls that some AIs write as text.</p>
+      </description>
+    </release>
+  </releases>
+</component>

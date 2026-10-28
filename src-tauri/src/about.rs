@@ -12,6 +12,8 @@ const ABOUT_LABEL: &str = "about";
 pub struct AboutInfo {
     pub version: String,
     pub repository_url: String,
+    /// `app`, `softwareCentre` or `packageManager` (see `distribution.rs`).
+    pub updates: &'static str,
 }
 
 #[derive(Deserialize)]
@@ -37,6 +39,7 @@ pub fn about_info(app: AppHandle) -> AboutInfo {
     AboutInfo {
         version: app.package_info().version.to_string(),
         repository_url: env!("CARGO_PKG_REPOSITORY").to_string(),
+        updates: crate::distribution::current(&app).kind(),
     }
 }
 
