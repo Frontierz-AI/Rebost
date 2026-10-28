@@ -86,7 +86,14 @@ jobs:
       - name: Lint the build
         run: |
           set -eu
-          flatpak-builder-lint --exceptions --user-exceptions packaging/flatpak/lint-exceptions.json repo repo
+          # Flathub's own build mirrors the screenshots into its repository, and
+          # their URLs on main only resolve once a change is merged: CI can
+          # check neither, so it excuses those two as well.
+          python3 -c 'import json, sys
+          data = json.load(open(sys.argv[1]))
+          data["ai.rebost.Rebost"] += ["appstream-screenshots-not-mirrored-in-ostree", "appstream-missing-screenshots"]
+          json.dump(data, open(sys.argv[2], "w"))' packaging/flatpak/lint-exceptions.json "$RUNNER_TEMP/lint-exceptions.json"
+          flatpak-builder-lint --exceptions --user-exceptions "$RUNNER_TEMP/lint-exceptions.json" repo repo
 
   smoke:
     name: Install and launch (${{ matrix.arch }})
