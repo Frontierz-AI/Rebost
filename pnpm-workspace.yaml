@@ -3,8 +3,6 @@ packages:
 minimumReleaseAge: 1440
 # Reviewed on 2026-10-27; exact versions only, while the 24-hour gate remains enabled.
 minimumReleaseAgeExclude:
-  # Icon additions and build fixes: https://github.com/lucide-icons/lucide/releases/tag/1.62.0
-  - "@lucide/svelte@1.62.0"
   # Parsing fixes: https://github.com/markedjs/marked/releases/tag/v18.1.2
   - marked@18.1.2
   # Infinite toast duration fix: https://github.com/wobsoriano/svelte-sonner/releases/tag/v1.2.2
