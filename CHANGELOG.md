@@ -2,7 +2,6 @@
 
 All notable changes to this project are documented in this file.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-The app-data layout may change without a migration.
 
 ## [Unreleased]
 

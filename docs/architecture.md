@@ -56,7 +56,7 @@ logs/engine.log
 
 AI models are the large item, so they can live in a folder the person chooses (`modelsFolder` in `settings.json`, see `src-tauri/src/models_folder.rs` and [models.md](models.md#where-ais-are-kept)). Everything else stays in app data.
 
-The layout can change without a migration. New library Shelves are created under `library/`. Existing Shelves keep the folder already stored in the registry (including older `Documents/Rebost` paths). Settings → Reset Rebost (or `scripts/reset.sh`) returns to first-run without deleting `library/` or Shelf folders outside app data. Replacing the app does not touch this directory.
+New library Shelves are created under `library/`. Existing Shelves keep the folder already stored in the registry (including older `Documents/Rebost` paths). Settings → Reset Rebost (or `scripts/reset.sh`) returns to first-run without deleting `library/` or Shelf folders outside app data. Replacing the app does not touch this directory.
 
 ## Module map (`src-tauri/src/`)
 
