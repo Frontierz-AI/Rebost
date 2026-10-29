@@ -1,6 +1,6 @@
 # Releases
 
-Signed installers are on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases). Installed copies check for a newer version on startup and offer an update when one exists. A failed check is ignored. The app-data layout may change without a migration.
+Signed installers are on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases). Installed copies check for a newer version on startup and offer an update when one exists. A failed check is ignored.
 
 ## Version
 

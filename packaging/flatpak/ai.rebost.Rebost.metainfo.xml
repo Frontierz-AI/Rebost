@@ -93,6 +93,11 @@
   </keywords>
 
   <releases>
+    <release version="1.0.0" date="2026-10-29">
+      <description>
+        <p>Rebost reaches 1.0.0. This maintenance release adds no new features: it polishes 0.9.9 and updates the components inside Rebost, including what runs the AI.</p>
+      </description>
+    </release>
     <release version="0.9.9" date="2026-10-28">
       <description>
         <p>Choose where AIs are kept and how many files each Shelf reads. Long scanned PDFs get the time they need, and Rebost now runs on Linux.</p>

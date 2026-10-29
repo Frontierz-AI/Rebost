@@ -2,9 +2,20 @@
 
 All notable changes to this project are documented in this file.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-The app-data layout may change without a migration.
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-10-29
+
+Rebost reaches 1.0.0. Thank you to everyone who took part: those who installed the early versions, reported what went wrong, suggested ideas in Discussions and tried Rebost on their Mac, Windows or Linux computer. Removing AIs you no longer use, choosing where AIs are kept and the Linux version all started as requests from you.
+
+This is a maintenance release. It adds no new features and changes nothing in how Rebost works: it finishes polishing 0.9.9 and brings the components inside Rebost up to date, with stability as the goal.
+
+### Changed
+
+- What runs the AI is the llama.cpp 0.8.0 release.
+- The file and folder dialogs, the in-app updater, and the parts that read ZIP archives and web pages use their latest versions, with their fixes.
+- Current frontend and Rust packages.
 
 ## [0.9.9] - 2026-10-28
 
@@ -681,7 +692,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.9...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.9...v1.0.0
 [0.9.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.8...v0.9.9
 [0.9.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.6...v0.9.7
