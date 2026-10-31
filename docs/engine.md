@@ -60,6 +60,8 @@ The Linux packages bundle the upstream `ubuntu-vulkan-*` archive. Those builds a
 
 Spawn flags follow the machine and the loaded file (`src-tauri/src/engine/tune.rs`): context 4k–16k (GGUF `context_length` is a ceiling; never below 4k; no 32k). 16k only on Metal with enough unified memory. Answer cap 768–2,048, batch/ubatch, `--cache-type-k/v q8_0` (OpenCL uses `f16`; q8_0 KV crashes Adreno), and `-fa on` (Metal/Vulkan/CUDA) or `-fa auto` (CPU/OpenCL). CPU uses `-ngl 0`. The x64-on-ARM Vulkan copy, and the Linux Vulkan build on a PC where it lists no device, are tuned as CPU and add `--device none --no-op-offload`. `--load-mode none` only on discrete Vulkan and CUDA (0.4.1 dropped `--no-mmap`). CPU and OpenCL stay at 4k–6k. Vulkan/CUDA stay at 4k–8k. OpenCL is probed with a tiny completion after `/health`; a hang or empty reply falls back to the bundled CPU pin.
 
+The b11960 Metal kernels do not compile with the Metal toolchain of macOS 14 and 15 ([llama.cpp#31272](https://github.com/ggml-org/llama.cpp/issues/31272)), and macOS has no CPU pin to fall back to. On macOS 15 or older, or when the version can't be read, Rebost sets `GGML_METAL_BF16_DISABLE=1` on the server, so BF16 tensors run on the CPU. A test fails on the next engine bump as a reminder to remove this.
+
 Extracted binaries live in `engine/<release>-<accelerator>/` (for example `0.8.0-metal`, `0.8.0-cuda`). An older `engine/<release>/` folder is still used for the bundled pin.
 
 ## First run

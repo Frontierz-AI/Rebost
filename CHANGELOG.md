@@ -5,6 +5,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- The AI starts again on Macs with an Apple chip running macOS 14 or 15. The llama.cpp 0.8.0 release could not prepare its graphics code on those versions, so the AI stopped before loading. AIs and image files in the BF16 format run partly on the processor there, more slowly.
+
 ## [1.0.0] - 2026-10-29
 
 Rebost reaches 1.0.0. Thank you to everyone who took part: those who installed the early versions, reported what went wrong, suggested ideas in Discussions and tried Rebost on their Mac, Windows or Linux computer. Removing AIs you no longer use, choosing where AIs are kept and the Linux version all started as requests from you.
