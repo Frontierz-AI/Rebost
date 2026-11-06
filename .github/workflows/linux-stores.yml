@@ -55,7 +55,7 @@ jobs:
           [[ "$PKGREL" =~ ^[1-9][0-9]*$ ]] || { echo "::error::pkgrel must be a positive number: $PKGREL"; exit 1; }
       - name: Install makepkg and namcap
         run: pacman -Syu --noconfirm --needed --quiet base-devel git namcap openssh >/dev/null
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.TAG }}
       - name: Build from the release
@@ -84,7 +84,7 @@ jobs:
           fi
       - name: Install and launch
         run: bash scripts/smoke-linux.sh pacman "$PKG" shot-archlinux-pacman-x86_64.png
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: aur-${{ env.TAG }}
           path: |
@@ -115,12 +115,12 @@ jobs:
         run: |
           [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "::error::not a release tag: $TAG"; exit 1; }
           [[ "$PKGREL" =~ ^[1-9][0-9]*$ ]] || { echo "::error::pkgrel must be a positive number: $PKGREL"; exit 1; }
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.TAG }}
           fetch-depth: 0
       - run: packaging/flatpak/flathub.sh --out flathub
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: flathub-${{ env.TAG }}
           path: flathub/

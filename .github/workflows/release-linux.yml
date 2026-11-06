@@ -86,18 +86,18 @@ jobs:
             libwebkit2gtk-4.1-dev
           dpkg-query -W -f '${Package} ${Version}\n' \
             libc6 libgtk-3-0 libwebkit2gtk-4.1-0 libsoup-3.0-0 librsvg2-2
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Node first: pnpm's installer needs npm, and the container has none.
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
-          version: 12.15.0
-      - uses: dtolnay/rust-toolchain@master
+          version: 12.17.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.1
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: src-tauri
           prefix-key: linux-${{ matrix.arch }}
@@ -136,7 +136,7 @@ jobs:
           echo "Newest glibc symbol: $(objdump -T "$bin" | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -n 1)"
           echo "deb control:"
           dpkg-deb -f src-tauri/target/release-linux/*.deb
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: rebost-linux-${{ matrix.arch }}
           path: |
@@ -166,8 +166,8 @@ jobs:
           - { image: "ubuntu:24.04", kind: deb, arch: aarch64 }
           - { image: "fedora:44", kind: rpm, arch: aarch64 }
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: rebost-linux-${{ matrix.arch }}
           path: packages
@@ -182,7 +182,7 @@ jobs:
           esac
           name="${{ matrix.image }}-${{ matrix.kind }}-${{ matrix.arch }}"
           bash scripts/smoke-linux.sh "${{ matrix.kind }}" "$file" "shot-${name//:/-}.png"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ always() }}
         with:
           name: smoke-${{ matrix.kind }}-${{ matrix.arch }}-${{ strategy.job-index }}
@@ -201,8 +201,8 @@ jobs:
     steps:
       - name: Install makepkg and namcap
         run: pacman -Syu --noconfirm --needed --quiet base-devel git namcap >/dev/null
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           pattern: rebost-linux-*
           path: packages
@@ -246,7 +246,7 @@ jobs:
           fi
       - name: Install and launch
         run: bash scripts/smoke-linux.sh pacman "$PKG" shot-archlinux-pacman-x86_64.png
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: rebost-aur-x86_64
           path: |
@@ -255,7 +255,7 @@ jobs:
             ${{ env.PKG }}
           include-hidden-files: true
           if-no-files-found: error
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ always() }}
         with:
           name: smoke-pacman-x86_64

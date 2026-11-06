@@ -35,9 +35,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: packaging/flatpak/generate-sources.sh
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: flatpak-sources
           path: |
@@ -62,8 +62,8 @@ jobs:
       options: --privileged
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: flatpak-sources
           path: packaging/flatpak
@@ -76,7 +76,7 @@ jobs:
             manifest packaging/flatpak/ai.rebost.Rebost.yml
           appstreamcli validate --no-net --explain packaging/flatpak/ai.rebost.Rebost.metainfo.xml
           desktop-file-validate packaging/flatpak/ai.rebost.Rebost.desktop
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6
         with:
           manifest-path: packaging/flatpak/ai.rebost.Rebost.yml
           bundle: rebost.flatpak
@@ -109,7 +109,7 @@ jobs:
           - arch: aarch64
             runner: ubuntu-24.04-arm
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: rebost-flatpak-${{ matrix.arch }}
       - name: Install Flatpak and Xvfb
@@ -154,7 +154,7 @@ jobs:
           grep -q 'updates come from Flatpak' "$log" || { echo "::error::the Flatpak still checks for in-app updates"; exit 1; }
           tail -n 40 run.log
           kill "$pid" 2>/dev/null || true
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ always() }}
         with:
           name: smoke-flatpak-${{ matrix.arch }}

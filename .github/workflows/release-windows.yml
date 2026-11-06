@@ -39,19 +39,19 @@ jobs:
     runs-on: windows-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
           # Current LTS. artifact-signing-cli wants .NET 8 or newer.
-          dotnet-version: "10.0.x"
-      - uses: dtolnay/rust-toolchain@master
+          dotnet-version: "10.0.403"
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.1
       - name: Install artifact-signing-cli
-        run: cargo install artifact-signing-cli
+        run: cargo install --locked --version 0.12.0 artifact-signing-cli
       - name: Stage the ARM64 engine
         run: node scripts/fetch-engine.mjs --triple=aarch64-pc-windows-msvc
       - name: Sign llama-server.exe and DLLs
@@ -63,7 +63,7 @@ jobs:
           AZURE_ARTIFACT_SIGNING_ACCOUNT: ${{ secrets.AZURE_ARTIFACT_SIGNING_ACCOUNT }}
           AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
         run: pwsh -File scripts/sign-engine-windows.ps1
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: engine-arm64-signed
           path: src-tauri/resources/engine/*.zip
@@ -89,25 +89,25 @@ jobs:
             artifact: rebost-windows-arm64-unsigned
             extra_args: -SkipAuthenticode
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
-          version: 12.15.0
-      - uses: actions/setup-node@v7
+          version: 12.17.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         # ARM64 is unsigned here; Authenticode runs on windows-latest in sign-arm64.
         if: ${{ matrix.extra_args == '' }}
         with:
           # Current LTS. artifact-signing-cli wants .NET 8 or newer.
-          dotnet-version: "10.0.x"
-      - uses: dtolnay/rust-toolchain@master
+          dotnet-version: "10.0.403"
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.1
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: src-tauri
           prefix-key: windows-${{ matrix.target }}
@@ -115,8 +115,8 @@ jobs:
       - name: Install artifact-signing-cli
         if: ${{ matrix.extra_args == '' }}
         continue-on-error: true
-        run: cargo install artifact-signing-cli
-      - uses: actions/download-artifact@v8
+        run: cargo install --locked --version 0.12.0 artifact-signing-cli
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         if: ${{ matrix.label == 'ARM64' && needs.engine-arm64.result == 'success' }}
         # Missing artifact: sign-engine-windows.mjs warns and bundles the upstream zip.
         continue-on-error: true
@@ -135,7 +135,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pwsh -File scripts/release-windows.ps1 -Target ${{ matrix.target }} ${{ matrix.extra_args }}
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ${{ matrix.artifact }}
           path: |
@@ -150,25 +150,25 @@ jobs:
     needs: [nsis]
     if: ${{ always() && (needs.nsis.result == 'success' || inputs.sign_arm_from_run != '') }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
         with:
-          version: 12.15.0
-      - uses: actions/setup-node@v7
+          version: 12.17.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
           # Current LTS. artifact-signing-cli wants .NET 8 or newer.
-          dotnet-version: "10.0.x"
-      - uses: dtolnay/rust-toolchain@master
+          dotnet-version: "10.0.403"
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.1
       - run: pnpm install --frozen-lockfile
       - name: Install artifact-signing-cli
-        run: cargo install artifact-signing-cli
-      - uses: actions/download-artifact@v8
+        run: cargo install --locked --version 0.12.0 artifact-signing-cli
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         if: ${{ inputs.sign_arm_from_run == '' }}
         with:
           name: rebost-windows-arm64-unsigned
@@ -177,18 +177,26 @@ jobs:
         if: ${{ inputs.sign_arm_from_run != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.sign_arm_from_run }}
         run: |
+          if ($env:SOURCE_RUN_ID -notmatch '^[0-9]+$') { throw "Invalid workflow run ID" }
           $PSNativeCommandUseErrorActionPreference = $false
+          $source = gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:SOURCE_RUN_ID" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $source.event -ne "workflow_dispatch" -or
+              $source.path -ne ".github/workflows/release-windows.yml" -or
+              $source.head_repository.full_name -ne $env:GITHUB_REPOSITORY) {
+            throw "Source must be a Release Windows dispatch from this repository"
+          }
           New-Item -ItemType Directory -Force arm-in | Out-Null
           $ok = $false
           foreach ($name in @("rebost-windows-arm64-unsigned", "rebost-windows-arm64")) {
-            gh run download ${{ inputs.sign_arm_from_run }} --repo ${{ github.repository }} --name $name --dir arm-in
+            gh run download $env:SOURCE_RUN_ID --repo $env:GITHUB_REPOSITORY --name $name --dir arm-in
             if ($LASTEXITCODE -eq 0) {
               $ok = $true
               break
             }
           }
-          if (-not $ok) { throw "Could not download an ARM installer from run ${{ inputs.sign_arm_from_run }}" }
+          if (-not $ok) { throw "Could not download an ARM installer from run $env:SOURCE_RUN_ID" }
       - name: Sign ARM NSIS
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -200,7 +208,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pwsh -File scripts/sign-windows-nsis.ps1 -SearchDir arm-in
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: rebost-windows-arm64
           path: |
