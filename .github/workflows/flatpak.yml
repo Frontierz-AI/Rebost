@@ -34,11 +34,10 @@ jobs:
     name: Dependency sources
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    env:
-      # Keep component installs separate from the runner's preinstalled toolchains.
-      RUSTUP_HOME: ${{ runner.temp }}/rebost-flatpak-rustup
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Isolate Rust toolchains
+        run: echo "RUSTUP_HOME=$RUNNER_TEMP/rebost-flatpak-rustup" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.1
