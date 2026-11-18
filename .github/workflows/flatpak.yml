@@ -65,7 +65,8 @@ jobs:
             runner: ubuntu-24.04-arm
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
-      options: --privileged
+      # Keep SDK updates off the image overlay, where directory renames can fail with EXDEV.
+      options: --privileged --volume /var/lib/flatpak
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
