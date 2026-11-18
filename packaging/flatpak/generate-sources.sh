@@ -7,7 +7,7 @@
 #   packaging/flatpak/generate-sources.sh --out DIR   # elsewhere (flathub.sh)
 #
 # Uses flatpak-builder-tools at a pinned commit, in a Python virtualenv under
-# the user cache. Needs python3 (with venv) and git. Rerun after any change to
+# the user cache. Needs python3 (with venv), git and the project Cargo toolchain. Rerun after changes to
 # Cargo.lock or pnpm-lock.yaml.
 
 set -euo pipefail
@@ -53,6 +53,9 @@ fi
 echo "Cargo sources…"
 "${VENV}/bin/python" "${TOOLS}/cargo/flatpak-cargo-generator.py" \
   "${ROOT}/src-tauri/Cargo.lock" -o "${OUT}/cargo-sources.json"
+
+"${VENV}/bin/python" "${ROOT}/packaging/flatpak/vendor-git-crates.py" \
+  "${ROOT}/src-tauri/Cargo.toml" "${OUT}/cargo-sources.json"
 
 echo "pnpm sources…"
 "${VENV}/bin/flatpak-node-generator" pnpm "${ROOT}/pnpm-lock.yaml" \
