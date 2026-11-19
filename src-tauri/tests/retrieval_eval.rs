@@ -194,7 +194,7 @@ async fn shelf_scoping_is_strict() {
 #[tokio::test(flavor = "multi_thread")]
 async fn conversation_memory_is_searchable_and_skips_prompt_turns() {
     let app = test_app();
-    let now = chrono::Utc::now();
+    let now = jiff::Timestamp::now();
     app.ctx
         .search
         .index_message(
