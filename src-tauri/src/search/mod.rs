@@ -281,7 +281,7 @@ impl SearchIndex {
         role: &str,
         text: &str,
         language: Option<&str>,
-        created_at: chrono::DateTime<chrono::Utc>,
+        created_at: jiff::Timestamp,
     ) -> Result<()> {
         self.index_message_deferred(thread_id, message_id, role, text, language, created_at)?;
         self.commit()
@@ -295,7 +295,7 @@ impl SearchIndex {
         role: &str,
         text: &str,
         language: Option<&str>,
-        created_at: chrono::DateTime<chrono::Utc>,
+        created_at: jiff::Timestamp,
     ) -> Result<()> {
         let lang = language.and_then(normalize_lang);
         self.with_writer(|writer| {
@@ -306,7 +306,7 @@ impl SearchIndex {
                 self.fields.message_id => message_id,
                 self.fields.role => role,
                 self.fields.body => text,
-                self.fields.created_at => DateTime::from_timestamp_secs(created_at.timestamp()),
+                self.fields.created_at => DateTime::from_timestamp_secs(created_at.as_second()),
             );
             if let Some(lang) = lang {
                 document.add_text(self.fields.language, lang);
