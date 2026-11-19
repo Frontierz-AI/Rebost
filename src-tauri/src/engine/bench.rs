@@ -143,7 +143,7 @@ async fn run(engine: &Arc<Engine>, base: &str, force: bool) -> Result<()> {
             settings.benchmark = Some(BenchmarkResult {
                 prompt_tokens_per_second: timings.prompt_per_second,
                 generation_tokens_per_second: timings.predicted_per_second,
-                measured_at: chrono::Utc::now().to_rfc3339(),
+                measured_at: crate::timestamps::now_string(),
                 model_file,
                 runtime: Some(runtime),
             });
