@@ -97,14 +97,14 @@ modules:
         cp -P build/bin/llama-server build/bin/*.so* "$stage/"
         dest=/app/lib/Rebost/resources/engine
         mkdir -p "$dest"
-        tar -czf "$dest/llama-b11960-bin-ubuntu-vulkan-$suffix.tar.gz" -C stage build
+        tar -czf "$dest/llama-b12359-bin-ubuntu-vulkan-$suffix.tar.gz" -C stage build
         rm "$stage"/libggml-vulkan.so*
-        tar -czf "$dest/llama-b11960-bin-ubuntu-$suffix.tar.gz" -C stage build
+        tar -czf "$dest/llama-b12359-bin-ubuntu-$suffix.tar.gz" -C stage build
     sources:
       - type: git
         url: https://github.com/ggml-org/llama.cpp.git
-        tag: b11960
-        commit: 8642541b255bfb5dc39cd351a178be09013a55d6
+        tag: b12359
+        commit: b1b770d90d94cad9e9ea5b993bdbc383a522fb28
 
   - name: rebost
     buildsystem: simple

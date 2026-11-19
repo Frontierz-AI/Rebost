@@ -598,6 +598,12 @@
             ? ` · ${diag.engineState.detail}`
             : ""})
         </p>
+        {#if diag.activeAccelerator}
+          <p>active backend: {diag.activeAccelerator}</p>
+        {/if}
+        {#if diag.lastEngineFallback}
+          <p>last fallback: {diag.lastEngineFallback}</p>
+        {/if}
         <p>data: {diag.dataDir}</p>
         <p class="mt-1 text-[10.5px] text-ink-faint">
           {t("settings.dataFolderHint")}
@@ -625,8 +631,8 @@
           </p>
         {/if}
         <p>
-          machine: {diag.machine.cpu} · {formatBytes(diag.machine.totalRamBytes)} RAM · {diag
-            .machine.accelerator}
+          machine: {diag.machine.cpu} · {formatBytes(diag.machine.totalRamBytes)} RAM · preferred backend:
+          {diag.machine.accelerator}
           {diag.machine.processArch !== diag.machine.osArch
             ? ` · ${diag.machine.processArch} on ${diag.machine.osArch}`
             : ` · ${diag.machine.processArch}`}

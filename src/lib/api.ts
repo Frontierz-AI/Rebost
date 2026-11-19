@@ -351,6 +351,8 @@ export interface Diagnostics {
   dataDir: string;
   engineBuild: string;
   engineState: EngineStatus;
+  activeAccelerator?: string | null;
+  lastEngineFallback?: string | null;
   model?: InstalledModel | null;
   indexRecords: number;
   contextBudgetChars: number;

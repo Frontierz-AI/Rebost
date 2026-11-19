@@ -19,16 +19,13 @@ pub fn preferred_optional_pin() -> Option<&'static EnginePin> {
 }
 
 fn detected_accelerator() -> Option<&'static str> {
-    #[cfg(all(windows, target_arch = "x86_64"))]
-    {
-        // The x64 Windows copy on an ARM PC must not chase NVIDIA or Adreno.
-        // Vulkan offload on Adreno hangs; CUDA is not present.
-        if windows_host_is_arm64() {
-            return None;
-        }
-        if nvidia_driver_present() {
-            return Some("CUDA");
-        }
+    #[cfg(all(windows, any(target_arch = "x86_64", target_arch = "aarch64")))]
+    if !runs_x64_on_arm() && nvidia_driver_present() {
+        return Some("CUDA");
+    }
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    if std::path::Path::new("/dev/nvidiactl").exists() {
+        return Some("CUDA");
     }
     #[cfg(all(windows, target_arch = "aarch64"))]
     if adreno_present() {
@@ -37,12 +34,8 @@ fn detected_accelerator() -> Option<&'static str> {
     None
 }
 
-/// Whether the Vulkan build at `binary` would run on a graphics card. On a
-/// Linux PC with no Vulkan driver, or only a software one (llama.cpp skips
-/// those), `--list-devices` lists nothing and the GPU plan would only slow
-/// the CPU down. `None` when the check could not run; the answer is kept per
-/// binary for the life of the process.
-pub(crate) async fn vulkan_device_listed(binary: &std::path::Path) -> Option<bool> {
+/// Each pinned binary has one GPU backend. Cache its device probe for this session.
+pub(crate) async fn device_listed(binary: &std::path::Path, backend: &'static str) -> Option<bool> {
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::sync::{Mutex, OnceLock};
@@ -69,21 +62,24 @@ pub(crate) async fn vulkan_device_listed(binary: &std::path::Path) -> Option<boo
     if !output.status.success() {
         return None;
     }
-    let listed = listed_devices(&String::from_utf8_lossy(&output.stdout))? > 0;
+    let listed = lists_backend(&String::from_utf8_lossy(&output.stdout), backend)?;
     crate::core::mutex_lock(seen).insert(binary.to_path_buf(), listed);
     Some(listed)
 }
 
-/// Devices under `Available devices:` in `llama-server --list-devices`.
-fn listed_devices(stdout: &str) -> Option<usize> {
+/// Ignore host accelerators such as BLAS when looking for an actual GPU.
+fn lists_backend(stdout: &str, backend: &str) -> Option<bool> {
     let mut lines = stdout.lines();
     lines.find(|line| line.trim_start().starts_with("Available devices"))?;
     Some(
         lines
             .take_while(|line| line.starts_with(char::is_whitespace))
-            .map(str::trim)
-            .filter(|line| line.contains(": ") && !line.starts_with("(none)"))
-            .count(),
+            .any(|line| {
+                let Some((name, _description)) = line.trim().split_once(": ") else {
+                    return false;
+                };
+                name.starts_with(backend) || (backend == "OpenCL" && name == "GPUOpenCL")
+            }),
     )
 }
 
@@ -121,7 +117,7 @@ fn system32() -> std::path::PathBuf {
     std::path::PathBuf::from(root).join("System32")
 }
 
-#[cfg(all(windows, target_arch = "x86_64"))]
+#[cfg(all(windows, any(target_arch = "x86_64", target_arch = "aarch64")))]
 fn nvidia_driver_present() -> bool {
     let dir = system32();
     dir.join("nvcuda.dll").is_file() || dir.join("nvml.dll").is_file()
@@ -197,14 +193,32 @@ mod tests {
     }
 
     #[test]
-    fn device_list_counts_only_listed_devices() {
+    fn device_list_matches_the_requested_backend() {
         let gpu = "Available devices:\n  Vulkan0: AMD Radeon 780M (RADV PHOENIX) (16384 MiB, 15000 MiB free)\n";
-        assert_eq!(listed_devices(gpu), Some(1));
-        assert_eq!(listed_devices("Available devices:\n"), Some(0));
-        assert_eq!(listed_devices("Available devices:\n  (none)\n"), Some(0));
+        assert_eq!(lists_backend(gpu, "Vulkan"), Some(true));
+        assert_eq!(
+            lists_backend(
+                "Available devices:\n  GPUOpenCL: Qualcomm Adreno X1-45",
+                "OpenCL"
+            ),
+            Some(true)
+        );
+        assert_eq!(
+            lists_backend("Available devices:\n  CUDA0: NVIDIA RTX Spark", "CUDA"),
+            Some(true)
+        );
+        assert_eq!(
+            lists_backend("Available devices:\n  BLAS: CPU", "Vulkan"),
+            Some(false)
+        );
+        assert_eq!(lists_backend("Available devices:\n", "CUDA"), Some(false));
+        assert_eq!(
+            lists_backend("Available devices:\n  BLAS: CPU acceleration\n", "CUDA"),
+            Some(false)
+        );
         let trailing = "load_backend: loaded CPU backend\nAvailable devices:\n  Vulkan0: Intel(R) Graphics (ADL GT2) (8000 MiB, 7000 MiB free)\n  Vulkan1: NVIDIA GeForce RTX 4060 (8188 MiB, 8000 MiB free)\nmain: exiting\n";
-        assert_eq!(listed_devices(trailing), Some(2));
-        assert_eq!(listed_devices("error: unknown argument"), None);
+        assert_eq!(lists_backend(trailing, "Vulkan"), Some(true));
+        assert_eq!(lists_backend("error: unknown argument", "Vulkan"), None);
     }
 
     #[test]

@@ -5,9 +5,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-19
+
+### Added
+
+- Native Windows ARM64 and Linux ARM64 installations can use NVIDIA graphics through CUDA. Rebost downloads the matching engine and runtime when it finds the driver. Your installed GGUF files work with the new engine.
+- Diagnostics shows the backend used by the running AI and the most recent reason it fell back to another engine.
+
+### Changed
+
+- Updated llama.cpp to 1.0.0, including OpenCL improvements for Snapdragon laptops with Adreno graphics. Rebost checks that CUDA and OpenCL can see the GPU and generate text before starting a chat.
+- Updated the document readers, build tools and dependencies. Dependency updates use a minimum release age of one day.
+
 ### Fixed
 
-- The AI starts again on Macs with an Apple chip running macOS 14 or 15. The llama.cpp 0.8.0 release could not prepare its graphics code on those versions, so the AI stopped before loading. AIs and image files in the BF16 format run partly on the processor there, more slowly.
+- The new engine includes the fix for loading AI on macOS 14 and 15 with Apple silicon.
 
 ## [1.0.0] - 2026-10-29
 
@@ -696,7 +708,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Frontierz-AI/Rebost/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.9...v1.0.0
 [0.9.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.8...v0.9.9
 [0.9.8]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.7...v0.9.8

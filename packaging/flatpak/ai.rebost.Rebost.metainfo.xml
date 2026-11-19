@@ -93,6 +93,11 @@
   </keywords>
 
   <releases>
+    <release version="1.1.0" date="2026-11-19">
+      <description>
+        <p>Rebost updates the local AI engine to llama.cpp 1.0.0. On Linux ARM64 with an NVIDIA driver, it can download and test a CUDA engine. Diagnostics shows the running backend and the last fallback.</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-10-29">
       <description>
         <p>Rebost reaches 1.0.0. This maintenance release adds no new features: it polishes 0.9.9 and updates the components inside Rebost, including what runs the AI.</p>
