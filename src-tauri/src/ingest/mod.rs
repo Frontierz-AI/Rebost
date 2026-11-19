@@ -656,7 +656,7 @@ pub async fn process_file(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
                             pii_total: 0,
                             pii_categories: Default::default(),
                             ocr: false,
-                            updated_at: chrono::Utc::now().to_rfc3339(),
+                            updated_at: crate::timestamps::now_string(),
                             source_label: job.source_label.clone(),
                         });
                 meta.status = DocStatus::Error;
@@ -781,7 +781,7 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
             .unwrap_or(0)
     });
     let mtime_ms = fp.as_ref().map(|f| f.mtime_ms).unwrap_or(0);
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = crate::timestamps::now_string();
 
     let mut meta = DocumentMeta {
         id: doc_id.clone(),
@@ -834,7 +834,7 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
             }
             meta.status = DocStatus::Error;
             meta.error = Some(friendly_error(&error));
-            meta.updated_at = chrono::Utc::now().to_rfc3339();
+            meta.updated_at = crate::timestamps::now_string();
             {
                 if ctx
                     .ingest_queue
@@ -942,7 +942,7 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
     meta.pii_total = privacy.total;
     meta.pii_categories = privacy.categories.clone();
     meta.ocr = extraction.ocr_used;
-    meta.updated_at = chrono::Utc::now().to_rfc3339();
+    meta.updated_at = crate::timestamps::now_string();
     {
         if ctx
             .ingest_queue

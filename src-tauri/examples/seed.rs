@@ -41,8 +41,8 @@ fn fixture(dir: &Path, name: &str, contents: &str) -> PathBuf {
     path
 }
 
-fn now() -> chrono::DateTime<chrono::Utc> {
-    chrono::Utc::now()
+fn now() -> jiff::Timestamp {
+    jiff::Timestamp::now()
 }
 
 fn pause() {
@@ -285,7 +285,7 @@ fn user(ctx: &Ctx, thread_id: &str, shelf_id: Option<&str>, text: &str) -> anyho
         text: text.into(),
         thinking: None,
         activity: Vec::new(),
-        ts: ts.to_rfc3339(),
+        ts: rebost::timestamps::format(ts),
         shelf_id: shelf_id.map(str::to_string),
         sources: Vec::new(),
         status: "done".into(),
@@ -313,7 +313,7 @@ fn assistant(
         text: text.into(),
         thinking: thinking.map(str::to_string),
         activity,
-        ts: ts.to_rfc3339(),
+        ts: rebost::timestamps::format(ts),
         shelf_id: shelf_id.map(str::to_string),
         sources: cited,
         status: "done".into(),

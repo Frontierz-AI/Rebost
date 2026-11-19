@@ -586,7 +586,7 @@ async fn prepare_turn_does_not_stuff_earlier_chats() {
         "# Staff handbook\n\nThe office kitchen is restocked every Tuesday morning.\n",
     )
     .await;
-    let now = chrono::Utc::now();
+    let now = jiff::Timestamp::now();
     fixture
         .ctx
         .search
@@ -720,7 +720,7 @@ fn user_line(text: &str) -> StoredMessage {
         text: text.into(),
         thinking: None,
         activity: Vec::new(),
-        ts: chrono::Utc::now().to_rfc3339(),
+        ts: crate::timestamps::now_string(),
         shelf_id: None,
         sources: Vec::new(),
         status: "done".into(),
@@ -735,7 +735,7 @@ async fn search_chats_returns_notes_from_other_threads_on_the_same_shelf() {
     let kitchen = Conversations::create(&ctx.paths, Some("s_kitchen".into())).unwrap();
     let current = Conversations::create(&ctx.paths, Some("s_kitchen".into())).unwrap();
     let office = Conversations::create(&ctx.paths, Some("s_office".into())).unwrap();
-    let now = chrono::Utc::now();
+    let now = jiff::Timestamp::now();
     let kitchen_note = user_line("The office move budget is twelve thousand euros.");
     Conversations::append(&ctx.paths, &kitchen.id, &kitchen_note).unwrap();
     ctx.search
@@ -794,7 +794,7 @@ async fn search_chats_finds_earlier_turns_of_this_thread() {
     let paths = Paths::new(dir.path().join("appdata"));
     let ctx = Ctx::new(paths, Arc::new(NoopEvents), ExtractorSettings::default()).unwrap();
     let current = Conversations::create(&ctx.paths, None).unwrap();
-    let now = chrono::Utc::now();
+    let now = jiff::Timestamp::now();
     let old = user_line("The office move budget is twelve thousand euros.");
     Conversations::append(&ctx.paths, &current.id, &old).unwrap();
     ctx.search
