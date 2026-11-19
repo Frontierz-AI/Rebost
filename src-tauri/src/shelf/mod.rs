@@ -540,7 +540,7 @@ impl Library {
     pub fn expire_stale_reading(
         &mut self,
         shelf_id: &str,
-        now: chrono::DateTime<chrono::Utc>,
+        now: jiff::Timestamp,
         in_flight: impl Fn(&DocumentMeta) -> bool,
     ) -> usize {
         let Some(docs) = self.documents.get_mut(shelf_id) else {
@@ -551,16 +551,16 @@ impl Library {
             if doc.status != DocStatus::Reading {
                 continue;
             }
-            let Ok(updated) = chrono::DateTime::parse_from_rfc3339(&doc.updated_at) else {
+            let Ok(updated) = doc.updated_at.parse::<jiff::Timestamp>() else {
                 continue;
             };
-            let age = now.signed_duration_since(updated.with_timezone(&chrono::Utc));
-            if age.num_seconds() < STALE_READING_SECS || in_flight(doc) {
+            let age = now.duration_since(updated);
+            if age.as_secs() < STALE_READING_SECS || in_flight(doc) {
                 continue;
             }
             doc.status = DocStatus::Error;
             doc.error = Some(STALE_READING_ERROR.to_string());
-            doc.updated_at = now.to_rfc3339();
+            doc.updated_at = crate::timestamps::format(now);
             changed += 1;
         }
         changed
@@ -645,7 +645,7 @@ pub fn import_into_shelf(
     }
     let imports_root = shelf.managed_path.join("Imports");
     std::fs::create_dir_all(longpath::with_long_path(&imports_root))?;
-    let stamp = chrono::Local::now().format("%Y-%m-%d %H-%M").to_string();
+    let stamp = jiff::Zoned::now().strftime("%Y-%m-%d %H-%M").to_string();
     let mut import_dir = imports_root.join(&stamp);
     let mut counter = 2;
     while longpath::with_long_path(&import_dir).exists() {
@@ -839,11 +839,11 @@ mod tests {
         let root = dir.path().join("Rebost");
         let mut library = Library::load(&paths).unwrap();
         let shelf = library.create_shelf(&paths, "Docs", &root).unwrap();
-        let now = chrono::DateTime::parse_from_rfc3339("2026-08-15T12:00:00Z")
-            .unwrap()
-            .with_timezone(&chrono::Utc);
-        let fresh = (now - chrono::Duration::seconds(60)).to_rfc3339();
-        let stale = (now - chrono::Duration::seconds(STALE_READING_SECS + 1)).to_rfc3339();
+        let now = "2026-08-15T12:00:00Z".parse::<jiff::Timestamp>().unwrap();
+        let fresh = crate::timestamps::format(now - jiff::SignedDuration::from_secs(60));
+        let stale = crate::timestamps::format(
+            now - jiff::SignedDuration::from_secs(STALE_READING_SECS + 1),
+        );
         let reading = |id: &str, updated_at: &str| crate::types::DocumentMeta {
             id: id.into(),
             shelf_id: shelf.id.clone(),

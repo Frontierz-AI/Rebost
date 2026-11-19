@@ -122,7 +122,7 @@ impl ChatService {
         image_ids: &[String],
     ) -> Result<StoredMessage> {
         let ctx = &self.ctx;
-        let now = chrono::Utc::now();
+        let now = jiff::Timestamp::now();
         if text.chars().count() > crate::limits::PROMPT_MAX_CHARS {
             return Err(anyhow!("{}", rust_i18n::t!("errors.promptTooLong")));
         }
@@ -149,7 +149,7 @@ impl ChatService {
             text: text.clone(),
             thinking: None,
             activity: Vec::new(),
-            ts: now.to_rfc3339(),
+            ts: crate::timestamps::format(now),
             shelf_id: shelf_id.clone(),
             sources: Vec::new(),
             status: "done".into(),
@@ -303,7 +303,7 @@ impl ChatService {
                 Some(thinking_text)
             },
             activity,
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: shelf_id.clone(),
             sources: cited,
             status: status.to_string(),
@@ -339,7 +339,7 @@ fn index_saved_message(ctx: Arc<Ctx>, thread_id: String, message: StoredMessage)
             &message.role,
             &message.text,
             lang,
-            chrono::Utc::now(),
+            jiff::Timestamp::now(),
         ) {
             log::warn!("index saved message: {error:#}");
         }
