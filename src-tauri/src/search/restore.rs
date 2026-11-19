@@ -73,10 +73,11 @@ pub(crate) fn restore_if_pending(ctx: &Ctx) -> Result<()> {
             if message.status == "error" || message.text.is_empty() {
                 continue;
             }
-            let date = chrono::DateTime::parse_from_rfc3339(&message.ts)
-                .or_else(|_| chrono::DateTime::parse_from_rfc3339(&thread.created_at))
-                .map(|date| date.with_timezone(&chrono::Utc))
-                .unwrap_or_else(|_| chrono::Utc::now());
+            let date = message
+                .ts
+                .parse::<jiff::Timestamp>()
+                .or_else(|_| thread.created_at.parse::<jiff::Timestamp>())
+                .unwrap_or_else(|_| jiff::Timestamp::now());
             ctx.search.index_message_deferred(
                 &thread.id,
                 &message.id,

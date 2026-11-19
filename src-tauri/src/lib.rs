@@ -30,6 +30,7 @@ pub mod search;
 pub mod settings;
 pub mod shelf;
 pub mod snapshot;
+pub mod timestamps;
 pub mod types;
 pub mod updater;
 pub mod window;

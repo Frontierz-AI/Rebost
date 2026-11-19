@@ -166,7 +166,7 @@ fn expire_stale_reading(ctx: &Ctx, shelf_id: &str) {
     if !ctx.ingest_queue.synced() {
         return;
     }
-    let now = chrono::Utc::now();
+    let now = jiff::Timestamp::now();
     let changed = {
         let mut library = crate::core::write_lock(&ctx.library);
         let reading_ids: std::collections::HashSet<_> = library
@@ -784,7 +784,8 @@ mod tests {
                 .unwrap()
         };
         let path = shelf.managed_path.join("scan.pdf");
-        let hour_ago = (chrono::Utc::now() - chrono::Duration::hours(1)).to_rfc3339();
+        let hour_ago =
+            crate::timestamps::format(jiff::Timestamp::now() - jiff::SignedDuration::from_hours(1));
         crate::core::write_lock(&ctx.library).upsert_document(DocumentMeta {
             id: "d_scan".into(),
             shelf_id: shelf.id.clone(),

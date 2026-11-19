@@ -672,8 +672,8 @@ impl SearchIndex {
                 .get_first(self.fields.created_at)
                 .and_then(|v| v.as_datetime())
                 .map(|d| {
-                    chrono::DateTime::<chrono::Utc>::from_timestamp(d.into_timestamp_secs(), 0)
-                        .map(|d| d.to_rfc3339())
+                    jiff::Timestamp::from_second(d.into_timestamp_secs())
+                        .map(crate::timestamps::format)
                         .unwrap_or_default()
                 })
                 .unwrap_or_default();
@@ -1115,7 +1115,7 @@ mod tests {
     #[test]
     fn message_search_can_limit_to_listed_threads() {
         let (_dir, search) = index();
-        let now = chrono::Utc::now();
+        let now = jiff::Timestamp::now();
         search
             .index_message(
                 "t_kitchen",
