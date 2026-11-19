@@ -314,15 +314,28 @@ impl Engine {
 
 /// Publish the readiness sidecar last so an interrupted install is retried.
 fn install_runtime_files(source: &Path, target: &Path, sidecar: &str) -> Result<()> {
+    let source = source.canonicalize()?;
     let marker = source.join(sidecar);
     anyhow::ensure!(marker.is_file(), "runtime is missing {sidecar}");
-    for entry in std::fs::read_dir(source)? {
+    // Copy from the intact archive tree. A SONAME can refer to a sibling that
+    // appears later, and a retry may have to replace a partially copied DLL.
+    let pending = target.join(format!("{sidecar}.installing"));
+    for entry in std::fs::read_dir(&source)? {
         let entry = entry?;
-        if entry.path() != marker && entry.file_type()?.is_file() {
-            std::fs::rename(entry.path(), target.join(entry.file_name()))?;
-        }
+        let file = entry.path().canonicalize()?;
+        anyhow::ensure!(
+            file.parent() == Some(source.as_path()) && file.is_file(),
+            "unexpected entry in CUDA runtime: {}",
+            entry.path().display()
+        );
+        let output = if entry.file_name() == std::ffi::OsStr::new(sidecar) {
+            pending.clone()
+        } else {
+            target.join(entry.file_name())
+        };
+        std::fs::copy(file, output)?;
     }
-    std::fs::rename(marker, target.join(sidecar))?;
+    std::fs::rename(pending, target.join(sidecar))?;
     Ok(())
 }
 
@@ -394,6 +407,28 @@ mod tests {
         assert!(!pin.file_name.is_empty());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn install_runtime_resolves_sonames_beside_the_server() {
+        let src = tempfile::tempdir().unwrap();
+        let dest = tempfile::tempdir().unwrap();
+        std::fs::write(src.path().join("libcudart.so.13.5"), b"runtime").unwrap();
+        std::os::unix::fs::symlink("libcudart.so.13.5", src.path().join("libcudart.so.13"))
+            .unwrap();
+        std::fs::write(src.path().join("libcublas.so.13.5"), b"blas").unwrap();
+        std::os::unix::fs::symlink("libcublas.so.13.5", src.path().join("libcublas.so.13"))
+            .unwrap();
+        install_runtime_files(src.path(), dest.path(), "libcudart.so.13").unwrap();
+        assert_eq!(
+            std::fs::read(dest.path().join("libcudart.so.13")).unwrap(),
+            b"runtime"
+        );
+        assert_eq!(
+            std::fs::read(dest.path().join("libcublas.so.13")).unwrap(),
+            b"blas"
+        );
+    }
+
     #[test]
     fn install_runtime_files_merges_sidecars() {
         let src = tempfile::tempdir().unwrap();
@@ -401,8 +436,12 @@ mod tests {
         std::fs::write(src.path().join("cudart64_12.dll"), b"rt").unwrap();
         std::fs::write(dest.path().join("llama-server"), b"bin").unwrap();
         std::fs::write(src.path().join("cublas64_12.dll"), b"blas").unwrap();
+        std::fs::write(dest.path().join("cublas64_12.dll"), b"incomplete").unwrap();
         install_runtime_files(src.path(), dest.path(), "cudart64_12.dll").unwrap();
-        assert!(dest.path().join("cublas64_12.dll").is_file());
+        assert_eq!(
+            std::fs::read(dest.path().join("cublas64_12.dll")).unwrap(),
+            b"blas"
+        );
         assert_eq!(
             std::fs::read(dest.path().join("cudart64_12.dll")).unwrap(),
             b"rt"
