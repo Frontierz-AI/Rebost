@@ -87,6 +87,7 @@ impl Engine {
                 Err(error) => {
                     self.skip_optional
                         .store(true, std::sync::atomic::Ordering::Relaxed);
+                    self.record_fallback(format!("{}: {error}", preferred.accelerator));
                     log::warn!(
                         "optional {} engine unavailable ({error:#}); using bundled {}",
                         preferred.accelerator,
@@ -260,7 +261,12 @@ impl Engine {
         std::fs::create_dir_all(&extract_dir)?;
         unpack_engine_archive(&dest, &extract_dir)?;
         std::fs::create_dir_all(target)?;
-        copy_dir_contents(&extract_dir, target)?;
+        // Linux puts the three shared libraries in a directory named after the archive.
+        let source = match runtime.file_name.strip_suffix(".tar.gz") {
+            Some(directory) => extract_dir.join(directory),
+            None => extract_dir.clone(),
+        };
+        install_runtime_files(&source, target, runtime.sidecar)?;
         let _ = std::fs::remove_dir_all(&extract_dir);
         let _ = std::fs::remove_file(&dest);
         if !target.join(runtime.sidecar).is_file() {
@@ -306,17 +312,17 @@ impl Engine {
     }
 }
 
-fn copy_dir_contents(src: &Path, dest: &Path) -> Result<()> {
-    std::fs::create_dir_all(dest)?;
-    for entry in std::fs::read_dir(src)? {
+/// Publish the readiness sidecar last so an interrupted install is retried.
+fn install_runtime_files(source: &Path, target: &Path, sidecar: &str) -> Result<()> {
+    let marker = source.join(sidecar);
+    anyhow::ensure!(marker.is_file(), "runtime is missing {sidecar}");
+    for entry in std::fs::read_dir(source)? {
         let entry = entry?;
-        let to = dest.join(entry.file_name());
-        if entry.file_type()?.is_dir() {
-            copy_dir_contents(&entry.path(), &to)?;
-        } else {
-            std::fs::copy(entry.path(), &to)?;
+        if entry.path() != marker && entry.file_type()?.is_file() {
+            std::fs::rename(entry.path(), target.join(entry.file_name()))?;
         }
     }
+    std::fs::rename(marker, target.join(sidecar))?;
     Ok(())
 }
 
@@ -389,12 +395,14 @@ mod tests {
     }
 
     #[test]
-    fn copy_dir_contents_merges_sidecars() {
+    fn install_runtime_files_merges_sidecars() {
         let src = tempfile::tempdir().unwrap();
         let dest = tempfile::tempdir().unwrap();
         std::fs::write(src.path().join("cudart64_12.dll"), b"rt").unwrap();
         std::fs::write(dest.path().join("llama-server"), b"bin").unwrap();
-        copy_dir_contents(src.path(), dest.path()).unwrap();
+        std::fs::write(src.path().join("cublas64_12.dll"), b"blas").unwrap();
+        install_runtime_files(src.path(), dest.path(), "cudart64_12.dll").unwrap();
+        assert!(dest.path().join("cublas64_12.dll").is_file());
         assert_eq!(
             std::fs::read(dest.path().join("cudart64_12.dll")).unwrap(),
             b"rt"

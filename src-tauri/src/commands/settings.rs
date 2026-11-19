@@ -176,6 +176,8 @@ pub struct Diagnostics {
     pub version: String,
     pub data_dir: String,
     pub engine_build: String,
+    pub active_accelerator: Option<String>,
+    pub last_engine_fallback: Option<String>,
     pub engine_state: EngineStatus,
     pub model: Option<InstalledModel>,
     pub index_records: u64,
@@ -207,7 +209,13 @@ pub fn diagnostics(
     Diagnostics {
         version: app.package_info().version.to_string(),
         data_dir: ctx.paths.base().to_string_lossy().to_string(),
-        engine_build: crate::engine::ENGINE_RELEASE.to_string(),
+        engine_build: format!(
+            "{} ({})",
+            crate::engine::ENGINE_RELEASE,
+            crate::engine::ENGINE_BUILD
+        ),
+        active_accelerator: engine.active_accelerator(),
+        last_engine_fallback: engine.last_fallback(),
         engine_state: engine.status(),
         model: settings.active_model.clone(),
         index_records: ctx.search.num_docs(),

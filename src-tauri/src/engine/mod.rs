@@ -80,6 +80,7 @@ pub struct Engine {
     disabled_vision: std::sync::Mutex<Option<String>>,
     /// Why image support last failed to start, for Diagnostics.
     vision_error: std::sync::Mutex<Option<String>>,
+    fallback_reason: std::sync::Mutex<Option<String>>,
     install_lock: tokio::sync::Mutex<()>,
     ctx: Arc<Ctx>,
     pub client: reqwest::Client,
@@ -255,6 +256,7 @@ impl Engine {
             vision: std::sync::Mutex::new(None),
             disabled_vision: std::sync::Mutex::new(None),
             vision_error: std::sync::Mutex::new(None),
+            fallback_reason: std::sync::Mutex::new(None),
             install_lock: tokio::sync::Mutex::new(()),
             ctx,
             client: reqwest::Client::builder()
@@ -294,6 +296,23 @@ impl Engine {
             generation_in_flight: AtomicUsize::new(0),
             skip_optional: AtomicBool::new(false),
         })
+    }
+
+    pub fn active_accelerator(&self) -> Option<String> {
+        let inner = self.inner.try_lock().ok()?;
+        inner.child.as_ref()?;
+        inner
+            .benchmark_runtime
+            .as_ref()
+            .map(|runtime| runtime.accelerator.clone())
+    }
+
+    fn record_fallback(&self, reason: String) {
+        *crate::core::mutex_lock(&self.fallback_reason) = Some(reason);
+    }
+
+    pub fn last_fallback(&self) -> Option<String> {
+        crate::core::mutex_lock(&self.fallback_reason).clone()
     }
 
     pub fn status(&self) -> EngineStatus {

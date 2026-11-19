@@ -97,22 +97,6 @@ fn failure_reason(tail: &str) -> Option<String> {
     Some(line.chars().take(240).collect())
 }
 
-/// llama.cpp b11960 cannot compile its bfloat16 Metal kernels with the Metal
-/// toolchain of macOS 14 and 15, so the server exits before it loads anything
-/// (ggml-org/llama.cpp#31272, fixed by #31360 after this pin). Turning bfloat16
-/// off skips those kernels; BF16 tensors then run on the CPU. An unknown version
-/// gets it too, since the other outcome is an AI that never starts.
-/// Remove with the next engine bump.
-fn metal_needs_bf16_off(accelerator: &str, os_version: Option<&str>) -> bool {
-    if accelerator != "Metal" {
-        return false;
-    }
-    let major = os_version
-        .and_then(|version| version.split('.').next())
-        .and_then(|major| major.parse::<u32>().ok());
-    major.is_none_or(|major| major <= 15)
-}
-
 fn llama_server_args(model_path: &Path, port: u16, plan: &SpawnPlan) -> Vec<String> {
     let mut args = vec![
         "-m".into(),
@@ -183,16 +167,20 @@ impl Engine {
     /// and then hang or return nothing on the first token.
     async fn generation_probe_ok(&self, port: u16) -> bool {
         let url = format!("http://127.0.0.1:{port}/completion");
-        let send = self
+        let result = self
             .client
             .post(&url)
             .json(&serde_json::json!({
-                "prompt": "Hi",
+                "prompt": "Count: 1, 2, 3,",
+                "temperature": 0,
+                "ignore_eos": true,
                 "n_predict": 4,
                 "cache_prompt": false,
             }))
-            .send();
-        let Ok(Ok(response)) = tokio::time::timeout(Duration::from_secs(60), send).await else {
+            .timeout(Duration::from_secs(60))
+            .send()
+            .await;
+        let Ok(response) = result else {
             return false;
         };
         if !response.status().is_success() {
@@ -201,7 +189,7 @@ impl Engine {
         let value: serde_json::Value = response.json().await.unwrap_or_default();
         let predicted = value["tokens_predicted"].as_i64().unwrap_or(0);
         let content = value["content"].as_str().unwrap_or("");
-        predicted > 0 || !content.is_empty()
+        predicted > 0 && !content.is_empty()
     }
 
     /// Bring the engine up if Chat needs it. Queued callers simply await.
@@ -354,6 +342,7 @@ impl Engine {
                     used_fallback = true;
                     self.skip_optional
                         .store(true, std::sync::atomic::Ordering::Relaxed);
+                    self.record_fallback(format!("{}: {}", pin.accelerator, fail.error));
                     log::warn!(
                         "optional {} engine failed ({:#}); falling back to bundled {}",
                         pin.accelerator,
@@ -377,6 +366,7 @@ impl Engine {
                     // too, do not go back to the bundled one.
                     used_fallback = true;
                     let cpu = cpu.expect("CPU fallback pin");
+                    self.record_fallback(format!("{}: {}", pin.accelerator, fail.error));
                     log::warn!(
                         "{} engine failed ({:#}); trying the CPU build",
                         pin.accelerator,
@@ -432,10 +422,19 @@ impl Engine {
             Err(error) => return Err(SpawnFailed::before_start(false, error)),
         };
         let profile = MachineProfile::detect(&self.ctx.models_dir());
+        if matches!(pin.accelerator, "CUDA" | "OpenCL")
+            && super::gpu::device_listed(binary, pin.accelerator).await != Some(true)
+        {
+            return Err(SpawnFailed::before_start(
+                true,
+                anyhow!("{} device unavailable", pin.accelerator),
+            ));
+        }
         let no_gpu = cfg!(target_os = "linux")
             && pin.accelerator == "Vulkan"
-            && super::gpu::vulkan_device_listed(binary).await == Some(false);
+            && super::gpu::device_listed(binary, "Vulkan").await == Some(false);
         if no_gpu {
+            self.record_fallback("Vulkan: no GPU device listed".into());
             log::warn!(
                 "the Vulkan build found no graphics card; running on the CPU (--device none)"
             );
@@ -509,14 +508,6 @@ impl Engine {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
-        let os_version = sysinfo::System::os_version();
-        if metal_needs_bf16_off(pin.accelerator, os_version.as_deref()) {
-            log::info!(
-                "macOS {}: starting llama-server with bfloat16 off",
-                os_version.as_deref().unwrap_or("unknown")
-            );
-            command.env("GGML_METAL_BF16_DISABLE", "1");
-        }
         if let Some(limits) = vision {
             let projector = model.projector.as_ref().expect("vision projector");
             command
@@ -583,7 +574,7 @@ impl Engine {
                 ready = self.health_ok(port) => ready,
             };
             if healthy {
-                let probe_ok = if pin.accelerator == "OpenCL" {
+                let probe_ok = if matches!(pin.accelerator, "OpenCL" | "CUDA") {
                     tokio::select! {
                         biased;
                         _ = super::wait_if_cancelled(cancel) => continue,
@@ -593,7 +584,7 @@ impl Engine {
                     true
                 };
                 if !probe_ok {
-                    log::warn!("OpenCL loaded but a test reply failed; falling back to CPU");
+                    log::warn!("{} loaded but a test reply failed", pin.accelerator);
                     if let Some(pid) = child.id() {
                         force_kill_pid(pid);
                     }
@@ -602,7 +593,7 @@ impl Engine {
                         try_bundled: true,
                         with_vision,
                         reason: None,
-                        error: anyhow!("OpenCL probe failed"),
+                        error: anyhow!("{} generation probe failed", pin.accelerator),
                     });
                 }
                 break;
@@ -775,30 +766,6 @@ mod tests {
     fn has_pair(args: &[String], key: &str, value: &str) -> bool {
         args.windows(2)
             .any(|pair| pair[0] == key && pair[1] == value)
-    }
-
-    #[test]
-    fn bf16_stays_on_only_for_metal_on_macos_16_and_newer() {
-        for version in ["11.7.10", "13.3", "14.8", "15.8.2", "15"] {
-            assert!(metal_needs_bf16_off("Metal", Some(version)), "{version}");
-        }
-        for version in ["16.0", "26.1", "27.0"] {
-            assert!(!metal_needs_bf16_off("Metal", Some(version)), "{version}");
-        }
-        assert!(metal_needs_bf16_off("Metal", None));
-        assert!(metal_needs_bf16_off("Metal", Some("")));
-        assert!(metal_needs_bf16_off("Metal", Some("unknown")));
-        assert!(!metal_needs_bf16_off("Vulkan", Some("14.8")));
-        assert!(!metal_needs_bf16_off("CPU", None));
-    }
-
-    #[test]
-    fn bf16_workaround_goes_with_the_engine_that_needs_it() {
-        assert_eq!(
-            super::super::pin::ENGINE_BUILD,
-            "b11960",
-            "the upstream fix (#31360) is in newer builds: remove metal_needs_bf16_off"
-        );
     }
 
     #[test]
