@@ -24,7 +24,7 @@ pub fn document_id(shelf_id: &str, source_id: &str, rel_path: &str) -> String {
 pub fn shelf_id(name: &str) -> String {
     format!(
         "s_{}",
-        short_hash(&[name, &chrono::Utc::now().to_rfc3339()], 8)
+        short_hash(&[name, &crate::timestamps::now_string()], 8)
     )
 }
 

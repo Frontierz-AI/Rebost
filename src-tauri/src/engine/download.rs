@@ -764,8 +764,8 @@ fn parse_retry_after(headers: &HeaderMap) -> Option<Duration> {
     if let Ok(seconds) = raw.parse::<u64>() {
         return Some(Duration::from_secs(seconds));
     }
-    let dt = chrono::DateTime::parse_from_rfc2822(raw).ok()?;
-    let wait = dt.timestamp() - chrono::Utc::now().timestamp();
+    let dt = jiff::fmt::rfc2822::parse(raw).ok()?;
+    let wait = dt.timestamp().as_second() - jiff::Timestamp::now().as_second();
     Some(Duration::from_secs(wait.max(0) as u64))
 }
 
