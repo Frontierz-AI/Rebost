@@ -225,7 +225,7 @@ impl Conversations {
     pub fn create(paths: &Paths, shelf_id: Option<String>) -> Result<ThreadMeta> {
         let transaction = crate::paths::metadata_lock(&paths.threads_index());
         let _write = crate::core::mutex_lock(&transaction);
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = crate::timestamps::now_string();
         let mut file = read_threads(paths);
         assign_missing_avatars(&mut file.threads);
         let used: HashSet<String> = file
@@ -270,7 +270,7 @@ impl Conversations {
             .find(|t| t.id == thread_id)
             .ok_or_else(|| anyhow::anyhow!("thread not found"))?;
         thread.upload_shelf_id = Some(shelf_id);
-        thread.updated_at = chrono::Utc::now().to_rfc3339();
+        thread.updated_at = crate::timestamps::now_string();
         write_threads(paths, &file)
     }
 
@@ -285,7 +285,7 @@ impl Conversations {
             .find(|t| t.id == thread_id)
             .ok_or_else(|| anyhow::anyhow!("thread not found"))?;
         thread.title = title;
-        thread.updated_at = chrono::Utc::now().to_rfc3339();
+        thread.updated_at = crate::timestamps::now_string();
         write_threads(paths, &file)
     }
 
@@ -333,7 +333,7 @@ impl Conversations {
         file.sync_data()?;
 
         if let Some(thread) = threads.threads.iter_mut().find(|t| t.id == thread_id) {
-            thread.updated_at = chrono::Utc::now().to_rfc3339();
+            thread.updated_at = crate::timestamps::now_string();
             thread.message_count += 1;
             if thread.message_count == 1
                 && thread.title == "New conversation"
@@ -625,7 +625,7 @@ mod tests {
             text: "Explain EBITDA in simple terms for our monthly board meeting".into(),
             thinking: None,
             activity: Vec::new(),
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: None,
             sources: Vec::new(),
             status: "done".into(),
@@ -653,7 +653,7 @@ mod tests {
             text: text.into(),
             thinking: None,
             activity: Vec::new(),
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: None,
             sources: Vec::new(),
             status: "done".into(),
@@ -771,7 +771,7 @@ mod tests {
             text: "What changed this week?".into(),
             thinking: None,
             activity: Vec::new(),
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: None,
             sources: Vec::new(),
             status: "done".into(),
@@ -794,7 +794,7 @@ mod tests {
             text: "First question about the lease".into(),
             thinking: None,
             activity: Vec::new(),
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: None,
             sources: Vec::new(),
             status: "done".into(),
@@ -808,7 +808,7 @@ mod tests {
             text: "And the dates?".into(),
             thinking: None,
             activity: Vec::new(),
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: None,
             sources: Vec::new(),
             status: "done".into(),
@@ -866,7 +866,7 @@ mod tests {
             text: text.into(),
             thinking: None,
             activity: Vec::new(),
-            ts: chrono::Utc::now().to_rfc3339(),
+            ts: crate::timestamps::now_string(),
             shelf_id: None,
             sources: Vec::new(),
             status: "done".into(),

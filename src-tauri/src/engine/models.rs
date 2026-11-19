@@ -247,24 +247,22 @@ fn display_name_from_repo(repo: &str) -> String {
         .to_string()
 }
 
-fn parse_released_on(value: &str) -> Option<chrono::NaiveDate> {
+fn parse_released_on(value: &str) -> Option<jiff::civil::Date> {
     let day = value.chars().take(10).collect::<String>();
-    chrono::NaiveDate::parse_from_str(&day, "%Y-%m-%d")
-        .ok()
-        .or_else(|| {
-            if day.len() == 7 {
-                chrono::NaiveDate::parse_from_str(&format!("{day}-01"), "%Y-%m-%d").ok()
-            } else {
-                None
-            }
-        })
+    day.parse::<jiff::civil::Date>().ok().or_else(|| {
+        if day.len() == 7 {
+            format!("{day}-01").parse::<jiff::civil::Date>().ok()
+        } else {
+            None
+        }
+    })
 }
 
-fn recency_score(released: Option<&str>, today: chrono::NaiveDate) -> i64 {
+fn recency_score(released: Option<&str>, today: jiff::civil::Date) -> i64 {
     let Some(date) = released.and_then(parse_released_on) else {
         return 0;
     };
-    let days = today.signed_duration_since(date).num_days();
+    let days = today.duration_since(date).as_secs() / 86_400;
     if !(0..=365).contains(&days) {
         return 0;
     }
@@ -324,7 +322,7 @@ fn fit_score(fits: Option<bool>) -> i64 {
 }
 
 /// Mix of fit, recency, how well the file uses this machine, Official, then downloads.
-fn best_score(result: &ModelSearchResult, today: chrono::NaiveDate, budget: u64) -> i64 {
+fn best_score(result: &ModelSearchResult, today: jiff::civil::Date, budget: u64) -> i64 {
     if result.fits == Some(false) {
         return download_score(result.downloads);
     }
@@ -347,12 +345,18 @@ pub(super) fn released_newest_first(left: Option<&str>, right: Option<&str>) -> 
 /// Default Explore order: fit, recent, good use of memory, Official, downloads.
 /// The UI keeps this order for Best. Other sorts happen in the webview.
 fn rank_search_results(results: &mut [ModelSearchResult], budget: u64) {
-    rank_search_results_on(results, chrono::Utc::now().date_naive(), budget);
+    rank_search_results_on(
+        results,
+        jiff::Timestamp::now()
+            .to_zoned(jiff::tz::TimeZone::UTC)
+            .date(),
+        budget,
+    );
 }
 
 fn rank_search_results_on(
     results: &mut [ModelSearchResult],
-    today: chrono::NaiveDate,
+    today: jiff::civil::Date,
     budget: u64,
 ) {
     results.sort_by(|a, b| {
@@ -1154,7 +1158,7 @@ mod tests {
 
     #[test]
     fn rank_mixes_fit_recency_usage_and_official() {
-        let today = chrono::NaiveDate::from_ymd_opt(2026, 8, 20).unwrap();
+        let today = jiff::civil::Date::new(2026, 8, 20).unwrap();
         let budget = 20 * 1024 * 1024 * 1024;
         let right = Some(9 * 1024 * 1024 * 1024);
         let tiny = Some(400 * 1024 * 1024);
