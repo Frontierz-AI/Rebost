@@ -20,6 +20,12 @@ describe("findInstalled", () => {
     expect(findInstalled(settings, "huggingface", "Google/Gemma-4-12B-GGUF")?.inUse).toBe(true);
   });
 
+  it("allows downloading the selected AI again when its file is missing", () => {
+    const missing = { ...settings, activeModelMissing: true };
+    expect(findInstalled(missing, "huggingface", settings.activeModel.reference)).toBeNull();
+    expect(findInstalled(missing, "ollama", "qwen3.8:27b")?.model).toBe(settings.otherModels[0]);
+  });
+
   it("finds other installed AIs by source and reference", () => {
     const match = findInstalled(settings, "ollama", "qwen3.8:27b");
     expect(match?.inUse).toBe(false);

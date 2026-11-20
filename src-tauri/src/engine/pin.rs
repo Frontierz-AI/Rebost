@@ -233,13 +233,10 @@ pub fn extract_dir_name(pin: &EnginePin) -> String {
         ENGINE_RELEASE,
         pin.accelerator.to_ascii_lowercase()
     );
-    // The x64 Windows copy on an ARM PC runs the ARM64 CPU build. Keep it
-    // apart from the x64 CPU build, which shares the accelerator name.
-    if pin.arch == std::env::consts::ARCH {
-        name
-    } else {
-        format!("{name}-{}", pin.arch)
+    if pin.os == "windows" {
+        return format!("{name}-{}-signed-v1", pin.arch);
     }
+    name
 }
 
 /// Map a Rust/Tauri target triple onto a pin (one installer per triple).
@@ -449,24 +446,17 @@ mod tests {
 
     #[test]
     fn extract_dir_is_release_plus_accelerator() {
-        let native = pin_for(std::env::consts::OS, std::env::consts::ARCH).unwrap();
         assert_eq!(
-            extract_dir_name(native),
-            format!("1.0.0-{}", native.accelerator.to_ascii_lowercase())
+            extract_dir_name(pin_for("macos", "aarch64").unwrap()),
+            "1.0.0-metal"
         );
-        let foreign_arch = if std::env::consts::ARCH == "aarch64" {
-            "x86_64"
-        } else {
-            "aarch64"
-        };
-        let foreign = pin_for("windows", foreign_arch).unwrap();
-        assert_eq!(
-            extract_dir_name(foreign),
-            format!(
-                "1.0.0-{}-{foreign_arch}",
-                foreign.accelerator.to_ascii_lowercase()
-            )
-        );
+        for arch in ["x86_64", "aarch64"] {
+            let cuda = optional_pin_for("windows", arch, "CUDA").unwrap();
+            assert_eq!(
+                extract_dir_name(cuda),
+                format!("1.0.0-cuda-{arch}-signed-v1")
+            );
+        }
     }
 
     #[test]

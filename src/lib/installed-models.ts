@@ -14,7 +14,8 @@ function sourceKey(source: string): string {
 
 /** The installed AI for a catalog entry, if this computer already has it. */
 export function findInstalled(
-  settings: Pick<SettingsView, "activeModel" | "otherModels"> | null | undefined,
+  settings:
+    Pick<SettingsView, "activeModel" | "activeModelMissing" | "otherModels"> | null | undefined,
   source: string,
   reference: string,
 ): InstalledMatch | null {
@@ -22,7 +23,8 @@ export function findInstalled(
   const same = (model: InstalledModel) =>
     sourceKey(model.source) === key && model.reference.toLowerCase() === reference.toLowerCase();
   const active = settings?.activeModel;
-  if (active && same(active)) return { model: active, inUse: true };
+  if (active && !settings?.activeModelMissing && same(active))
+    return { model: active, inUse: true };
   const other = settings?.otherModels?.find(same);
   return other ? { model: other, inUse: false } : null;
 }

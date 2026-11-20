@@ -22,21 +22,20 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **1.1.0**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), one per target, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **1.1.1**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine                               | Installer                                  |
 | ------------------------------------- | ------------------------------------------ |
 | Mac with an Apple chip                | Mac (Apple chip)                           |
 | Intel Mac                             | Mac (Intel)                                |
-| Windows 10/11                         | Windows                                    |
-| Windows on ARM                        | Windows (ARM)                              |
+| Windows 10/11 (Intel, AMD or ARM64)   | Windows                                    |
 | Ubuntu 22.04+, Debian 12+ (Intel/AMD) | Linux (.deb)                               |
 | Fedora 43+ (Intel/AMD)                | Linux (.rpm)                               |
 | Arch Linux and its derivatives        | AUR: `rebost-bin` (coming soon)            |
 | Other Linux distributions (Intel/AMD) | Linux (AppImage), or Flathub (coming soon) |
 | Linux on ARM (64-bit)                 | Linux ARM (.deb), (.rpm), or (AppImage)    |
 
-The Mac download is a disk image: open it and drag Rebost into Applications. The Windows download is an installer.
+The Mac download is a disk image: open it and drag Rebost into Applications. The Windows installer selects the native app and includes WebView2 and the inference engines. You can copy it to another PC and install offline.
 
 On Linux, the .deb and .rpm packages install Rebost with the distribution's own WebKitGTK and add it to the applications menu. Open them with the software installer, or from a terminal:
 
@@ -134,7 +133,7 @@ A team works the same way, one install per person. Each person runs Rebost on th
 
 Documents on a Shelf stay on the machine that holds them, and reading, searching, and answering all happen there. Counts of personal information are counts, not a legal opinion.
 
-Rebost does reach the network in a few places. Searching for or installing an AI contacts Hugging Face or Ollama, startup may check GitHub for a newer release, and on some Windows and Linux PCs the first chat downloads a faster or more compatible way to run the AI. Online, in Settings, allows Chat to look things up on the public web and is off until it is turned on. [docs/privacy.md](docs/privacy.md) lists every request.
+Rebost does reach the network in a few places. Searching for or installing an AI contacts Hugging Face or Ollama, startup may check GitHub for a newer release, and on some Linux PCs the first chat downloads a faster or more compatible way to run the AI. Online, in Settings, allows Chat to look things up on the public web and is off until it is turned on. [docs/privacy.md](docs/privacy.md) lists every request.
 
 The application is MIT licensed. An installed AI carries its own license, shown before the download starts: [docs/licensing.md](docs/licensing.md).
 
@@ -148,7 +147,7 @@ Anything that looks like local files leaking belongs in [SECURITY.md](SECURITY.m
 - Disk space for a GGUF model (several GB)
 - Rust 1.99.1, Node 22.22.2+ on the 22.x line, pnpm 12 (`rust-toolchain.toml` and `.nvmrc`)
 - macOS: Xcode Command Line Tools
-- Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The NSIS installer downloads it when it is missing.
+- Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The release installer includes it.
 - Linux: WebKitGTK 4.1 and GTK 3 development packages. On Debian and Ubuntu: `sudo apt install build-essential cmake pkg-config file libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev librsvg2-dev libdbus-1-dev`. On Fedora: `sudo dnf install gcc-c++ cmake file webkit2gtk4.1-devel gtk3-devel libsoup3-devel librsvg2-devel dbus-devel`.
 - First OCR build: CMake and a C++ compiler (xberg compiles Tesseract)
 

@@ -88,6 +88,7 @@
     "online": "Online",
     "onlineHelp": "Chatで公開ウェブを検索できるようにします。検索語やアドレスは送信前に表示され、承認を求められます。回答はこのコンピュータで作成されます。",
     "ai": "AI",
+    "downloadAgain": "再ダウンロード",
     "installedHere": "このコンピュータにインストール済み",
     "armBuildNotice": "これは通常のWindows PC向けのRebostで、ARM PCで動いています。このPCではWindows (ARM) 版のほうが速く、安定して動きます。",
     "armBuildDownload": "Windows (ARM) 版を入手",

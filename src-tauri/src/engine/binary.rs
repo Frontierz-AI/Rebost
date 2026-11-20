@@ -41,7 +41,7 @@ impl Engine {
         let bundled_accel = current_engine_pin()
             .map(|bundled| bundled.accelerator)
             .unwrap_or("");
-        if bundled_accel == pin.accelerator {
+        if pin.os != "windows" && bundled_accel == pin.accelerator {
             let legacy = self
                 .ctx
                 .paths
@@ -192,6 +192,10 @@ impl Engine {
                 );
                 (local.path, local.verify_pin_sha, local.delete_after_unpack)
             } else {
+                anyhow::ensure!(
+                    pin.os != "windows",
+                    "Windows engine is missing from the installation"
+                );
                 if !allow_local {
                     log::info!(
                         "downloading optional {} engine {ENGINE_RELEASE} ({})",
@@ -246,16 +250,31 @@ impl Engine {
         engine_dir: &Path,
         target: &Path,
     ) -> Result<()> {
-        let dest = engine_dir.join(runtime.file_name);
-        log::info!("downloading CUDA runtime ({})", runtime.file_name);
-        self.download_archive(
-            runtime.url,
-            &dest,
-            runtime.sha256,
-            runtime.file_name,
-            "AI engine",
-        )
-        .await?;
+        let bundled = self
+            .ctx
+            .paths
+            .bundled_engine_archive(runtime.file_name)
+            .filter(|p| p.is_file());
+        let downloaded = bundled.is_none();
+        let dest = if let Some(path) = bundled {
+            path
+        } else {
+            anyhow::ensure!(
+                runtime.os != "windows",
+                "Windows CUDA runtime is missing from the installation"
+            );
+            let dest = engine_dir.join(runtime.file_name);
+            log::info!("downloading CUDA runtime ({})", runtime.file_name);
+            self.download_archive(
+                runtime.url,
+                &dest,
+                runtime.sha256,
+                runtime.file_name,
+                "AI engine",
+            )
+            .await?;
+            dest
+        };
         let extract_dir = engine_dir.join("extract-tmp-runtime");
         let _ = std::fs::remove_dir_all(&extract_dir);
         std::fs::create_dir_all(&extract_dir)?;
@@ -268,7 +287,9 @@ impl Engine {
         };
         install_runtime_files(&source, target, runtime.sidecar)?;
         let _ = std::fs::remove_dir_all(&extract_dir);
-        let _ = std::fs::remove_file(&dest);
+        if downloaded {
+            let _ = std::fs::remove_file(&dest);
+        }
         if !target.join(runtime.sidecar).is_file() {
             return Err(anyhow!(
                 "CUDA runtime archive did not contain {}",

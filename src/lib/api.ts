@@ -237,6 +237,7 @@ export interface SettingsView {
   houseRules: string;
   onboardingDone: boolean;
   activeModel?: InstalledModel | null;
+  activeModelMissing?: boolean;
   /** Installed AIs that are not in use, most recently used first. */
   otherModels?: InstalledModel[];
   allowOnlineResearch: boolean;
@@ -453,11 +454,8 @@ export function userFacingError(error: unknown): string {
   ) {
     return t("errors.notAvailable");
   }
-  if (
-    lower.includes("no ai model") ||
-    lower.includes("no model installed") ||
-    lower.includes("model file missing")
-  ) {
+  if (lower.includes("model file missing")) return t("errors.aiMissing");
+  if (lower.includes("no ai model") || lower.includes("no model installed")) {
     return t("errors.needsAi");
   }
   if (lower.includes("switch-failed")) {

@@ -88,6 +88,7 @@
     "online": "Online",
     "onlineHelp": "Sta zoeken op het openbare web toe. Elke zoekopdracht of elk adres wordt vóór verzending ter goedkeuring getoond. Antwoorden worden op deze computer geschreven.",
     "ai": "AI",
+    "downloadAgain": "Opnieuw downloaden",
     "installedHere": "geïnstalleerd op deze computer",
     "armBuildNotice": "Dit is Rebost voor gewone Windows-pc’s en het draait op een ARM-pc. De versie Windows (ARM) werkt hier sneller en betrouwbaarder.",
     "armBuildDownload": "Windows (ARM) downloaden",

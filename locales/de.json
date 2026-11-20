@@ -88,6 +88,7 @@
     "online": "Online",
     "onlineHelp": "Erlaubt Chat, im öffentlichen Web zu recherchieren. Jede Suchanfrage oder Adresse wird vor dem Senden zur Bestätigung angezeigt. Die Antworten entstehen auf diesem Computer.",
     "ai": "KI",
+    "downloadAgain": "Erneut herunterladen",
     "installedHere": "auf diesem Computer installiert",
     "armBuildNotice": "Das ist Rebost für normale Windows-PCs und läuft auf einem ARM-PC. Die Version Windows (ARM) läuft hier schneller und zuverlässiger.",
     "armBuildDownload": "Windows (ARM) laden",

@@ -87,6 +87,7 @@
     "online": "Online",
     "onlineHelp": "Permite consultar la web pública. Cada consulta o dirección se muestra para que la apruebes antes de enviarla. Las respuestas se escriben en este ordenador.",
     "ai": "IA",
+    "downloadAgain": "Volver a descargar",
     "installedHere": "instalada en este ordenador",
     "armBuildNotice": "Esta es la versión de Rebost para PC con Windows normales y se está ejecutando en un PC ARM. La descarga Windows (ARM) funciona aquí más rápido y de forma más fiable.",
     "armBuildDownload": "Descargar Windows (ARM)",
