@@ -88,6 +88,7 @@
     "online": "Online",
     "onlineHelp": "Permet à Chat de faire des recherches sur le web public. Chaque recherche ou adresse est soumise à votre accord avant l’envoi. Les réponses sont rédigées sur cet ordinateur.",
     "ai": "IA",
+    "downloadAgain": "Télécharger à nouveau",
     "installedHere": "installée sur cet ordinateur",
     "armBuildNotice": "Cette version de Rebost est destinée aux PC Windows classiques et tourne sur un PC ARM. La version Windows (ARM) y est plus rapide et plus fiable.",
     "armBuildDownload": "Télécharger Windows (ARM)",

@@ -72,7 +72,7 @@ function publicUpdaterFilename(version, platform) {
     case "darwin-x86_64":
       return `Rebost-${version}-darwin-x86_64.app.tar.gz`;
     case "windows-x86_64":
-      return `Rebost-${version}-Windows.exe`;
+      return `Rebost-${version}-Windows-x64.exe`;
     case "windows-aarch64":
       return `Rebost-${version}-Windows-ARM.exe`;
     case "linux-x86_64-appimage":

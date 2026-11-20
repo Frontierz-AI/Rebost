@@ -55,11 +55,15 @@ try {
     Expand-Archive -LiteralPath $archivePath -DestinationPath $work
     $binaries = @(Get-ChildItem -LiteralPath $work -Recurse -File |
         Where-Object { $_.Extension -in @(".exe", ".dll") })
-    if (-not ($binaries | Where-Object { $_.Name -eq "llama-server.exe" })) {
-        Write-Error "No llama-server.exe in $archivePath"
+    $required = if ((Split-Path -Leaf $archivePath) -like "cudart-*") { "cudart64_*.dll" } else { "llama-server.exe" }
+    if (-not ($binaries | Where-Object { $_.Name -like $required })) {
+        throw "Missing $required in $archivePath"
     }
 
     foreach ($file in $binaries) {
+        $original = Get-AuthenticodeSignature -LiteralPath $file.FullName
+        if ($original.Status -eq "Valid") { continue }
+        if ($original.Status -ne "NotSigned") { throw "Invalid upstream signature on $($file.Name): $($original.Status)" }
         & artifact-signing-cli `
             -e $env:AZURE_ARTIFACT_SIGNING_ENDPOINT `
             -a $env:AZURE_ARTIFACT_SIGNING_ACCOUNT `

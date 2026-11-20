@@ -93,6 +93,9 @@
   </keywords>
 
   <releases>
+    <release version="1.1.1" date="2026-11-20">
+      <description><p>Settings can restore the selected AI if its file is missing.</p></description>
+    </release>
     <release version="1.1.0" date="2026-11-19">
       <description>
         <p>Rebost updates the local AI engine to llama.cpp 1.0.0. On Linux ARM64 with an NVIDIA driver, it can download and test a CUDA engine. Diagnostics shows the running backend and the last fallback.</p>

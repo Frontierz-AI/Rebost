@@ -11,11 +11,15 @@
   let {
     active,
     others,
+    missing = false,
+    onRestore,
     busy = false,
     children,
   }: {
     active: InstalledModel | null | undefined;
     others: InstalledModel[];
+    missing?: boolean;
+    onRestore: (model: InstalledModel) => void;
     /** A model download holds the install lock; switching and removing wait for it. */
     busy?: boolean;
     /** Rendered under the AI in use (image support line). */
@@ -37,7 +41,7 @@
     return model.sizeBytes + (model.projector?.sizeBytes ?? 0);
   }
 
-  const installed = $derived(active ? [active, ...others] : others);
+  const installed = $derived(active && !missing ? [active, ...others] : others);
   const totalBytes = $derived(installedBytes(installed));
 
   function details(model: InstalledModel) {
@@ -117,19 +121,28 @@
     <div class="min-w-0 flex-1">
       <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
       <p class="text-[11.5px] text-ink-soft tabular-nums">
-        {details(model)} · {t("settings.installedHere")}
+        {missing ? t("errors.aiMissing") : `${details(model)} · ${t("settings.installedHere")}`}
       </p>
     </div>
-    <span
-      class="rounded-full px-2 py-1 text-[10.5px] font-semibold
+    {#if missing}
+      <button
+        type="button"
+        class="btn-outline !h-8"
+        disabled={busy || !!switchingTo}
+        onclick={() => onRestore(model)}>{t("settings.downloadAgain")}</button
+      >
+    {:else}
+      <span
+        class="rounded-full px-2 py-1 text-[10.5px] font-semibold
       {app.engine.state === 'ready'
-        ? 'bg-ready text-ready-ink dark:bg-navy-200/20 dark:text-navy-200'
-        : app.engine.state === 'starting'
-          ? 'bg-amber-350/50 text-amber-550'
-          : 'bg-paper-soft text-ink-faint'}"
-    >
-      {statusLabel}
-    </span>
+          ? 'bg-ready text-ready-ink dark:bg-navy-200/20 dark:text-navy-200'
+          : app.engine.state === 'starting'
+            ? 'bg-amber-350/50 text-amber-550'
+            : 'bg-paper-soft text-ink-faint'}"
+      >
+        {statusLabel}
+      </span>
+    {/if}
     <button
       type="button"
       class="btn-ghost !p-1.5"

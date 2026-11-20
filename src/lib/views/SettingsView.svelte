@@ -5,6 +5,7 @@
     formatBytes,
     runsEmulatedOnArm,
     type Diagnostics,
+    type InstalledModel,
     type MachineView,
     type ModelSearchResult,
     type Recommendation,
@@ -115,7 +116,9 @@
   const hasAi = $derived(!!app.settings?.activeModel);
   const aiBytes = $derived(
     installedBytes([
-      ...(app.settings?.activeModel ? [app.settings.activeModel] : []),
+      ...(app.settings?.activeModel && !app.settings.activeModelMissing
+        ? [app.settings.activeModel]
+        : []),
       ...(app.settings?.otherModels ?? []),
     ]),
   );
@@ -179,6 +182,16 @@
     total?: number | null,
   ) {
     await beginModelInstall(source, reference, name, license, total);
+  }
+
+  async function restoreModel(model: InstalledModel) {
+    try {
+      await install(model.source, model.reference, model.name, model.license, model.sizeBytes);
+    } catch (error) {
+      notifyInvokeError(error);
+    } finally {
+      await refreshSettings().catch(notifyInvokeError);
+    }
   }
 
   function installRec(rec: Recommendation) {
@@ -444,7 +457,9 @@
           <DownloadProgress
             download={modelDownload}
             cancelable
-            note={app.settings?.activeModel ? t("settings.keepUsingChat") : undefined}
+            note={app.settings?.activeModel && !app.settings.activeModelMissing
+              ? t("settings.keepUsingChat")
+              : undefined}
           />
         </div>
       {:else if engineDownload}
@@ -455,6 +470,8 @@
 
       <InstalledModels
         active={app.settings?.activeModel}
+        missing={app.settings?.activeModelMissing}
+        onRestore={restoreModel}
         others={app.settings?.otherModels ?? []}
         busy={!!modelDownload}
       >
@@ -462,7 +479,7 @@
           <p class="mt-3 text-sm text-ink-soft">
             {t("images.ready", { count: app.engine.vision.maxImages })}
           </p>
-        {:else if visionOffer}
+        {:else if visionOffer && !app.settings?.activeModelMissing}
           <div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
             <p class="min-w-0 text-ink-soft">
               {t("images.enableDescription", { size: formatBytes(visionOffer) })}

@@ -88,6 +88,7 @@
     "online": "Online",
     "onlineHelp": "Salli haku julkisesta verkosta. Jokainen haku tai osoite näytetään hyväksyttäväksi ennen lähettämistä. Vastaukset kirjoitetaan tällä tietokoneella.",
     "ai": "Tekoäly",
+    "downloadAgain": "Lataa uudelleen",
     "installedHere": "asennettu tälle tietokoneelle",
     "armBuildNotice": "Tämä on Rebost tavallisille Windows-tietokoneille, ja se toimii nyt ARM-tietokoneella. Windows (ARM) -versio toimii tässä nopeammin ja luotettavammin.",
     "armBuildDownload": "Lataa Windows (ARM)",

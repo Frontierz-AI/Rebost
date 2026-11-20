@@ -88,6 +88,7 @@
     "online": "Online",
     "onlineHelp": "Umožní Chatu hledat na veřejném webu. Každý dotaz nebo adresa se před odesláním zobrazí ke schválení. Odpovědi vznikají na tomto počítači.",
     "ai": "AI",
+    "downloadAgain": "Stáhnout znovu",
     "installedHere": "nainstalovaná na tomto počítači",
     "armBuildNotice": "Toto je Rebost pro běžné počítače s Windows a běží na počítači s ARM. Verze Windows (ARM) tu poběží rychleji a spolehlivěji.",
     "armBuildDownload": "Stáhnout Windows (ARM)",

@@ -1,8 +1,8 @@
 # Signed installers
 
-GitHub Releases ship signed Mac DMGs and Windows installers (regular PC and ARM). The Windows files are signed when Azure Artifact Signing is configured; otherwise they are unsigned. Linux packages (AppImage, .deb, .rpm) carry no code signature; like every platform, their in-app updates are checked against the updater key (`TAURI_SIGNING_PRIVATE_KEY`). Contributors do not need signing credentials.
+Windows releases include one signed offline installer with both native installers. The app updater uses the individually signed native packages. The release workflow verifies Authenticode for every executable and DLL in each Windows inference archive. It preserves valid vendor signatures, signs unsigned binaries, and stops if a signature is invalid. This includes the CUDA runtime and the Snapdragon OpenCL engine. Windows copies from before 1.1.1 use a different extraction directory.
 
-Upstream llama.cpp binaries are unsigned, and antivirus heuristics flag an unsigned `llama-server.exe` (Avast reported IDP.Generic on 0.9.0). A signed Windows release therefore also signs `llama-server.exe` and every DLL in the bundled engine zip: `beforeBuildCommand` runs `scripts/sign-engine-windows.mjs`, which repacks the zip through `scripts/sign-engine-windows.ps1` when `release-windows.ps1` sets `REBOST_SIGN_ENGINE=1`. The ARM runner cannot sign, so the `engine-arm64` job in `release-windows.yml` signs the ARM64 zip on x64 and the ARM build picks it up through `REBOST_SIGNED_ENGINE_DIR`. If engine signing fails, the build warns and bundles the upstream zip; the installer is still signed. Engines downloaded at warmup (CUDA, Adreno OpenCL, the x64 CPU fallback, and the ARM64 CPU build for an x64 copy on ARM) come straight from llama.cpp and stay unsigned.
+Mac releases ship signed and notarized DMGs. In-app updates on all platforms are verified against the updater key.
 
 ```bash
 pnpm tauri build

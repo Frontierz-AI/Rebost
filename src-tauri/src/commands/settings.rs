@@ -18,6 +18,7 @@ pub struct SettingsView {
     pub house_rules: String,
     pub onboarding_done: bool,
     pub active_model: Option<InstalledModel>,
+    pub active_model_missing: bool,
     /// Installed AIs that are not in use, most recently used first.
     pub other_models: Vec<InstalledModel>,
     pub allow_online_research: bool,
@@ -41,8 +42,9 @@ pub struct ModelsFolderView {
 }
 
 fn settings_view(ctx: &Ctx) -> SettingsView {
+    let models_dir = ctx.models_dir();
     let models_folder = ModelsFolderView {
-        path: ctx.models_dir().to_string_lossy().into_owned(),
+        path: models_dir.to_string_lossy().into_owned(),
         custom: crate::core::read_lock(&ctx.settings)
             .models_folder
             .is_some(),
@@ -60,6 +62,13 @@ fn settings_view(ctx: &Ctx) -> SettingsView {
     SettingsView {
         house_rules: settings.house_rules.clone(),
         onboarding_done: settings.onboarding_done,
+        active_model_missing: !models_folder.missing
+            && settings.active_model.as_ref().is_some_and(|model| {
+                models_dir
+                    .join(&model.file)
+                    .try_exists()
+                    .is_ok_and(|exists| !exists)
+            }),
         active_model: settings.active_model.clone(),
         other_models: settings.other_models.clone(),
         allow_online_research: settings.allow_online_research,

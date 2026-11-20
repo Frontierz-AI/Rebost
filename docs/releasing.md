@@ -25,6 +25,10 @@ That writes an unsigned DMG, NSIS, or AppImage/.deb/.rpm for this machine. Gatek
 
 Signed installers need credentials that are not in this repository. See [signing.md](signing.md).
 
+## Windows packages
+
+Run `release-windows.yml` on the release commit. The `rebost-windows-universal` artifact contains `Rebost-X.Y.Z-Windows.exe`. Use that file for the public Windows download. Publish the two native installers as `Rebost-X.Y.Z-Windows-x64.exe` and `Rebost-X.Y.Z-Windows-ARM.exe` for their respective signed updater entries. The workflow installs the universal package on x64 and ARM64 and checks the native executable and the installed CUDA DLL signature.
+
 ## Linux packages
 
 `release-linux.yml` builds the AppImage, .deb, and .rpm for x86_64 (`ubuntu-24.04`) and aarch64 (`ubuntu-24.04-arm`) inside an `ubuntu:22.04` container, so the binary links glibc 2.35 and runs on Ubuntu 22.04+, Debian 12+, Fedora 43+, and other distributions of that age. It does not run on push. Dispatch it on the release commit:

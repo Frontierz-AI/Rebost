@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Download the pinned llama.cpp archive for this build target and stage it
-// into src-tauri/resources/engine/ (the only file Tauri bundles).
-// Optional CUDA / OpenCL pins in pin.rs are not staged; the app downloads
-// those at warmup when the GPU is present.
+// into src-tauri/resources/engine/ for Tauri.
+// Windows also bundles the signed optional engines and NVIDIA runtime.
 //
 //   node scripts/fetch-engine.mjs              # host (or TAURI_ENV_TARGET_TRIPLE)
 //   node scripts/fetch-engine.mjs --all        # cache macOS + Windows installer pins
@@ -30,7 +29,7 @@ const TRIPLES = {
 
 function parsePins(text) {
   const pins = [];
-  const re = /EnginePin \{([^}]+)\}/g;
+  const re = /Engine(?:Runtime)?Pin \{([^}]+)\}/g;
   let match;
   while ((match = re.exec(text))) {
     const block = match[1];
@@ -100,6 +99,12 @@ function pickBundledPin(all, os, arch) {
   return pin;
 }
 
+function installerPins(all, os, arch) {
+  if (os !== "windows") return [pickBundledPin(all, os, arch)];
+  return all.filter((pin) => pin.os === os && (pin.arch === arch ||
+    (arch === "x86_64" && pin.accelerator === "CPU" && pin.arch === "aarch64")));
+}
+
 function selectPins(all, args) {
   if (args.includes("--all")) {
     const includeLinux = args.includes("--include-linux");
@@ -116,15 +121,15 @@ function selectPins(all, args) {
       throw new Error(`no engine pin for target ${triple}`);
     }
     const [os, arch] = mapped;
-    return [pickBundledPin(all, os, arch)];
+    return installerPins(all, os, arch);
   }
   const fromEnv = osArchFromEnv();
   if (fromEnv) {
     const [os, arch] = fromEnv;
-    return [pickBundledPin(all, os, arch)];
+    return installerPins(all, os, arch);
   }
   const { os, arch } = hostOsArch();
-  return [pickBundledPin(all, os, arch)];
+  return installerPins(all, os, arch);
 }
 
 async function downloadPin(pin) {
@@ -157,7 +162,7 @@ async function downloadPin(pin) {
   return dest;
 }
 
-async function stagePin(pin, cacheFile) {
+async function stagePins(downloaded) {
   await mkdir(STAGE, { recursive: true });
   for (const name of await readdir(STAGE)) {
     if (KEEP_IN_STAGE.has(name)) {
@@ -165,8 +170,10 @@ async function stagePin(pin, cacheFile) {
     }
     await rm(path.join(STAGE, name), { recursive: true, force: true });
   }
-  await copyFile(cacheFile, path.join(STAGE, pin.fileName));
-  console.log(`staged ${pin.fileName} for bundle`);
+  for (const [pin, cacheFile] of downloaded) {
+    await copyFile(cacheFile, path.join(STAGE, pin.fileName));
+    console.log(`staged ${pin.fileName} for bundle`);
+  }
 }
 
 const args = process.argv.slice(2);
@@ -187,11 +194,11 @@ for (const pin of selected) {
   downloaded.push([pin, await downloadPin(pin)]);
 }
 if (!args.includes("--all")) {
-  await stagePin(downloaded[0][0], downloaded[0][1]);
+  await stagePins(downloaded);
 } else {
   const { os, arch } = hostOsArch();
   const host = downloaded.find(([pin]) => pin.os === os && pin.arch === arch);
   if (host) {
-    await stagePin(host[0], host[1]);
+    await stagePins([host]);
   }
 }

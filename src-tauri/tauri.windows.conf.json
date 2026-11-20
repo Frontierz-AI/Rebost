@@ -3,7 +3,9 @@
   "bundle": {
     "targets": ["nsis"],
     "windows": {
+      "webviewInstallMode": { "type": "offlineInstaller" },
       "nsis": {
+        "compression": "zlib",
         "installerHooks": "windows/installer-hooks.nsh"
       }
     }

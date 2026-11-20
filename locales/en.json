@@ -87,6 +87,7 @@
     "online": "Online",
     "onlineHelp": "Let Chat research the public web. Each query or address is shown for your approval before it is sent. Answers are written on this computer.",
     "ai": "AI",
+    "downloadAgain": "Download again",
     "installedHere": "installed on this computer",
     "armBuildNotice": "This is Rebost for regular Windows PCs, running on an ARM PC. The Windows (ARM) download runs faster and more reliably here.",
     "armBuildDownload": "Get Windows (ARM)",

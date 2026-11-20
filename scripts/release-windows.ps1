@@ -1,10 +1,4 @@
-# NSIS installer. Authenticode-signs when Azure Artifact Signing env is
-# present and SignTool succeeds; otherwise ships unsigned.
-# Must run on Windows. From macOS: gh workflow run release-windows.yml
-#
-#   pwsh scripts/release-windows.ps1
-#   pwsh scripts/release-windows.ps1 -Target aarch64-pc-windows-msvc
-
+# Build the signed Windows NSIS installer. ARM64 is signed on the x64 runner.
 param(
     [string]$Target = "",
     # ARM runners cannot run Azure SignTool (x64). Build unsigned there,
@@ -127,39 +121,13 @@ function Test-ExesAuthenticodeValid {
     return $ok
 }
 
-$wantSign = -not $SkipAuthenticode -and (Test-AzureSigningEnv)
 if ($SkipAuthenticode) {
-    Write-Host "Skipping Authenticode on this host."
-}
-if ($wantSign -and -not (Get-Command artifact-signing-cli -ErrorAction SilentlyContinue)) {
-    Write-Warning "artifact-signing-cli is not installed; building unsigned NSIS."
-    $wantSign = $false
-}
-
-$signed = $false
-if ($wantSign) {
-    Write-Host "Azure signing env is set; building signed NSIS…"
-    try {
-        Invoke-NsisBuild -Sign $true
-        if (Test-ExesAuthenticodeValid -Dir $prefix) {
-            $signed = $true
-        } else {
-            throw "Authenticode status is not Valid"
-        }
-    } catch {
-        Write-Warning "Signing did not work ($($_.Exception.Message)). Building unsigned NSIS."
-    }
-}
-
-if (-not $signed) {
-    if (-not $wantSign) {
-        Write-Host "Azure signing env is missing; building unsigned NSIS…"
-    }
+    if (-not $env:REBOST_SIGNED_ENGINE_DIR) { throw "Missing signed engines for the ARM64 installer" }
     Invoke-NsisBuild -Sign $false
-    Get-ChildItem $prefix -Filter *.exe -ErrorAction Stop | ForEach-Object {
-        $sig = Get-AuthenticodeSignature $_.FullName
-        Write-Host "$($_.Name): $($sig.Status) $($sig.SignerCertificate.Subject)"
-    }
+} else {
+    if (-not (Test-AzureSigningEnv)) { throw "Missing Azure signing configuration" }
+    Invoke-NsisBuild -Sign $true
+    if (-not (Test-ExesAuthenticodeValid -Dir $prefix)) { throw "Invalid installer signature" }
 }
 
 Write-Host ""

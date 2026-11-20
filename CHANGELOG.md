@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-20
+
+- One Windows installer contains both native apps and selects the right one for Intel, AMD or ARM64. It includes WebView2 and the Windows inference engines for offline installation. AI models are still a separate download.
+- Windows uses fresh copies of the signed llama.cpp engines and their libraries, including CUDA and Snapdragon OpenCL. NVIDIA libraries with valid publisher signatures retain them.
+- If the selected AI file is missing, Settings shows what happened and offers to download it again. Reconnecting a removable models drive remains an option when the drive is offline.
+
 ## [1.1.0] - 2026-11-19
 
 ### Added
@@ -708,7 +714,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Frontierz-AI/Rebost/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.9...v1.0.0
 [0.9.9]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.8...v0.9.9

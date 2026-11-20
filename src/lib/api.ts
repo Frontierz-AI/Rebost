@@ -237,6 +237,7 @@ export interface SettingsView {
   houseRules: string;
   onboardingDone: boolean;
   activeModel?: InstalledModel | null;
+  activeModelMissing?: boolean;
   /** Installed AIs that are not in use, most recently used first. */
   otherModels?: InstalledModel[];
   allowOnlineResearch: boolean;
