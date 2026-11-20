@@ -93,6 +93,9 @@
   </keywords>
 
   <releases>
+    <release version="1.1.2" date="2026-11-20">
+      <description><p>This release reduces the Windows installer size and verifies the optional NVIDIA engine download on Windows.</p></description>
+    </release>
     <release version="1.1.1" date="2026-11-20">
       <description><p>Settings can restore the selected AI if its file is missing.</p></description>
     </release>

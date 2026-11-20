@@ -1,7 +1,7 @@
 {
   "name": "rebost",
   "private": true,
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "MIT",
   "description": "Private AI that works with your files.",
   "author": {

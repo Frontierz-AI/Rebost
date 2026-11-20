@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-20
+
+- Reduced the universal Windows download by moving the NVIDIA CUDA packages to first use and fetching Microsoft WebView2 only when missing. The installer still carries both native apps and their CPU, Vulkan or Snapdragon Adreno engines.
+- Windows verifies the downloaded CUDA archives against the signed copies shipped in 1.1.1 before it extracts or runs them. If the download fails, Rebost can use its bundled engine.
+
 ## [1.1.1] - 2026-11-20
 
 - One Windows installer contains both native apps and selects the right one for Intel, AMD or ARM64. It includes WebView2 and the Windows inference engines for offline installation. AI models are still a separate download.
@@ -714,7 +719,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Frontierz-AI/Rebost/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Frontierz-AI/Rebost/compare/v0.9.9...v1.0.0
