@@ -414,7 +414,7 @@ mod tests {
         let binary = engine.ensure_pin_binary(pin, false).await?;
         let dir = binary.parent().unwrap();
         assert!(dir.join("llama-common.dll").is_file());
-        let signatures = std::process::Command::new("powershell.exe")
+        let signatures = std::process::Command::new("pwsh.exe")
             .args(["-NoProfile", "-NonInteractive", "-Command",
                 r#"$ErrorActionPreference='Stop'; Get-ChildItem -File -Recurse | Where-Object { $_.Extension -in '.dll','.exe' } | ForEach-Object { $s = Get-AuthenticodeSignature -LiteralPath $_.FullName; if ($s.Status -ne 'Valid') { throw ($_.Name + [string]$s.Status) } }"#])
             .current_dir(dir).status()?;
