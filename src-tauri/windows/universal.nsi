@@ -3,6 +3,7 @@ Name "Rebost"
 OutFile "${OUTPUT}"
 RequestExecutionLevel user
 SilentInstall silent
+InstallDir ""
 SetCompress off
 Icon "..\icons\icon.ico"
 !include "x64.nsh"
@@ -21,6 +22,11 @@ Section
     Quit
   ${EndIf}
   ${GetParameters} $0
+  ; NSIS removes /D from the argument list and stores it in $INSTDIR.
+  ; It must be the last argument, unquoted even when the path contains spaces.
+  ${If} $INSTDIR != ""
+    StrCpy $0 "$0 /D=$INSTDIR"
+  ${EndIf}
   ClearErrors
   ExecWait '"$PLUGINSDIR\Rebost-setup.exe" $0' $1
   IfErrors 0 +2

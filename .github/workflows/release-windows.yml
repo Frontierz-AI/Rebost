@@ -146,6 +146,8 @@ jobs:
         with:
           name: rebost-windows-x64
           path: x64-in
+      - name: Install NSIS for the universal installer
+        run: choco install nsis --version=3.12.0 --yes --no-progress
       - name: Sign ARM NSIS and build the offline Windows installer
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
