@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Download the pinned llama.cpp archive for this build target and stage it
 // into src-tauri/resources/engine/ for Tauri.
-// Windows also bundles the signed optional engines and NVIDIA runtime.
+// Windows ships the portable engines. Rebost fetches signed CUDA packages on demand.
 //
 //   node scripts/fetch-engine.mjs              # host (or TAURI_ENV_TARGET_TRIPLE)
 //   node scripts/fetch-engine.mjs --all        # cache macOS + Windows installer pins
@@ -101,7 +101,7 @@ function pickBundledPin(all, os, arch) {
 
 function installerPins(all, os, arch) {
   if (os !== "windows") return [pickBundledPin(all, os, arch)];
-  return all.filter((pin) => pin.os === os && (pin.arch === arch ||
+  return all.filter((pin) => pin.os === os && pin.accelerator !== "CUDA" && (pin.arch === arch ||
     (arch === "x86_64" && pin.accelerator === "CPU" && pin.arch === "aarch64")));
 }
 

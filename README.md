@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **1.1.1**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **1.1.2**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine                               | Installer                                  |
 | ------------------------------------- | ------------------------------------------ |
@@ -35,7 +35,7 @@ The current release is **1.1.1**. Installers are published on [GitHub Releases](
 | Other Linux distributions (Intel/AMD) | Linux (AppImage), or Flathub (coming soon) |
 | Linux on ARM (64-bit)                 | Linux ARM (.deb), (.rpm), or (AppImage)    |
 
-The Mac download is a disk image: open it and drag Rebost into Applications. The Windows installer selects the native app and includes WebView2 and the inference engines. You can copy it to another PC and install offline.
+The Mac download is a disk image: open it and drag Rebost into Applications. The Windows installer selects the native app and includes CPU, Vulkan or Snapdragon Adreno support. It installs Microsoft WebView2 if missing. On NVIDIA PCs, Rebost downloads its signed CUDA engine on first use. The [1.1.1 offline Windows installer](https://github.com/Frontierz-AI/Rebost/releases/download/v1.1.1/Rebost-1.1.1-Windows.exe) includes WebView2 and CUDA for offline setups.
 
 On Linux, the .deb and .rpm packages install Rebost with the distribution's own WebKitGTK and add it to the applications menu. Open them with the software installer, or from a terminal:
 
@@ -147,7 +147,7 @@ Anything that looks like local files leaking belongs in [SECURITY.md](SECURITY.m
 - Disk space for a GGUF model (several GB)
 - Rust 1.99.1, Node 22.22.2+ on the 22.x line, pnpm 12 (`rust-toolchain.toml` and `.nvmrc`)
 - macOS: Xcode Command Line Tools
-- Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The release installer includes it.
+- Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The release installer adds it when needed.
 - Linux: WebKitGTK 4.1 and GTK 3 development packages. On Debian and Ubuntu: `sudo apt install build-essential cmake pkg-config file libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev librsvg2-dev libdbus-1-dev`. On Fedora: `sudo dnf install gcc-c++ cmake file webkit2gtk4.1-devel gtk3-devel libsoup3-devel librsvg2-devel dbus-devel`.
 - First OCR build: CMake and a C++ compiler (xberg compiles Tesseract)
 

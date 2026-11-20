@@ -14,6 +14,13 @@ use std::path::{Path, PathBuf};
 pub const ENGINE_RELEASE: &str = "1.0.0";
 /// GitHub tag that hosts the archives for [`ENGINE_RELEASE`].
 pub const ENGINE_BUILD: &str = "b12359";
+/// Archives containing the Authenticode-signed CUDA binaries shipped in Rebost 1.1.1.
+pub const SIGNED_WINDOWS_ARCHIVES: &str =
+    "https://github.com/Frontierz-AI/Rebost/releases/download/v1.1.1/";
+
+pub fn can_download_archive(os: &str, url: &str) -> bool {
+    os != "windows" || url.starts_with(SIGNED_WINDOWS_ARCHIVES)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EnginePin {
@@ -99,8 +106,8 @@ pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
         os: "windows",
         arch: "aarch64",
         accelerator: "CUDA",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b12359/llama-b12359-bin-win-cuda-13.5-arm64.zip",
-        sha256: "f40398808e74b88c3ccee904824667ef9825692843533e7fc22881ab2e4de9da",
+        url: "https://github.com/Frontierz-AI/Rebost/releases/download/v1.1.1/llama-b12359-bin-win-cuda-13.5-arm64.zip",
+        sha256: "b84a926a78796074fb78415aacb65948bb09e684fc0ccd27b3148f02f05b1513",
         file_name: "llama-b12359-bin-win-cuda-13.5-arm64.zip",
     },
     EnginePin {
@@ -122,8 +129,8 @@ pub const ENGINE_OPTIONAL_PINS: &[EnginePin] = &[
     EnginePin {
         os: "windows",
         arch: "x86_64",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b12359/llama-b12359-bin-win-cuda-12.4-x64.zip",
-        sha256: "e9c0abf442e8339c06728366c1ad2c711332f9939c0c00603fb75d85fd44c914",
+        url: "https://github.com/Frontierz-AI/Rebost/releases/download/v1.1.1/llama-b12359-bin-win-cuda-12.4-x64.zip",
+        sha256: "a1957b63afcdb05027504c9d60cc8dee41722e531055a6f8633cbd29e69fbf66",
         file_name: "llama-b12359-bin-win-cuda-12.4-x64.zip",
         accelerator: "CUDA",
     },
@@ -158,8 +165,8 @@ pub const ENGINE_OPTIONAL_RUNTIMES: &[EngineRuntimePin] = &[
         os: "windows",
         arch: "aarch64",
         accelerator: "CUDA",
-        url: "https://github.com/ggml-org/llama.cpp/releases/download/b12359/cudart-llama-bin-win-cuda-13.5-arm64.zip",
-        sha256: "f89e7b2457f627d052dd99f42205ddfd01964454809754cdc649cffc74320dca",
+        url: "https://github.com/Frontierz-AI/Rebost/releases/download/v1.1.1/cudart-llama-bin-win-cuda-13.5-arm64.zip",
+        sha256: "2a377b294542a124313bd314137c01c63fcbb974694da6bd1bf03a63dba9cbbc",
         file_name: "cudart-llama-bin-win-cuda-13.5-arm64.zip",
         sidecar: "cudart64_13.dll",
     },
@@ -176,8 +183,8 @@ EngineRuntimePin {
     os: "windows",
     arch: "x86_64",
     accelerator: "CUDA",
-    url: "https://github.com/ggml-org/llama.cpp/releases/download/b12359/cudart-llama-bin-win-cuda-12.4-x64.zip",
-        sha256: "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6",
+    url: "https://github.com/Frontierz-AI/Rebost/releases/download/v1.1.1/cudart-llama-bin-win-cuda-12.4-x64.zip",
+        sha256: "97e8bf29b7fab864f3b8129c3079ade398144569ce8651b422621586b83e0db2",
         file_name: "cudart-llama-bin-win-cuda-12.4-x64.zip",
     sidecar: "cudart64_12.dll",
 }];
@@ -314,7 +321,12 @@ mod tests {
         let mut seen = std::collections::HashSet::new();
         for pin in ENGINE_PINS.iter().chain(ENGINE_OPTIONAL_PINS.iter()) {
             assert!(
-                pin.url.starts_with(&prefix),
+                pin.url
+                    .starts_with(if pin.os == "windows" && pin.accelerator == "CUDA" {
+                        SIGNED_WINDOWS_ARCHIVES
+                    } else {
+                        &prefix
+                    }),
                 "{} is not under the {ENGINE_BUILD} archives for {ENGINE_RELEASE}",
                 pin.url
             );
@@ -348,7 +360,15 @@ mod tests {
             );
         }
         for runtime in ENGINE_OPTIONAL_RUNTIMES {
-            assert!(runtime.url.starts_with(&prefix), "{}", runtime.url);
+            assert!(
+                runtime.url.starts_with(if runtime.os == "windows" {
+                    SIGNED_WINDOWS_ARCHIVES
+                } else {
+                    &prefix
+                }),
+                "{}",
+                runtime.url
+            );
             assert!(runtime.url.ends_with(runtime.file_name), "{}", runtime.url);
             assert_eq!(runtime.sha256.len(), 64, "{}", runtime.file_name);
             assert!(

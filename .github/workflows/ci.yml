@@ -144,7 +144,7 @@ jobs:
           import pathlib, re, subprocess, sys
           text = pathlib.Path("src-tauri/src/engine/pin.rs").read_text()
           urls = sorted(set(re.findall(
-              r'url: "(https://github.com/ggml-org/llama.cpp/releases/download/[^"]+\.(?:tar\.gz|zip))"',
+              r'url: "(https://github.com/(?:ggml-org/llama.cpp|Frontierz-AI/Rebost)/releases/download/[^"]+\.(?:tar\.gz|zip))"',
               text,
           )))
           if not urls:

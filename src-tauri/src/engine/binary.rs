@@ -193,7 +193,7 @@ impl Engine {
                 (local.path, local.verify_pin_sha, local.delete_after_unpack)
             } else {
                 anyhow::ensure!(
-                    pin.os != "windows",
+                    super::pin::can_download_archive(pin.os, pin.url),
                     "Windows engine is missing from the installation"
                 );
                 if !allow_local {
@@ -260,7 +260,7 @@ impl Engine {
             path
         } else {
             anyhow::ensure!(
-                runtime.os != "windows",
+                super::pin::can_download_archive(runtime.os, runtime.url),
                 "Windows CUDA runtime is missing from the installation"
             );
             let dest = engine_dir.join(runtime.file_name);
@@ -395,6 +395,41 @@ fn resolve_local_archive(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Release CI calls this on native x64 and ARM64. No bundled resource or GPU
+    // is needed: exercise the real downloader and the Windows loader on a clean profile.
+    #[cfg(windows)]
+    #[tokio::test]
+    #[ignore = "downloads the signed Windows CUDA engine and runtime"]
+    async fn windows_cuda_download_and_launch() -> Result<()> {
+        let profile = tempfile::tempdir()?;
+        let ctx = crate::core::Ctx::new(
+            crate::paths::Paths::new(profile.path()),
+            std::sync::Arc::new(crate::core::NoopEvents),
+            crate::ingest::extract::ExtractorSettings::default(),
+        )?;
+        let engine = Engine::new(ctx);
+        let pin =
+            super::super::pin::optional_pin_for("windows", std::env::consts::ARCH, "CUDA").unwrap();
+        let binary = engine.ensure_pin_binary(pin, false).await?;
+        let dir = binary.parent().unwrap();
+        assert!(dir.join("llama-common.dll").is_file());
+        let signatures = std::process::Command::new("powershell.exe")
+            .args(["-NoProfile", "-NonInteractive", "-Command",
+                r#"$ErrorActionPreference='Stop'; Get-ChildItem -File -Recurse | Where-Object { $_.Extension -in '.dll','.exe' } | ForEach-Object { $s = Get-AuthenticodeSignature -LiteralPath $_.FullName; if ($s.Status -ne 'Valid') { throw ($_.Name + [string]$s.Status) } }"#])
+            .current_dir(dir).status()?;
+        assert!(
+            signatures.success(),
+            "invalid publisher on a downloaded binary"
+        );
+        let version = std::process::Command::new(&binary)
+            .arg("--version")
+            .current_dir(dir)
+            .output()?;
+        assert!(version.status.success(), "{version:?}");
+        assert_eq!(engine.ensure_pin_binary(pin, false).await?, binary);
+        Ok(())
+    }
 
     #[test]
     fn env_archive_wins_over_bundle() {
