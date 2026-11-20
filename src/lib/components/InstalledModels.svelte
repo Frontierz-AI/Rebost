@@ -6,7 +6,7 @@
   import { installedBytes } from "$lib/installed-models";
   import { confirmDanger } from "$lib/native-dialog";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
-  import { BadgeCheck, Ellipsis } from "@lucide/svelte";
+  import { BadgeCheck, CircleAlert, Ellipsis } from "@lucide/svelte";
 
   let {
     active,
@@ -117,7 +117,11 @@
   <div
     class="flex flex-wrap items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 py-3 pr-2 pl-4"
   >
-    <BadgeCheck size={18} class="shrink-0 text-navy-600 dark:text-navy-400" />
+    {#if missing}
+      <CircleAlert size={18} class="shrink-0 text-amber-550" />
+    {:else}
+      <BadgeCheck size={18} class="shrink-0 text-navy-600 dark:text-navy-400" />
+    {/if}
     <div class="min-w-0 flex-1">
       <p class="text-[13.5px] font-semibold text-ink">{model.name}</p>
       <p class="text-[11.5px] text-ink-soft tabular-nums">

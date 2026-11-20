@@ -23,9 +23,7 @@ describe("findInstalled", () => {
   it("allows downloading the selected AI again when its file is missing", () => {
     const missing = { ...settings, activeModelMissing: true };
     expect(findInstalled(missing, "huggingface", settings.activeModel.reference)).toBeNull();
-    expect(findInstalled(missing, "ollama", settings.otherModels[0].reference)?.model).toBe(
-      settings.otherModels[0],
-    );
+    expect(findInstalled(missing, "ollama", "qwen3.8:27b")?.model).toBe(settings.otherModels[0]);
   });
 
   it("finds other installed AIs by source and reference", () => {
