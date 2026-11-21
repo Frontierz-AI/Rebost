@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-11-21
+
+- Updated the desktop runtime, Markdown renderer, HTML sanitizer, icons and build dependencies.
+- Fixed preparation of the Flathub release files by isolating the Rust toolchain in CI.
+
 ## [1.1.2] - 2026-11-20
 
 - Reduced the universal Windows download by moving the NVIDIA CUDA packages to first use and fetching Microsoft WebView2 only when missing. The installer still carries both native apps and their CPU, Vulkan or Snapdragon Adreno engines.
@@ -719,7 +724,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Frontierz-AI/Rebost/compare/v1.0.0...v1.1.0
