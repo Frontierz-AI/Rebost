@@ -30,7 +30,19 @@
   const mac = isMac();
   let toastTheme = $state(colorScheme());
   // Overlay title bar on macOS: content is full height and the traffic lights
-  // sit on the sidebar, so it needs top clearance and drag regions.
+  // sit on the sidebar, so it needs top clearance and drag regions. The window
+  // is transparent there, so the sidebar shows the system sidebar material.
+
+  function railItemClass(active: boolean): string {
+    if (mac) {
+      return active
+        ? "bg-navy-500/20 text-navy-800 dark:bg-navy-400/15 dark:text-navy-400"
+        : "text-ink-soft hover:bg-black/5 hover:text-ink dark:hover:bg-white/8";
+    }
+    return active
+      ? "bg-navy-500/15 text-navy-500"
+      : "text-rail-idle hover:bg-navy-500/10 hover:text-white";
+  }
 
   onMount(() => {
     setNotifier((message) => toast(message));
@@ -150,13 +162,13 @@
     </div>
   </div>
 {:else}
-  <div class="flex h-full bg-navy-950">
+  <div class="flex h-full {mac ? '' : 'bg-navy-950'}">
     <nav
       data-tauri-drag-region
       aria-label={t("nav.main")}
-      class="flex w-[76px] shrink-0 flex-col items-center border-r border-navy-950/40 bg-navy-950 pb-4 {mac
-        ? 'pt-[46px]'
-        : 'pt-4'}"
+      class="flex w-[76px] shrink-0 flex-col items-center border-r pb-4 {mac
+        ? 'border-black/10 pt-[46px] dark:border-white/10'
+        : 'border-navy-950/40 bg-navy-950 pt-4'}"
     >
       {#each nav as item (item.view)}
         {@const Icon = item.icon}
@@ -165,9 +177,7 @@
           aria-label={item.label}
           aria-current={app.view === item.view ? "page" : undefined}
           class="mb-1.5 flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5
-            {app.view === item.view
-            ? 'bg-navy-500/15 text-navy-500'
-            : 'text-rail-idle hover:bg-navy-500/10 hover:text-white'}"
+            {railItemClass(app.view === item.view)}"
           onclick={() => {
             app.view = item.view;
             if (item.view === "shelves") app.openShelfId = null;
@@ -182,8 +192,10 @@
         <button
           type="button"
           aria-label={t("nav.updateAvailable", { version: app.update.version })}
-          class="mb-1.5 flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5 text-amber-450
-            hover:bg-amber-450/10 hover:text-amber-350"
+          class="mb-1.5 flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5 hover:bg-amber-450/10
+            {mac
+            ? 'text-amber-550 hover:text-amber-550 dark:text-amber-450 dark:hover:text-amber-350'
+            : 'text-amber-450 hover:text-amber-350'}"
           onclick={() => api.showUpdateWindow().catch(notifyInvokeError)}
         >
           <span class="relative">
@@ -201,9 +213,7 @@
         aria-label={t("nav.settings")}
         aria-current={app.view === "settings" ? "page" : undefined}
         class="flex w-[60px] flex-col items-center gap-1 rounded-xl py-2.5
-          {app.view === 'settings'
-          ? 'bg-navy-500/15 text-navy-500'
-          : 'text-rail-idle hover:bg-navy-500/10 hover:text-white'}"
+          {railItemClass(app.view === 'settings')}"
         onclick={() => (app.view = "settings")}
       >
         <Settings size={19} />
@@ -212,7 +222,8 @@
     </nav>
 
     <main class="app-main-in flex min-w-0 flex-1 flex-col overflow-hidden bg-paper">
-      {#if mac}
+      {#if mac && current !== "chat"}
+        <!-- Chat draws its own toolbar row on macOS. -->
         <div data-tauri-drag-region class="h-3 shrink-0"></div>
       {/if}
       <div class="relative min-h-0 flex-1 overflow-hidden">

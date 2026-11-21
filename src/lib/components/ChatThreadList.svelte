@@ -3,6 +3,7 @@
   import { t } from "$lib/i18n.svelte";
   import { threadShelfSubtitle } from "$lib/shelf-label";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
+  import { isMac } from "$lib/platform";
   import { Plus, Trash2, Lock, Pencil, X } from "@lucide/svelte";
   import ConversationFace from "./ConversationFace.svelte";
 
@@ -29,6 +30,9 @@
   } = $props();
 
   const open = $derived(threads.length > 0);
+  // macOS: a full-height column beside the sidebar, its header level with
+  // Chat's toolbar. The narrow-window drawer keeps the floating card.
+  const column = $derived(isMac() && !onClose);
   let editingId = $state<string | null>(null);
   let editTitle = $state("");
 
@@ -84,12 +88,17 @@
   aria-hidden={!open}
 >
   <aside
-    class="mt-1 mr-3 mb-2 ml-3 flex w-60 shrink-0 flex-col overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-black/5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none dark:shadow-none dark:ring-white/5 {open
+    class="flex shrink-0 flex-col overflow-hidden transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none {column
+      ? 'w-[16.5rem] border-r border-paper-line bg-surface'
+      : 'mt-1 mr-3 mb-2 ml-3 w-60 rounded-2xl bg-surface shadow-card ring-1 ring-black/5 dark:shadow-none dark:ring-white/5'} {open
       ? 'translate-x-0'
       : '-translate-x-full'}"
     inert={!open}
   >
-    <div data-tauri-drag-region class="flex items-center justify-between px-3 pt-3 pb-2">
+    <div
+      data-tauri-drag-region
+      class="flex shrink-0 items-center justify-between px-3 {column ? 'h-[52px]' : 'pt-3 pb-2'}"
+    >
       {#if onClose}
         <button
           type="button"

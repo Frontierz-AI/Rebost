@@ -83,6 +83,11 @@ body {
   cursor: default;
 }
 
+/* The window is transparent on macOS (tauri.macos.conf.json); panes paint their own fill. */
+html[data-os="macos"][data-shell="main"] body {
+  background: transparent;
+}
+
 input:not(
   [type="button"],
   [type="submit"],

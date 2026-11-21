@@ -35,6 +35,7 @@
   import ThinkingPanel from "$lib/components/ThinkingPanel.svelte";
   import ConversationFace from "$lib/components/ConversationFace.svelte";
   import { confirmDanger } from "$lib/native-dialog";
+  import { isMac } from "$lib/platform";
   import { t } from "$lib/i18n.svelte";
   import { shot } from "$lib/shot-control.svelte";
   import { tick } from "svelte";
@@ -42,6 +43,8 @@
   import { PanelLeft, Plus } from "@lucide/svelte";
 
   const narrow = new MediaQuery("(max-width: 899px)");
+  // macOS: a toolbar row with the conversation title replaces the inline header.
+  const mac = isMac();
   let conversationsDialog = $state<HTMLDialogElement | null>(null);
 
   $effect(() => {
@@ -455,7 +458,48 @@
   {/if}
 
   <section class="flex min-w-0 flex-1 flex-col">
-    {#if narrow.current}
+    {#if mac}
+      <div
+        data-tauri-drag-region
+        class="flex h-[52px] shrink-0 items-center gap-2 px-3 min-[900px]:px-5"
+      >
+        {#if narrow.current && app.threads.length > 0}
+          <button
+            type="button"
+            class="btn-ghost !p-1.5"
+            aria-haspopup="dialog"
+            aria-label={t("chat.conversations")}
+            title={t("chat.conversations")}
+            onclick={() => conversationsDialog?.showModal()}
+          >
+            <PanelLeft size={17} aria-hidden="true" />
+          </button>
+        {/if}
+        {#if activeThread}
+          {@const thread = activeThread}
+          <ChatThreadHeader
+            variant="toolbar"
+            {thread}
+            shelves={app.shelves}
+            messageCount={Math.max(thread.messageCount, chatState.messages.length)}
+            onDownload={() => void exportThread(thread.id)}
+          />
+        {:else}
+          <div data-tauri-drag-region class="h-full flex-1"></div>
+        {/if}
+        {#if narrow.current}
+          <button
+            type="button"
+            class="btn-ghost !p-1.5"
+            onclick={startConversation}
+            aria-label={t("chat.newConversation")}
+            title={t("chat.newConversation")}
+          >
+            <Plus size={17} aria-hidden="true" />
+          </button>
+        {/if}
+      </div>
+    {:else if narrow.current}
       <div class="flex shrink-0 items-center gap-2 border-b border-paper-line px-3 py-2">
         {#if app.threads.length > 0}
           <button
@@ -493,7 +537,7 @@
           bind:this={scrollContentEl}
           class="mx-auto flex max-w-[760px] flex-col gap-4 px-3 pt-4 pb-6 min-[900px]:px-6"
         >
-          {#if activeThread}
+          {#if activeThread && !mac}
             {@const thread = activeThread}
             <ChatThreadHeader
               {thread}

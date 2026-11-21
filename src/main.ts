@@ -60,6 +60,7 @@ void (async () => {
       mount(UpdateWindow, { target });
       break;
     case null:
+      document.documentElement.dataset.shell = "main";
       restoreTextSize();
       mount(App, { target });
       break;
