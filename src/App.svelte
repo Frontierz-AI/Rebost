@@ -167,7 +167,7 @@
       data-tauri-drag-region
       aria-label={t("nav.main")}
       class="flex w-[76px] shrink-0 flex-col items-center border-r pb-4 {mac
-        ? 'border-black/10 pt-[46px] dark:border-white/10'
+        ? 'border-black/10 pt-[52px] dark:border-white/10'
         : 'border-navy-950/40 bg-navy-950 pt-4'}"
     >
       {#each nav as item (item.view)}

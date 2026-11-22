@@ -12,6 +12,7 @@
         "dragDropEnabled": true,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
+        "trafficLightPosition": { "x": 8, "y": 28 },
         "transparent": true,
         "windowEffects": {
           "effects": ["sidebar"],
