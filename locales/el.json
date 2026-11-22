@@ -19,21 +19,16 @@
   "menu": {
     "about": "Πληροφορίες για το Rebost",
     "settings": "Ρυθμίσεις…",
-    "settingsWin": "Ρυθμίσεις",
     "newConversation": "Νέα συνομιλία",
-    "newConversationWin": "Νέα συνομιλία",
     "chat": "Συνομιλίες",
     "shelves": "Ράφια",
     "recipes": "Συνταγές",
     "largerText": "Μεγαλύτερο κείμενο",
-    "largerTextWin": "Μεγαλύτερο κείμενο",
     "smallerText": "Μικρότερο κείμενο",
-    "smallerTextWin": "Μικρότερο κείμενο",
     "file": "Αρχείο",
     "edit": "Επεξεργασία",
     "view": "Προβολή",
-    "window": "Παράθυρο",
-    "help": "Βοήθεια"
+    "window": "Παράθυρο"
   },
   "locale": {
     "heading": "Γλώσσα",

@@ -19,21 +19,16 @@
   "menu": {
     "about": "Om Rebost",
     "settings": "Inställningar…",
-    "settingsWin": "Inställningar",
     "newConversation": "Nytt samtal",
-    "newConversationWin": "Nytt samtal",
     "chat": "Chattar",
     "shelves": "Hyllor",
     "recipes": "Recept",
     "largerText": "Större text",
-    "largerTextWin": "Större text",
     "smallerText": "Mindre text",
-    "smallerTextWin": "Mindre text",
     "file": "Arkiv",
     "edit": "Redigera",
     "view": "Visa",
-    "window": "Fönster",
-    "help": "Hjälp"
+    "window": "Fönster"
   },
   "locale": {
     "heading": "Språk",

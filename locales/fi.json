@@ -19,21 +19,16 @@
   "menu": {
     "about": "Tietoja Rebostista",
     "settings": "Asetukset…",
-    "settingsWin": "Asetukset",
     "newConversation": "Uusi keskustelu",
-    "newConversationWin": "Uusi keskustelu",
     "chat": "Keskustelut",
     "shelves": "Hyllyt",
     "recipes": "Reseptit",
     "largerText": "Suurempi teksti",
-    "largerTextWin": "Suurempi teksti",
     "smallerText": "Pienempi teksti",
-    "smallerTextWin": "Pienempi teksti",
     "file": "Tiedosto",
     "edit": "Muokkaa",
     "view": "Näytä",
-    "window": "Ikkuna",
-    "help": "Ohje"
+    "window": "Ikkuna"
   },
   "locale": {
     "heading": "Kieli",

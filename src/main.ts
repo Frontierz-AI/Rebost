@@ -8,7 +8,7 @@ import { applyColorSchemeFromSystem, watchWindowTheme } from "./lib/appearance";
 import { restoreTextSize } from "./lib/text-size";
 import { suppressWebviewBeep } from "./lib/keys";
 import { installNativeContextMenus } from "./lib/native-menu";
-import { osFamily } from "./lib/platform";
+import { osFamily, shellMaterial } from "./lib/platform";
 import { api } from "./lib/api";
 import { applyLocale, parseAppLocale } from "./lib/i18n.svelte";
 
@@ -61,6 +61,7 @@ void (async () => {
       break;
     case null:
       document.documentElement.dataset.shell = "main";
+      document.documentElement.dataset.material = shellMaterial() ?? "none";
       restoreTextSize();
       mount(App, { target });
       break;

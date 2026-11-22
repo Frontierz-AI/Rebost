@@ -18,21 +18,16 @@
   "menu": {
     "about": "Quant a Rebost",
     "settings": "Ajustos…",
-    "settingsWin": "Ajustos",
     "newConversation": "Nova conversa",
-    "newConversationWin": "Nova conversa",
     "chat": "Xat",
     "shelves": "Estants",
     "recipes": "Receptes",
     "largerText": "Text més gran",
-    "largerTextWin": "Text més gran",
     "smallerText": "Text més petit",
-    "smallerTextWin": "Text més petit",
     "file": "Fitxer",
     "edit": "Edita",
     "view": "Visualització",
-    "window": "Finestra",
-    "help": "Ajuda"
+    "window": "Finestra"
   },
   "locale": {
     "heading": "Idioma",

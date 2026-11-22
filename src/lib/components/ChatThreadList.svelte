@@ -3,7 +3,7 @@
   import { t } from "$lib/i18n.svelte";
   import { threadShelfSubtitle } from "$lib/shelf-label";
   import { popupNativeMenu, type NativeMenuEntry } from "$lib/native-menu";
-  import { isMac } from "$lib/platform";
+  import { isMac, isWindows } from "$lib/platform";
   import { Plus, Trash2, Lock, Pencil, X } from "@lucide/svelte";
   import ConversationFace from "./ConversationFace.svelte";
 
@@ -30,9 +30,9 @@
   } = $props();
 
   const open = $derived(threads.length > 0);
-  // macOS: a full-height column beside the sidebar, its header level with
-  // Chat's toolbar. The narrow-window drawer keeps the floating card.
-  const column = $derived(isMac() && !onClose);
+  // macOS and Windows: a full-height column beside the sidebar, its header
+  // level with Chat's macOS toolbar. The narrow-window drawer keeps the card.
+  const column = $derived((isMac() || isWindows()) && !onClose);
   let editingId = $state<string | null>(null);
   let editTitle = $state("");
 

@@ -18,21 +18,16 @@
   "menu": {
     "about": "Acerca de Rebost",
     "settings": "Ajustes…",
-    "settingsWin": "Ajustes",
     "newConversation": "Nueva conversación",
-    "newConversationWin": "Nueva conversación",
     "chat": "Chats",
     "shelves": "Estantes",
     "recipes": "Recetas",
     "largerText": "Texto más grande",
-    "largerTextWin": "Texto más grande",
     "smallerText": "Texto más pequeño",
-    "smallerTextWin": "Texto más pequeño",
     "file": "Archivo",
     "edit": "Edición",
     "view": "Visualización",
-    "window": "Ventana",
-    "help": "Ayuda"
+    "window": "Ventana"
   },
   "locale": {
     "heading": "Idioma",

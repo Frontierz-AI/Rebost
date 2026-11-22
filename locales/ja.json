@@ -19,21 +19,16 @@
   "menu": {
     "about": "Rebostについて",
     "settings": "設定…",
-    "settingsWin": "設定",
     "newConversation": "新しい会話",
-    "newConversationWin": "新しい会話",
     "chat": "チャット",
     "shelves": "シェルフ",
     "recipes": "レシピ",
     "largerText": "文字を大きく",
-    "largerTextWin": "文字を大きく",
     "smallerText": "文字を小さく",
-    "smallerTextWin": "文字を小さく",
     "file": "ファイル",
     "edit": "編集",
     "view": "表示",
-    "window": "ウィンドウ",
-    "help": "ヘルプ"
+    "window": "ウィンドウ"
   },
   "locale": {
     "heading": "言語",

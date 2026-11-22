@@ -19,21 +19,16 @@
   "menu": {
     "about": "O Rebostu",
     "settings": "Nastavení…",
-    "settingsWin": "Nastavení",
     "newConversation": "Nová konverzace",
-    "newConversationWin": "Nová konverzace",
     "chat": "Chat",
     "shelves": "Police",
     "recipes": "Recepty",
     "largerText": "Větší text",
-    "largerTextWin": "Větší text",
     "smallerText": "Menší text",
-    "smallerTextWin": "Menší text",
     "file": "Soubor",
     "edit": "Úpravy",
     "view": "Zobrazení",
-    "window": "Okno",
-    "help": "Nápověda"
+    "window": "Okno"
   },
   "locale": {
     "heading": "Jazyk",
