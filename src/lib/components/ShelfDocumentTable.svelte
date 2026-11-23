@@ -161,7 +161,7 @@
               {#if doc.status === "ready"}
                 <span class="text-ready-ink dark:text-navy-300">{t("shelves.ready")}</span>
               {:else if doc.status === "reading"}
-                <span class="inline-flex items-center gap-1.5 text-amber-550">
+                <span class="inline-flex items-center gap-1.5 text-amber-550 dark:text-amber-350">
                   <span
                     class="inline-block size-1.5 animate-pulse rounded-full bg-amber-450"
                     aria-hidden="true"

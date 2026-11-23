@@ -141,6 +141,13 @@ export interface ThreadPage {
   hasOlder: boolean;
 }
 
+/** Local OpenAI-compatible address and key for other apps. */
+export interface ApiAccess {
+  /** Null while the AI is not running; the port changes on each start. */
+  url: string | null;
+  key: string;
+}
+
 export interface EngineStatus {
   vision?: VisionLimits | null;
   state: "no-model" | "downloading" | "stopped" | "starting" | "ready" | "error";
@@ -617,6 +624,7 @@ export const api = {
   warmEngine: () => invoke<void>("warm_engine"),
 
   engineStatus: () => invoke<EngineStatus>("engine_status"),
+  engineApiAccess: () => invoke<ApiAccess>("engine_api_access"),
   modelVisionOffer: () => invoke<number | null>("model_vision_offer"),
   modelEnableVision: () => invoke<void>("model_enable_vision"),
   engineRemeasure: () => invoke<void>("engine_remeasure"),

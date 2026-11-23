@@ -106,7 +106,7 @@
                 ? 'text-red-700/80 dark:text-red-400'
                 : doc.status === 'ready'
                   ? 'text-ready-ink dark:text-navy-300'
-                  : 'text-amber-550'}"
+                  : 'text-amber-550 dark:text-amber-350'}"
             >
               {statusLabel(doc)}
             </p>

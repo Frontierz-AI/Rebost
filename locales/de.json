@@ -19,21 +19,16 @@
   "menu": {
     "about": "Über Rebost",
     "settings": "Einstellungen…",
-    "settingsWin": "Einstellungen",
     "newConversation": "Neue Unterhaltung",
-    "newConversationWin": "Neue Unterhaltung",
     "chat": "Chats",
     "shelves": "Regale",
     "recipes": "Rezepte",
     "largerText": "Text vergrößern",
-    "largerTextWin": "Text vergrößern",
     "smallerText": "Text verkleinern",
-    "smallerTextWin": "Text verkleinern",
     "file": "Datei",
     "edit": "Bearbeiten",
     "view": "Ansicht",
-    "window": "Fenster",
-    "help": "Hilfe"
+    "window": "Fenster"
   },
   "locale": {
     "heading": "Sprache",
@@ -158,6 +153,16 @@
     "changeShort": "Ändern",
     "tooSmall": "Hier ist nicht genug Platz für diese KI. Wähle einen Ordner auf einem anderen Laufwerk.",
     "keptCopies": "Deine KIs sind jetzt im neuen Ordner. Von einigen hat Rebost eine Kopie im alten Ordner gelassen, weil es nicht sicher bestätigen konnte, dass sie gelöscht werden dürfen. Du kannst sie dort selbst löschen."
+  },
+  "apiAccess": {
+    "heading": "Diese KI in anderen Apps verwenden",
+    "help": "Apps auf diesem Computer, die mit der OpenAI-API arbeiten, können die KI nutzen, die in Rebost läuft. Gib ihnen diese Adresse und diesen Schlüssel. Beide ändern sich, wenn Rebost die KI neu startet.",
+    "address": "Adresse",
+    "key": "API-Schlüssel",
+    "notRunning": "Die Adresse erscheint, sobald die KI läuft.",
+    "show": "Anzeigen",
+    "hide": "Ausblenden",
+    "copied": "Kopiert"
   },
   "onboarding": {
     "welcome": "Willkommen bei Rebost",

@@ -19,21 +19,16 @@
   "menu": {
     "about": "Tietoja Rebostista",
     "settings": "Asetukset…",
-    "settingsWin": "Asetukset",
     "newConversation": "Uusi keskustelu",
-    "newConversationWin": "Uusi keskustelu",
     "chat": "Keskustelut",
     "shelves": "Hyllyt",
     "recipes": "Reseptit",
     "largerText": "Suurempi teksti",
-    "largerTextWin": "Suurempi teksti",
     "smallerText": "Pienempi teksti",
-    "smallerTextWin": "Pienempi teksti",
     "file": "Tiedosto",
     "edit": "Muokkaa",
     "view": "Näytä",
-    "window": "Ikkuna",
-    "help": "Ohje"
+    "window": "Ikkuna"
   },
   "locale": {
     "heading": "Kieli",
@@ -158,6 +153,16 @@
     "changeShort": "Vaihda",
     "tooSmall": "Tämä tekoäly ei mahdu tänne. Valitse kansio toiselta asemalta.",
     "keptCopies": "Tekoälysi ovat nyt uudessa kansiossa. Rebost jätti joistakin kopion vanhaan kansioon, koska se ei voinut varmistaa, että niiden poistaminen on turvallista. Voit poistaa ne sieltä itse."
+  },
+  "apiAccess": {
+    "heading": "Käytä tätä tekoälyä muista sovelluksista",
+    "help": "Tämän tietokoneen sovellukset, jotka toimivat OpenAI-rajapinnan kanssa, voivat käyttää Rebostissa toimivaa tekoälyä. Anna niille tämä osoite ja avain. Molemmat vaihtuvat, kun Rebost käynnistää tekoälyn uudelleen.",
+    "address": "Osoite",
+    "key": "API-avain",
+    "notRunning": "Osoite näkyy, kun tekoäly on käynnissä.",
+    "show": "Näytä",
+    "hide": "Piilota",
+    "copied": "Kopioitu"
   },
   "onboarding": {
     "welcome": "Tervetuloa Rebostiin",

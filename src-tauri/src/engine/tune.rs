@@ -220,7 +220,7 @@ fn machine_base_ctx(profile: &MachineProfile, pin: &EnginePin) -> u32 {
 
 fn machine_max_ctx(profile: &MachineProfile, pin: &EnginePin, file_bytes: Option<u64>) -> u32 {
     let ram = profile.total_ram_bytes;
-    let unified = pin.accelerator == "Metal";
+    let unified = super::pin::unified_memory(pin);
     // Weights share system memory only on unified memory. Discrete VRAM is
     // not measured here, so leftover RAM must not unlock a wide KV cache.
     if unified {
@@ -249,7 +249,7 @@ fn is_gpu(pin: &EnginePin) -> bool {
 
 fn class_target_ctx(class: ModelClass, family: ModelFamily, ram: u64, pin: &EnginePin) -> u32 {
     let gpu = is_gpu(pin);
-    let unified = pin.accelerator == "Metal";
+    let unified = super::pin::unified_memory(pin);
     match class {
         ModelClass::Tiny => {
             if gpu
@@ -780,6 +780,23 @@ mod tests {
         let plan = SpawnPlan::for_model(&profile(24, "Metal"), pin, Some(&model));
         assert_eq!(plan.context_tokens, 16384);
         assert_eq!(plan.answer_tokens, 1536);
+    }
+
+    #[test]
+    fn small_model_stretches_on_windows_arm_cuda() {
+        // RTX Spark N1X: the GPU shares the 24 GB with the CPU.
+        let pin = crate::engine::pin::optional_pin_for("windows", "aarch64", "CUDA").unwrap();
+        let model = hint("Ministral 3 8B", "Ministral-3-8B.gguf", 5114);
+        let plan = SpawnPlan::for_model(&profile(24, "CUDA"), pin, Some(&model));
+        assert_eq!(plan.context_tokens, 16384);
+    }
+
+    #[test]
+    fn small_model_stays_8k_on_discrete_cuda() {
+        let pin = crate::engine::pin::optional_pin_for("windows", "x86_64", "CUDA").unwrap();
+        let model = hint("Ministral 3 8B", "Ministral-3-8B.gguf", 5114);
+        let plan = SpawnPlan::for_model(&profile(24, "CUDA"), pin, Some(&model));
+        assert_eq!(plan.context_tokens, 8192);
     }
 
     #[test]

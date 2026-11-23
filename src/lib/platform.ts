@@ -1,4 +1,4 @@
-import { platform } from "@tauri-apps/plugin-os";
+import { platform, version } from "@tauri-apps/plugin-os";
 
 export type OsFamily = "macos" | "windows" | "other";
 
@@ -27,4 +27,35 @@ export function isMac(): boolean {
 
 export function isWindows(): boolean {
   return osFamily() === "windows";
+}
+
+/** Windows 11 is NT 10.0 from build 22000; Mica needs it. */
+export function supportsMica(osVersion: string): boolean {
+  const build = Number(osVersion.split(".")[2]);
+  return Number.isFinite(build) && build >= 22000;
+}
+
+/**
+ * System material behind the main window's sidebar, or `null` when the window
+ * is opaque. Matches `windowEffects` in tauri.macos.conf.json and
+ * tauri.windows.conf.json (Windows 10 ignores Mica).
+ */
+export function shellMaterial(): "sidebar" | "mica" | null {
+  const os = osFamily();
+  switch (os) {
+    case "macos":
+      return "sidebar";
+    case "windows":
+      try {
+        return supportsMica(version()) ? "mica" : null;
+      } catch {
+        return null;
+      }
+    case "other":
+      return null;
+    default: {
+      const _exhaustive: never = os;
+      return _exhaustive;
+    }
+  }
 }

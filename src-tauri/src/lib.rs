@@ -187,9 +187,9 @@ pub fn run() {
                 }
             }
         });
-    // GNOME and KDE apps do not carry a menu bar. The webview handles the
-    // same shortcuts, and About is in Settings.
-    #[cfg(not(target_os = "linux"))]
+    // Only macOS has a menu bar. Windows 11, GNOME and KDE apps do not carry
+    // one; the webview handles the same shortcuts, and About is in Settings.
+    #[cfg(target_os = "macos")]
     let builder = builder.menu(crate::menu::build_menu);
 
     builder
@@ -317,6 +317,7 @@ pub fn run() {
             commands::chat_approve_web,
             commands::warm_engine,
             commands::engine_status,
+            commands::engine_api_access,
             commands::engine_remeasure,
             commands::machine_profile,
             commands::models_search,

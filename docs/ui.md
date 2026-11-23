@@ -70,20 +70,20 @@ Add `btn-icon` for a 36×36 circle (Send, Stop). Ghost icon buttons usually over
 
 Press: primary/amber scale to 0.98 in 80ms. Honor `prefers-reduced-motion`.
 
-Do not square a button. Do not put a second mint button next to the first; the neighbor is outline or ghost.
+On Windows the same classes follow Fluent: 32px tall, 4px radius (`btn-icon` 32×32), see the Windows block in `app.css`. Elsewhere do not square a button. Do not put a second mint button next to the first; the neighbor is outline or ghost.
 
 ## Other shapes
 
 | Class / place | Radius | Notes |
 |---------------|--------|-------|
-| `.card` | `rounded-2xl` (16px) | `paper-line` border, `surface`, `shadow-card` |
-| `.input` | `rounded-lg` (10px) | Focus: `navy-500` border + `navy-100` ring |
+| `.card` | `rounded-2xl` (16px) | `paper-line` border, `surface`, `shadow-card`. Windows: 8px, no shadow |
+| `.input` | `rounded-lg` (10px) | Focus: `navy-500` border + `navy-100` ring. Windows: 4px |
 | `.chip` | full pill | 12px medium; add your own fill/border |
 | Rail nav item | `rounded-xl` | 60× wide, icon 19, label 10px |
 | Chat composer | card, `!rounded-2xl` | Lives in [`ChatComposer.svelte`](../src/lib/components/ChatComposer.svelte) |
 | User bubble | `rounded-2xl rounded-br-md` | `navy-900`, white type |
 | Assistant bubble | `rounded-2xl rounded-tl-md` | Surface card + shadow |
-| Thread list pane | `rounded-2xl` | 16.5rem when open |
+| Thread list pane | `rounded-2xl` (Linux, narrow drawer) | 16.5rem when open; a square column on macOS and Windows |
 | Menus / typeahead | `rounded-xl` | Surface + `shadow-pop` |
 | Dialog / drawer | `.card` | Overlay `navy-950/25` (dark: `black/50`) |
 | Onboarding pane | `rounded-3xl` | On `navy-950`; type is white |
@@ -96,7 +96,7 @@ Drop targets: dashed `navy-500` border, `navy-100/50` wash, `rounded-2xl`.
 
 ## Type
 
-System UI only (`ui-sans-serif`, then the OS stack). Mono for Diagnostics and confirm-`DELETE`. Settings → Text size scales the window in three steps (default, 1.15, 1.3) via `html[data-text-size]`.
+System UI only (`ui-sans-serif`, then the OS stack; Segoe UI Variable before Segoe UI on Windows 11). Mono for Diagnostics and confirm-`DELETE`. Settings → Text size scales the window in three steps (default, 1.15, 1.3) via `html[data-text-size]`.
 
 | Role | Size | Weight |
 |------|------|--------|
@@ -114,10 +114,13 @@ Selection wash: navy-500 at 35%. Body is `user-select: none`; text fields, `[con
 
 ## Chrome
 
-- Sidebar is 76px of `navy-950`. Active item: mint type on `navy-500/15`. Idle: `rail-idle`, hover toward white.
+- Sidebar is 76px. On Linux and Windows 10 it is `navy-950`: active item mint type on `navy-500/15`, idle `rail-idle`, hover toward white.
+- macOS and Windows 11: the main window is transparent and the sidebar shows the system material (`windowEffects` in `tauri.macos.conf.json` / `tauri.windows.conf.json`; `html[data-material]` says which). Active item: `navy-800` type (dark: `navy-400`) on a mint tint; idle `ink-soft`.
+- macOS: overlay title bar. The rail starts 52px down so the traffic lights (`trafficLightPosition`) sit above it, and Chat has a 52px toolbar row with the conversation title that drags the window. Other panes keep a 12px drag strip.
+- Windows: native title bar, no menu bar. On Mica the main pane is a layer with a rounded top-left corner and a hairline border. Scroll bars are Fluent overlay (`scrollBarStyle`; About and Update must match).
+- macOS and Windows: the conversation list is a full-height column with a right border; narrow windows keep the floating card.
 - Main pane is `paper`.
 - Settings / Recipes content caps at 760px.
-- macOS: 46px drag region over the rail so traffic lights sit on the green.
 
 Icons: Lucide (`@lucide/svelte`). 12–15px in buttons, 17–19px in the rail and onboarding cards.
 

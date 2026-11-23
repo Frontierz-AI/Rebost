@@ -19,21 +19,16 @@
   "menu": {
     "about": "Om Rebost",
     "settings": "Indstillinger…",
-    "settingsWin": "Indstillinger",
     "newConversation": "Ny samtale",
-    "newConversationWin": "Ny samtale",
     "chat": "Chat",
     "shelves": "Hylder",
     "recipes": "Opskrifter",
     "largerText": "Større tekst",
-    "largerTextWin": "Større tekst",
     "smallerText": "Mindre tekst",
-    "smallerTextWin": "Mindre tekst",
     "file": "Arkiv",
     "edit": "Rediger",
     "view": "Vis",
-    "window": "Vindue",
-    "help": "Hjælp"
+    "window": "Vindue"
   },
   "locale": {
     "heading": "Sprog",
@@ -158,6 +153,16 @@
     "changeShort": "Skift",
     "tooSmall": "Der er ikke plads til denne AI her. Vælg en mappe på et andet drev.",
     "keptCopies": "Dine AI'er ligger nu i den nye mappe. Rebost har ladet en kopi af nogle ligge i den gamle mappe, fordi den ikke kunne bekræfte, at de var sikre at slette. Du kan selv slette dem der."
+  },
+  "apiAccess": {
+    "heading": "Brug denne AI fra andre apps",
+    "help": "Apps på denne computer, der virker med OpenAI-API'et, kan bruge den AI, der kører i Rebost. Giv dem denne adresse og nøgle. Begge ændres, når Rebost starter AI'en igen.",
+    "address": "Adresse",
+    "key": "API-nøgle",
+    "notRunning": "Adressen vises, når AI'en kører.",
+    "show": "Vis",
+    "hide": "Skjul",
+    "copied": "Kopieret"
   },
   "onboarding": {
     "welcome": "Velkommen til Rebost",

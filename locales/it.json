@@ -19,21 +19,16 @@
   "menu": {
     "about": "Informazioni su Rebost",
     "settings": "Impostazioni…",
-    "settingsWin": "Impostazioni",
     "newConversation": "Nuova conversazione",
-    "newConversationWin": "Nuova conversazione",
     "chat": "Chat",
     "shelves": "Scaffali",
     "recipes": "Ricette",
     "largerText": "Testo più grande",
-    "largerTextWin": "Testo più grande",
     "smallerText": "Testo più piccolo",
-    "smallerTextWin": "Testo più piccolo",
     "file": "File",
     "edit": "Modifica",
     "view": "Vista",
-    "window": "Finestra",
-    "help": "Aiuto"
+    "window": "Finestra"
   },
   "locale": {
     "heading": "Lingua",
@@ -158,6 +153,16 @@
     "changeShort": "Cambia",
     "tooSmall": "Qui non c'è abbastanza spazio per questa IA. Scegli una cartella su un'altra unità.",
     "keptCopies": "Le tue IA sono nella nuova cartella. Rebost ha lasciato una copia di alcune nella cartella precedente perché non ha potuto confermare che fosse sicuro eliminarle. Puoi eliminarle tu da lì."
+  },
+  "apiAccess": {
+    "heading": "Usa questa IA da altre app",
+    "help": "Le app di questo computer compatibili con l'API di OpenAI possono usare l'IA in esecuzione in Rebost. Fornisci loro questo indirizzo e questa chiave. Entrambi cambiano quando Rebost riavvia l'IA.",
+    "address": "Indirizzo",
+    "key": "Chiave API",
+    "notRunning": "L'indirizzo compare quando l'IA è in esecuzione.",
+    "show": "Mostra",
+    "hide": "Nascondi",
+    "copied": "Copiato"
   },
   "onboarding": {
     "welcome": "Ti diamo il benvenuto in Rebost",

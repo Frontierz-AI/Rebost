@@ -695,7 +695,7 @@
         {/if}
         {#if shelf.stats.waiting > 0}
           <p
-            class="mr-1.5 shrink-0 text-[11.5px] whitespace-nowrap text-amber-550 tabular-nums"
+            class="mr-1.5 shrink-0 text-[11.5px] whitespace-nowrap text-amber-550 tabular-nums dark:text-amber-350"
             aria-live="polite"
           >
             {t("shelves.stillToRead", { count: shelf.stats.waiting })}

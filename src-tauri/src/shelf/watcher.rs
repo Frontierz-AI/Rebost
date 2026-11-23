@@ -49,6 +49,9 @@ pub struct WatcherHub {
     ctx: Arc<Ctx>,
     ingestor: Ingestor,
     watcher: Mutex<Option<RecommendedWatcher>>,
+    /// Roots the current watcher covers, set only when every one was watched.
+    /// Listing Shelves calls `rebuild`, so an unchanged set must be a no-op.
+    watched_roots: Mutex<Vec<PathBuf>>,
     tx: mpsc::UnboundedSender<PathBuf>,
 }
 
@@ -67,6 +70,7 @@ impl WatcherHub {
             ctx,
             ingestor,
             watcher: Mutex::new(None),
+            watched_roots: Mutex::new(Vec::new()),
             tx,
         });
         hub.rebuild();
@@ -121,8 +125,16 @@ impl WatcherHub {
                 })
                 .collect()
         };
+        {
+            let watched = crate::core::mutex_lock(&self.watched_roots);
+            let running = crate::core::mutex_lock(&self.watcher).is_some();
+            if *watched == roots && (running || roots.is_empty()) {
+                return;
+            }
+        }
         if roots.is_empty() {
             *crate::core::mutex_lock(&self.watcher) = None;
+            crate::core::mutex_lock(&self.watched_roots).clear();
             return;
         }
         let tx = self.tx.clone();
@@ -151,13 +163,18 @@ impl WatcherHub {
                 return;
             }
         };
+        let mut all_watched = true;
         for root in &roots {
             if let Err(error) = watcher.watch(root, RecursiveMode::Recursive) {
                 log::warn!("cannot watch {}: {error:#}", root.display());
+                all_watched = false;
             }
         }
         *crate::core::mutex_lock(&self.watcher) = Some(watcher);
         log::info!("watching {} folder(s)", roots.len());
+        // A root that failed (drive unplugged) is retried on the next rebuild.
+        let watched = if all_watched { roots } else { Vec::new() };
+        *crate::core::mutex_lock(&self.watched_roots) = watched;
     }
 
     fn resolve(&self, path: &Path) -> Option<SourceMatch> {

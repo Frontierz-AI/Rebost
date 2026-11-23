@@ -1,25 +1,16 @@
-//! App menu: About, Settings, new conversation, view shortcuts, and text size.
+//! macOS app menu: About, Settings, new conversation, view shortcuts, and
+//! text size. Windows and Linux have no menu bar: the webview handles the same
+//! shortcuts, and About is in Settings.
 
 use serde::Serialize;
+use tauri::menu::MenuEvent;
 #[cfg(target_os = "macos")]
-use tauri::menu::WINDOW_SUBMENU_ID;
-use tauri::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu, WINDOW_SUBMENU_ID};
 use tauri::{AppHandle, Emitter};
 
+#[cfg(target_os = "macos")]
 fn tr(key: &str) -> String {
     rust_i18n::t!(key).into()
-}
-
-/// Windows menu accelerators. macOS does not use `&`.
-#[cfg(not(target_os = "macos"))]
-fn accel(text: String) -> String {
-    if text.contains('&') {
-        return text;
-    }
-    if let Some(ch) = text.chars().find(|c| c.is_alphabetic()) {
-        return text.replacen(ch, &format!("&{ch}"), 1);
-    }
-    text
 }
 
 const ABOUT: &str = "about";
@@ -164,99 +155,6 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
                 ],
             )?,
             &window_menu,
-        ],
-    )
-}
-
-#[cfg(not(target_os = "macos"))]
-pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
-    let about = MenuItem::with_id(handle, ABOUT, accel(tr("menu.about")), true, None::<&str>)?;
-    let settings = MenuItem::with_id(
-        handle,
-        VIEW_SETTINGS,
-        accel(tr("menu.settingsWin")),
-        true,
-        Some("CmdOrCtrl+,"),
-    )?;
-    let new_conversation = MenuItem::with_id(
-        handle,
-        NEW_CONVERSATION,
-        accel(tr("menu.newConversationWin")),
-        true,
-        Some("CmdOrCtrl+N"),
-    )?;
-    let chat = MenuItem::with_id(
-        handle,
-        VIEW_CHAT,
-        accel(tr("menu.chat")),
-        true,
-        Some("CmdOrCtrl+1"),
-    )?;
-    let shelves = MenuItem::with_id(
-        handle,
-        VIEW_SHELVES,
-        accel(tr("menu.shelves")),
-        true,
-        Some("CmdOrCtrl+2"),
-    )?;
-    let recipes = MenuItem::with_id(
-        handle,
-        VIEW_RECIPES,
-        accel(tr("menu.recipes")),
-        true,
-        Some("CmdOrCtrl+3"),
-    )?;
-    let text_larger = MenuItem::with_id(
-        handle,
-        TEXT_LARGER,
-        accel(tr("menu.largerTextWin")),
-        true,
-        Some("CmdOrCtrl+Plus"),
-    )?;
-    let text_smaller = MenuItem::with_id(
-        handle,
-        TEXT_SMALLER,
-        accel(tr("menu.smallerTextWin")),
-        true,
-        Some("CmdOrCtrl+Minus"),
-    )?;
-    Menu::with_items(
-        handle,
-        &[
-            &Submenu::with_items(
-                handle,
-                accel(tr("menu.file")),
-                true,
-                &[&new_conversation, &settings],
-            )?,
-            &Submenu::with_items(
-                handle,
-                accel(tr("menu.edit")),
-                true,
-                &[
-                    &PredefinedMenuItem::undo(handle, None)?,
-                    &PredefinedMenuItem::redo(handle, None)?,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::cut(handle, None)?,
-                    &PredefinedMenuItem::copy(handle, None)?,
-                    &PredefinedMenuItem::paste(handle, None)?,
-                    &PredefinedMenuItem::select_all(handle, None)?,
-                ],
-            )?,
-            &Submenu::with_items(
-                handle,
-                accel(tr("menu.view")),
-                true,
-                &[
-                    &chat,
-                    &shelves,
-                    &recipes,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &text_larger,
-                    &text_smaller,
-                ],
-            )?,
-            &Submenu::with_items(handle, accel(tr("menu.help")), true, &[&about])?,
         ],
     )
 }

@@ -19,21 +19,16 @@
   "menu": {
     "about": "Rebostについて",
     "settings": "設定…",
-    "settingsWin": "設定",
     "newConversation": "新しい会話",
-    "newConversationWin": "新しい会話",
     "chat": "チャット",
     "shelves": "シェルフ",
     "recipes": "レシピ",
     "largerText": "文字を大きく",
-    "largerTextWin": "文字を大きく",
     "smallerText": "文字を小さく",
-    "smallerTextWin": "文字を小さく",
     "file": "ファイル",
     "edit": "編集",
     "view": "表示",
-    "window": "ウィンドウ",
-    "help": "ヘルプ"
+    "window": "ウィンドウ"
   },
   "locale": {
     "heading": "言語",
@@ -158,6 +153,16 @@
     "changeShort": "変更",
     "tooSmall": "ここにはこのAIを保存する空きがありません。別のドライブのフォルダを選んでください。",
     "keptCopies": "AIは新しいフォルダに移りました。安全に削除できることを確認できなかったため、一部のAIは元のフォルダにもコピーを残しています。不要であれば、そこから削除してください。"
+  },
+  "apiAccess": {
+    "heading": "ほかのアプリからこのAIを使う",
+    "help": "OpenAI API に対応したこのコンピューター上のアプリは、Rebost で動いている AI を使えます。このアドレスとキーを設定してください。どちらも Rebost が AI を再起動すると変わります。",
+    "address": "アドレス",
+    "key": "API キー",
+    "notRunning": "AI が起動するとアドレスが表示されます。",
+    "show": "表示",
+    "hide": "隠す",
+    "copied": "コピーしました"
   },
   "onboarding": {
     "welcome": "Rebostへようこそ",
