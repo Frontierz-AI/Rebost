@@ -130,11 +130,9 @@ if ($SkipAuthenticode) {
 } else {
     if (-not (Test-AzureSigningEnv)) { throw "Missing Azure signing configuration" }
     Invoke-NsisBuild -Sign $true
+    # Tauri signs the patched rebost.exe it bundles, then restores the unsigned
+    # one under target/. The workflow's install test checks the installed files.
     if (-not (Test-ExesAuthenticodeValid -Dir $prefix)) { throw "Invalid installer signature" }
-    $app = Join-Path (Split-Path -Parent (Split-Path -Parent $prefix)) "rebost.exe"
-    $appSig = Get-AuthenticodeSignature $app
-    Write-Host "rebost.exe: $($appSig.Status) $($appSig.SignerCertificate.Subject)"
-    if ($appSig.Status -ne "Valid") { throw "rebost.exe is not signed" }
 }
 
 Write-Host ""
