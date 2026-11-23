@@ -11,7 +11,7 @@ use tauri_plugin_opener::OpenerExt;
 use super::{friendly, CmdResult};
 use crate::core::Ctx;
 use crate::engine::models::{self, MachineProfile, ModelSearchResult, Recommendation};
-use crate::engine::{Engine, EngineStatus};
+use crate::engine::{ApiAccess, Engine, EngineStatus};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,6 +27,12 @@ pub struct MachineView {
 #[tauri::command]
 pub fn engine_status(engine: State<'_, Arc<Engine>>) -> EngineStatus {
     engine.status()
+}
+
+/// Local API address and key for Settings.
+#[tauri::command]
+pub async fn engine_api_access(engine: State<'_, Arc<Engine>>) -> CmdResult<ApiAccess> {
+    Ok(engine.api_access().await)
 }
 
 #[tauri::command]

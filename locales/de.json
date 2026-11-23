@@ -154,6 +154,16 @@
     "tooSmall": "Hier ist nicht genug Platz für diese KI. Wähle einen Ordner auf einem anderen Laufwerk.",
     "keptCopies": "Deine KIs sind jetzt im neuen Ordner. Von einigen hat Rebost eine Kopie im alten Ordner gelassen, weil es nicht sicher bestätigen konnte, dass sie gelöscht werden dürfen. Du kannst sie dort selbst löschen."
   },
+  "apiAccess": {
+    "heading": "Diese KI in anderen Apps verwenden",
+    "help": "Apps auf diesem Computer, die mit der OpenAI-API arbeiten, können die KI nutzen, die in Rebost läuft. Gib ihnen diese Adresse und diesen Schlüssel. Beide ändern sich, wenn Rebost die KI neu startet.",
+    "address": "Adresse",
+    "key": "API-Schlüssel",
+    "notRunning": "Die Adresse erscheint, sobald die KI läuft.",
+    "show": "Anzeigen",
+    "hide": "Ausblenden",
+    "copied": "Kopiert"
+  },
   "onboarding": {
     "welcome": "Willkommen bei Rebost",
     "lede": "Rebost ist eine private KI, die mit deinen Dateien arbeitet.\nWas auf deinem Computer passiert, bleibt auf deinem Computer.",

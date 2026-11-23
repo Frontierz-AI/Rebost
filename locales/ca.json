@@ -153,6 +153,16 @@
     "tooSmall": "Aquí no hi cap aquesta IA. Tria una carpeta en una altra unitat.",
     "keptCopies": "Les IA ja són a la carpeta nova. Rebost n'ha deixat una còpia d'algunes a la carpeta anterior perquè no ha pogut confirmar que fos segur esborrar-les. Les pots esborrar tu mateix d'allà."
   },
+  "apiAccess": {
+    "heading": "Fes servir aquesta IA des d'altres apps",
+    "help": "Les apps d'aquest ordinador compatibles amb l'API d'OpenAI poden fer servir la IA que funciona a Rebost. Dona'ls aquesta adreça i aquesta clau. Totes dues canvien quan Rebost torna a iniciar la IA.",
+    "address": "Adreça",
+    "key": "Clau d'API",
+    "notRunning": "L'adreça apareix quan la IA està en marxa.",
+    "show": "Mostra",
+    "hide": "Amaga",
+    "copied": "Copiat"
+  },
   "onboarding": {
     "welcome": "Et donem la benvinguda a Rebost",
     "lede": "Rebost és una IA privada que treballa amb els teus fitxers.\nEl que passa al teu ordinador es queda al teu ordinador.",

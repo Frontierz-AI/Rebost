@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- Settings → Use this AI from other apps shows the local OpenAI-compatible address and an API key, so other apps on this computer can use the AI running in Rebost.
+- Windows on ARM with NVIDIA (RTX Spark N1X) uses its shared memory like a Mac: a wider conversation window on 24 GB and image reading on the GPU.
+- Amber status labels such as Warming up are readable in dark mode.
+- Fewer repeated lines in the app log.
+
 ## [1.1.3] - 2026-11-21
 
 - Updated the desktop runtime, Markdown renderer, HTML sanitizer, icons and build dependencies.

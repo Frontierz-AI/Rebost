@@ -154,6 +154,16 @@
     "tooSmall": "Det finns inte plats för den här AI:n här. Välj en mapp på en annan enhet.",
     "keptCopies": "Dina AI:er ligger nu i den nya mappen. Rebost lämnade en kopia av några i den gamla mappen eftersom det inte gick att bekräfta att de var säkra att radera. Du kan radera dem där själv."
   },
+  "apiAccess": {
+    "heading": "Använd den här AI:n från andra appar",
+    "help": "Appar på den här datorn som fungerar med OpenAI:s API kan använda AI:n som körs i Rebost. Ge dem den här adressen och nyckeln. Båda ändras när Rebost startar AI:n igen.",
+    "address": "Adress",
+    "key": "API-nyckel",
+    "notRunning": "Adressen visas när AI:n körs.",
+    "show": "Visa",
+    "hide": "Dölj",
+    "copied": "Kopierad"
+  },
   "onboarding": {
     "welcome": "Välkommen till Rebost",
     "lede": "Rebost är en privat AI som arbetar med dina filer.\nDet som händer på din dator stannar på din dator.",

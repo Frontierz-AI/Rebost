@@ -154,6 +154,16 @@
     "tooSmall": "Det er ikke plass til denne KI-en her. Velg en mappe på en annen disk.",
     "keptCopies": "KI-ene dine ligger nå i den nye mappen. Rebost lot en kopi av noen ligge i den gamle mappen, fordi den ikke kunne bekrefte at det var trygt å slette dem. Du kan slette dem der selv."
   },
+  "apiAccess": {
+    "heading": "Bruk denne KI-en fra andre apper",
+    "help": "Apper på denne datamaskinen som fungerer med OpenAI-API-et, kan bruke KI-en som kjører i Rebost. Gi dem denne adressen og nøkkelen. Begge endres når Rebost starter KI-en på nytt.",
+    "address": "Adresse",
+    "key": "API-nøkkel",
+    "notRunning": "Adressen vises når KI-en kjører.",
+    "show": "Vis",
+    "hide": "Skjul",
+    "copied": "Kopiert"
+  },
   "onboarding": {
     "welcome": "Velkommen til Rebost",
     "lede": "Rebost er en privat KI som jobber med filene dine.\nDet som skjer på datamaskinen din, blir på datamaskinen din.",

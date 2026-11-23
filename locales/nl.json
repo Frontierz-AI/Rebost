@@ -154,6 +154,16 @@
     "tooSmall": "Hier is niet genoeg ruimte voor deze AI. Kies een map op een andere schijf.",
     "keptCopies": "Je AI's staan nu in de nieuwe map. Rebost heeft van sommige een kopie in de oude map laten staan, omdat het niet kon bevestigen dat verwijderen veilig was. Je kunt ze daar zelf verwijderen."
   },
+  "apiAccess": {
+    "heading": "Gebruik deze AI vanuit andere apps",
+    "help": "Apps op deze computer die met de OpenAI-API werken, kunnen de AI gebruiken die in Rebost draait. Geef ze dit adres en deze sleutel. Beide veranderen wanneer Rebost de AI opnieuw start.",
+    "address": "Adres",
+    "key": "API-sleutel",
+    "notRunning": "Het adres verschijnt zodra de AI draait.",
+    "show": "Tonen",
+    "hide": "Verbergen",
+    "copied": "Gekopieerd"
+  },
   "onboarding": {
     "welcome": "Welkom bij Rebost",
     "lede": "Rebost is een privé-AI die met je bestanden werkt.\nWat er op je computer gebeurt, blijft op je computer.",

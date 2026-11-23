@@ -37,6 +37,8 @@ Optional downloads (app data, not the installer):
 
 Windows x64 uses CUDA 12.4 for older drivers. Native ARM64 uses CUDA 13.5 on Windows and Linux. Rebost checks that the engine lists the expected GPU and generates a short completion before using it for chat. If the optional download fails, or llama-server **exits or never becomes healthy** (missing DLL, wrong GPU, hung driver), Rebost uses the bundled Vulkan or CPU build and skips the optional pin for the rest of that session. A slow load of the *bundled* pin is still a timeout, not a reason to fetch CUDA.
 
+Windows on ARM with NVIDIA (RTX Spark N1X) is treated like Apple Silicon: the GPU shares system memory, so the window can widen to 16k on 24 GB and the image encoder runs on the GPU. Windows reports only a small dedicated carve-out there, and the rest spills into the same RAM. Linux arm64 CUDA stays on the discrete rules, since it can be a separate card on an Arm server.
+
 If the bundled Vulkan build also exits or never becomes healthy (an old or broken graphics driver), Rebost downloads the CPU build for that OS and architecture (Windows x64, Linux x64, Linux arm64) and starts the AI there. `settings.json` keeps `cpuEngineFor` (`<release>/<model file>`) so that AI starts on CPU next time without retrying Vulkan; another AI or a new engine release tries Vulkan again.
 
 CI HEAD-checks every URL. `node scripts/fetch-engine.mjs` downloads the **bundled** pin for this build target into `src-tauri/resources/engine/` (gitignored). `pnpm tauri build` runs that fetch first. `--all` fills the cache with macOS + Windows installer pins only (`--all --include-linux` adds the Linux ones); it does not pull CUDA or the CPU fallbacks.
@@ -74,6 +76,8 @@ Extracted binaries live in `engine/<release>-<accelerator>/` (for example `1.0.0
 4. Else if the installer bundled the pin, unpack it in place. Signed Mac builds re-sign Mach-O inside it for notarization, so that archive is **not** checked against the GitHub pin SHA.
 5. Else download the host pin and verify SHA-256 (`tauri dev` without a prior fetch).
 6. Unpack tar.gz or zip (path-safe), chmod `0755` on Unix, spawn on `127.0.0.1`. Working directory is the engine folder so Windows DLLs load.
+
+Each launch of Rebost makes a random API key and passes it to `llama-server` in `LLAMA_API_KEY`, not on the command line. Rebost sends it as a bearer token on every request. Settings → Use this AI from other apps shows the OpenAI-compatible address (`http://127.0.0.1:<port>/v1`) and the key, so other apps on the same computer can use the loaded AI. The port and key change when Rebost starts the AI again.
 
 Logs live under the OS app-data directory (`logs/engine.log`). Settings → Diagnostics shows the path, not the log body.
 

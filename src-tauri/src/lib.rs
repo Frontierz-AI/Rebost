@@ -317,6 +317,7 @@ pub fn run() {
             commands::chat_approve_web,
             commands::warm_engine,
             commands::engine_status,
+            commands::engine_api_access,
             commands::engine_remeasure,
             commands::machine_profile,
             commands::models_search,

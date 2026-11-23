@@ -283,6 +283,14 @@ pub fn llama_server_file_name() -> &'static str {
     }
 }
 
+/// The GPU shares system memory: Apple Silicon, and NVIDIA on Windows on Arm
+/// (RTX Spark N1X), where Windows reports only a small dedicated carve-out.
+/// Linux aarch64 CUDA is left out: it can be a discrete card on an Arm server.
+pub fn unified_memory(pin: &EnginePin) -> bool {
+    pin.accelerator == "Metal"
+        || (pin.accelerator == "CUDA" && pin.os == "windows" && pin.arch == "aarch64")
+}
+
 /// Discrete NVIDIA/AMD/Intel GPUs copy weights off mmap into RAM before
 /// upload. Metal, Adreno, and CPU keep mmap (unified or page-cache).
 pub fn no_mmap_for(pin: &EnginePin) -> bool {
@@ -299,6 +307,18 @@ pub fn is_llama_server_file_name(name: Option<&std::ffi::OsStr>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unified_memory_is_metal_and_windows_arm_cuda() {
+        let mac = pin_for("macos", "aarch64").unwrap();
+        assert!(unified_memory(mac));
+        let n1x = optional_pin_for("windows", "aarch64", "CUDA").unwrap();
+        assert!(unified_memory(n1x));
+        let rtx = optional_pin_for("windows", "x86_64", "CUDA").unwrap();
+        assert!(!unified_memory(rtx));
+        let arm_server = optional_pin_for("linux", "aarch64", "CUDA").unwrap();
+        assert!(!unified_memory(arm_server));
+    }
 
     fn archive_prefix() -> String {
         format!("https://github.com/ggml-org/llama.cpp/releases/download/{ENGINE_BUILD}/")

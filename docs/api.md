@@ -50,6 +50,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `chat_cancel` | `messageId` | `()` |
 | `warm_engine` | — | `()` |
 | `engine_status` | — | `EngineStatus` |
+| `engine_api_access` | — | `ApiAccess` (`url` is the local `/v1` address, or `null` while the AI is not running; `key` is this launch's API key) |
 | `engine_remeasure` | — | `()` (recalibrates when Chat is idle) |
 | `machine_profile` | — | `MachineView` |
 | `active_model` | — | `ActiveModel \| null` (Rust command; the UI reads the model from `settings_get`) |
