@@ -39,7 +39,7 @@ export function shelfListStatusClass(status: ShelfListStatus): string {
       return "bg-ready text-ready-ink dark:bg-navy-200/20 dark:text-navy-200";
     case "processing":
     case "syncing":
-      return "bg-amber-350 text-amber-550";
+      return "bg-amber-350 text-amber-550 dark:bg-amber-450/15 dark:text-amber-350";
     case "error":
       return "bg-[#F4C2C8] text-[#C20F27] dark:bg-red-400/10 dark:text-red-400";
     default: {

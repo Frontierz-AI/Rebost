@@ -118,7 +118,7 @@
     class="flex flex-wrap items-center gap-3 rounded-xl border border-paper-line bg-paper-soft/50 py-3 pr-2 pl-4"
   >
     {#if missing}
-      <CircleAlert size={18} class="shrink-0 text-amber-550" />
+      <CircleAlert size={18} class="shrink-0 text-amber-550 dark:text-amber-350" />
     {:else}
       <BadgeCheck size={18} class="shrink-0 text-navy-600 dark:text-navy-400" />
     {/if}
@@ -141,7 +141,7 @@
       {app.engine.state === 'ready'
           ? 'bg-ready text-ready-ink dark:bg-navy-200/20 dark:text-navy-200'
           : app.engine.state === 'starting'
-            ? 'bg-amber-350/50 text-amber-550'
+            ? 'bg-amber-350/50 text-amber-550 dark:bg-amber-450/15 dark:text-amber-350'
             : 'bg-paper-soft text-ink-faint'}"
       >
         {statusLabel}
