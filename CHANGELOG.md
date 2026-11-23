@@ -5,10 +5,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-23
+
+- On macOS the window uses the system sidebar material, the conversation list is a full-height column, and Chat has a toolbar row with the conversation title. The window drags from that row.
+- On Windows 11 the window uses Mica, with the native title bar, Fluent scroll bars, and Fluent sizes for buttons, fields and cards. Windows no longer shows a menu bar; the same keyboard shortcuts work, and About is in Settings.
 - Settings → Use this AI from other apps shows the local OpenAI-compatible address and an API key, so other apps on this computer can use the AI running in Rebost.
 - Windows on ARM with NVIDIA (RTX Spark N1X) uses its shared memory like a Mac: a wider conversation window on 24 GB and image reading on the GPU.
 - Amber status labels such as Warming up are readable in dark mode.
-- Fewer repeated lines in the app log.
+- Fewer repeated lines in the app log, and Shelves no longer restarts an unchanged folder watcher.
+- Updated the URL and cookie libraries for two security advisories.
 
 ## [1.1.3] - 2026-11-21
 
@@ -729,7 +734,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.0...v1.1.1
