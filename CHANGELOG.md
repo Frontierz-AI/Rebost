@@ -13,6 +13,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Windows on ARM with NVIDIA (RTX Spark N1X) uses its shared memory like a Mac: a wider conversation window on 24 GB and image reading on the GPU.
 - Amber status labels such as Warming up are readable in dark mode.
 - Fewer repeated lines in the app log, and Shelves no longer restarts an unchanged folder watcher.
+- On Windows on Arm, the installed app is now signed as well as the installer, so Smart App Control no longer blocks it.
 - Updated the URL and cookie libraries for two security advisories.
 
 ## [1.1.3] - 2026-11-21

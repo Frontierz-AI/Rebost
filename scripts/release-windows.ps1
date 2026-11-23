@@ -1,8 +1,11 @@
-# Build the signed Windows NSIS installer. ARM64 is signed on the x64 runner.
+# Build the signed Windows NSIS installer. Tauri signs rebost.exe, the
+# uninstaller and the installer. On Windows on Arm, run
+# scripts/setup-windows-arm-signing.ps1 first: the signing dlib is x64.
 param(
     [string]$Target = "",
-    # ARM runners cannot run Azure SignTool (x64). Build unsigned there,
-    # then sign on windows-latest with scripts/sign-windows-nsis.ps1.
+    # Unsigned local build. Signing the installer afterwards with
+    # scripts/sign-windows-nsis.ps1 leaves rebost.exe unsigned, which
+    # Smart App Control blocks.
     [switch]$SkipAuthenticode
 )
 
@@ -128,6 +131,10 @@ if ($SkipAuthenticode) {
     if (-not (Test-AzureSigningEnv)) { throw "Missing Azure signing configuration" }
     Invoke-NsisBuild -Sign $true
     if (-not (Test-ExesAuthenticodeValid -Dir $prefix)) { throw "Invalid installer signature" }
+    $app = Join-Path (Split-Path -Parent (Split-Path -Parent $prefix)) "rebost.exe"
+    $appSig = Get-AuthenticodeSignature $app
+    Write-Host "rebost.exe: $($appSig.Status) $($appSig.SignerCertificate.Subject)"
+    if ($appSig.Status -ne "Valid") { throw "rebost.exe is not signed" }
 }
 
 Write-Host ""
