@@ -205,7 +205,8 @@ impl Engine {
                         pin.file_name
                     );
                 }
-                self.download_archive(pin.url, &download_dest, pin.sha256, "AI engine").await?;
+                self.download_archive(pin.url, &download_dest, pin.sha256, "AI engine")
+                    .await?;
                 (download_dest, false, true)
             };
 
@@ -260,7 +261,8 @@ impl Engine {
             );
             let dest = engine_dir.join(runtime.file_name);
             log::info!("downloading CUDA runtime ({})", runtime.file_name);
-            self.download_archive(runtime.url, &dest, runtime.sha256, "AI engine").await?;
+            self.download_archive(runtime.url, &dest, runtime.sha256, "AI engine")
+                .await?;
             dest
         };
         let extract_dir = engine_dir.join("extract-tmp-runtime");
