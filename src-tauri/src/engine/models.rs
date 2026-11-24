@@ -205,7 +205,10 @@ pub fn pick_gguf_with(
 ) -> Option<(String, Option<u64>)> {
     if let Some(quant) = quant {
         if let Some(hit) = files.iter().find(|(name, _)| {
-            !name.contains("-of-") && !is_imatrix_file(name) && file_has_quant(name, quant)
+            !name.contains("-of-")
+                && !is_hidden_catalog_name(name)
+                && !is_imatrix_file(name)
+                && file_has_quant(name, quant)
         }) {
             return Some(hit.clone());
         }
@@ -1269,6 +1272,7 @@ mod tests {
     #[test]
     fn quant_tag_picks_that_single_file() {
         let files: Vec<(String, Option<u64>)> = [
+            "mmproj-M-Q6_K.gguf",
             "M-Q4_K_M.gguf",
             "M-Q6_K.gguf",
             "M-UD-IQ3_XXS.gguf",
