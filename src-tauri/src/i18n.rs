@@ -174,10 +174,10 @@ pub fn apply(pref: UiLocalePref) -> AppLocale {
 
 /// Rebuild the menu bar in the current language. Linux has none.
 pub fn rebuild_menu(app: &AppHandle) -> tauri::Result<()> {
-    if cfg!(target_os = "linux") {
-        return Ok(());
-    }
+    #[cfg(target_os = "macos")]
     app.set_menu(crate::menu::build_menu(app)?)?;
+    #[cfg(not(target_os = "macos"))]
+    let _ = app;
     Ok(())
 }
 

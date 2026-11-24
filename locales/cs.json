@@ -19,21 +19,16 @@
   "menu": {
     "about": "O Rebostu",
     "settings": "Nastavení…",
-    "settingsWin": "Nastavení",
     "newConversation": "Nová konverzace",
-    "newConversationWin": "Nová konverzace",
     "chat": "Chat",
     "shelves": "Police",
     "recipes": "Recepty",
     "largerText": "Větší text",
-    "largerTextWin": "Větší text",
     "smallerText": "Menší text",
-    "smallerTextWin": "Menší text",
     "file": "Soubor",
     "edit": "Úpravy",
     "view": "Zobrazení",
-    "window": "Okno",
-    "help": "Nápověda"
+    "window": "Okno"
   },
   "locale": {
     "heading": "Jazyk",
@@ -158,6 +153,16 @@
     "changeShort": "Změnit",
     "tooSmall": "Tato AI se sem nevejde. Vyber složku na jiném disku.",
     "keptCopies": "Tvé AI jsou teď v nové složce. Rebost ve staré složce nechal kopii některých, protože nemohl ověřit, že je bezpečné je smazat. Můžeš je tam smazat sám."
+  },
+  "apiAccess": {
+    "heading": "Používejte tuto AI z jiných aplikací",
+    "help": "Aplikace na tomto počítači, které pracují s OpenAI API, mohou používat AI spuštěnou v Rebostu. Zadejte jim tuto adresu a klíč. Obojí se změní, když Rebost AI znovu spustí.",
+    "address": "Adresa",
+    "key": "Klíč API",
+    "notRunning": "Adresa se zobrazí, jakmile AI poběží.",
+    "show": "Zobrazit",
+    "hide": "Skrýt",
+    "copied": "Zkopírováno"
   },
   "onboarding": {
     "welcome": "Vítej v Rebostu",

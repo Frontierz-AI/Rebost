@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **1.1.3**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **1.2.0**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine                               | Installer                                  |
 | ------------------------------------- | ------------------------------------------ |
@@ -95,7 +95,7 @@ House rules are standing instructions kept in Settings: tone, language, and anyt
   <img src="docs/assets/settings.webp" alt="Rebost Settings: House rules and the installed AI." width="880" />
 </p>
 
-Settings opens from the sidebar or the menu (Linux has no menu bar), or with ⌘, on a Mac and Ctrl+, on Windows and Linux. Text size can also be changed with ⌘+ and ⌘- on a Mac, or Ctrl+ and Ctrl- on Windows and Linux. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
+Settings opens from the sidebar or the macOS menu (Windows and Linux have no menu bar), or with ⌘, on a Mac and Ctrl+, on Windows and Linux. Text size can also be changed with ⌘+ and ⌘- on a Mac, or Ctrl+ and Ctrl- on Windows and Linux. Explore other AIs is in the same window for cases where the suggested AI is not the right one.
 
 ## Getting started
 

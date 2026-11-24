@@ -56,12 +56,10 @@ jobs:
             runner: windows-latest
             target: x86_64-pc-windows-msvc
             artifact: rebost-windows-x64
-            extra_args: ""
           - label: ARM64
             runner: windows-11-arm
             target: aarch64-pc-windows-msvc
-            artifact: rebost-windows-arm64-unsigned
-            extra_args: -SkipAuthenticode
+            artifact: rebost-windows-arm64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
@@ -72,8 +70,6 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
-        # ARM64 is unsigned here; Authenticode runs on windows-latest in sign-arm64.
-        if: ${{ matrix.extra_args == '' }}
         with:
           # Current LTS. artifact-signing-cli wants .NET 8 or newer.
           dotnet-version: "10.0.404"
@@ -87,8 +83,12 @@ jobs:
           prefix-key: windows-${{ matrix.target }}
       - run: pnpm install --frozen-lockfile
       - name: Install artifact-signing-cli
-        if: ${{ matrix.extra_args == '' }}
         run: cargo install --locked --version 0.12.0 artifact-signing-cli
+      - name: x64 signing tools on Windows on Arm
+        # Tauri signs rebost.exe and the uninstaller inside the installer, so
+        # ARM64 must sign here. Smart App Control blocks an unsigned rebost.exe.
+        if: ${{ matrix.label == 'ARM64' }}
+        run: ./scripts/setup-windows-arm-signing.ps1
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         if: ${{ matrix.label == 'ARM64' }}
         with:
@@ -105,7 +105,7 @@ jobs:
           AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ secrets.AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: pwsh -File scripts/release-windows.ps1 -Target ${{ matrix.target }} ${{ matrix.extra_args }}
+        run: pwsh -File scripts/release-windows.ps1 -Target ${{ matrix.target }}
       - name: Download and run the signed CUDA engine using the app's installer
         run: cargo test --manifest-path src-tauri/Cargo.toml --release --locked --target ${{ matrix.target }} --lib engine::binary::tests::windows_cuda_download_and_launch -- --exact --ignored
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
@@ -117,8 +117,8 @@ jobs:
             src-tauri/target/updater/*.json
           if-no-files-found: error
 
-  sign-arm64:
-    name: Sign ARM64
+  universal:
+    name: Universal installer
     runs-on: windows-latest
     needs: [nsis]
     steps:
@@ -142,7 +142,7 @@ jobs:
         run: cargo install --locked --version 0.12.0 artifact-signing-cli
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: rebost-windows-arm64-unsigned
+          name: rebost-windows-arm64
           path: arm-in
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
@@ -150,7 +150,7 @@ jobs:
           path: x64-in
       - name: Install NSIS for the universal installer
         run: choco install nsis --version=3.12.0 --yes --no-progress
-      - name: Sign ARM NSIS and build the universal Windows installer
+      - name: Build the universal Windows installer
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -161,7 +161,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          ./scripts/sign-windows-nsis.ps1 -SearchDir arm-in
           $x64 = @(Get-ChildItem x64-in -Recurse -Filter *.exe)
           $arm = @(Get-ChildItem arm-in -Recurse -Filter *.exe)
           if ($x64.Count -ne 1 -or $arm.Count -ne 1) { throw "Expected one installer per architecture" }
@@ -172,18 +171,10 @@ jobs:
           name: rebost-windows-universal
           path: Rebost-*-Windows.exe
           if-no-files-found: error
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: rebost-windows-arm64
-          path: |
-            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
-            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.sig
-            src-tauri/target/updater/*.json
-          if-no-files-found: error
 
   smoke:
     name: Install universal package (${{ matrix.runner }})
-    needs: sign-arm64
+    needs: universal
     strategy:
       matrix:
         runner: [windows-latest, windows-11-arm]
@@ -202,6 +193,10 @@ jobs:
           $run = Start-Process $setup -ArgumentList "/S /D=$dir" -Wait -PassThru
           if ($run.ExitCode -ne 0) { throw "Installer exited $($run.ExitCode)" }
           $exe = Join-Path $dir 'rebost.exe'
+          # Smart App Control blocks unsigned executables and libraries.
+          $unsigned = @(Get-ChildItem $dir -Recurse -File -Include *.exe, *.dll |
+            Where-Object { (Get-AuthenticodeSignature $_.FullName).Status -ne 'Valid' })
+          if ($unsigned) { throw "Not signed: $($unsigned.FullName -join ', ')" }
           $bytes = [IO.File]::ReadAllBytes($exe)
           $header = [BitConverter]::ToInt32($bytes, 0x3c)
           $machine = [BitConverter]::ToUInt16($bytes, $header + 4)

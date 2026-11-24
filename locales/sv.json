@@ -19,21 +19,16 @@
   "menu": {
     "about": "Om Rebost",
     "settings": "Inställningar…",
-    "settingsWin": "Inställningar",
     "newConversation": "Nytt samtal",
-    "newConversationWin": "Nytt samtal",
     "chat": "Chattar",
     "shelves": "Hyllor",
     "recipes": "Recept",
     "largerText": "Större text",
-    "largerTextWin": "Större text",
     "smallerText": "Mindre text",
-    "smallerTextWin": "Mindre text",
     "file": "Arkiv",
     "edit": "Redigera",
     "view": "Visa",
-    "window": "Fönster",
-    "help": "Hjälp"
+    "window": "Fönster"
   },
   "locale": {
     "heading": "Språk",
@@ -158,6 +153,16 @@
     "changeShort": "Ändra",
     "tooSmall": "Det finns inte plats för den här AI:n här. Välj en mapp på en annan enhet.",
     "keptCopies": "Dina AI:er ligger nu i den nya mappen. Rebost lämnade en kopia av några i den gamla mappen eftersom det inte gick att bekräfta att de var säkra att radera. Du kan radera dem där själv."
+  },
+  "apiAccess": {
+    "heading": "Använd den här AI:n från andra appar",
+    "help": "Appar på den här datorn som fungerar med OpenAI:s API kan använda AI:n som körs i Rebost. Ge dem den här adressen och nyckeln. Båda ändras när Rebost startar AI:n igen.",
+    "address": "Adress",
+    "key": "API-nyckel",
+    "notRunning": "Adressen visas när AI:n körs.",
+    "show": "Visa",
+    "hide": "Dölj",
+    "copied": "Kopierad"
   },
   "onboarding": {
     "welcome": "Välkommen till Rebost",

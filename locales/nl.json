@@ -19,21 +19,16 @@
   "menu": {
     "about": "Over Rebost",
     "settings": "Instellingen…",
-    "settingsWin": "Instellingen",
     "newConversation": "Nieuw gesprek",
-    "newConversationWin": "Nieuw gesprek",
     "chat": "Chats",
     "shelves": "Planken",
     "recipes": "Recepten",
     "largerText": "Grotere tekst",
-    "largerTextWin": "Grotere tekst",
     "smallerText": "Kleinere tekst",
-    "smallerTextWin": "Kleinere tekst",
     "file": "Bestand",
     "edit": "Bewerken",
     "view": "Weergave",
-    "window": "Venster",
-    "help": "Help"
+    "window": "Venster"
   },
   "locale": {
     "heading": "Taal",
@@ -158,6 +153,16 @@
     "changeShort": "Wijzigen",
     "tooSmall": "Hier is niet genoeg ruimte voor deze AI. Kies een map op een andere schijf.",
     "keptCopies": "Je AI's staan nu in de nieuwe map. Rebost heeft van sommige een kopie in de oude map laten staan, omdat het niet kon bevestigen dat verwijderen veilig was. Je kunt ze daar zelf verwijderen."
+  },
+  "apiAccess": {
+    "heading": "Gebruik deze AI vanuit andere apps",
+    "help": "Apps op deze computer die met de OpenAI-API werken, kunnen de AI gebruiken die in Rebost draait. Geef ze dit adres en deze sleutel. Beide veranderen wanneer Rebost de AI opnieuw start.",
+    "address": "Adres",
+    "key": "API-sleutel",
+    "notRunning": "Het adres verschijnt zodra de AI draait.",
+    "show": "Tonen",
+    "hide": "Verbergen",
+    "copied": "Gekopieerd"
   },
   "onboarding": {
     "welcome": "Welkom bij Rebost",

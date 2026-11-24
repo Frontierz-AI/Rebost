@@ -220,8 +220,12 @@ fn create(app: &AppHandle) -> tauri::Result<()> {
     .center()
     .focused(true);
 
+    // The scroll bar style must match the main window (tauri.windows.conf.json):
+    // WebView2 refuses a second style in the same data directory.
     #[cfg(windows)]
-    let builder = builder.drag_and_drop(false);
+    let builder = builder
+        .drag_and_drop(false)
+        .scroll_bar_style(tauri::webview::ScrollBarStyle::FluentOverlay);
 
     #[cfg(target_os = "macos")]
     let builder = builder

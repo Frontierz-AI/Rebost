@@ -40,6 +40,7 @@
   import ModelSuggestionCards from "$lib/components/ModelSuggestionCards.svelte";
   import InstalledModels from "$lib/components/InstalledModels.svelte";
   import ModelsFolderCard from "$lib/components/ModelsFolderCard.svelte";
+  import ApiAccessCard from "$lib/components/ApiAccessCard.svelte";
   import { installedBytes } from "$lib/installed-models";
   import icon from "../../assets/rebost-icon.png";
 
@@ -532,6 +533,9 @@
     </section>
     {#if !app.settings?.modelsFolder?.missing}
       {@render folderSection()}
+    {/if}
+    {#if hasAi}
+      <ApiAccessCard />
     {/if}
   {/snippet}
 

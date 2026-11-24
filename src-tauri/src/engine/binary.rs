@@ -196,21 +196,17 @@ impl Engine {
                     super::pin::can_download_archive(pin.os, pin.url),
                     "Windows engine is missing from the installation"
                 );
-                if !allow_local {
+                if allow_local {
+                    log::info!("downloading AI engine {ENGINE_RELEASE} ({})", pin.file_name);
+                } else {
                     log::info!(
                         "downloading optional {} engine {ENGINE_RELEASE} ({})",
                         pin.accelerator,
                         pin.file_name
                     );
                 }
-                self.download_archive(
-                    pin.url,
-                    &download_dest,
-                    pin.sha256,
-                    pin.file_name,
-                    "AI engine",
-                )
-                .await?;
+                self.download_archive(pin.url, &download_dest, pin.sha256, "AI engine")
+                    .await?;
                 (download_dest, false, true)
             };
 
@@ -265,14 +261,8 @@ impl Engine {
             );
             let dest = engine_dir.join(runtime.file_name);
             log::info!("downloading CUDA runtime ({})", runtime.file_name);
-            self.download_archive(
-                runtime.url,
-                &dest,
-                runtime.sha256,
-                runtime.file_name,
-                "AI engine",
-            )
-            .await?;
+            self.download_archive(runtime.url, &dest, runtime.sha256, "AI engine")
+                .await?;
             dest
         };
         let extract_dir = engine_dir.join("extract-tmp-runtime");
@@ -304,10 +294,8 @@ impl Engine {
         url: &str,
         dest: &Path,
         sha256: &str,
-        file_name: &str,
         name: &str,
     ) -> Result<()> {
-        log::info!("downloading AI engine {ENGINE_RELEASE} ({file_name})");
         let mut transfer = ArchiveDownload {
             control: download::DownloadControl::new(),
             events: &self.ctx.events,

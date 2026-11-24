@@ -18,21 +18,16 @@
   "menu": {
     "about": "About Rebost",
     "settings": "Settings…",
-    "settingsWin": "Settings",
     "newConversation": "New Conversation",
-    "newConversationWin": "New conversation",
     "chat": "Chat",
     "shelves": "Shelves",
     "recipes": "Recipes",
     "largerText": "Larger Text",
-    "largerTextWin": "Larger text",
     "smallerText": "Smaller Text",
-    "smallerTextWin": "Smaller text",
     "file": "File",
     "edit": "Edit",
     "view": "View",
-    "window": "Window",
-    "help": "Help"
+    "window": "Window"
   },
   "locale": {
     "heading": "Language",
@@ -157,6 +152,16 @@
     "changeShort": "Change",
     "tooSmall": "There isn't enough room here for this AI. Choose a folder on another drive.",
     "keptCopies": "Your AIs are in the new folder. Rebost left a copy of some in the old folder because it couldn't confirm they were safe to delete. You can delete them there yourself."
+  },
+  "apiAccess": {
+    "heading": "Use this AI from other apps",
+    "help": "Apps on this computer that work with the OpenAI API can use the AI running in Rebost. Give them this address and key. Both change when Rebost starts the AI again.",
+    "address": "Address",
+    "key": "API key",
+    "notRunning": "The address appears once the AI is running.",
+    "show": "Show",
+    "hide": "Hide",
+    "copied": "Copied"
   },
   "onboarding": {
     "welcome": "Welcome to Rebost",

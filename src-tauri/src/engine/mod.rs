@@ -1,7 +1,8 @@
 //! llama.cpp `llama-server` as a child process.
 //!
-//! Generation is its only job. The UI never sees a server, port, or PID;
-//! it sees "Warming up..." and then tokens.
+//! Generation is its only job. Chat sees "Warming up..." and then tokens.
+//! Settings shows the server's local address and API key so other apps on
+//! this computer can use the same AI.
 
 pub mod bench;
 mod binary;
@@ -53,6 +54,35 @@ pub enum EngineState {
     Error,
 }
 
+/// Local OpenAI-compatible address and key, shown in Settings.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiAccess {
+    /// `None` while the AI is not running; the port changes on each start.
+    pub url: Option<String>,
+    pub key: String,
+}
+
+/// Random per launch: 244 bits from two v4 UUIDs.
+fn new_api_key() -> String {
+    let (a, b) = (uuid::Uuid::new_v4(), uuid::Uuid::new_v4());
+    format!("rebost-{}{}", a.simple(), b.simple())
+}
+
+fn engine_client(api_key: &str) -> reqwest::Client {
+    let mut headers = reqwest::header::HeaderMap::new();
+    let mut auth = reqwest::header::HeaderValue::from_str(&format!("Bearer {api_key}"))
+        .expect("API key is ASCII");
+    auth.set_sensitive(true);
+    headers.insert(reqwest::header::AUTHORIZATION, auth);
+    reqwest::Client::builder()
+        .user_agent(USER_AGENT)
+        .default_headers(headers)
+        .connect_timeout(Duration::from_secs(30))
+        .build()
+        .expect("reqwest client")
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EngineStatus {
@@ -83,6 +113,8 @@ pub struct Engine {
     fallback_reason: std::sync::Mutex<Option<String>>,
     install_lock: tokio::sync::Mutex<()>,
     ctx: Arc<Ctx>,
+    /// Sent as a bearer token on every request to llama-server.
+    api_key: String,
     pub client: reqwest::Client,
     download_client: reqwest::Client,
     inner: tokio::sync::Mutex<Inner>,
@@ -252,6 +284,7 @@ impl Engine {
             EngineState::NoModel
         };
         kill_stale_llama_servers(ctx.paths.base());
+        let api_key = new_api_key();
         Arc::new(Self {
             vision: std::sync::Mutex::new(None),
             disabled_vision: std::sync::Mutex::new(None),
@@ -259,11 +292,8 @@ impl Engine {
             fallback_reason: std::sync::Mutex::new(None),
             install_lock: tokio::sync::Mutex::new(()),
             ctx,
-            client: reqwest::Client::builder()
-                .user_agent(USER_AGENT)
-                .connect_timeout(Duration::from_secs(30))
-                .build()
-                .expect("reqwest client"),
+            client: engine_client(&api_key),
+            api_key,
             download_client: reqwest::Client::builder()
                 .user_agent(USER_AGENT)
                 .https_only(true)
@@ -317,6 +347,20 @@ impl Engine {
 
     pub fn status(&self) -> EngineStatus {
         crate::core::mutex_lock(&self.status).clone()
+    }
+
+    pub(crate) fn api_key(&self) -> &str {
+        &self.api_key
+    }
+
+    pub async fn api_access(&self) -> ApiAccess {
+        let ready = self.status().state == EngineState::Ready;
+        let inner = self.inner.lock().await;
+        ApiAccess {
+            url: (ready && inner.child.is_some() && inner.port != 0)
+                .then(|| format!("http://127.0.0.1:{}/v1", inner.port)),
+            key: self.api_key.clone(),
+        }
     }
 
     fn set_status(&self, state: EngineState, detail: Option<String>) {
