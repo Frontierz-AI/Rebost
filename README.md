@@ -22,7 +22,7 @@ The first launch offers an AI sized for the machine's memory and downloads it. T
 
 ## Download
 
-The current release is **1.2.0**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
+The current release is **1.2.1**. Installers are published on [GitHub Releases](https://github.com/Frontierz-AI/Rebost/releases), including one Windows installer for Intel, AMD and ARM64 PCs, and the project site is [rebost.ai](https://rebost.ai/).
 
 | Machine                               | Installer                                  |
 | ------------------------------------- | ------------------------------------------ |

@@ -93,6 +93,9 @@
   </keywords>
 
   <releases>
+    <release version="1.2.1" date="2026-11-24">
+      <description><p>Rebost picks a better AI for each computer: Ornith-1.5 9B from 12 GB of memory, including Windows and Linux PCs with a graphics card, and larger models on computers with 96 GB or more.</p></description>
+    </release>
     <release version="1.2.0" date="2026-11-23">
       <description><p>Rebost looks more native on macOS and Windows, and Settings shows a local address and key so other apps on this computer can use the AI running in Rebost.</p></description>
     </release>
