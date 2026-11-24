@@ -163,13 +163,13 @@ modules:
       # pnpm itself, as the native build pnpm publishes (packageManager in package.json).
       - type: archive
         only-arches: [x86_64]
-        url: https://registry.npmjs.org/@pnpm/exe.linux-x64/-/exe.linux-x64-12.22.0.tgz
-        sha256: c0362f05e75732a8099e8aa7ec10faba7594e87ae14c768729270680d4151eae
+        url: https://registry.npmjs.org/@pnpm/exe.linux-x64/-/exe.linux-x64-12.23.0.tgz
+        sha256: 8aeb5ad2b7e71fc3f81f572fb3107449fc0ef8a9be4e4cdf51d9d4992921bb51
         dest: pnpm-bin
       - type: archive
         only-arches: [aarch64]
-        url: https://registry.npmjs.org/@pnpm/exe.linux-arm64/-/exe.linux-arm64-12.22.0.tgz
-        sha256: e02f7b7e2736e7cb4c787b91f94895c36a64f8b845d3bd96cbd62a84c398bbe4
+        url: https://registry.npmjs.org/@pnpm/exe.linux-arm64/-/exe.linux-arm64-12.23.0.tgz
+        sha256: 986807e3baaf6310b770f3bd456ebf6dc95f469d42c610c0df4a9a3d7f84d498
         dest: pnpm-bin
       # The sources xberg-tesseract 1.4.0 pins (its build.rs), in the layout
       # of its artifact cache: <cache>/source-artifacts/<key>/<sha256>/<name>.
