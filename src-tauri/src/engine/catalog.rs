@@ -39,14 +39,16 @@ impl MachineProfile {
         }
     }
 
-    /// RAM the model may use, leaving headroom for the OS, Rebost, Shelves,
-    /// search and OCR.
+    /// RAM the model may use: total RAM minus a reserve for the OS, Rebost,
+    /// Shelves, search and OCR. The reserve is 4 GiB or a quarter of RAM,
+    /// whichever is larger, so big machines keep proportionally more room.
     pub fn model_budget_bytes(&self) -> u64 {
-        (self.total_ram_bytes as f64 * 0.65) as u64
+        let reserve = (self.total_ram_bytes / 4).max(OS_RESERVE);
+        self.total_ram_bytes.saturating_sub(reserve)
     }
 
     /// Estimated runtime need for a file of `file_bytes` on this machine.
-    /// Vulkan and CUDA copy weights off mmap, so they need roughly two copies.
+    /// Vulkan and CUDA load without mmap, so they get a wider margin.
     pub fn runtime_need_bytes(&self, file_bytes: u64) -> u64 {
         runtime_need_bytes_for(file_bytes, &self.accelerator)
     }
@@ -64,16 +66,21 @@ fn host_arch_labels() -> (String, String) {
 
 const MIB: u64 = 1024 * 1024;
 const GIB: u64 = 1024 * 1024 * 1024;
+/// Smallest RAM reserve kept out of the model budget.
+const OS_RESERVE: u64 = 4 * GIB;
 
 /// Estimated runtime need for a GGUF of `file_bytes` (weights + KV/overhead).
-/// Metal, CPU, and OpenCL keep mmap. Vulkan and CUDA copy the weights.
+/// Metal, CPU, and OpenCL keep mmap. Vulkan and CUDA load without mmap
+/// (`--load-mode none`): weights go to VRAM, but a card too small for them
+/// spills into shared system memory, and the driver keeps staging buffers.
+/// 1.5x covers that without counting a full second copy.
 pub fn runtime_need_bytes(file_bytes: u64) -> u64 {
     runtime_need_bytes_for(file_bytes, "")
 }
 
 fn runtime_need_bytes_for(file_bytes: u64, accelerator: &str) -> u64 {
     let copies = if matches!(accelerator, "Vulkan" | "CUDA") {
-        2.0
+        1.5
     } else {
         1.15
     };
@@ -89,7 +96,7 @@ fn runtime_need_bytes_for(file_bytes: u64, accelerator: &str) -> u64 {
 /// smaller same-family fallbacks so lower RAM bands still have a pick.
 /// The default install is the first row that fits RAM.
 ///
-/// Missing an Artificial Analysis Intelligence Index is not a skip. A
+/// Missing an Artificial Analysis Progress Index is not a skip. A
 /// new model may sit above scored rows when published benches show a
 /// clear lead over the current pick for the bands it would take; mark
 /// that `CatalogStanding::BenchLead`. The app never fetches AA or
@@ -100,6 +107,13 @@ pub struct CatalogEntry {
     pub provider: &'static str,
     pub standing: CatalogStanding,
     pub hf_repo: &'static str,
+    /// Quant file to download (`Q6_K`, `IQ3_XXS`). `None` uses the usual
+    /// order (Q4_K_M first). Rows of the same model at several quants sit
+    /// largest first, so the first that fits is the best file for the RAM.
+    pub quant: Option<&'static str>,
+    /// Only offered on machines with at least this much RAM (GiB). Keeps a
+    /// file that fits smaller machines for the bands that should get it.
+    pub min_ram_gib: u64,
     pub approx_bytes: u64,
     pub license: &'static str,
     pub released: &'static str,
@@ -110,31 +124,92 @@ pub struct CatalogEntry {
 /// is stronger.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CatalogStanding {
-    /// Artificial Analysis Intelligence Index.
-    Scored(u8),
-    /// No Intelligence Index yet. Benches beat the scored document pick
+    /// Artificial Analysis Progress Index v1 (it replaced the
+    /// Intelligence Index in November 2026; the scale runs to ~350).
+    Scored(u16),
+    /// No Progress Index yet. Benches beat the scored document pick
     /// whose index is `above`; the row sorts just above that score.
-    BenchLead { above: u8 },
+    BenchLead { above: u16 },
 }
 
 impl CatalogStanding {
     /// Family heads in `CATALOG` must appear in this order, descending.
     pub const fn sort_key(self) -> u16 {
         match self {
-            Self::Scored(score) => (score as u16) * 2,
-            Self::BenchLead { above } => (above as u16) * 2 + 1,
+            Self::Scored(score) => score * 2,
+            Self::BenchLead { above } => above * 2 + 1,
         }
     }
 }
 
 pub const CATALOG: &[CatalogEntry] = &[
+    // No Progress Index yet. Its card beats Qwen3.8 27B on every shared
+    // bench (Terminal-Bench 2.1 81.2 vs 71.9, HLE 48.0 vs 31.3, SciCode
+    // 53.8 vs 43.6). 122B MoE, 8 of 256 experts active, so it decodes faster
+    // than a dense 27B. Q6_K for 192 GB+, Q4_K_M for 128 GB, IQ3_XXS only where Q4 misses
+    // (Windows 128 GB). 96 GB machines get Qwen3.8 27B Q8_0 instead: no 3-bit file.
+    CatalogEntry {
+        name: "Ornith-1.5 122B",
+        family: "Ornith",
+        provider: "DeepReinforce",
+        standing: CatalogStanding::BenchLead { above: 303 },
+        hf_repo: "ornith-ai/Ornith-1.5-122B-GGUF",
+        quant: Some("Q6_K"),
+        min_ram_gib: 0,
+        approx_bytes: 97637 * MIB,
+        license: "MIT",
+        released: "2026-10",
+        blurb: "Many languages. The strongest pick, for computers with 96 GB of memory or more.",
+    },
+    CatalogEntry {
+        name: "Ornith-1.5 122B",
+        family: "Ornith",
+        provider: "DeepReinforce",
+        standing: CatalogStanding::BenchLead { above: 303 },
+        hf_repo: "ornith-ai/Ornith-1.5-122B-GGUF",
+        quant: Some("Q4_K_M"),
+        min_ram_gib: 0,
+        approx_bytes: 72330 * MIB,
+        license: "MIT",
+        released: "2026-10",
+        blurb: "Many languages. The strongest pick, for computers with 96 GB of memory or more.",
+    },
+    CatalogEntry {
+        name: "Ornith-1.5 122B",
+        family: "Ornith",
+        provider: "DeepReinforce",
+        standing: CatalogStanding::BenchLead { above: 303 },
+        hf_repo: "unsloth/Ornith-1.5-122B-GGUF",
+        quant: Some("IQ3_XXS"),
+        min_ram_gib: 100,
+        approx_bytes: 47221 * MIB,
+        license: "MIT",
+        released: "2026-10",
+        blurb: "Many languages. The strongest pick, for computers with 96 GB of memory or more.",
+    },
+    // Near-lossless Qwen3.8 27B for 96 GB machines, the safe pick there.
     CatalogEntry {
         name: "Qwen3.8 27B",
         family: "Qwen",
         provider: "Alibaba",
-        standing: CatalogStanding::Scored(34),
+        standing: CatalogStanding::Scored(303),
         hf_repo: "unsloth/Qwen3.8-27B-GGUF",
-        approx_bytes: 15702 * MIB,
+        quant: Some("Q8_0"),
+        min_ram_gib: 88,
+        approx_bytes: 27701 * MIB,
+        license: "Apache-2.0",
+        released: "2026-08",
+        blurb: "Many languages. Strong on documents and everyday writing.",
+    },
+    CatalogEntry {
+        name: "Qwen3.8 27B",
+        family: "Qwen",
+        provider: "Alibaba",
+        standing: CatalogStanding::Scored(303),
+        hf_repo: "unsloth/Qwen3.8-27B-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 15797 * MIB,
         license: "Apache-2.0",
         released: "2026-08",
         blurb: "Many languages. Strong on documents and everyday writing.",
@@ -143,41 +218,49 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Muse Glimmer",
         family: "Muse",
         provider: "Meta",
-        standing: CatalogStanding::Scored(17),
+        standing: CatalogStanding::Scored(267),
         hf_repo: "unsloth/Muse-Glimmer-30B-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 15143 * MIB,
         license: "Apache-2.0",
         released: "2026-08",
         blurb: "From Meta. Needs a computer with plenty of memory.",
     },
     CatalogEntry {
+        name: "Gemma 4 31B",
+        family: "Gemma",
+        provider: "Google",
+        standing: CatalogStanding::Scored(254),
+        hf_repo: "unsloth/gemma-4-31B-it-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 17475 * MIB,
+        license: "Apache-2.0",
+        released: "2026-04",
+        blurb: "Larger Gemma from Google. Big download.",
+    },
+    CatalogEntry {
         name: "Gemma 4 26B A4B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(17),
+        standing: CatalogStanding::Scored(243),
         hf_repo: "unsloth/gemma-4-26B-A4B-it-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 16162 * MIB,
         license: "Apache-2.0",
         released: "2026-03",
         blurb: "Larger Gemma from Google. Big download.",
     },
     CatalogEntry {
-        name: "Granite 4.2 30B",
-        family: "Granite",
-        provider: "IBM",
-        standing: CatalogStanding::Scored(15),
-        hf_repo: "ibm-granite/granite-4.2-30b-GGUF",
-        approx_bytes: 16900 * MIB,
-        license: "Apache-2.0",
-        released: "2026-08",
-        blurb: "From IBM. Needs a computer with plenty of memory.",
-    },
-    CatalogEntry {
         name: "Ornith-1.5 9B",
         family: "Ornith",
         provider: "DeepReinforce",
-        standing: CatalogStanding::BenchLead { above: 14 },
+        standing: CatalogStanding::BenchLead { above: 233 },
         hf_repo: "ornith-ai/Ornith-1.5-9B-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 5512 * MIB,
         license: "MIT",
         released: "2026-08",
@@ -187,8 +270,10 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Gemma 4 12B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(14),
+        standing: CatalogStanding::Scored(233),
         hf_repo: "unsloth/gemma-4-12b-it-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 6792 * MIB,
         license: "Apache-2.0",
         released: "2026-05",
@@ -198,85 +283,114 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Qwen3.5 4B",
         family: "Qwen",
         provider: "Alibaba",
-        standing: CatalogStanding::Scored(13),
+        standing: CatalogStanding::Scored(231),
         hf_repo: "unsloth/Qwen3.5-4B-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 2614 * MIB,
         license: "Apache-2.0",
         released: "2026-03",
         blurb: "Many languages. Documents and everyday writing on computers with 8 GB of memory.",
     },
     CatalogEntry {
-        name: "Granite 4.2 8B",
+        name: "Granite 4.2 30B",
         family: "Granite",
         provider: "IBM",
-        standing: CatalogStanding::Scored(11),
-        hf_repo: "ibm-granite/granite-4.2-8b-GGUF",
-        approx_bytes: 5100 * MIB,
+        standing: CatalogStanding::Scored(225),
+        hf_repo: "ibm-granite/granite-4.2-30b-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 16900 * MIB,
         license: "Apache-2.0",
         released: "2026-08",
-        blurb: "From IBM. Documents and chat.",
+        blurb: "From IBM. Needs a computer with plenty of memory.",
     },
     CatalogEntry {
         name: "gpt-oss 20B",
         family: "GPT",
         provider: "OpenAI",
-        standing: CatalogStanding::Scored(10),
+        standing: CatalogStanding::Scored(217),
         hf_repo: "unsloth/gpt-oss-20b-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 11086 * MIB,
         license: "Apache-2.0",
         released: "2025-08",
         blurb: "Open weights from OpenAI.",
     },
     CatalogEntry {
+        name: "LFM3 1.7B",
+        family: "LFM",
+        provider: "Liquid AI",
+        standing: CatalogStanding::Scored(216),
+        hf_repo: "LiquidAI/LFM3-1.7B-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 1049 * MIB,
+        license: "LFM Open License v1.0",
+        released: "2026-10",
+        blurb: "Many languages. A small file for everyday writing.",
+    },
+    CatalogEntry {
+        name: "Granite 4.2 8B",
+        family: "Granite",
+        provider: "IBM",
+        standing: CatalogStanding::Scored(211),
+        hf_repo: "ibm-granite/granite-4.2-8b-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 5100 * MIB,
+        license: "Apache-2.0",
+        released: "2026-08",
+        blurb: "From IBM. Documents and chat.",
+    },
+    CatalogEntry {
         name: "Magistral Small 1.2",
         family: "Mistral",
         provider: "Mistral",
-        standing: CatalogStanding::Scored(9),
+        standing: CatalogStanding::Scored(202),
         hf_repo: "unsloth/Magistral-Small-2509-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 13670 * MIB,
         license: "Apache-2.0",
         released: "2025-09",
         blurb: "From Mistral. Thinks before answering.",
     },
     CatalogEntry {
-        name: "Gemma 4 E4B",
-        family: "Gemma",
-        provider: "Google",
-        standing: CatalogStanding::Scored(9),
-        hf_repo: "unsloth/gemma-4-E4B-it-GGUF",
-        approx_bytes: 4747 * MIB,
-        license: "Apache-2.0",
-        released: "2026-03",
-        blurb: "From Google. A smaller Gemma for tighter memory.",
-    },
-    CatalogEntry {
         name: "Granite 4.2 3B",
         family: "Granite",
         provider: "IBM",
-        standing: CatalogStanding::Scored(9),
+        standing: CatalogStanding::Scored(191),
         hf_repo: "ibm-granite/granite-4.2-3b-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 2140 * MIB,
         license: "Apache-2.0",
         released: "2026-08",
         blurb: "Small file, short answers.",
     },
     CatalogEntry {
-        name: "LFM2.5 2.6B",
-        family: "LFM",
-        provider: "Liquid AI",
-        standing: CatalogStanding::Scored(8),
-        hf_repo: "LiquidAI/LFM2.5-2.6B-GGUF",
-        approx_bytes: 1597 * MIB,
-        license: "LFM Open License v1.0",
-        released: "2026-08",
-        blurb: "Many languages. A small file for everyday writing.",
+        name: "Gemma 4 E4B",
+        family: "Gemma",
+        provider: "Google",
+        standing: CatalogStanding::Scored(183),
+        hf_repo: "unsloth/gemma-4-E4B-it-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 4747 * MIB,
+        license: "Apache-2.0",
+        released: "2026-03",
+        blurb: "From Google. A smaller Gemma for tighter memory.",
     },
     CatalogEntry {
         name: "Qwen3.5 2B",
         family: "Qwen",
         provider: "Alibaba",
-        standing: CatalogStanding::Scored(7),
+        standing: CatalogStanding::Scored(177),
         hf_repo: "unsloth/Qwen3.5-2B-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 1222 * MIB,
         license: "Apache-2.0",
         released: "2026-01",
@@ -286,30 +400,23 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Ministral 3 14B",
         family: "Mistral",
         provider: "Mistral",
-        standing: CatalogStanding::Scored(6),
+        standing: CatalogStanding::Scored(176),
         hf_repo: "unsloth/Ministral-3-14B-Instruct-2512-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 7857 * MIB,
         license: "Apache-2.0",
         released: "2025-12",
         blurb: "Comfortable with long documents.",
     },
     CatalogEntry {
-        name: "Phi-4 Mini",
-        family: "Phi",
-        provider: "Microsoft",
-        standing: CatalogStanding::Scored(6),
-        hf_repo: "unsloth/Phi-4-mini-instruct-GGUF",
-        approx_bytes: 2376 * MIB,
-        license: "MIT",
-        released: "2024-12",
-        blurb: "From Microsoft. Careful answers in a small file.",
-    },
-    CatalogEntry {
         name: "Ministral 3 8B",
         family: "Mistral",
         provider: "Mistral",
-        standing: CatalogStanding::Scored(5),
+        standing: CatalogStanding::Scored(167),
         hf_repo: "unsloth/Ministral-3-8B-Instruct-2512-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 4958 * MIB,
         license: "Apache-2.0",
         released: "2025-12",
@@ -319,19 +426,36 @@ pub const CATALOG: &[CatalogEntry] = &[
         name: "Ministral 3 3B",
         family: "Mistral",
         provider: "Mistral",
-        standing: CatalogStanding::Scored(5),
+        standing: CatalogStanding::Scored(150),
         hf_repo: "unsloth/Ministral-3-3B-Instruct-2512-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 2047 * MIB,
         license: "Apache-2.0",
         released: "2025-12",
         blurb: "Fits when memory is tight.",
     },
     CatalogEntry {
+        name: "Phi-4 Mini",
+        family: "Phi",
+        provider: "Microsoft",
+        standing: CatalogStanding::Scored(133),
+        hf_repo: "unsloth/Phi-4-mini-instruct-GGUF",
+        quant: None,
+        min_ram_gib: 0,
+        approx_bytes: 2376 * MIB,
+        license: "MIT",
+        released: "2024-12",
+        blurb: "From Microsoft. Careful answers in a small file.",
+    },
+    CatalogEntry {
         name: "Gemma 3 1B",
         family: "Gemma",
         provider: "Google",
-        standing: CatalogStanding::Scored(5),
+        standing: CatalogStanding::Scored(98),
         hf_repo: "unsloth/gemma-3-1b-it-GGUF",
+        quant: None,
+        min_ram_gib: 0,
         approx_bytes: 769 * MIB,
         license: "Gemma",
         released: "2025-03",
@@ -354,7 +478,10 @@ pub struct Recommendation {
 fn to_recommendation(entry: &CatalogEntry) -> Recommendation {
     Recommendation {
         name: entry.name.to_string(),
-        reference: entry.hf_repo.to_string(),
+        reference: match entry.quant {
+            Some(quant) => format!("{}:{quant}", entry.hf_repo),
+            None => entry.hf_repo.to_string(),
+        },
         provider: entry.provider.to_string(),
         approx_bytes: entry.approx_bytes,
         license: entry.license.to_string(),
@@ -389,7 +516,8 @@ fn localized_blurb(entry: &CatalogEntry) -> String {
 }
 
 fn fits(entry: &CatalogEntry, profile: &MachineProfile) -> bool {
-    profile.runtime_need_bytes(entry.approx_bytes) <= profile.model_budget_bytes()
+    profile.total_ram_bytes >= entry.min_ram_gib * GIB
+        && profile.runtime_need_bytes(entry.approx_bytes) <= profile.model_budget_bytes()
 }
 
 fn forced_recommend_index() -> Option<usize> {
@@ -403,8 +531,29 @@ fn forced_recommend_index() -> Option<usize> {
         .position(|entry| entry.name.eq_ignore_ascii_case(name))
 }
 
+/// RAM bands with a fixed pick, even when a higher-scoring row would squeeze
+/// in or the pick itself is a little over the budget. The half GiB of slack
+/// covers machines sold as 8 or 12 GB that report a little more or less.
+/// - 8 GB or less: LFM3 1.7B, so the OS and Shelves keep their room.
+/// - 12 GB: Ornith-1.5 9B, about 0.2 GiB over the Mac budget; far stronger
+///   than Qwen3.5 4B, the row that fits.
+const RAM_BAND_PICKS: &[(u64, &str)] = &[
+    (8 * GIB + GIB / 2, "LFM3 1.7B"),
+    (12 * GIB + GIB / 2, "Ornith-1.5 9B"),
+];
+
+fn small_machine_index(profile: &MachineProfile) -> Option<usize> {
+    let (_, name) = RAM_BAND_PICKS
+        .iter()
+        .find(|(max_ram, _)| profile.total_ram_bytes <= *max_ram)?;
+    CATALOG.iter().position(|entry| entry.name == *name)
+}
+
 fn pick_index(profile: &MachineProfile) -> usize {
     if let Some(index) = forced_recommend_index() {
+        return index;
+    }
+    if let Some(index) = small_machine_index(profile) {
         return index;
     }
     CATALOG
@@ -462,6 +611,9 @@ pub fn smaller_alternatives(profile: &MachineProfile, n: usize) -> Vec<Recommend
         return Vec::new();
     }
     let primary = &CATALOG[pick_index(profile)];
+    if small_machine_index(profile).is_some() {
+        return small_machine_alternatives(profile, primary, n);
+    }
     let candidates = alt_candidates(profile, primary);
     let step_max = primary.approx_bytes.saturating_mul(80) / 100;
     let step_downs: Vec<&CatalogEntry> = candidates
@@ -505,6 +657,28 @@ pub fn smaller_alternatives(profile: &MachineProfile, n: usize) -> Vec<Recommend
     }
     chosen.truncate(n);
     chosen.into_iter().map(to_recommendation).collect()
+}
+
+/// On small machines the pick is the smallest good file, so nothing useful
+/// is smaller. Offer the strongest other families that still fit instead.
+fn small_machine_alternatives(
+    profile: &MachineProfile,
+    primary: &CatalogEntry,
+    n: usize,
+) -> Vec<Recommendation> {
+    let mut families: Vec<&str> = vec![primary.family];
+    let mut out = Vec::new();
+    for entry in CATALOG {
+        if out.len() >= n {
+            break;
+        }
+        if families.contains(&entry.family) || !fits(entry, profile) {
+            continue;
+        }
+        families.push(entry.family);
+        out.push(to_recommendation(entry));
+    }
+    out
 }
 
 /// Up to `n` catalog models that fit this machine and are not already
@@ -561,7 +735,9 @@ mod tests {
         assert_eq!(recommend(&mk(32)).name, "Qwen3.8 27B");
         assert_eq!(recommend(&mk(24)).name, "Ornith-1.5 9B");
         assert_eq!(recommend(&mk(16)).name, "Ornith-1.5 9B");
-        assert_eq!(recommend(&mk(8)).name, "Qwen3.5 4B");
+        assert_eq!(recommend(&mk(8)).name, "LFM3 1.7B");
+        assert_eq!(recommend(&mk(4)).name, "LFM3 1.7B");
+        assert_eq!(recommend(&mk(2)).name, "LFM3 1.7B");
 
         let alts48: Vec<_> = smaller_alternatives(&mk(48), 2)
             .into_iter()
@@ -585,9 +761,37 @@ mod tests {
                 .into_iter()
                 .map(|r| r.name)
                 .collect::<Vec<_>>(),
-            ["LFM2.5 2.6B", "Phi-4 Mini"]
+            ["Qwen3.5 2B", "Gemma 3 1B"]
         );
         assert!(smaller_alternatives(&mk(4), 2).is_empty());
+
+        let windows = |gb: u64, accel: &str| MachineProfile {
+            accelerator: accel.into(),
+            ..mk(gb)
+        };
+        assert_eq!(recommend(&windows(16, "CUDA")).name, "Ornith-1.5 9B");
+        assert_eq!(recommend(&windows(16, "Vulkan")).name, "Ornith-1.5 9B");
+        assert_eq!(recommend(&mk(12)).name, "Ornith-1.5 9B");
+        assert_eq!(recommend(&windows(12, "CUDA")).name, "Ornith-1.5 9B");
+
+        let reference = |profile: &MachineProfile| recommend(profile).reference;
+        assert_eq!(reference(&mk(64)), "unsloth/Qwen3.8-27B-GGUF");
+        assert_eq!(reference(&mk(96)), "unsloth/Qwen3.8-27B-GGUF:Q8_0");
+        assert_eq!(
+            reference(&windows(96, "CUDA")),
+            "unsloth/Qwen3.8-27B-GGUF:Q8_0"
+        );
+        assert_eq!(reference(&mk(128)), "ornith-ai/Ornith-1.5-122B-GGUF:Q4_K_M");
+        assert_eq!(
+            reference(&windows(128, "CUDA")),
+            "unsloth/Ornith-1.5-122B-GGUF:IQ3_XXS"
+        );
+        assert_eq!(
+            reference(&windows(192, "CUDA")),
+            "ornith-ai/Ornith-1.5-122B-GGUF:Q4_K_M"
+        );
+        assert_eq!(reference(&mk(192)), "ornith-ai/Ornith-1.5-122B-GGUF:Q6_K");
+        assert_eq!(reference(&mk(256)), "ornith-ai/Ornith-1.5-122B-GGUF:Q6_K");
     }
 
     #[test]
@@ -620,7 +824,7 @@ mod tests {
     }
 
     #[test]
-    fn ornith_sits_between_the_large_rows_and_gemma_12b() {
+    fn ornith_sits_between_gemma_26b_and_gemma_12b() {
         let standing = |name: &str| {
             CATALOG
                 .iter()
@@ -630,7 +834,7 @@ mod tests {
         };
         let ornith = standing("Ornith-1.5 9B");
         assert!(standing("Gemma 4 26B A4B") > ornith);
-        assert!(standing("Granite 4.2 30B") > ornith);
+        assert!(ornith > standing("Granite 4.2 30B"));
         assert!(ornith > standing("Gemma 4 12B"));
         assert!(ornith > standing("Gemma 4 E4B"));
         assert!(ornith > standing("gpt-oss 20B"));
@@ -642,7 +846,7 @@ mod tests {
                 .position(|entry| entry.name == "Ornith-1.5 9B"),
             CATALOG
                 .iter()
-                .position(|entry| entry.name == "Granite 4.2 30B")
+                .position(|entry| entry.name == "Gemma 4 26B A4B")
                 .map(|i| i + 1)
         );
     }
@@ -697,7 +901,7 @@ mod tests {
     }
 
     #[test]
-    fn vulkan_counts_two_copies_of_the_weights() {
+    fn vulkan_counts_a_wider_margin_than_metal() {
         let mk = |accel: &str| MachineProfile {
             total_ram_bytes: 16 * GIB,
             cpu: "test".into(),
@@ -706,13 +910,30 @@ mod tests {
             process_arch: "test".into(),
             os_arch: "test".into(),
         };
-        let file = 5 * GIB;
+        let file = 7 * GIB;
         let metal = mk("Metal");
         let vulkan = mk("Vulkan");
-        assert_eq!(vulkan.runtime_need_bytes(file), 12 * GIB);
+        assert_eq!(vulkan.runtime_need_bytes(file), 25 * GIB / 2);
         assert!(metal.runtime_need_bytes(file) < vulkan.runtime_need_bytes(file));
         assert!(metal.runtime_need_bytes(file) <= metal.model_budget_bytes());
         assert!(vulkan.runtime_need_bytes(file) > vulkan.model_budget_bytes());
+    }
+
+    #[test]
+    fn budget_keeps_four_gib_or_a_quarter() {
+        let mk = |gb: u64| MachineProfile {
+            total_ram_bytes: gb * GIB,
+            cpu: "test".into(),
+            accelerator: "Metal".into(),
+            free_disk_bytes: 500 * GIB,
+            process_arch: "test".into(),
+            os_arch: "test".into(),
+        };
+        assert_eq!(mk(8).model_budget_bytes(), 4 * GIB);
+        assert_eq!(mk(16).model_budget_bytes(), 12 * GIB);
+        assert_eq!(mk(24).model_budget_bytes(), 18 * GIB);
+        assert_eq!(mk(64).model_budget_bytes(), 48 * GIB);
+        assert_eq!(mk(2).model_budget_bytes(), 0);
     }
 
     #[test]
@@ -725,7 +946,7 @@ mod tests {
         assert_eq!(blurb_slug("Granite 4.2 3B"), "granite_4_2_3b");
         assert_eq!(blurb_slug("Gemma 4 26B A4B"), "gemma_4_26b_a4b");
         assert_eq!(blurb_slug("Magistral Small 1.2"), "magistral_small_1_2");
-        assert_eq!(blurb_slug("LFM2.5 2.6B"), "lfm2_5_2_6b");
+        assert_eq!(blurb_slug("LFM3 1.7B"), "lfm3_1_7b");
     }
 
     #[test]

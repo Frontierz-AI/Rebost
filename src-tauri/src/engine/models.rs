@@ -176,6 +176,43 @@ fn keep_explore_hit(
     include_explore_hit(query, pipeline_tag, tags, files)
 }
 
+/// Split a Hugging Face reference into the repo and an optional quant tag:
+/// `owner/repo:Q6_K` names one file the same way `llama-server -hf` does.
+pub fn split_hf_reference(reference: &str) -> (&str, Option<&str>) {
+    match reference.split_once(':') {
+        Some((repo, quant)) => (repo, Some(quant)),
+        None => (reference, None),
+    }
+}
+
+/// True when `name` is the single-file GGUF for `quant` (`…-Q6_K.gguf`,
+/// `…-UD-IQ3_XXS.gguf`). `Q8_0` does not match `Q8_0_Old`.
+fn file_has_quant(name: &str, quant: &str) -> bool {
+    let base = name.rsplit('/').next().unwrap_or(name).to_ascii_uppercase();
+    let Some(stem) = base.strip_suffix(".GGUF") else {
+        return false;
+    };
+    let quant = quant.to_ascii_uppercase();
+    stem.strip_suffix(quant.as_str())
+        .is_some_and(|head| head.ends_with(['-', '_', '.']))
+}
+
+/// Like [`pick_gguf`], but a named quant wins when the repo has it as a
+/// single file. Without one, or when it is missing, the usual order applies.
+pub fn pick_gguf_with(
+    files: &[(String, Option<u64>)],
+    quant: Option<&str>,
+) -> Option<(String, Option<u64>)> {
+    if let Some(quant) = quant {
+        if let Some(hit) = files.iter().find(|(name, _)| {
+            !name.contains("-of-") && !is_imatrix_file(name) && file_has_quant(name, quant)
+        }) {
+            return Some(hit.clone());
+        }
+    }
+    pick_gguf(files)
+}
+
 /// Pick the best single-file GGUF from a repo file listing.
 pub fn pick_gguf(files: &[(String, Option<u64>)]) -> Option<(String, Option<u64>)> {
     let mut candidates: Vec<&(String, Option<u64>)> = files
@@ -465,7 +502,8 @@ pub fn normalize_source(source: &str) -> Result<&'static str> {
     }
 }
 
-/// Hugging Face `owner/repo` or an Ollama library name (optional `:tag`).
+/// Hugging Face `owner/repo` (optional `:QUANT`) or an Ollama library name
+/// (optional `:tag`).
 pub fn validate_reference(source: &str, reference: &str) -> Result<()> {
     if reference.is_empty() || reference.len() > 200 {
         return Err(anyhow!("invalid model reference"));
@@ -475,6 +513,13 @@ pub fn validate_reference(source: &str, reference: &str) -> Result<()> {
     }
     match source {
         "huggingface" => {
+            let (reference, quant) = split_hf_reference(reference);
+            if let Some(quant) = quant {
+                if quant.is_empty() || !quant.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+                {
+                    return Err(anyhow!("invalid Hugging Face reference"));
+                }
+            }
             let mut parts = reference.split('/');
             let owner = parts.next().unwrap_or("");
             let repo = parts.next().unwrap_or("");
@@ -524,7 +569,10 @@ pub fn catalog_page_url(source: &str, reference: &str) -> Result<String> {
     let source = normalize_source(source)?;
     validate_reference(source, reference)?;
     match source {
-        "huggingface" => Ok(format!("https://huggingface.co/{reference}")),
+        "huggingface" => Ok(format!(
+            "https://huggingface.co/{}",
+            split_hf_reference(reference).0
+        )),
         "ollama" => {
             let name = reference
                 .split_once(':')
@@ -584,6 +632,7 @@ pub async fn resolve_download(
             })
         }
         _ => {
+            let (reference, quant) = split_hf_reference(reference);
             let entries: Vec<HfTreeEntry> = client
                 .get(format!(
                     "https://huggingface.co/api/models/{reference}/tree/main"
@@ -603,8 +652,8 @@ pub async fn resolve_download(
                     )
                 })
                 .collect();
-            let (file, size) =
-                pick_gguf(&files).ok_or_else(|| anyhow!("no usable model file in {reference}"))?;
+            let (file, size) = pick_gguf_with(&files, quant)
+                .ok_or_else(|| anyhow!("no usable model file in {reference}"))?;
             let sha256 = entries
                 .iter()
                 .find(|e| e.path == file)
@@ -645,6 +694,7 @@ pub async fn resolve_projector(
             sha256: layer.digest.strip_prefix("sha256:").map(str::to_string),
         }));
     }
+    let reference = split_hf_reference(reference).0;
     let entries: Vec<HfTreeEntry> = client
         .get(format!(
             "https://huggingface.co/api/models/{reference}/tree/main"
@@ -1214,5 +1264,46 @@ mod tests {
         assert_eq!(base_model_owner("base_model:Qwen/Qwen3-8B"), Some("Qwen"));
         assert_eq!(base_model_owner("base_model:quantized:Qwen/Qwen3-8B"), None);
         assert_eq!(base_model_owner("base_model:adapter:DavidAU/foo"), None);
+    }
+
+    #[test]
+    fn quant_tag_picks_that_single_file() {
+        let files: Vec<(String, Option<u64>)> = [
+            "M-Q4_K_M.gguf",
+            "M-Q6_K.gguf",
+            "M-UD-IQ3_XXS.gguf",
+            "M-Q8_0_Old.gguf",
+            "Q8_0/M-Q8_0-00001-of-00002.gguf",
+        ]
+        .iter()
+        .map(|n| (n.to_string(), None))
+        .collect();
+        assert_eq!(
+            pick_gguf_with(&files, Some("Q6_K")).unwrap().0,
+            "M-Q6_K.gguf"
+        );
+        assert_eq!(
+            pick_gguf_with(&files, Some("iq3_xxs")).unwrap().0,
+            "M-UD-IQ3_XXS.gguf"
+        );
+        // Only a split or a look-alike exists: fall back to the usual order.
+        assert_eq!(
+            pick_gguf_with(&files, Some("Q8_0")).unwrap().0,
+            "M-Q4_K_M.gguf"
+        );
+        assert_eq!(pick_gguf_with(&files, None).unwrap().0, "M-Q4_K_M.gguf");
+    }
+
+    #[test]
+    fn hf_reference_may_carry_a_quant_tag() {
+        assert!(validate_reference("huggingface", "owner/repo:Q6_K").is_ok());
+        assert!(validate_reference("huggingface", "owner/repo:UD-Q6_K").is_err());
+        assert!(validate_reference("huggingface", "owner/repo:").is_err());
+        assert!(validate_reference("huggingface", "owner/repo:Q4:x").is_err());
+        assert_eq!(split_hf_reference("o/r:Q6_K"), ("o/r", Some("Q6_K")));
+        assert_eq!(
+            catalog_page_url("huggingface", "o/r:Q6_K").unwrap(),
+            "https://huggingface.co/o/r"
+        );
     }
 }

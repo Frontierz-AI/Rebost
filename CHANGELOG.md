@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-24
+
+- First-run picks use Artificial Analysis's new Progress Index. Computers with 8 GB of memory or less now get Liquid AI's LFM3 1.7B, with Qwen3.5 2B and Gemma 3 1B as alternatives. LFM3 1.7B replaces LFM2.5 2.6B, and Gemma 4 31B is back as the larger Gemma on 48 GB machines.
+- The AI may use all memory except 4 GB or a quarter, whichever is larger (it was 65%). Windows and Linux computers with an NVIDIA or AMD card now get Ornith-1.5 9B from 16 GB, like Macs.
+- Computers with 12 GB of memory get Ornith-1.5 9B. Computers with 96 GB get Qwen3.8 27B in its larger 8-bit file, and those with 128 GB or more get Ornith-1.5 122B, at the largest file that fits.
+
 ## [1.2.0] - 2026-11-23
 
 - On macOS the window uses the system sidebar material, the conversation list is a full-height column, and Chat has a toolbar row with the conversation title. The window drags from that row.
@@ -735,7 +741,8 @@ First release. Rebost is a desktop application that runs an AI on the machine wh
 - App data on Mac and Linux is readable only by the operating-system user account that installed it.
 - Diagnostics do not send log contents into the window.
 
-[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Frontierz-AI/Rebost/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/Frontierz-AI/Rebost/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Frontierz-AI/Rebost/compare/v1.1.1...v1.1.2

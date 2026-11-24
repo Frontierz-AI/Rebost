@@ -6,12 +6,16 @@ The installed catalog is `src-tauri/src/engine/catalog.rs` (`CATALOG`, `recommen
 
 `recommend()` picks the first **document-work** catalog row that fits (the catalog is ordered by capability, highest first):
 
-`runtime = file_bytes * 1.15 + 2 GiB`, fits when `runtime ≤ RAM * 0.65`.
+`runtime = file_bytes * 1.15 + 2 GiB` on Metal, CPU and OpenCL, and `file_bytes * 1.5 + 2 GiB` on CUDA and Vulkan (no mmap; a small card spills into shared memory). A row fits when `runtime ≤ RAM − max(4 GiB, RAM / 4)`.
+
+A catalog row may name a quant (`quant: Some("Q6_K")`); its install reference is then `owner/repo:Q6_K`, the same form `llama-server -hf` takes, and the download picks that single file. Rows of one model at several quants sit largest first, so the first that fits is the best file for that RAM. A row can also set `min_ram_gib`, so a file that would fit smaller machines is only offered where it should be. 96 GB gets Qwen3.8 27B Q8_0 (`min_ram_gib: 88`), the safe near-lossless pick. Ornith-1.5 122B takes the bands above: Q6_K on 192 GB and up, Q4_K_M on 128 GB (and Windows 192 GB), IQ3_XXS only where Q4 misses (Windows 128 GB, `min_ram_gib: 100`).
+
+Two RAM bands have a fixed pick (`RAM_BAND_PICKS`; half a GiB of slack for reported RAM): 8 GB or less always gets **LFM3 1.7B**, even when a higher-scoring row would squeeze in, and 12 GB gets **Ornith-1.5 9B**, about 0.2 GiB over the Mac budget but far stronger than the row that fits. Their alternatives are the strongest other families that still fit, not only smaller files.
 
 Capability order is set on the maintainer machine, never at runtime. Family heads use `CatalogStanding` in `catalog.rs`:
 
-- **Scored** — Artificial Analysis Intelligence Index, higher first.
-- **BenchLead** — no Index yet. Published benches show a clear lead over the current document pick for the RAM bands the new row would take. The row sorts just above that pick’s score (`BenchLead { above }`). Ornith-1.5 9B is the current example (`above: 14`, ahead of Gemma 4 12B).
+- **Scored** — Artificial Analysis Progress Index v1, higher first. It replaced the Intelligence Index in November 2026 and runs to ~350, so standings are `u16`.
+- **BenchLead** — no Index yet. Published benches show a clear lead over the current document pick for the RAM bands the new row would take. The row sorts just above that pick’s score (`BenchLead { above }`). Ornith-1.5 9B is the current example (`above: 233`, ahead of Gemma 4 12B).
 
 A coding-only sweep does not unseat a document default. Overlapping benches the incumbent also reports count (Terminal-Bench v2.1, HLE, GPQA Diamond, and office or document benches when both sides publish them). Clear means ahead on at least two of those, and not clearly behind on the rest.
 
