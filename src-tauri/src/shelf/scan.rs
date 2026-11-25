@@ -91,6 +91,41 @@ pub fn rel_is_skipped(rel: &str) -> bool {
         .unwrap_or(false)
 }
 
+/// True for a page inside the `Page_files/` folder a browser writes next to
+/// `Page.html` on "Save page as, complete" (frames, embeds). Only the saved
+/// page itself is a document. Looks at the disk, so call it on real paths;
+/// non-HTML files are never affected, so nothing read before HTML support
+/// changes status.
+pub fn is_saved_page_asset(path: &Path) -> bool {
+    if !crate::ingest::extract::is_html_file(path) {
+        return false;
+    }
+    let mut dir = path.parent();
+    while let Some(folder) = dir {
+        let Some(name) = folder.file_name().and_then(|n| n.to_str()) else {
+            break;
+        };
+        if let Some(stem) = name.strip_suffix("_files").filter(|s| !s.is_empty()) {
+            if let Some(parent) = folder.parent() {
+                if crate::ingest::extract::HTML_EXTENSIONS
+                    .iter()
+                    .any(|ext| parent.join(format!("{stem}.{ext}")).is_file())
+                {
+                    return true;
+                }
+            }
+        }
+        dir = folder.parent();
+    }
+    false
+}
+
+/// A file the Shelf should read: a supported type, and not part of a saved
+/// web page's asset folder.
+pub fn is_shelf_document(path: &Path) -> bool {
+    crate::ingest::extract::is_supported_file(path) && !is_saved_page_asset(path)
+}
+
 /// Walk `root` for supported files that are not in `already`. Stops after
 /// `max_new` new files or [`walk_budget`] visits. Does not skip `root`
 /// even if its name is on the ignore list (the user linked it on purpose).
@@ -132,7 +167,7 @@ pub fn scan_new_files(root: &Path, max_new: usize, already: &HashSet<PathBuf>) -
                 stack.push(path);
                 continue;
             }
-            if !file_type.is_file() || !crate::ingest::extract::is_supported_file(&path) {
+            if !file_type.is_file() || !is_shelf_document(&path) {
                 continue;
             }
             if already.contains(&path) {
@@ -285,5 +320,50 @@ mod tests {
         std::fs::write(root.join("note.md"), "explicit").unwrap();
         let scanned = scan_all(&root);
         assert_eq!(scanned.len(), 1);
+    }
+
+    #[test]
+    fn saved_page_assets_are_skipped_but_the_page_is_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        std::fs::write(root.join("Page.html"), "<p>page</p>").unwrap();
+        let assets = root.join("Page_files");
+        std::fs::create_dir_all(assets.join("nested")).unwrap();
+        std::fs::write(assets.join("frame.html"), "<p>frame</p>").unwrap();
+        std::fs::write(assets.join("nested/inner.htm"), "<p>inner</p>").unwrap();
+        std::fs::write(assets.join("app.js"), "x").unwrap();
+        std::fs::write(assets.join("style.css"), "x").unwrap();
+        // Something people put there on purpose that Rebost already read
+        // before HTML was supported stays readable.
+        std::fs::write(assets.join("notes.md"), "keep").unwrap();
+        // A `_files` folder with no page next to it is an ordinary folder.
+        std::fs::create_dir_all(root.join("Tax_files")).unwrap();
+        std::fs::write(root.join("Tax_files/receipt.html"), "<p>keep</p>").unwrap();
+
+        assert!(is_saved_page_asset(&assets.join("frame.html")));
+        assert!(is_saved_page_asset(&assets.join("nested/inner.htm")));
+        assert!(!is_saved_page_asset(&assets.join("notes.md")));
+        assert!(!is_saved_page_asset(&root.join("Page.html")));
+        assert!(!is_saved_page_asset(&root.join("Tax_files/receipt.html")));
+
+        let found = scan_all(root);
+        assert_eq!(
+            found,
+            vec![
+                root.join("Page.html"),
+                assets.join("notes.md"),
+                root.join("Tax_files/receipt.html"),
+            ]
+        );
+    }
+
+    #[test]
+    fn saved_page_stem_matches_htm_too() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        std::fs::write(root.join("Old page.htm"), "<p>page</p>").unwrap();
+        std::fs::create_dir_all(root.join("Old page_files")).unwrap();
+        std::fs::write(root.join("Old page_files/frame.html"), "<p>f</p>").unwrap();
+        assert_eq!(scan_all(root), vec![root.join("Old page.htm")]);
     }
 }

@@ -335,7 +335,7 @@
     "syncFolderHint": "Verknüpfe einen Ordner auf diesem Computer. Neue Dateien darin erscheinen hier.",
     "emptyRegion": "Leeres Regal",
     "dropToFill": "Dateien ablegen, um sie zu diesem Regal hinzuzufügen",
-    "dropTypes": "PDFs, Office-Dokumente, Tabellen, Präsentationen und E-Mails. Rebost liest sie auf diesem Computer.",
+    "dropTypes": "PDFs, Office-Dokumente, Tabellen, Präsentationen, E-Mails und Webseiten. Rebost liest sie auf diesem Computer.",
     "filterByName": "Nach Dateiname filtern",
     "filterByNamePlaceholder": "Nach Name filtern",
     "filterBySource": "Nach Quelle filtern",

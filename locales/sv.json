@@ -335,7 +335,7 @@
     "syncFolderHint": "Koppla en mapp på den här datorn. Nya filer i den dyker upp här.",
     "emptyRegion": "Tom hylla",
     "dropToFill": "Släpp filer för att lägga till dem på den här hyllan",
-    "dropTypes": "PDF, Office-dokument, kalkylblad, presentationer och e-post. Rebost läser dem på den här datorn.",
+    "dropTypes": "PDF, Office-dokument, kalkylblad, presentationer, e-post och webbsidor. Rebost läser dem på den här datorn.",
     "filterByName": "Filtrera efter filnamn",
     "filterByNamePlaceholder": "Filtrera efter namn",
     "filterBySource": "Filtrera efter källa",

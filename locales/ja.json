@@ -335,7 +335,7 @@
     "syncFolderHint": "このコンピュータのフォルダを関連付けます。そのフォルダに追加されたファイルは、ここにも表示されます。",
     "emptyRegion": "空のシェルフ",
     "dropToFill": "ファイルをドロップすると、このシェルフに追加されます",
-    "dropTypes": "PDF、Office文書、表計算、プレゼンテーション、メール。Rebostはこのコンピュータ上で読み取ります。",
+    "dropTypes": "PDF、Office文書、表計算、プレゼンテーション、メール、Webページ。Rebostはこのコンピュータ上で読み取ります。",
     "filterByName": "ファイル名で絞り込む",
     "filterByNamePlaceholder": "名前で絞り込む",
     "filterBySource": "入手元で絞り込む",

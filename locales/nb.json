@@ -335,7 +335,7 @@
     "syncFolderHint": "Koble til en mappe på denne datamaskinen. Nye filer i den dukker opp her.",
     "emptyRegion": "Tom hylle",
     "dropToFill": "Slipp filer for å legge dem til på denne hyllen",
-    "dropTypes": "PDF-er, Office-dokumenter, regneark, presentasjoner og e-post. Rebost leser dem på denne datamaskinen.",
+    "dropTypes": "PDF-er, Office-dokumenter, regneark, presentasjoner, e-post og nettsider. Rebost leser dem på denne datamaskinen.",
     "filterByName": "Filtrer etter filnavn",
     "filterByNamePlaceholder": "Filtrer etter navn",
     "filterBySource": "Filtrer etter kilde",

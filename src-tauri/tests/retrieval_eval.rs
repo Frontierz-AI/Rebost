@@ -152,6 +152,43 @@ async fn spanish_stemming_matches_inflections() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn saved_web_page_answers_from_its_main_text() {
+    let app = test_app();
+    let shelf_id = make_shelf(&app, "Web");
+    ingest_file(&app, &shelf_id, &fixture_saved_page(app.dir.path())).await;
+    ingest_file(&app, &shelf_id, &fixture_policies_es_md(app.dir.path())).await;
+
+    let query = "¿Cuántos libros puedo llevarme en préstamo?";
+    let tokens = app.ctx.search.query_tokens(query);
+    let hits = app
+        .ctx
+        .search
+        .search_passages(query, &shelf_id, 24)
+        .expect("search");
+    let results = apply_gate(hits, &tokens, &[]);
+    assert!(!results.is_empty(), "the library page should be found");
+    assert_eq!(results[0].title, "Horario de la biblioteca municipal");
+    assert!(
+        results[0].body.contains("seis libros"),
+        "got {:?}",
+        results[0].body
+    );
+
+    // Page furniture is not searchable.
+    let query = "galletas de seguimiento para personalizar anuncios";
+    let tokens = app.ctx.search.query_tokens(query);
+    let hits = app
+        .ctx
+        .search
+        .search_passages(query, &shelf_id, 24)
+        .expect("search");
+    assert!(
+        apply_gate(hits, &tokens, &[]).is_empty(),
+        "cookie banner text must not be indexed"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn remove_document_is_idempotent() {
     let app = test_app();
     app.ctx

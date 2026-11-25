@@ -335,7 +335,7 @@
     "syncFolderHint": "Tilknyt en mappe på denne computer. Nye filer i den vises her.",
     "emptyRegion": "Tom hylde",
     "dropToFill": "Slip filer for at føje dem til denne hylde",
-    "dropTypes": "PDF'er, Office-dokumenter, regneark, præsentationer og e-mails. Rebost læser dem på denne computer.",
+    "dropTypes": "PDF'er, Office-dokumenter, regneark, præsentationer, e-mails og websider. Rebost læser dem på denne computer.",
     "filterByName": "Filtrer efter filnavn",
     "filterByNamePlaceholder": "Filtrer efter navn",
     "filterBySource": "Filtrer efter kilde",

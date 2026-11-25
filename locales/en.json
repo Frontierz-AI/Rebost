@@ -334,7 +334,7 @@
     "syncFolderHint": "Link a folder on this computer. New files in it show up here.",
     "emptyRegion": "Empty Shelf",
     "dropToFill": "Drop files to add them to this Shelf",
-    "dropTypes": "PDFs, Office documents, spreadsheets, presentations, and email. Rebost reads them on this computer.",
+    "dropTypes": "PDFs, Office documents, spreadsheets, presentations, email, and web pages. Rebost reads them on this computer.",
     "filterByName": "Filter by file name",
     "filterByNamePlaceholder": "Filter by name",
     "filterBySource": "Filter by source",

@@ -301,7 +301,7 @@ impl Ingestor {
         for doc in source_docs {
             let path = PathBuf::from(&doc.path);
             let skipped = rel_is_skipped(&doc.rel_path);
-            if skipped || !path.exists() || !crate::ingest::extract::is_supported_file(&path) {
+            if skipped || !path.exists() || !crate::shelf::is_shelf_document(&path) {
                 stale.push(doc.id);
                 continue;
             }
@@ -697,7 +697,9 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
         }
         return Ok(());
     }
-    if crate::shelf::rel_is_skipped(&job.rel_path) || !extract::is_supported_file(&job.abs_path) {
+    if crate::shelf::rel_is_skipped(&job.rel_path)
+        || !crate::shelf::is_shelf_document(&job.abs_path)
+    {
         return Ok(());
     }
     if !job_still_wanted(ctx, job) {

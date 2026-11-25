@@ -75,6 +75,8 @@ Chat is the main window. The installed AI answers each question there without th
 
 A Shelf is how a folder becomes available to Chat. Creating a Shelf and linking a folder, or dropping files into it, is what lets Rebost read those documents and search them later. Linking does not move or copy the folder, and renaming a Shelf inside Rebost leaves the folder on disk untouched. How thoroughly Chat searches is configured per Shelf.
 
+A Shelf reads PDFs, Word, Excel, and PowerPoint files, their OpenDocument equivalents, email (`.eml`, `.msg`), EPUB, Markdown, plain text, RTF, CSV, and saved web pages (`.html`, `.htm`). A web page is read as its main text, without menus, cookie banners, or scripts, and the folder of images and scripts a browser saves beside it is ignored. Other files in a linked folder are skipped quietly.
+
 <p align="center">
   <img src="docs/assets/shelves.webp" alt="Rebost Shelves: a Shelf created from a folder on disk." width="880" />
 </p>
