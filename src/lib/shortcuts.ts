@@ -24,7 +24,9 @@ export function shortcutAction(event: KeyboardEvent): MenuAction | null {
   if (!isModKey(event) || event.altKey || event.repeat) return null;
   const sizeAction = textSizeAction(event);
   if (sizeAction) return sizeAction;
-  if (event.shiftKey) return null;
+  if (event.shiftKey) {
+    return event.key === "f" || event.key === "F" ? "search-conversations" : null;
+  }
   switch (event.key) {
     case "n":
     case "N":
@@ -45,6 +47,7 @@ export function shortcutAction(event: KeyboardEvent): MenuAction | null {
 export function parseMenuAction(action: string): MenuAction | null {
   switch (action) {
     case "new-conversation":
+    case "search-conversations":
     case "view-chat":
     case "view-shelves":
     case "view-recipes":

@@ -40,6 +40,7 @@ Handlers live under `src-tauri/src/commands/`, plus `about.rs`, `menu.rs`, and `
 | `open_original` | `path` | `()` (allowlisted Shelf paths only) |
 | `reveal_item` | `path` | `()` (allowlisted Shelf paths only) |
 | `threads_list` | — | `ThreadMeta[]` |
+| `threads_search` | `query`, `limit?` (default 50, max 200) | `ThreadSearchHit[]`: one per live conversation, best first (`threadId`, `messageId`, `role`, `snippet` as `{ text, mark }` segments, `createdAt`, `matches`, `matchesCapped`) |
 | `thread_create` | `shelfId?` | `ThreadMeta` |
 | `thread_messages` | `threadId`, `beforeId?` | `{ messages, hasOlder }` (latest window, or the window older than `beforeId`) |
 | `thread_set_shelf` | `threadId`, `shelfId?` | `()` |

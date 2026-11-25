@@ -26,6 +26,7 @@ pub mod images;
 mod neighbors;
 mod prompts;
 mod queries;
+pub mod thread_search;
 mod tools;
 pub(crate) mod web_approval;
 

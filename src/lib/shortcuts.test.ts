@@ -19,6 +19,7 @@ function key(
 describe("parseMenuAction", () => {
   it("accepts known actions and ignores others", () => {
     expect(parseMenuAction("new-conversation")).toBe("new-conversation");
+    expect(parseMenuAction("search-conversations")).toBe("search-conversations");
     expect(parseMenuAction("view-chat")).toBe("view-chat");
     expect(parseMenuAction("view-settings")).toBe("view-settings");
     expect(parseMenuAction("text-larger")).toBe("text-larger");
@@ -40,5 +41,14 @@ describe("shortcutAction", () => {
     expect(shortcutAction(key("-", mod))).toBe("text-smaller");
     expect(shortcutAction(key("n"))).toBeNull();
     expect(shortcutAction(key("n", { ...mod, alt: true }))).toBeNull();
+  });
+
+  it("maps modifier+Shift+F to conversation search, and leaves plain modifier+F alone", () => {
+    const mod = isMac() ? { meta: true } : { ctrl: true };
+    expect(shortcutAction(key("F", { ...mod, shift: true }))).toBe("search-conversations");
+    expect(shortcutAction(key("f", { ...mod, shift: true }))).toBe("search-conversations");
+    expect(shortcutAction(key("f", mod))).toBeNull();
+    expect(shortcutAction(key("N", { ...mod, shift: true }))).toBeNull();
+    expect(shortcutAction(key("F", { ...mod, shift: true, alt: true }))).toBeNull();
   });
 });

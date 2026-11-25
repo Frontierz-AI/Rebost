@@ -7,6 +7,7 @@ use tauri_plugin_dialog::DialogExt;
 use super::shelves::{shelf_view, ShelfView};
 use super::{friendly, require_id, require_optional_id, CmdResult};
 use crate::chat::conversations::{Conversations, ThreadMeta, ThreadPage};
+use crate::chat::thread_search::{self, ThreadSearchHit};
 use crate::chat::ChatService;
 use crate::core::Ctx;
 use crate::engine::Engine;
@@ -16,6 +17,22 @@ use crate::shelf::watcher::WatcherHub;
 #[tauri::command]
 pub fn threads_list(ctx: State<'_, Arc<Ctx>>) -> Vec<ThreadMeta> {
     Conversations::list(&ctx.paths)
+}
+
+/// Search saved messages for the conversation list: one hit per conversation.
+/// Async so the Tantivy read and snippet work stay off the main thread.
+#[tauri::command]
+pub async fn threads_search(
+    ctx: State<'_, Arc<Ctx>>,
+    query: String,
+    limit: Option<u32>,
+) -> CmdResult<Vec<ThreadSearchHit>> {
+    let limit = limit.map_or(thread_search::DEFAULT_LIMIT, |limit| limit as usize);
+    let ctx = ctx.inner().clone();
+    tokio::task::spawn_blocking(move || thread_search::search(&ctx, &query, limit))
+        .await
+        .map_err(friendly)?
+        .map_err(friendly)
 }
 
 /// Start a new thread, optionally scoped to a Shelf.

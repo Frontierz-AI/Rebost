@@ -1,4 +1,4 @@
-//! macOS app menu: About, Settings, new conversation, view shortcuts, and
+//! macOS app menu: About, Settings, new and search conversations, view shortcuts, and
 //! text size. Windows and Linux have no menu bar: the webview handles the same
 //! shortcuts, and About is in Settings.
 
@@ -16,6 +16,7 @@ fn tr(key: &str) -> String {
 const ABOUT: &str = "about";
 const VIEW_SETTINGS: &str = "view-settings";
 const NEW_CONVERSATION: &str = "new-conversation";
+const SEARCH_CONVERSATIONS: &str = "search-conversations";
 const VIEW_CHAT: &str = "view-chat";
 const VIEW_SHELVES: &str = "view-shelves";
 const VIEW_RECIPES: &str = "view-recipes";
@@ -44,6 +45,13 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         tr("menu.newConversation"),
         true,
         Some("CmdOrCtrl+N"),
+    )?;
+    let search_conversations = MenuItem::with_id(
+        handle,
+        SEARCH_CONVERSATIONS,
+        tr("menu.searchConversations"),
+        true,
+        Some("CmdOrCtrl+Shift+F"),
     )?;
     let chat = MenuItem::with_id(
         handle,
@@ -121,6 +129,7 @@ pub fn build_menu(handle: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
                 true,
                 &[
                     &new_conversation,
+                    &search_conversations,
                     &PredefinedMenuItem::separator(handle)?,
                     &PredefinedMenuItem::close_window(handle, None)?,
                 ],
@@ -172,6 +181,8 @@ pub fn on_menu_event(app: &AppHandle, event: &MenuEvent) {
 
     let action = if event.id() == NEW_CONVERSATION {
         "new-conversation"
+    } else if event.id() == SEARCH_CONVERSATIONS {
+        "search-conversations"
     } else if event.id() == VIEW_CHAT {
         "view-chat"
     } else if event.id() == VIEW_SHELVES {

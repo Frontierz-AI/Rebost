@@ -46,6 +46,7 @@
   // macOS: a toolbar row with the conversation title replaces the inline header.
   const mac = isMac();
   let conversationsDialog = $state<HTMLDialogElement | null>(null);
+  let threadList = $state<ReturnType<typeof ChatThreadList> | null>(null);
 
   $effect(() => {
     if (!narrow.current || app.threads.length === 0) conversationsDialog?.close();
@@ -58,6 +59,23 @@
     } catch (error) {
       notifyInvokeError(error);
     }
+  }
+
+  // ⌘⇧F / Ctrl+Shift+F or File > Search Conversations: the narrow-window
+  // drawer only opens on demand, so open it before focusing its field.
+  $effect(() => {
+    if (!chatState.searchFocusPending) return;
+    chatState.searchFocusPending = false;
+    if (app.threads.length === 0) return;
+    if (narrow.current && conversationsDialog && !conversationsDialog.open) {
+      conversationsDialog.showModal();
+    }
+    void tick().then(() => threadList?.focusSearch());
+  });
+
+  function leaveSearch() {
+    conversationsDialog?.close();
+    composerEl?.focus();
   }
 
   function startConversation() {
@@ -432,8 +450,9 @@
     </div>
   {/if}
 
-  {#snippet threadList(drawer = false)}
+  {#snippet threadListPane(drawer = false)}
     <ChatThreadList
+      bind:this={threadList}
       threads={app.threads}
       activeThreadId={chatState.activeThreadId}
       shelves={app.shelves}
@@ -443,6 +462,7 @@
       onRename={renameThread}
       onExport={exportThread}
       onClose={drawer ? () => conversationsDialog?.close() : undefined}
+      onLeaveSearch={leaveSearch}
     />
   {/snippet}
   {#if narrow.current}
@@ -451,10 +471,10 @@
       aria-label={t("chat.conversations")}
       class="fixed inset-y-4 left-[80px] m-0 h-[calc(100%-2rem)] max-h-none max-w-[calc(100%-96px)] overflow-visible border-0 bg-transparent p-0 backdrop:bg-navy-950/30 dark:backdrop:bg-black/50"
     >
-      {@render threadList(true)}
+      {@render threadListPane(true)}
     </dialog>
   {:else}
-    {@render threadList()}
+    {@render threadListPane()}
   {/if}
 
   <section class="flex min-w-0 flex-1 flex-col">

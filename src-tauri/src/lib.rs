@@ -300,6 +300,7 @@ pub fn run() {
             commands::open_original,
             commands::reveal_item,
             commands::threads_list,
+            commands::threads_search,
             commands::thread_create,
             commands::thread_messages,
             commands::thread_set_shelf,
