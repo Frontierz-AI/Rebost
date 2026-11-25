@@ -61,6 +61,8 @@ export interface DocumentMeta {
   ocr: boolean;
   updatedAt: string;
   sourceLabel: string;
+  /** Rebost wrote this file from a Chat answer. */
+  writtenByRebost?: boolean;
 }
 
 export interface OutlineEntry {
@@ -96,6 +98,8 @@ export interface SourcePassage {
   body?: string;
   path: string;
   score: number;
+  /** The file was written by Rebost from an earlier answer. */
+  writtenByRebost?: boolean;
 }
 
 export interface DocumentTextWindow {
@@ -142,6 +146,21 @@ export interface ChatActivityStep {
   file?: string | null;
 }
 
+export type SaveFormat = "docx" | "md" | "txt";
+
+/** An answer saved as a file on the Shelf, or why it was not. */
+export interface SavedDocument {
+  status: "saved" | "failed" | "undone";
+  fileName: string;
+  format: SaveFormat;
+  shelfId?: string;
+  documentId?: string;
+  path?: string;
+  hash?: string;
+  /** `shelf-full`, or a short reason. */
+  error?: string;
+}
+
 export interface StoredMessage {
   images?: ChatImage[];
   id: string;
@@ -153,6 +172,7 @@ export interface StoredMessage {
   shelfId?: string | null;
   sources: SourcePassage[];
   status: "done" | "stopped" | "error" | "interrupted";
+  saved?: SavedDocument | null;
 }
 
 export interface ThreadPage {
@@ -642,6 +662,10 @@ export const api = {
   chatApproveWeb: (requestId: string, allowed: boolean) =>
     invoke<void>("chat_approve_web", { requestId, allowed }),
   chatCancel: (messageId: string) => invoke<void>("chat_cancel", { messageId }),
+  chatSaveMessage: (threadId: string, messageId: string, format: SaveFormat) =>
+    invoke<SavedDocument>("chat_save_message", { threadId, messageId, format }),
+  chatUndoSave: (threadId: string, messageId: string) =>
+    invoke<SavedDocument>("chat_undo_save", { threadId, messageId }),
   warmEngine: () => invoke<void>("warm_engine"),
 
   engineStatus: () => invoke<EngineStatus>("engine_status"),
@@ -732,7 +756,16 @@ export interface DownloadEvent {
 }
 
 export type ChatPrepareStage =
-  "waiting" | "looking" | "reading" | "opening" | "around" | "chats" | "web" | "page" | "thinking";
+  | "waiting"
+  | "looking"
+  | "reading"
+  | "opening"
+  | "around"
+  | "chats"
+  | "web"
+  | "page"
+  | "writing"
+  | "thinking";
 
 export interface ChatEvent {
   threadId: string;

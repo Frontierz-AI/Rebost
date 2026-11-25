@@ -263,7 +263,23 @@
     "allowOnce": "Permet un cop",
     "keepLocal": "Fes servir només informació local",
     "exportConversation": "Exporta la conversa",
-    "closeConversations": "Tanca les converses"
+    "closeConversations": "Tanca les converses",
+    "saveToShelf": "Desa a l'estant",
+    "saveToShelfTitle": "Desa aquesta resposta com a fitxer a l'estant d'aquesta conversa",
+    "saveFormat": "Format del fitxer",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Text (.txt)",
+    "saving": "Desant…",
+    "savedTo": "Desat a %{file}",
+    "saveOpen": "Obre",
+    "saveUndo": "Desfés",
+    "saveUndone": "S'ha tret %{file} de l'estant",
+    "saveShelfFull": "%{file} no s'ha desat: aquest estant és ple. Augmenta'n el límit de fitxers a Estants.",
+    "saveFailedNamed": "%{file} no s'ha desat: %{reason}",
+    "writtenByRebost": "escrit per Rebost",
+    "writtenByRebostTitle": "Rebost va escriure aquest fitxer a partir d'una resposta anterior. No és una prova independent.",
+    "saveSourcesHeading": "Fonts"
   },
   "thinking": {
     "fallback": "Pensant…",
@@ -308,7 +324,13 @@
     "hideThinking": "Amaga el raonament",
     "hideLooked": "Amaga el que s'ha revisat",
     "showThinking": "Mostra el raonament",
-    "showLooked": "Mostra el que s'ha revisat"
+    "showLooked": "Mostra el que s'ha revisat",
+    "writing": "Escrivint el document…",
+    "writingNamed": "Escrivint %{file}…",
+    "writingLive": "Escrivint el document",
+    "writingPast": "Ha escrit el document",
+    "writingNamedLive": "Escrivint %{file}",
+    "writingNamedPast": "Ha escrit %{file}"
   },
   "shelves": {
     "title": "Estants",
@@ -631,7 +653,12 @@
     "modelsFolderNameTaken": "En aquesta carpeta ja hi ha un altre fitxer amb el mateix nom que una de les teves IA. Tria una altra carpeta.",
     "modelsFolderNoAis": "Les teves IA no són en aquesta carpeta. Tria la carpeta on són o fes servir la de Rebost.",
     "modelsFolderNested": "Aquesta carpeta és dins de la carpeta actual de les IA, o la conté. Tria'n una de separada.",
-    "openFailed": "Rebost no ho ha pogut obrir. Comprova quina aplicació obre aquest tipus de fitxer i torna-ho a provar."
+    "openFailed": "Rebost no ho ha pogut obrir. Comprova quina aplicació obre aquest tipus de fitxer i torna-ho a provar.",
+    "saveNeedsShelf": "Tria un estant per a aquesta conversa per desar documents.",
+    "saveEmpty": "No hi ha text per desar.",
+    "saveFailed": "Rebost no ha pogut escriure el fitxer a la carpeta de l'estant.",
+    "saveUndoFailed": "Aquest document no es pot treure des d'aquí.",
+    "saveUndoChanged": "El fitxer ha canviat després que Rebost el desés, així que s'ha conservat. Treu-lo des d'Estants."
   },
   "pii": {
     "heading": "Informació personal",

@@ -264,7 +264,23 @@
     "allowOnce": "Consenti una volta",
     "keepLocal": "Usa solo le informazioni locali",
     "exportConversation": "Esporta conversazione",
-    "closeConversations": "Chiudi conversazioni"
+    "closeConversations": "Chiudi conversazioni",
+    "saveToShelf": "Salva nello scaffale",
+    "saveToShelfTitle": "Salva questa risposta come file nello scaffale di questa conversazione",
+    "saveFormat": "Formato del file",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Testo (.txt)",
+    "saving": "Salvataggio…",
+    "savedTo": "Salvato in %{file}",
+    "saveOpen": "Apri",
+    "saveUndo": "Annulla",
+    "saveUndone": "%{file} è stato tolto dallo scaffale",
+    "saveShelfFull": "%{file} non è stato salvato: questo scaffale è pieno. Aumenta il limite di file in Scaffali.",
+    "saveFailedNamed": "%{file} non è stato salvato: %{reason}",
+    "writtenByRebost": "scritto da Rebost",
+    "writtenByRebostTitle": "Rebost ha scritto questo file a partire da una risposta precedente. Non è una prova indipendente.",
+    "saveSourcesHeading": "Fonti"
   },
   "thinking": {
     "fallback": "Sta pensando…",
@@ -309,7 +325,13 @@
     "hideThinking": "Nascondi il ragionamento",
     "hideLooked": "Nascondi ciò che ha esaminato",
     "showThinking": "Mostra il ragionamento",
-    "showLooked": "Mostra ciò che ha esaminato"
+    "showLooked": "Mostra ciò che ha esaminato",
+    "writing": "Sta scrivendo il documento…",
+    "writingNamed": "Sta scrivendo %{file}…",
+    "writingLive": "Sta scrivendo il documento",
+    "writingPast": "Ha scritto il documento",
+    "writingNamedLive": "Sta scrivendo %{file}",
+    "writingNamedPast": "Ha scritto %{file}"
   },
   "shelves": {
     "title": "Scaffali",
@@ -632,7 +654,12 @@
     "modelsFolderNameTaken": "In quella cartella c'è già un altro file con lo stesso nome di una delle tue IA. Scegli un'altra cartella.",
     "modelsFolderNoAis": "Le tue IA non sono in quella cartella. Scegli la cartella che le contiene o usa quella di Rebost.",
     "modelsFolderNested": "Quella cartella è dentro la cartella attuale delle tue IA, o la contiene. Scegline una separata.",
-    "openFailed": "Rebost non è riuscito ad aprirlo. Controlla quale app apre questo tipo di file e riprova."
+    "openFailed": "Rebost non è riuscito ad aprirlo. Controlla quale app apre questo tipo di file e riprova.",
+    "saveNeedsShelf": "Scegli uno scaffale per questa conversazione per salvare documenti.",
+    "saveEmpty": "Non c’è testo da salvare.",
+    "saveFailed": "Rebost non è riuscito a scrivere il file nella cartella dello scaffale.",
+    "saveUndoFailed": "Quel documento non si può togliere da qui.",
+    "saveUndoChanged": "Il file è cambiato dopo che Rebost lo ha salvato, quindi è stato mantenuto. Toglilo da Scaffali."
   },
   "pii": {
     "heading": "Informazioni personali",

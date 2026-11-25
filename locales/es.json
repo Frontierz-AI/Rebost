@@ -263,7 +263,23 @@
     "allowOnce": "Permitir una vez",
     "keepLocal": "Usar solo información local",
     "exportConversation": "Exportar conversación",
-    "closeConversations": "Cerrar conversaciones"
+    "closeConversations": "Cerrar conversaciones",
+    "saveToShelf": "Guardar en el estante",
+    "saveToShelfTitle": "Guarda esta respuesta como archivo en el estante de esta conversación",
+    "saveFormat": "Formato del archivo",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Texto (.txt)",
+    "saving": "Guardando…",
+    "savedTo": "Guardado en %{file}",
+    "saveOpen": "Abrir",
+    "saveUndo": "Deshacer",
+    "saveUndone": "%{file} se ha quitado del estante",
+    "saveShelfFull": "%{file} no se ha guardado: este estante está lleno. Sube su límite de archivos en Estantes.",
+    "saveFailedNamed": "%{file} no se ha guardado: %{reason}",
+    "writtenByRebost": "escrito por Rebost",
+    "writtenByRebostTitle": "Rebost escribió este archivo a partir de una respuesta anterior. No es una prueba independiente.",
+    "saveSourcesHeading": "Fuentes"
   },
   "thinking": {
     "fallback": "Pensando…",
@@ -308,7 +324,13 @@
     "hideThinking": "Ocultar razonamiento",
     "hideLooked": "Ocultar lo revisado",
     "showThinking": "Mostrar razonamiento",
-    "showLooked": "Mostrar lo revisado"
+    "showLooked": "Mostrar lo revisado",
+    "writing": "Escribiendo el documento…",
+    "writingNamed": "Escribiendo %{file}…",
+    "writingLive": "Escribiendo el documento",
+    "writingPast": "Ha escrito el documento",
+    "writingNamedLive": "Escribiendo %{file}",
+    "writingNamedPast": "Ha escrito %{file}"
   },
   "shelves": {
     "title": "Estantes",
@@ -631,7 +653,12 @@
     "modelsFolderNameTaken": "En esa carpeta ya hay otro archivo con el mismo nombre que una de tus IA. Elige otra carpeta.",
     "modelsFolderNoAis": "Tus IA no están en esa carpeta. Elige la carpeta donde están o usa la carpeta de Rebost.",
     "modelsFolderNested": "Esa carpeta está dentro de la carpeta actual de tus IA, o la contiene. Elige una carpeta aparte.",
-    "openFailed": "Rebost no ha podido abrirlo. Comprueba qué aplicación abre este tipo de archivo y vuelve a intentarlo."
+    "openFailed": "Rebost no ha podido abrirlo. Comprueba qué aplicación abre este tipo de archivo y vuelve a intentarlo.",
+    "saveNeedsShelf": "Elige un estante para esta conversación para guardar documentos.",
+    "saveEmpty": "No hay texto para guardar.",
+    "saveFailed": "Rebost no ha podido escribir el archivo en la carpeta del estante.",
+    "saveUndoFailed": "Ese documento no se puede quitar desde aquí.",
+    "saveUndoChanged": "El archivo cambió después de que Rebost lo guardara, así que se ha conservado. Quítalo desde Estantes."
   },
   "pii": {
     "heading": "Información personal",

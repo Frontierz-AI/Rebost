@@ -264,7 +264,23 @@
     "allowOnce": "Eenmalig toestaan",
     "keepLocal": "Alleen lokale informatie gebruiken",
     "exportConversation": "Gesprek exporteren",
-    "closeConversations": "Gesprekken sluiten"
+    "closeConversations": "Gesprekken sluiten",
+    "saveToShelf": "Op de plank bewaren",
+    "saveToShelfTitle": "Bewaart dit antwoord als bestand op de plank van dit gesprek",
+    "saveFormat": "Bestandsformaat",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Tekst (.txt)",
+    "saving": "Bewaren…",
+    "savedTo": "Bewaard als %{file}",
+    "saveOpen": "Openen",
+    "saveUndo": "Ongedaan maken",
+    "saveUndone": "%{file} is van de plank gehaald",
+    "saveShelfFull": "%{file} is niet bewaard: deze plank is vol. Verhoog de bestandslimiet bij Planken.",
+    "saveFailedNamed": "%{file} is niet bewaard: %{reason}",
+    "writtenByRebost": "geschreven door Rebost",
+    "writtenByRebostTitle": "Rebost schreef dit bestand op basis van een eerder antwoord. Het is geen onafhankelijk bewijs.",
+    "saveSourcesHeading": "Bronnen"
   },
   "thinking": {
     "fallback": "Nadenken…",
@@ -309,7 +325,13 @@
     "hideThinking": "Denkproces verbergen",
     "hideLooked": "Geraadpleegde bronnen verbergen",
     "showThinking": "Denkproces tonen",
-    "showLooked": "Geraadpleegde bronnen tonen"
+    "showLooked": "Geraadpleegde bronnen tonen",
+    "writing": "Het document schrijven…",
+    "writingNamed": "%{file} schrijven…",
+    "writingLive": "Het document schrijven",
+    "writingPast": "Het document geschreven",
+    "writingNamedLive": "%{file} schrijven",
+    "writingNamedPast": "%{file} geschreven"
   },
   "shelves": {
     "title": "Planken",
@@ -632,7 +654,12 @@
     "modelsFolderNameTaken": "In die map staat al een ander bestand met dezelfde naam als een van je AI's. Kies een andere map.",
     "modelsFolderNoAis": "Je AI's staan niet in die map. Kies de map waarin ze staan, of gebruik de map van Rebost.",
     "modelsFolderNested": "Die map staat in de map met je AI's, of bevat die. Kies een aparte map.",
-    "openFailed": "Rebost kon het niet openen. Controleer welke app dit soort bestand opent en probeer het opnieuw."
+    "openFailed": "Rebost kon het niet openen. Controleer welke app dit soort bestand opent en probeer het opnieuw.",
+    "saveNeedsShelf": "Kies een plank voor dit gesprek om documenten te bewaren.",
+    "saveEmpty": "Er is geen tekst om te bewaren.",
+    "saveFailed": "Rebost kon het bestand niet in de map van de plank schrijven.",
+    "saveUndoFailed": "Dat document kan hier niet worden verwijderd.",
+    "saveUndoChanged": "Het bestand is gewijzigd nadat Rebost het bewaarde, dus het is behouden. Verwijder het bij Planken."
   },
   "pii": {
     "heading": "Persoonsgegevens",

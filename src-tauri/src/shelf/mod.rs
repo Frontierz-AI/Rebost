@@ -6,6 +6,8 @@ pub mod watcher;
 
 mod longpath;
 
+pub(crate) use longpath::{dest_too_long, with_long_path};
+
 pub use scan::{
     is_saved_page_asset, is_shelf_document, rel_is_skipped, scan_new_files, DEFAULT_FILE_LIMIT,
     FILE_LIMIT_CHOICES,
@@ -849,6 +851,7 @@ mod tests {
         );
         let reading = |id: &str, updated_at: &str| crate::types::DocumentMeta {
             id: id.into(),
+            written_by_rebost: false,
             shelf_id: shelf.id.clone(),
             source_id: Shelf::IMPORTED_SOURCE.into(),
             source_type: crate::types::SourceType::Imported,
@@ -1011,6 +1014,7 @@ mod tests {
         for i in 0..count {
             library.upsert_document(crate::types::DocumentMeta {
                 id: format!("d_fill{i}"),
+                written_by_rebost: false,
                 shelf_id: shelf_id.to_string(),
                 source_id: Shelf::IMPORTED_SOURCE.into(),
                 source_type: crate::types::SourceType::Imported,
@@ -1280,6 +1284,7 @@ mod tests {
         assert!(managed.join("keep.md").exists());
         library.upsert_document(crate::types::DocumentMeta {
             id: "d_ghost".into(),
+            written_by_rebost: false,
             shelf_id: shelf.id.clone(),
             source_id: Shelf::IMPORTED_SOURCE.into(),
             source_type: crate::types::SourceType::Imported,

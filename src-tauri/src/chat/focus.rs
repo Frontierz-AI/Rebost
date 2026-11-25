@@ -282,6 +282,7 @@ pub(crate) fn coverage_passages(
     for body in chosen {
         sources.push(SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: String::new(),
             document_id: document_id.to_string(),
             shelf_id: shelf_id.to_string(),
@@ -578,6 +579,7 @@ mod tests {
         let extracted = "AAAA\n\nBBBB\n\nCCCC";
         let sources = [SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: "S1".into(),
             document_id: "d1".into(),
             shelf_id: "s".into(),

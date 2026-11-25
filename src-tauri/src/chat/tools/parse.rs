@@ -183,6 +183,18 @@ fn leftover_args(value: &Value, name: &str) -> String {
                 return json!({ "url": url }).to_string();
             }
         }
+        ToolName::SaveDocument => {
+            let mut args = serde_json::Map::new();
+            if let Some(file) = string_field(value, &["file_name", "filename", "title", "file"])
+                .or_else(|| string_field(value, &["name"]).filter(|n| ToolName::parse(n).is_none()))
+            {
+                args.insert("file_name".into(), Value::String(file));
+            }
+            if let Some(format) = string_field(value, &["format", "type", "extension", "ext"]) {
+                args.insert("format".into(), Value::String(format));
+            }
+            return Value::Object(args).to_string();
+        }
     }
     "{}".into()
 }
@@ -217,6 +229,11 @@ fn parse_tagged_tools(text: &str) -> Option<Vec<ToolCall>> {
             "</read_web_page>",
             Some(ToolName::ReadWebPage),
         ),
+        (
+            "<save_document>",
+            "</save_document>",
+            Some(ToolName::SaveDocument),
+        ),
     ] {
         if let Some(inner) = between(text, open, close) {
             if let Some(calls) = parse_json_tools(inner.trim()) {
@@ -234,6 +251,7 @@ fn parse_tagged_tools(text: &str) -> Option<Vec<ToolCall>> {
                     }
                     ToolName::LookAround => json!({ "id": body }).to_string(),
                     ToolName::ReadWebPage => json!({ "url": body }).to_string(),
+                    ToolName::SaveDocument => json!({ "file_name": body }).to_string(),
                 };
                 return Some(vec![ToolCall::function("call_1", kind.as_str(), args)]);
             }
@@ -316,6 +334,33 @@ fn parse_gemma_tools(text: &str) -> Option<Vec<ToolCall>> {
             }
             json!({ "url": url }).to_string()
         }
+        ToolName::SaveDocument => {
+            let file = quoted.filter(|s| !s.is_empty()).or_else(|| {
+                ["file_name:", "filename:", "name:"].iter().find_map(|key| {
+                    between(body, key, "}")
+                        .map(|s| clean_requested(s.split(',').next().unwrap_or(s)))
+                })
+            })?;
+            if file.is_empty() {
+                return None;
+            }
+            let mut args = json!({ "file_name": file });
+            if let Some(format) = between(body, "format:", "}")
+                .map(|s| {
+                    clean_requested(
+                        s.split(',')
+                            .next()
+                            .unwrap_or(s)
+                            .replace("<|\"|>", "")
+                            .as_str(),
+                    )
+                })
+                .filter(|s| !s.is_empty())
+            {
+                args["format"] = json!(format);
+            }
+            args.to_string()
+        }
     };
     Some(vec![ToolCall::function("call_1", name, args)])
 }
@@ -329,7 +374,8 @@ fn between<'a>(text: &'a str, start: &str, end: &str) -> Option<&'a str> {
 #[cfg(test)]
 mod tests {
     use super::super::{
-        LOOK_AROUND, OPEN_SHELF_FILE, READ_WEB_PAGE, SEARCH_CHATS, SEARCH_SHELF, SEARCH_WEB,
+        LOOK_AROUND, OPEN_SHELF_FILE, READ_WEB_PAGE, SAVE_DOCUMENT, SEARCH_CHATS, SEARCH_SHELF,
+        SEARCH_WEB,
     };
     use super::*;
 
@@ -400,6 +446,63 @@ mod tests {
         assert!(cut_off[0].function.arguments.contains("boiler service"));
 
         assert!(parse_tool_calls_from_text("<function=delete_everything></function>").is_empty());
+    }
+
+    #[test]
+    fn parse_save_document_in_every_text_shape() {
+        let json = parse_tool_calls_from_text(
+            r#"{"name":"create_document","arguments":{"file_name":"Cover letter","format":"md"}}"#,
+        );
+        assert_eq!(json[0].function.name, SAVE_DOCUMENT);
+        assert_eq!(
+            arg_string(&json[0].function.arguments, &["file_name"]).as_deref(),
+            Some("Cover letter")
+        );
+        assert_eq!(
+            arg_string(&json[0].function.arguments, &["format"]).as_deref(),
+            Some("md")
+        );
+
+        let flat = parse_tool_calls_from_text(r#"{"tool":"save_file","filename":"Rota.txt"}"#);
+        assert_eq!(flat[0].function.name, SAVE_DOCUMENT);
+        assert!(flat[0].function.arguments.contains("Rota.txt"));
+
+        let tagged = parse_tool_calls_from_text("<save_document>Budget 2027</save_document>");
+        assert_eq!(tagged[0].function.name, SAVE_DOCUMENT);
+        assert!(tagged[0].function.arguments.contains("Budget 2027"));
+
+        let qwen = parse_tool_calls_from_text(
+            "<tool_call>\n<function=write_document>\n<parameter=file_name>\nInforme Q3\n</parameter>\n<parameter=format>\ndocx\n</parameter>\n</function>\n</tool_call>",
+        );
+        assert_eq!(qwen[0].function.name, SAVE_DOCUMENT);
+        assert_eq!(
+            arg_string(&qwen[0].function.arguments, &["file_name"]).as_deref(),
+            Some("Informe Q3")
+        );
+        assert_eq!(
+            arg_string(&qwen[0].function.arguments, &["format"]).as_deref(),
+            Some("docx")
+        );
+
+        let gemma = parse_tool_calls_from_text(
+            r#"<|tool_call>call:save_document{file_name:<|"|>Notes<|"|>}<tool_call|>"#,
+        );
+        assert_eq!(gemma[0].function.name, SAVE_DOCUMENT);
+        assert!(gemma[0].function.arguments.contains("Notes"));
+    }
+
+    #[test]
+    fn native_save_calls_keep_their_metadata_only() {
+        let native = merge_tool_calls(
+            vec![ToolCall::function(
+                "c1",
+                "save_to_shelf",
+                r#"{"file_name":"Plan","format":"txt"}"#,
+            )],
+            "",
+        );
+        assert_eq!(native[0].function.name, SAVE_DOCUMENT);
+        assert!(native[0].function.arguments.contains("Plan"));
     }
 
     #[test]

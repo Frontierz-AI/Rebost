@@ -264,7 +264,23 @@
     "allowOnce": "Autoriser une fois",
     "keepLocal": "Utiliser uniquement les informations locales",
     "exportConversation": "Exporter la conversation",
-    "closeConversations": "Fermer les conversations"
+    "closeConversations": "Fermer les conversations",
+    "saveToShelf": "Enregistrer dans l’étagère",
+    "saveToShelfTitle": "Enregistre cette réponse comme fichier dans l’étagère de cette conversation",
+    "saveFormat": "Format du fichier",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Texte (.txt)",
+    "saving": "Enregistrement…",
+    "savedTo": "Enregistré dans %{file}",
+    "saveOpen": "Ouvrir",
+    "saveUndo": "Annuler",
+    "saveUndone": "%{file} a été retiré de l’étagère",
+    "saveShelfFull": "%{file} n’a pas été enregistré : cette étagère est pleine. Augmentez sa limite de fichiers dans Étagères.",
+    "saveFailedNamed": "%{file} n’a pas été enregistré : %{reason}",
+    "writtenByRebost": "écrit par Rebost",
+    "writtenByRebostTitle": "Rebost a écrit ce fichier à partir d’une réponse précédente. Ce n’est pas une preuve indépendante.",
+    "saveSourcesHeading": "Sources"
   },
   "thinking": {
     "fallback": "Réflexion…",
@@ -309,7 +325,13 @@
     "hideThinking": "Masquer la réflexion",
     "hideLooked": "Masquer ce qui a été consulté",
     "showThinking": "Afficher la réflexion",
-    "showLooked": "Afficher ce qui a été consulté"
+    "showLooked": "Afficher ce qui a été consulté",
+    "writing": "Rédaction du document…",
+    "writingNamed": "Rédaction de %{file}…",
+    "writingLive": "Rédige le document",
+    "writingPast": "A rédigé le document",
+    "writingNamedLive": "Rédige %{file}",
+    "writingNamedPast": "A rédigé %{file}"
   },
   "shelves": {
     "title": "Étagères",
@@ -632,7 +654,12 @@
     "modelsFolderNameTaken": "Ce dossier contient déjà un autre fichier portant le nom d’une de vos IA. Choisissez un autre dossier.",
     "modelsFolderNoAis": "Vos IA ne sont pas dans ce dossier. Choisissez celui qui les contient, ou utilisez le dossier de Rebost.",
     "modelsFolderNested": "Ce dossier se trouve dans celui de vos IA, ou le contient. Choisissez un dossier distinct.",
-    "openFailed": "Rebost n'a pas pu l'ouvrir. Vérifiez quelle app ouvre ce type de fichier, puis réessayez."
+    "openFailed": "Rebost n'a pas pu l'ouvrir. Vérifiez quelle app ouvre ce type de fichier, puis réessayez.",
+    "saveNeedsShelf": "Choisissez une étagère pour cette conversation afin d’enregistrer des documents.",
+    "saveEmpty": "Il n’y a pas de texte à enregistrer.",
+    "saveFailed": "Rebost n’a pas pu écrire le fichier dans le dossier de l’étagère.",
+    "saveUndoFailed": "Ce document ne peut pas être retiré d’ici.",
+    "saveUndoChanged": "Le fichier a changé depuis que Rebost l’a enregistré, il a donc été conservé. Retirez-le depuis Étagères."
   },
   "pii": {
     "heading": "Informations personnelles",

@@ -395,6 +395,7 @@ impl SearchIndex {
             };
             hits.push(SourcePassage {
                 anchor: None,
+                written_by_rebost: false,
                 sid: String::new(),
                 document_id: get_str(self.fields.document_id),
                 shelf_id: get_str(self.fields.shelf_id),
@@ -714,6 +715,7 @@ mod tests {
     fn meta_named(id: &str, shelf: &str, file_name: &str) -> DocumentMeta {
         DocumentMeta {
             id: id.into(),
+            written_by_rebost: false,
             shelf_id: shelf.into(),
             source_id: "imported".into(),
             source_type: SourceType::Imported,
@@ -1053,6 +1055,7 @@ mod tests {
     fn hit(doc: &str, score: f32, body: &str) -> crate::types::SourcePassage {
         crate::types::SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: String::new(),
             document_id: doc.into(),
             shelf_id: "s1".into(),

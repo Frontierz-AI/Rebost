@@ -72,6 +72,9 @@ pub struct StoredMessage {
     /// "done" | "stopped" | "interrupted" | "error"
     #[serde(default = "default_status")]
     pub status: String,
+    /// This answer saved as a document on the Shelf (or why it was not).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub saved: Option<super::save_doc::SavedDocument>,
 }
 
 fn default_status() -> String {
@@ -349,6 +352,47 @@ impl Conversations {
         Ok(())
     }
 
+    /// Change one stored message in place (the rest of the file is kept
+    /// byte for byte). Returns the updated message, or None if not found.
+    pub fn update_message(
+        paths: &Paths,
+        thread_id: &str,
+        message_id: &str,
+        update: impl FnOnce(&mut StoredMessage),
+    ) -> Result<Option<StoredMessage>> {
+        let transaction = crate::paths::metadata_lock(&paths.threads_index());
+        let _write = crate::core::mutex_lock(&transaction);
+        let path = paths.thread_path(thread_id);
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            return Ok(None);
+        };
+        let mut update = Some(update);
+        let mut updated = None;
+        let mut out = String::with_capacity(text.len() + 256);
+        for line in text.lines() {
+            if updated.is_none() {
+                if let Ok(mut message) = serde_json::from_str::<StoredMessage>(line) {
+                    if message.id == message_id {
+                        if let Some(update) = update.take() {
+                            update(&mut message);
+                        }
+                        compact_message(&mut message);
+                        out.push_str(&serde_json::to_string(&message)?);
+                        out.push('\n');
+                        updated = Some(message);
+                        continue;
+                    }
+                }
+            }
+            out.push_str(line);
+            out.push('\n');
+        }
+        if updated.is_some() {
+            crate::paths::atomic_write(&path, out)?;
+        }
+        Ok(updated)
+    }
+
     pub fn messages(paths: &Paths, thread_id: &str) -> Vec<StoredMessage> {
         let Ok(text) = std::fs::read_to_string(paths.thread_path(thread_id)) else {
             return Vec::new();
@@ -620,6 +664,7 @@ mod tests {
         let thread = Conversations::create(&paths, None).unwrap();
         let message = StoredMessage {
             images: Vec::new(),
+            saved: None,
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "Explain EBITDA in simple terms for our monthly board meeting".into(),
@@ -647,6 +692,7 @@ mod tests {
 
     fn user_line(text: &str) -> StoredMessage {
         StoredMessage {
+            saved: None,
             images: Vec::new(),
             id: crate::ids::message_id(),
             role: "user".into(),
@@ -766,6 +812,7 @@ mod tests {
         Conversations::rename(&paths, &thread.id, "  Weekly notes  ").unwrap();
         let message = StoredMessage {
             images: Vec::new(),
+            saved: None,
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "What changed this week?".into(),
@@ -789,6 +836,7 @@ mod tests {
         let thread = Conversations::create(&paths, None).unwrap();
         let first = StoredMessage {
             images: Vec::new(),
+            saved: None,
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "First question about the lease".into(),
@@ -803,6 +851,7 @@ mod tests {
         Conversations::rename(&paths, &thread.id, "New conversation").unwrap();
         let second = StoredMessage {
             images: Vec::new(),
+            saved: None,
             id: crate::ids::message_id(),
             role: "user".into(),
             text: "And the dates?".into(),
@@ -823,6 +872,7 @@ mod tests {
             "Lease notes",
             &[StoredMessage {
                 images: Vec::new(),
+                saved: None,
                 id: "m1".into(),
                 role: "assistant".into(),
                 text: "Notice is 90 days. [S1]".into(),
@@ -832,6 +882,7 @@ mod tests {
                 shelf_id: None,
                 sources: vec![crate::types::SourcePassage {
                     anchor: None,
+                    written_by_rebost: false,
                     sid: "S1".into(),
                     document_id: "d1".into(),
                     shelf_id: "s1".into(),
@@ -860,6 +911,7 @@ mod tests {
 
     fn stored(id: &str, text: &str) -> StoredMessage {
         StoredMessage {
+            saved: None,
             images: Vec::new(),
             id: id.into(),
             role: "user".into(),
@@ -885,6 +937,7 @@ mod tests {
         message.thinking = Some(thinking);
         message.sources = vec![crate::types::SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: "S1".into(),
             document_id: "d1".into(),
             shelf_id: "s1".into(),
@@ -1033,6 +1086,31 @@ mod tests {
         assert_eq!(
             log.iter().map(|s| s.stage.as_str()).collect::<Vec<_>>(),
             ["looking", "opening", "opening", "around"]
+        );
+    }
+
+    #[test]
+    fn update_message_changes_only_that_line() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = Paths::new(dir.path().to_path_buf());
+        paths.ensure().unwrap();
+        let thread = Conversations::create(&paths, None).unwrap();
+        Conversations::append(&paths, &thread.id, &stored("m_one", "First")).unwrap();
+        Conversations::append(&paths, &thread.id, &stored("m_two", "Second")).unwrap();
+        let updated = Conversations::update_message(&paths, &thread.id, "m_two", |message| {
+            message.text = "Second, edited".into();
+        })
+        .unwrap()
+        .unwrap();
+        assert_eq!(updated.text, "Second, edited");
+        let messages = Conversations::messages(&paths, &thread.id);
+        assert_eq!(messages.len(), 2);
+        assert_eq!(messages[0].text, "First");
+        assert_eq!(messages[1].text, "Second, edited");
+        assert!(
+            Conversations::update_message(&paths, &thread.id, "m_none", |_| {})
+                .unwrap()
+                .is_none()
         );
     }
 

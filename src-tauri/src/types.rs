@@ -82,6 +82,10 @@ pub struct DocumentMeta {
     /// Display label of the source ("Imported" or the linked folder name).
     #[serde(alias = "source_label")]
     pub source_label: String,
+    /// Rebost wrote this file from a Chat answer. Later answers must not treat
+    /// it as independent evidence. Missing in older registries means false.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub written_by_rebost: bool,
 }
 
 /// The deterministic Card kept for each document (`rebost-card/v1`).
@@ -187,6 +191,9 @@ pub struct SourcePassage {
     pub body: String,
     pub path: String,
     pub score: f32,
+    /// The file was written by Rebost from an earlier answer, not by a person.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub written_by_rebost: bool,
 }
 
 /// One retrieved older-conversation snippet.

@@ -5442,6 +5442,8 @@ dependencies = [
  "objc2-app-kit",
  "objc2-foundation",
  "pii-vault",
+ "pulldown-cmark",
+ "quick-xml 0.42.0",
  "readabilityrs",
  "regex",
  "reqwest",

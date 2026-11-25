@@ -263,7 +263,23 @@
     "allowOnce": "Allow once",
     "keepLocal": "Keep this local",
     "exportConversation": "Export conversation",
-    "closeConversations": "Close conversations"
+    "closeConversations": "Close conversations",
+    "saveToShelf": "Save to Shelf",
+    "saveToShelfTitle": "Save this answer as a file on this conversation's Shelf",
+    "saveFormat": "File format",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Text (.txt)",
+    "saving": "Saving…",
+    "savedTo": "Saved to %{file}",
+    "saveOpen": "Open",
+    "saveUndo": "Undo",
+    "saveUndone": "Removed %{file} from the Shelf",
+    "saveShelfFull": "%{file} wasn't saved: this Shelf is full. Raise its file limit in Shelves.",
+    "saveFailedNamed": "%{file} wasn't saved: %{reason}",
+    "writtenByRebost": "written by Rebost",
+    "writtenByRebostTitle": "Rebost wrote this file from an earlier answer. It is not independent evidence.",
+    "saveSourcesHeading": "Sources"
   },
   "thinking": {
     "fallback": "Thinking…",
@@ -308,7 +324,13 @@
     "hideThinking": "Hide thinking",
     "hideLooked": "Hide what it looked through",
     "showThinking": "Show thinking",
-    "showLooked": "Show what it looked through"
+    "showLooked": "Show what it looked through",
+    "writing": "Writing the document…",
+    "writingNamed": "Writing %{file}…",
+    "writingLive": "Writing the document",
+    "writingPast": "Wrote the document",
+    "writingNamedLive": "Writing %{file}",
+    "writingNamedPast": "Wrote %{file}"
   },
   "shelves": {
     "title": "Shelves",
@@ -631,7 +653,12 @@
     "modelsFolderNameTaken": "That folder already has a different file with the same name as one of your AIs. Choose another folder.",
     "modelsFolderNoAis": "Your AIs aren't in that folder. Choose the folder that holds them, or use Rebost's own folder.",
     "modelsFolderNested": "That folder is inside the one your AIs are in now, or holds it. Choose a separate folder.",
-    "openFailed": "Rebost couldn't open that. Check which app opens this kind of file, then try again."
+    "openFailed": "Rebost couldn't open that. Check which app opens this kind of file, then try again.",
+    "saveNeedsShelf": "Choose a Shelf for this conversation to save documents.",
+    "saveEmpty": "There is no text to save.",
+    "saveFailed": "Rebost couldn't write the file to the Shelf folder.",
+    "saveUndoFailed": "That document can't be removed from here.",
+    "saveUndoChanged": "The file changed after Rebost saved it, so it was kept. Remove it from Shelves instead."
   },
   "pii": {
     "heading": "Personal information",

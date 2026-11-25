@@ -25,6 +25,7 @@
   } from "$lib/chat-reducer";
   import Markdown from "$lib/components/Markdown.svelte";
   import CopyActions from "$lib/components/CopyActions.svelte";
+  import SaveToShelf from "$lib/components/SaveToShelf.svelte";
   import SourcePanel from "$lib/components/SourcePanel.svelte";
   import ChatThreadList from "$lib/components/ChatThreadList.svelte";
   import ChatThreadHeader from "$lib/components/ChatThreadHeader.svelte";
@@ -158,6 +159,7 @@
     if (chip.showSection && chip.source.section) parts.push(chip.source.section);
     const page = citationPage(chip.source);
     if (page) parts.push(page);
+    if (chip.source.writtenByRebost) parts.push(t("chat.writtenByRebost"));
     return parts.filter(Boolean).join(" ");
   }
 
@@ -638,6 +640,13 @@
                             {#if page}
                               <span class="text-navy-400 dark:text-navy-300">{page}</span>
                             {/if}
+                            {#if chip.source.writtenByRebost}
+                              <span
+                                class="text-navy-400 italic dark:text-navy-300"
+                                title={t("chat.writtenByRebostTitle")}
+                                >{t("chat.writtenByRebost")}</span
+                              >
+                            {/if}
                           </button>
                         {/each}
                       </div>
@@ -661,7 +670,17 @@
                       </div>
                     {/if}
                   </div>
-                  <CopyActions text={message.text} subtle />
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <CopyActions text={message.text} subtle />
+                    {#if chatState.activeThreadId}
+                      <SaveToShelf
+                        threadId={chatState.activeThreadId}
+                        {message}
+                        shelfId={chatState.selectedShelfId}
+                        busy={generating}
+                      />
+                    {/if}
+                  </div>
                 </div>
               </div>
             {/if}

@@ -392,6 +392,7 @@ mod tests {
     fn sample_meta() -> DocumentMeta {
         DocumentMeta {
             id: "d1".into(),
+            written_by_rebost: false,
             shelf_id: "s1".into(),
             source_id: "imported".into(),
             source_type: SourceType::Imported,

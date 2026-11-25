@@ -264,7 +264,23 @@
     "allowOnce": "Tillat én gang",
     "keepLocal": "Bruk bare lokal informasjon",
     "exportConversation": "Eksporter samtale",
-    "closeConversations": "Lukk samtaler"
+    "closeConversations": "Lukk samtaler",
+    "saveToShelf": "Lagre i hyllen",
+    "saveToShelfTitle": "Lagrer svaret som en fil i hyllen for denne samtalen",
+    "saveFormat": "Filformat",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Tekst (.txt)",
+    "saving": "Lagrer…",
+    "savedTo": "Lagret som %{file}",
+    "saveOpen": "Åpne",
+    "saveUndo": "Angre",
+    "saveUndone": "%{file} ble fjernet fra hyllen",
+    "saveShelfFull": "%{file} ble ikke lagret: hyllen er full. Øk filgrensen under Hyller.",
+    "saveFailedNamed": "%{file} ble ikke lagret: %{reason}",
+    "writtenByRebost": "skrevet av Rebost",
+    "writtenByRebostTitle": "Rebost skrev denne filen ut fra et tidligere svar. Den er ikke et uavhengig belegg.",
+    "saveSourcesHeading": "Kilder"
   },
   "thinking": {
     "fallback": "Tenker…",
@@ -309,7 +325,13 @@
     "hideThinking": "Skjul resonnementet",
     "hideLooked": "Skjul gjennomgangen",
     "showThinking": "Vis resonnementet",
-    "showLooked": "Vis gjennomgangen"
+    "showLooked": "Vis gjennomgangen",
+    "writing": "Skriver dokumentet…",
+    "writingNamed": "Skriver %{file}…",
+    "writingLive": "Skriver dokumentet",
+    "writingPast": "Skrev dokumentet",
+    "writingNamedLive": "Skriver %{file}",
+    "writingNamedPast": "Skrev %{file}"
   },
   "shelves": {
     "title": "Hyller",
@@ -632,7 +654,12 @@
     "modelsFolderNameTaken": "Mappen har allerede en annen fil med samme navn som en av KI-ene dine. Velg en annen mappe.",
     "modelsFolderNoAis": "KI-ene dine ligger ikke i den mappen. Velg mappen der de ligger, eller bruk Rebosts egen mappe.",
     "modelsFolderNested": "Den mappen ligger inni mappen med KI-ene dine, eller inneholder den. Velg en egen mappe.",
-    "openFailed": "Rebost kunne ikke åpne det. Sjekk hvilken app som åpner denne filtypen, og prøv igjen."
+    "openFailed": "Rebost kunne ikke åpne det. Sjekk hvilken app som åpner denne filtypen, og prøv igjen.",
+    "saveNeedsShelf": "Velg en hylle for denne samtalen for å lagre dokumenter.",
+    "saveEmpty": "Det er ingen tekst å lagre.",
+    "saveFailed": "Rebost kunne ikke skrive filen til hyllemappen.",
+    "saveUndoFailed": "Det dokumentet kan ikke fjernes herfra.",
+    "saveUndoChanged": "Filen ble endret etter at Rebost lagret den, så den ble beholdt. Fjern den under Hyller i stedet."
   },
   "pii": {
     "heading": "Personopplysninger",

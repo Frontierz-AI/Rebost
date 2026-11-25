@@ -162,6 +162,7 @@ fn a_blank_follow_up_drops_tool_notes() {
 fn follow_up_search_keeps_the_last_user_questions() {
     let user = |id: &str, text: &str| StoredMessage {
         images: Vec::new(),
+        saved: None,
         id: id.into(),
         role: "user".into(),
         text: text.into(),
@@ -193,6 +194,7 @@ fn follow_up_search_keeps_the_last_user_questions() {
 fn history_keeps_the_citation_titles_the_user_saw() {
     let message = StoredMessage {
         images: Vec::new(),
+        saved: None,
         id: "a1".into(),
         role: "assistant".into(),
         text: "Notice is 90 days. [S1]".into(),
@@ -202,6 +204,7 @@ fn history_keeps_the_citation_titles_the_user_saw() {
         shelf_id: None,
         sources: vec![SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: "S1".into(),
             document_id: "d1".into(),
             shelf_id: "s1".into(),

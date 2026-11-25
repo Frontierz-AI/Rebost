@@ -13,6 +13,7 @@ pub mod commands;
 pub mod compositor;
 pub mod core;
 pub mod distribution;
+pub(crate) mod docx;
 pub mod engine;
 pub mod host;
 pub mod i18n;
@@ -223,6 +224,7 @@ pub fn run() {
             let runtime_guard = tauri::async_runtime::handle().inner().clone();
             let _enter = runtime_guard.enter();
             let ingestor = Ingestor::start(ctx.clone());
+            chat.attach_ingestor(ingestor.clone());
             let watcher = WatcherHub::start(ctx.clone(), ingestor.clone());
 
             // Startup: bring every Shelf source in sync (new/changed/removed
@@ -315,6 +317,8 @@ pub fn run() {
             commands::model_vision_offer,
             commands::model_enable_vision,
             commands::chat_cancel,
+            commands::chat_save_message,
+            commands::chat_undo_save,
             commands::chat_approve_web,
             commands::warm_engine,
             commands::engine_status,
