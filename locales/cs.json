@@ -250,7 +250,23 @@
     "allowOnce": "Povolit jednou",
     "keepLocal": "Použít jen místní informace",
     "exportConversation": "Exportovat konverzaci",
-    "closeConversations": "Zavřít konverzace"
+    "closeConversations": "Zavřít konverzace",
+    "saveToShelf": "Uložit na polici",
+    "saveToShelfTitle": "Uloží tuto odpověď jako soubor na polici této konverzace",
+    "saveFormat": "Formát souboru",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Text (.txt)",
+    "saving": "Ukládá se…",
+    "savedTo": "Uloženo jako %{file}",
+    "saveOpen": "Otevřít",
+    "saveUndo": "Zpět",
+    "saveUndone": "%{file} byl odebrán z police",
+    "saveShelfFull": "%{file} nebyl uložen: tato police je plná. Zvyšte limit souborů v Policích.",
+    "saveFailedNamed": "%{file} nebyl uložen: %{reason}",
+    "writtenByRebost": "napsal Rebost",
+    "writtenByRebostTitle": "Tento soubor napsal Rebost z dřívější odpovědi. Není to nezávislý důkaz.",
+    "saveSourcesHeading": "Zdroje"
   },
   "thinking": {
     "fallback": "Přemýšlí…",
@@ -295,7 +311,13 @@
     "hideThinking": "Skrýt přemýšlení",
     "hideLooked": "Skrýt prohledané zdroje",
     "showThinking": "Zobrazit přemýšlení",
-    "showLooked": "Zobrazit prohledané zdroje"
+    "showLooked": "Zobrazit prohledané zdroje",
+    "writing": "Píše dokument…",
+    "writingNamed": "Píše %{file}…",
+    "writingLive": "Píše dokument",
+    "writingPast": "Napsal dokument",
+    "writingNamedLive": "Píše %{file}",
+    "writingNamedPast": "Napsal %{file}"
   },
   "shelves": {
     "title": "Police",
@@ -618,7 +640,12 @@
     "modelsFolderNameTaken": "V té složce už je jiný soubor se stejným názvem jako jedna z tvých AI. Vyber jinou složku.",
     "modelsFolderNoAis": "Tvé AI v té složce nejsou. Vyber složku, kde jsou, nebo použij složku Rebostu.",
     "modelsFolderNested": "Ta složka je uvnitř složky, kde teď máš AI, nebo ji obsahuje. Vyber samostatnou složku.",
-    "openFailed": "Rebost to nemohl otevřít. Zkontrolujte, která aplikace otevírá tento typ souboru, a zkuste to znovu."
+    "openFailed": "Rebost to nemohl otevřít. Zkontrolujte, která aplikace otevírá tento typ souboru, a zkuste to znovu.",
+    "saveNeedsShelf": "Pro ukládání dokumentů vyberte pro tuto konverzaci polici.",
+    "saveEmpty": "Není co uložit.",
+    "saveFailed": "Rebost nemohl zapsat soubor do složky police.",
+    "saveUndoFailed": "Tento dokument odsud nelze odebrat.",
+    "saveUndoChanged": "Soubor se změnil poté, co ho Rebost uložil, proto zůstal zachován. Odeberte ho v Policích."
   },
   "pii": {
     "heading": "Osobní údaje",

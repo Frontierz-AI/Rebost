@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- Chat can save a document to the conversation's Shelf. Ask it to write a report, letter or summary and it saves the answer as a Word file (or Markdown or plain text) in the Shelf folder, never replacing an existing file. Every answer also has a Save to Shelf button, and a saved file can be opened or undone from the conversation. Files Rebost wrote are marked as such when later answers cite them.
+
 ## [1.2.1] - 2026-11-24
 
 - First-run picks use Artificial Analysis's new Progress Index. Computers with 8 GB of memory or less now get Liquid AI's LFM3 1.7B, with Qwen3.5 2B and Gemma 3 1B as alternatives. LFM3 1.7B replaces LFM2.5 2.6B, and Gemma 4 31B is back as the larger Gemma on 48 GB machines.

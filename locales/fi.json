@@ -250,7 +250,23 @@
     "allowOnce": "Salli kerran",
     "keepLocal": "Käytä vain paikallisia tietoja",
     "exportConversation": "Vie keskustelu",
-    "closeConversations": "Sulje keskustelut"
+    "closeConversations": "Sulje keskustelut",
+    "saveToShelf": "Tallenna hyllylle",
+    "saveToShelfTitle": "Tallentaa vastauksen tiedostoksi tämän keskustelun hyllylle",
+    "saveFormat": "Tiedostomuoto",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Teksti (.txt)",
+    "saving": "Tallennetaan…",
+    "savedTo": "Tallennettu: %{file}",
+    "saveOpen": "Avaa",
+    "saveUndo": "Kumoa",
+    "saveUndone": "%{file} poistettiin hyllyltä",
+    "saveShelfFull": "%{file} jäi tallentamatta: hylly on täynnä. Nosta tiedostorajaa Hyllyt-näkymässä.",
+    "saveFailedNamed": "%{file} jäi tallentamatta: %{reason}",
+    "writtenByRebost": "Rebostin kirjoittama",
+    "writtenByRebostTitle": "Rebost kirjoitti tämän tiedoston aiemman vastauksen pohjalta. Se ei ole riippumaton lähde.",
+    "saveSourcesHeading": "Lähteet"
   },
   "thinking": {
     "fallback": "Pohditaan…",
@@ -295,7 +311,13 @@
     "hideThinking": "Piilota pohdinta",
     "hideLooked": "Piilota läpikäynti",
     "showThinking": "Näytä pohdinta",
-    "showLooked": "Näytä läpikäynti"
+    "showLooked": "Näytä läpikäynti",
+    "writing": "Kirjoitetaan asiakirjaa…",
+    "writingNamed": "Kirjoitetaan %{file}…",
+    "writingLive": "Kirjoitetaan asiakirjaa",
+    "writingPast": "Kirjoitettiin asiakirja",
+    "writingNamedLive": "Kirjoitetaan %{file}",
+    "writingNamedPast": "Kirjoitettiin %{file}"
   },
   "shelves": {
     "title": "Hyllyt",
@@ -618,7 +640,12 @@
     "modelsFolderNameTaken": "Kansiossa on jo toinen tiedosto, jolla on sama nimi kuin yhdellä tekoälylläsi. Valitse toinen kansio.",
     "modelsFolderNoAis": "Tekoälysi eivät ole siinä kansiossa. Valitse kansio, jossa ne ovat, tai käytä Rebostin omaa kansiota.",
     "modelsFolderNested": "Kansio on nykyisen tekoälykansiosi sisällä tai sisältää sen. Valitse erillinen kansio.",
-    "openFailed": "Rebost ei voinut avata sitä. Tarkista, mikä sovellus avaa tämän tiedostotyypin, ja yritä uudelleen."
+    "openFailed": "Rebost ei voinut avata sitä. Tarkista, mikä sovellus avaa tämän tiedostotyypin, ja yritä uudelleen.",
+    "saveNeedsShelf": "Valitse tälle keskustelulle hylly, niin voit tallentaa asiakirjoja.",
+    "saveEmpty": "Tallennettavaa tekstiä ei ole.",
+    "saveFailed": "Rebost ei voinut kirjoittaa tiedostoa hyllyn kansioon.",
+    "saveUndoFailed": "Asiakirjaa ei voi poistaa täältä.",
+    "saveUndoChanged": "Tiedosto muuttui sen jälkeen, kun Rebost tallensi sen, joten se säilytettiin. Poista se Hyllyt-näkymässä."
   },
   "pii": {
     "heading": "Henkilötiedot",

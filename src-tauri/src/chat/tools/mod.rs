@@ -323,7 +323,7 @@ impl ToolSet {
                             "format": {
                                 "type": "string",
                                 "enum": ["docx", "md", "txt"],
-                                "description": "docx (Word, default), md (Markdown), or txt (plain text).",
+                                "description": "Leave this out for a Word file (docx). Use md or txt only when the user asks for Markdown or plain text.",
                             }
                         },
                         "required": ["file_name"]
@@ -393,6 +393,8 @@ pub(crate) struct ToolCtx<'a> {
     pub exclude_message_ids: &'a [String],
     /// Library Shelf that `save_document` writes to.
     pub save_shelf_id: Option<&'a str>,
+    /// File formats the user's message names (Markdown, plain text, Word).
+    pub user_formats: &'a [DocFormat],
 }
 
 impl ToolCtx<'_> {
@@ -462,13 +464,8 @@ pub(crate) fn status_hint(call: &ToolCall, sources: &[SourcePassage]) -> StatusH
             .filter(|s| !s.is_empty()),
         ToolName::LookAround => look_around_label(call, sources),
         ToolName::ReadWebPage => web::page_label(&url_arg(call)),
-        ToolName::SaveDocument => {
-            let (stem, format) = save_args(call);
-            Some(clip_label(&save_doc::file_label(
-                &save_doc::sanitize_stem(&stem),
-                format,
-            )))
-        }
+        // The tool result names the file once the format is settled.
+        ToolName::SaveDocument => None,
         ToolName::SearchShelf | ToolName::SearchChats | ToolName::SearchWeb => None,
     };
     StatusHint {
@@ -544,7 +541,8 @@ fn save_document(tool: &ToolCtx<'_>, call: &ToolCall) -> ToolOutcome {
     let Some(shelf_id) = tool.save_shelf_id else {
         return ToolOutcome::reply("Saving needs a Shelf. Answer normally.");
     };
-    let (raw, format) = save_args(call);
+    let (raw, asked) = save_args(call);
+    let format = save_doc::choose_format(asked, tool.user_formats);
     let stem = save_doc::sanitize_stem(&raw);
     let label = save_doc::file_label(&stem, format);
     let room = save_doc::shelf_has_room(tool.ctx, shelf_id);
@@ -573,9 +571,9 @@ reached its file limit, then write the document as your answer so they can copy 
     }
 }
 
-/// File stem and format from a `save_document` call. A format argument wins;
-/// otherwise an extension on the name decides; otherwise .docx.
-fn save_args(call: &ToolCall) -> (String, DocFormat) {
+/// File stem and requested format from a `save_document` call. A `.md` the
+/// model typed on the name is not a format choice: it writes Markdown anyway.
+fn save_args(call: &ToolCall) -> (String, Option<DocFormat>) {
     let name = arg_string(
         &call.function.arguments,
         &["file_name", "filename", "name", "title", "file"],
@@ -585,9 +583,7 @@ fn save_args(call: &ToolCall) -> (String, DocFormat) {
         &call.function.arguments,
         &["format", "type", "extension", "ext"],
     )
-    .and_then(|raw| DocFormat::parse(&raw))
-    .or_else(|| save_doc::format_from_name(&name))
-    .unwrap_or_default();
+    .and_then(|raw| DocFormat::parse(&raw));
     (name, format)
 }
 
@@ -874,6 +870,9 @@ impl AnswerHoldback {
 
     pub(crate) fn is_toolish(text: &str) -> bool {
         let t = text.trim_start();
+        if Self::starts_markdown_fence(t) {
+            return false;
+        }
         t.starts_with('{')
             || t.starts_with('[')
             || t.starts_with('<')
@@ -889,8 +888,21 @@ impl AnswerHoldback {
             || t.starts_with("call:")
     }
 
+    /// A document wrapped in a ```markdown fence is prose, not a tool dump.
+    fn starts_markdown_fence(t: &str) -> bool {
+        let Some(rest) = t.strip_prefix("```") else {
+            return false;
+        };
+        let lang = rest.split(['\n', '\r']).next().unwrap_or("");
+        rest.contains(['\n', '\r'])
+            && matches!(lang.trim().to_ascii_lowercase().as_str(), "markdown" | "md")
+    }
+
     fn looks_like_prose(text: &str) -> bool {
         let t = text.trim_start();
+        if Self::starts_markdown_fence(t) {
+            return true;
+        }
         if t.is_empty() || Self::is_toolish(t) {
             return false;
         }
@@ -1024,14 +1036,29 @@ mod tests {
         let call = ToolCall::function("c", "write_document", r#"{"name":"Plan.md"}"#);
         let hint = status_hint(&call, &[]);
         assert_eq!(hint.stage, "writing");
-        assert_eq!(hint.file.as_deref(), Some("Plan.md"));
+        assert_eq!(hint.file, None, "the tool result names the file");
+        assert_eq!(
+            save_args(&call),
+            ("Plan.md".into(), None),
+            "a typed .md is not a format"
+        );
         let call = ToolCall::function(
             "c",
             "save_document",
-            r#"{"file_name":"Plan.md","format":"docx"}"#,
+            r#"{"file_name":"Plan","format":"txt"}"#,
         );
-        assert_eq!(status_hint(&call, &[]).file.as_deref(), Some("Plan.docx"));
+        assert_eq!(save_args(&call).1, Some(DocFormat::Txt));
         assert!(AnswerHoldback::is_toolish("save_document(file_name=\"x\")"));
+
+        // A document in a ```markdown fence streams; a ```json dump stays hidden.
+        let mut gate = AnswerHoldback::new(true);
+        assert!(gate.push("```mark").is_none());
+        let flushed = gate.push("down\n# Letter\n").unwrap();
+        assert!(flushed.starts_with("```markdown"));
+        assert!(gate.released());
+        let mut gate = AnswerHoldback::new(true);
+        assert!(gate.push("```json\n{\"name\":\"save_document\"}").is_none());
+        assert!(!gate.released());
     }
 
     #[test]

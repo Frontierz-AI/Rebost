@@ -617,6 +617,7 @@ async fn generate_with_tools(
                         open_next: used.open_next.clone(),
                         exclude_message_ids: &turn.history_ids,
                         save_shelf_id: save_shelf.as_deref(),
+                        user_formats: &turn.user_formats,
                     },
                 )
                 .await;
@@ -864,6 +865,8 @@ struct PreparedTurn {
     history_ids: Vec<String>,
     /// Library Shelf `save_document` may write to this turn.
     save_shelf: Option<String>,
+    /// File formats the user's message names.
+    user_formats: Vec<save_doc::DocFormat>,
     /// A save the model asked for. Written only if the turn completes.
     save: Option<save_doc::SaveRequest>,
 }
@@ -1286,6 +1289,7 @@ fn prepare_turn(
         cited,
         history_ids,
         save_shelf,
+        user_formats: save_doc::formats_mentioned(text),
         save: None,
     })
 }

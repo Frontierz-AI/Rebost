@@ -250,7 +250,23 @@
     "allowOnce": "Einmal erlauben",
     "keepLocal": "Nur lokale Informationen verwenden",
     "exportConversation": "Unterhaltung exportieren",
-    "closeConversations": "Unterhaltungen schließen"
+    "closeConversations": "Unterhaltungen schließen",
+    "saveToShelf": "Im Regal speichern",
+    "saveToShelfTitle": "Speichert diese Antwort als Datei im Regal dieser Unterhaltung",
+    "saveFormat": "Dateiformat",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Text (.txt)",
+    "saving": "Wird gespeichert…",
+    "savedTo": "In %{file} gespeichert",
+    "saveOpen": "Öffnen",
+    "saveUndo": "Rückgängig",
+    "saveUndone": "%{file} wurde aus dem Regal entfernt",
+    "saveShelfFull": "%{file} wurde nicht gespeichert: Dieses Regal ist voll. Erhöhe das Dateilimit unter Regale.",
+    "saveFailedNamed": "%{file} wurde nicht gespeichert: %{reason}",
+    "writtenByRebost": "von Rebost geschrieben",
+    "writtenByRebostTitle": "Rebost hat diese Datei aus einer früheren Antwort geschrieben. Sie ist kein unabhängiger Beleg.",
+    "saveSourcesHeading": "Quellen"
   },
   "thinking": {
     "fallback": "Denkt nach…",
@@ -295,7 +311,13 @@
     "hideThinking": "Überlegungen ausblenden",
     "hideLooked": "Durchsuchte Quellen ausblenden",
     "showThinking": "Überlegungen anzeigen",
-    "showLooked": "Durchsuchte Quellen anzeigen"
+    "showLooked": "Durchsuchte Quellen anzeigen",
+    "writing": "Schreibt das Dokument…",
+    "writingNamed": "Schreibt %{file}…",
+    "writingLive": "Schreibt das Dokument",
+    "writingPast": "Hat das Dokument geschrieben",
+    "writingNamedLive": "Schreibt %{file}",
+    "writingNamedPast": "Hat %{file} geschrieben"
   },
   "shelves": {
     "title": "Regale",
@@ -618,7 +640,12 @@
     "modelsFolderNameTaken": "In diesem Ordner liegt schon eine andere Datei mit dem Namen einer deiner KIs. Wähle einen anderen Ordner.",
     "modelsFolderNoAis": "Deine KIs sind nicht in diesem Ordner. Wähle den Ordner, in dem sie liegen, oder verwende Rebosts eigenen Ordner.",
     "modelsFolderNested": "Dieser Ordner liegt im Ordner deiner KIs oder enthält ihn. Wähle einen eigenen Ordner.",
-    "openFailed": "Rebost konnte das nicht öffnen. Prüfe, welche App diesen Dateityp öffnet, und versuche es erneut."
+    "openFailed": "Rebost konnte das nicht öffnen. Prüfe, welche App diesen Dateityp öffnet, und versuche es erneut.",
+    "saveNeedsShelf": "Wähle für diese Unterhaltung ein Regal, um Dokumente zu speichern.",
+    "saveEmpty": "Es gibt keinen Text zum Speichern.",
+    "saveFailed": "Rebost konnte die Datei nicht in den Regalordner schreiben.",
+    "saveUndoFailed": "Dieses Dokument kann hier nicht entfernt werden.",
+    "saveUndoChanged": "Die Datei wurde geändert, nachdem Rebost sie gespeichert hat, deshalb bleibt sie erhalten. Entferne sie unter Regale."
   },
   "pii": {
     "heading": "Persönliche Daten",

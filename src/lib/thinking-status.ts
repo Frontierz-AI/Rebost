@@ -35,6 +35,9 @@ export const THINKING_STATUS = {
   get page() {
     return t("thinking.page");
   },
+  get writing() {
+    return t("thinking.writing");
+  },
 } as const;
 
 function clipFile(file?: string | null): string {
@@ -56,6 +59,11 @@ export function aroundStatusLine(file?: string | null): string {
 export function pageStatusLine(file?: string | null): string {
   const name = clipFile(file);
   return name ? t("thinking.pageNamed", { file: name }) : THINKING_STATUS.page;
+}
+
+export function writingStatusLine(file?: string | null): string {
+  const name = clipFile(file);
+  return name ? t("thinking.writingNamed", { file: name }) : THINKING_STATUS.writing;
 }
 
 export type ThinkingStatusState = {
@@ -93,6 +101,8 @@ export function thinkingStatusLines(input: {
       return [THINKING_STATUS.web];
     case "page":
       return [pageStatusLine(input.file)];
+    case "writing":
+      return [writingStatusLine(input.file)];
     case "thinking":
     case null:
       return [THINKING_STATUS.fallback];
@@ -173,6 +183,10 @@ export function activityStepLabel(step: ChatActivityStep, live = false): string 
       return live
         ? namedFileLinePast("thinking.pageNamedLive", "thinking.pageLive", step.file)
         : namedFileLinePast("thinking.pageNamedPast", "thinking.pagePast", step.file);
+    case "writing":
+      return live
+        ? namedFileLinePast("thinking.writingNamedLive", "thinking.writingLive", step.file)
+        : namedFileLinePast("thinking.writingNamedPast", "thinking.writingPast", step.file);
     case "thinking":
       return live ? t("thinking.thinkingLive") : t("thinking.thinkingPast");
     default: {
@@ -192,6 +206,7 @@ export function parseChatPrepareStage(value: string | undefined): ChatPrepareSta
     case "chats":
     case "web":
     case "page":
+    case "writing":
     case "thinking":
       return value;
     default:

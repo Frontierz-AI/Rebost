@@ -107,6 +107,9 @@
       <div class="min-w-0 flex-1">
         <p class="truncate text-[13px] font-semibold text-ink">{source.title}</p>
         {#if location}<p class="text-[12px] text-ink-soft">{location}</p>{/if}
+        {#if source.writtenByRebost}<p class="text-[12px] text-ink-soft italic">
+            {t("chat.writtenByRebostTitle")}
+          </p>{/if}
       </div>
       <span class="rounded-md bg-navy-900 px-1.5 py-0.5 text-[10.5px] font-bold text-white"
         >{source.sid}</span

@@ -94,6 +94,7 @@ fn tool_ctx<'a>(
         open_next: HashMap::new(),
         exclude_message_ids: &[],
         save_shelf_id: None,
+        user_formats: &[],
     }
 }
 
@@ -121,6 +122,7 @@ fn tool_ctx_used<'a>(
         open_next: used.open_next.clone(),
         exclude_message_ids: &[],
         save_shelf_id: None,
+        user_formats: &[],
     }
 }
 
@@ -781,6 +783,7 @@ async fn search_chats_returns_notes_from_other_threads_on_the_same_shelf() {
         open_next: HashMap::new(),
         exclude_message_ids: &[],
         save_shelf_id: None,
+        user_formats: &[],
     };
     let call = ToolCall::function(
         "c1",
@@ -835,6 +838,7 @@ async fn search_chats_finds_earlier_turns_of_this_thread() {
         open_next: HashMap::new(),
         exclude_message_ids: &skip,
         save_shelf_id: None,
+        user_formats: &[],
     };
     let call = ToolCall::function(
         "c1",
@@ -1343,6 +1347,8 @@ async fn save_document_records_a_pending_save_and_writes_nothing_yet() {
     );
     tool.allowed = tools::ToolSet::new(false, false, false, false, true, &used);
     tool.save_shelf_id = Some(&fixture.shelf.id);
+    let markdown = [save_doc::DocFormat::Md];
+    tool.user_formats = &markdown;
 
     let outcome = tools::run_tool(
         &save_call(r#"{"file_name":"../Move plan.docx","format":"md"}"#),

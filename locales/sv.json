@@ -250,7 +250,23 @@
     "allowOnce": "Tillåt en gång",
     "keepLocal": "Använd bara lokal information",
     "exportConversation": "Exportera samtalet",
-    "closeConversations": "Stäng konversationer"
+    "closeConversations": "Stäng konversationer",
+    "saveToShelf": "Spara på hyllan",
+    "saveToShelfTitle": "Sparar svaret som en fil på hyllan för den här konversationen",
+    "saveFormat": "Filformat",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Text (.txt)",
+    "saving": "Sparar…",
+    "savedTo": "Sparat som %{file}",
+    "saveOpen": "Öppna",
+    "saveUndo": "Ångra",
+    "saveUndone": "%{file} togs bort från hyllan",
+    "saveShelfFull": "%{file} sparades inte: hyllan är full. Höj filgränsen under Hyllor.",
+    "saveFailedNamed": "%{file} sparades inte: %{reason}",
+    "writtenByRebost": "skriven av Rebost",
+    "writtenByRebostTitle": "Rebost skrev den här filen utifrån ett tidigare svar. Den är inget oberoende underlag.",
+    "saveSourcesHeading": "Källor"
   },
   "thinking": {
     "fallback": "Tänker…",
@@ -295,7 +311,13 @@
     "hideThinking": "Dölj resonemanget",
     "hideLooked": "Dölj vad den gick igenom",
     "showThinking": "Visa resonemanget",
-    "showLooked": "Visa vad den gick igenom"
+    "showLooked": "Visa vad den gick igenom",
+    "writing": "Skriver dokumentet…",
+    "writingNamed": "Skriver %{file}…",
+    "writingLive": "Skriver dokumentet",
+    "writingPast": "Skrev dokumentet",
+    "writingNamedLive": "Skriver %{file}",
+    "writingNamedPast": "Skrev %{file}"
   },
   "shelves": {
     "title": "Hyllor",
@@ -618,7 +640,12 @@
     "modelsFolderNameTaken": "Mappen innehåller redan en annan fil med samma namn som en av dina AI:er. Välj en annan mapp.",
     "modelsFolderNoAis": "Dina AI:er ligger inte i den mappen. Välj mappen där de ligger, eller använd Rebosts egen mapp.",
     "modelsFolderNested": "Den mappen ligger i mappen med dina AI:er, eller innehåller den. Välj en separat mapp.",
-    "openFailed": "Rebost kunde inte öppna det. Kontrollera vilken app som öppnar den här filtypen och försök igen."
+    "openFailed": "Rebost kunde inte öppna det. Kontrollera vilken app som öppnar den här filtypen och försök igen.",
+    "saveNeedsShelf": "Välj en hylla för den här konversationen för att spara dokument.",
+    "saveEmpty": "Det finns ingen text att spara.",
+    "saveFailed": "Rebost kunde inte skriva filen till hyllans mapp.",
+    "saveUndoFailed": "Det dokumentet kan inte tas bort härifrån.",
+    "saveUndoChanged": "Filen ändrades efter att Rebost sparade den, så den behölls. Ta bort den under Hyllor i stället."
   },
   "pii": {
     "heading": "Personuppgifter",

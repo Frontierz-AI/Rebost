@@ -133,127 +133,29 @@ pub(crate) fn file_label(stem: &str, format: DocFormat) -> String {
 /// Words that suggest the user wants a file. `save_document` is offered
 /// only then, so a plain question never tempts a small model into it. The
 /// "Save to Shelf" button covers everything else.
+#[rustfmt::skip]
 const SAVE_HINTS: &[&str] = &[
     // en
-    "document",
-    "doc",
-    "file",
-    "report",
-    "letter",
-    "memo",
-    "draft",
-    "write",
-    "save",
-    "summary",
-    "notes",
-    "essay",
-    "proposal",
-    "minutes",
-    "markdown",
-    "txt",
-    "word",
+    "document", "doc", "file", "report", "letter", "memo", "draft", "write", "save", "summary",
+    "notes", "essay", "proposal", "minutes", "markdown", "brief", "outline", "checklist", "agenda",
+    "template", "handout", "resume", "cv ", "esquema", "plantilla", "txt", "word",
     // es / ca / pt / it
-    "archivo",
-    "fichero",
-    "informe",
-    "carta",
-    "borrador",
-    "redact",
-    "escrib",
-    "escriu",
-    "guarda",
-    "desa",
-    "resum",
-    "nota",
-    "acta",
-    "propuesta",
-    "proposta",
-    "arxiu",
-    "fitxer",
-    "esborrany",
-    "arquivo",
-    "ficheiro",
-    "relatório",
-    "rascunho",
-    "escrev",
-    "salva",
-    "rapporto",
-    "relazione",
-    "lettera",
-    "bozza",
-    "scrivi",
-    "riassunto",
-    "verbale",
+    "archivo", "fichero", "informe", "carta", "borrador", "redact", "escrib", "escriu", "guarda",
+    "desa", "resum", "nota", "acta", "propuesta", "proposta", "arxiu", "fitxer", "esborrany",
+    "arquivo", "ficheiro", "relatório", "rascunho", "escrev", "salva", "rapporto", "relazione",
+    "lettera", "bozza", "scrivi", "riassunto", "verbale",
     // fr / de / nl
-    "fichier",
-    "rapport",
-    "lettre",
-    "brouillon",
-    "rédige",
-    "écri",
-    "enregistr",
-    "sauvegard",
-    "résumé",
-    "compte rendu",
-    "dokument",
-    "datei",
-    "bericht",
-    "brief",
-    "entwurf",
-    "schreib",
-    "speicher",
-    "zusammenfass",
-    "protokoll",
-    "bestand",
-    "verslag",
-    "concept",
-    "schrijf",
-    "opslaan",
+    "fichier", "rapport", "lettre", "brouillon", "rédige", "écri", "enregistr", "sauvegard",
+    "résumé", "compte rendu", "dokument", "datei", "bericht", "brief", "entwurf", "schreib",
+    "speicher", "zusammenfass", "protokoll", "bestand", "verslag", "concept", "schrijf", "opslaan",
     "samenvatting",
     // sv / da / nb / fi / cs
-    "fil",
-    "utkast",
-    "udkast",
-    "skriv",
-    "spara",
-    "gem ",
-    "lagre",
-    "sammanfatt",
-    "sammendrag",
-    "asiakirja",
-    "dokumentti",
-    "tiedosto",
-    "raportti",
-    "kirje",
-    "luonnos",
-    "kirjoita",
-    "tallenna",
-    "yhteenveto",
-    "soubor",
-    "zpráv",
-    "dopis",
-    "napiš",
-    "ulož",
-    "shrnutí",
+    "fil", "utkast", "udkast", "skriv", "spara", "gem ", "lagre", "sammanfatt", "sammendrag",
+    "asiakirja", "dokumentti", "tiedosto", "raportti", "kirje", "luonnos", "kirjoita", "tallenna",
+    "yhteenveto", "soubor", "zpráv", "dopis", "napiš", "ulož", "shrnutí",
     // el / ja
-    "έγγραφ",
-    "αρχείο",
-    "αναφορ",
-    "επιστολ",
-    "γράψ",
-    "αποθήκευ",
-    "περίληψ",
-    "文書",
-    "ドキュメント",
-    "ファイル",
-    "報告",
-    "レポート",
-    "手紙",
-    "下書き",
-    "書いて",
-    "保存",
-    "要約",
-    "議事録",
+    "έγγραφ", "αρχείο", "αναφορ", "επιστολ", "γράψ", "αποθήκευ", "περίληψ", "文書", "ドキュメント", "ファイル",
+    "報告", "レポート", "手紙", "下書き", "書いて", "保存", "要約", "議事録",
 ];
 
 pub(crate) fn save_intent(text: &str) -> bool {
@@ -277,10 +179,39 @@ const KNOWN_EXTENSIONS: &[&str] = &[
     "docx", "doc", "md", "markdown", "txt", "text", "pdf", "rtf", "odt", "html", "htm",
 ];
 
-/// Format named by a trailing extension on the requested name, if any.
-pub(crate) fn format_from_name(raw: &str) -> Option<DocFormat> {
-    let ext = raw.trim().rsplit_once('.')?.1;
-    DocFormat::parse(ext)
+fn format_mentions() -> &'static [(DocFormat, regex::Regex)] {
+    static RE: OnceLock<Vec<(DocFormat, regex::Regex)>> = OnceLock::new();
+    RE.get_or_init(|| {
+        let re = |p: &str| regex::Regex::new(p).expect("format mention");
+        vec![
+            (DocFormat::Md, re(r"(?i)markdown|\.md\b|\bmd\b|マークダウン")),
+            (
+                DocFormat::Txt,
+                re(r"(?i)\btxt\b|plain text|text file|texto plano|text pla|texte brut|reiner text|nur text|testo semplice|texto simples|platte tekst|ren text|ren tekst|vanlig tekst|pelkkä teksti|prostý text|απλό κείμενο|テキスト"),
+            ),
+            (DocFormat::Docx, re(r"(?i)\bdocx\b|\bword\b")),
+        ]
+    })
+}
+
+/// Formats the user's own message names. Models asked to write Markdown
+/// often pick `md` on their own; that only counts when the user asked.
+pub(crate) fn formats_mentioned(text: &str) -> Vec<DocFormat> {
+    format_mentions()
+        .iter()
+        .filter(|(_, re)| re.is_match(text))
+        .map(|(format, _)| *format)
+        .collect()
+}
+
+/// The model's format when the user named it, else the one format the user
+/// named, else Word.
+pub(crate) fn choose_format(asked: Option<DocFormat>, mentioned: &[DocFormat]) -> DocFormat {
+    match asked {
+        Some(format) if format == DocFormat::Docx || mentioned.contains(&format) => format,
+        _ if mentioned.len() == 1 => mentioned[0],
+        _ => DocFormat::Docx,
+    }
 }
 
 /// A safe, readable file stem: no path parts, no control characters, no
@@ -905,13 +836,28 @@ mod tests {
     }
 
     #[test]
-    fn format_parses_aliases_and_trailing_extensions() {
+    fn the_model_picks_markdown_or_text_only_when_the_user_did() {
+        let none = formats_mentioned("Write a short report on the lease");
+        assert!(none.is_empty());
+        assert_eq!(choose_format(Some(DocFormat::Md), &none), DocFormat::Docx);
+        assert_eq!(choose_format(None, &none), DocFormat::Docx);
+        let md = formats_mentioned("Save the notes as a Markdown file");
+        assert_eq!(md, [DocFormat::Md]);
+        assert_eq!(choose_format(Some(DocFormat::Md), &md), DocFormat::Md);
+        assert_eq!(choose_format(None, &md), DocFormat::Md);
+        let txt = formats_mentioned("Desa-ho com a text pla (.txt)");
+        assert_eq!(txt, [DocFormat::Txt]);
+        assert_eq!(choose_format(Some(DocFormat::Md), &txt), DocFormat::Txt);
+        assert_eq!(formats_mentioned("a Word document"), [DocFormat::Docx]);
+        assert!(formats_mentioned("a few words about mdma").is_empty());
+    }
+
+    #[test]
+    fn format_parses_aliases() {
         assert_eq!(DocFormat::parse("Markdown"), Some(DocFormat::Md));
         assert_eq!(DocFormat::parse(".TXT"), Some(DocFormat::Txt));
         assert_eq!(DocFormat::parse("word"), Some(DocFormat::Docx));
         assert_eq!(DocFormat::parse("pdf"), None);
-        assert_eq!(format_from_name("Plan.md"), Some(DocFormat::Md));
-        assert_eq!(format_from_name("Plan"), None);
     }
 
     #[test]

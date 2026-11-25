@@ -250,7 +250,23 @@
     "allowOnce": "Permitir uma vez",
     "keepLocal": "Usar apenas informação local",
     "exportConversation": "Exportar conversa",
-    "closeConversations": "Fechar conversas"
+    "closeConversations": "Fechar conversas",
+    "saveToShelf": "Guardar na estante",
+    "saveToShelfTitle": "Guarda esta resposta como ficheiro na estante desta conversa",
+    "saveFormat": "Formato do ficheiro",
+    "saveFormatDocx": "Word (.docx)",
+    "saveFormatMd": "Markdown (.md)",
+    "saveFormatTxt": "Texto (.txt)",
+    "saving": "A guardar…",
+    "savedTo": "Guardado em %{file}",
+    "saveOpen": "Abrir",
+    "saveUndo": "Anular",
+    "saveUndone": "%{file} foi retirado da estante",
+    "saveShelfFull": "%{file} não foi guardado: esta estante está cheia. Aumente o limite de ficheiros em Estantes.",
+    "saveFailedNamed": "%{file} não foi guardado: %{reason}",
+    "writtenByRebost": "escrito pelo Rebost",
+    "writtenByRebostTitle": "O Rebost escreveu este ficheiro a partir de uma resposta anterior. Não é uma prova independente.",
+    "saveSourcesHeading": "Fontes"
   },
   "thinking": {
     "fallback": "A pensar…",
@@ -295,7 +311,13 @@
     "hideThinking": "Ocultar o raciocínio",
     "hideLooked": "Ocultar o que consultou",
     "showThinking": "Mostrar o raciocínio",
-    "showLooked": "Mostrar o que consultou"
+    "showLooked": "Mostrar o que consultou",
+    "writing": "A escrever o documento…",
+    "writingNamed": "A escrever %{file}…",
+    "writingLive": "A escrever o documento",
+    "writingPast": "Escreveu o documento",
+    "writingNamedLive": "A escrever %{file}",
+    "writingNamedPast": "Escreveu %{file}"
   },
   "shelves": {
     "title": "Estantes",
@@ -618,7 +640,12 @@
     "modelsFolderNameTaken": "Essa pasta já tem outro ficheiro com o mesmo nome de uma das suas IA. Escolha outra pasta.",
     "modelsFolderNoAis": "As suas IA não estão nessa pasta. Escolha a pasta onde estão ou use a pasta do Rebost.",
     "modelsFolderNested": "Essa pasta está dentro da pasta atual das suas IA, ou contém-na. Escolha uma pasta à parte.",
-    "openFailed": "O Rebost não conseguiu abrir. Verifique qual aplicação abre este tipo de ficheiro e tente novamente."
+    "openFailed": "O Rebost não conseguiu abrir. Verifique qual aplicação abre este tipo de ficheiro e tente novamente.",
+    "saveNeedsShelf": "Escolha uma estante para esta conversa para guardar documentos.",
+    "saveEmpty": "Não há texto para guardar.",
+    "saveFailed": "O Rebost não conseguiu escrever o ficheiro na pasta da estante.",
+    "saveUndoFailed": "Esse documento não pode ser retirado a partir daqui.",
+    "saveUndoChanged": "O ficheiro mudou depois de o Rebost o guardar, por isso foi mantido. Retire-o em Estantes."
   },
   "pii": {
     "heading": "Informação pessoal",

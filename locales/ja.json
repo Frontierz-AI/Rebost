@@ -250,7 +250,23 @@
     "allowOnce": "今回のみ許可",
     "keepLocal": "このコンピュータの情報だけを使う",
     "exportConversation": "会話をエクスポート",
-    "closeConversations": "会話一覧を閉じる"
+    "closeConversations": "会話一覧を閉じる",
+    "saveToShelf": "シェルフに保存",
+    "saveToShelfTitle": "この回答を、この会話のシェルフにファイルとして保存します",
+    "saveFormat": "ファイル形式",
+    "saveFormatDocx": "Word（.docx）",
+    "saveFormatMd": "Markdown（.md）",
+    "saveFormatTxt": "テキスト（.txt）",
+    "saving": "保存しています…",
+    "savedTo": "%{file}に保存しました",
+    "saveOpen": "開く",
+    "saveUndo": "元に戻す",
+    "saveUndone": "%{file}をシェルフから削除しました",
+    "saveShelfFull": "%{file}は保存されませんでした。このシェルフはいっぱいです。シェルフでファイル数の上限を上げてください。",
+    "saveFailedNamed": "%{file}は保存されませんでした：%{reason}",
+    "writtenByRebost": "Rebostが作成",
+    "writtenByRebostTitle": "このファイルは、Rebostが以前の回答から作成したものです。独立した根拠ではありません。",
+    "saveSourcesHeading": "出典"
   },
   "thinking": {
     "fallback": "考えています…",
@@ -295,7 +311,13 @@
     "hideThinking": "思考過程を隠す",
     "hideLooked": "調べた内容を隠す",
     "showThinking": "思考過程を表示",
-    "showLooked": "調べた内容を表示"
+    "showLooked": "調べた内容を表示",
+    "writing": "文書を書いています…",
+    "writingNamed": "%{file}を書いています…",
+    "writingLive": "文書を書いています",
+    "writingPast": "文書を書きました",
+    "writingNamedLive": "%{file}を書いています",
+    "writingNamedPast": "%{file}を書きました"
   },
   "shelves": {
     "title": "シェルフ",
@@ -618,7 +640,12 @@
     "modelsFolderNameTaken": "このフォルダには、AIと同じ名前の別のファイルがすでにあります。別のフォルダを選んでください。",
     "modelsFolderNoAis": "このフォルダにはAIがありません。AIがあるフォルダを選ぶか、Rebost標準のフォルダを使ってください。",
     "modelsFolderNested": "このフォルダは今のAIのフォルダの中にあるか、それを含んでいます。別のフォルダを選んでください。",
-    "openFailed": "Rebost で開けませんでした。この種類のファイルを開くアプリを確認して、もう一度お試しください。"
+    "openFailed": "Rebost で開けませんでした。この種類のファイルを開くアプリを確認して、もう一度お試しください。",
+    "saveNeedsShelf": "文書を保存するには、この会話のシェルフを選んでください。",
+    "saveEmpty": "保存するテキストがありません。",
+    "saveFailed": "Rebostはシェルフのフォルダーにファイルを書き込めませんでした。",
+    "saveUndoFailed": "その文書はここからは削除できません。",
+    "saveUndoChanged": "Rebostが保存した後にファイルが変更されたため、残しました。シェルフから削除してください。"
   },
   "pii": {
     "heading": "個人情報",

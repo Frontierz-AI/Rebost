@@ -933,6 +933,13 @@ See [the site](https://example.com/?a=1&b=2) or [local](notes.md).\n\n\
         }
     }
 
+    #[test]
+    #[ignore = "writes DOCX_DUMP for a manual look"]
+    fn dump_sample() {
+        let path = std::env::var("DOCX_DUMP").unwrap();
+        std::fs::write(path, markdown_to_docx(SAMPLE, "Fallback").unwrap()).unwrap();
+    }
+
     #[tokio::test(flavor = "multi_thread")]
     async fn xberg_reads_back_the_text() {
         let dir = tempfile::tempdir().unwrap();
