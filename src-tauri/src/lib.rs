@@ -13,6 +13,7 @@ pub mod commands;
 pub mod compositor;
 pub mod core;
 pub mod distribution;
+pub(crate) mod docx;
 pub mod engine;
 pub mod host;
 pub mod i18n;
