@@ -321,7 +321,7 @@
     "syncFolderHint": "Liitä kansio tältä tietokoneelta. Sinne tulevat uudet tiedostot näkyvät täällä.",
     "emptyRegion": "Tyhjä hylly",
     "dropToFill": "Pudota tiedostot tälle hyllylle",
-    "dropTypes": "PDF-tiedostot, Office-asiakirjat, laskentataulukot, esitykset ja sähköpostit. Rebost lukee ne tällä tietokoneella.",
+    "dropTypes": "PDF-tiedostot, Office-asiakirjat, laskentataulukot, esitykset, sähköpostit ja verkkosivut. Rebost lukee ne tällä tietokoneella.",
     "filterByName": "Suodata tiedostonimen mukaan",
     "filterByNamePlaceholder": "Suodata nimen mukaan",
     "filterBySource": "Suodata lähteen mukaan",

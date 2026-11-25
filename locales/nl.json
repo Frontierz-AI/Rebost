@@ -321,7 +321,7 @@
     "syncFolderHint": "Koppel een map op deze computer. Nieuwe bestanden in die map verschijnen hier.",
     "emptyRegion": "Lege plank",
     "dropToFill": "Laat bestanden los om ze aan deze plank toe te voegen",
-    "dropTypes": "PDF’s, Office-documenten, spreadsheets, presentaties en e-mails. Rebost leest ze op deze computer.",
+    "dropTypes": "PDF’s, Office-documenten, spreadsheets, presentaties, e-mails en webpagina’s. Rebost leest ze op deze computer.",
     "filterByName": "Filteren op bestandsnaam",
     "filterByNamePlaceholder": "Filteren op naam",
     "filterBySource": "Filteren op bron",

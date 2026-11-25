@@ -321,7 +321,7 @@
     "syncFolderHint": "Rattachez un dossier de cet ordinateur. Ses nouveaux fichiers apparaissent ici.",
     "emptyRegion": "Étagère vide",
     "dropToFill": "Déposez des fichiers pour les ajouter à cette étagère",
-    "dropTypes": "PDF, documents Office, feuilles de calcul, présentations et e-mails. Rebost les lit sur cet ordinateur.",
+    "dropTypes": "PDF, documents Office, feuilles de calcul, présentations, e-mails et pages web. Rebost les lit sur cet ordinateur.",
     "filterByName": "Filtrer par nom de fichier",
     "filterByNamePlaceholder": "Filtrer par nom",
     "filterBySource": "Filtrer par origine",

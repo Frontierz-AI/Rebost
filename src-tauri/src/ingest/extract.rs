@@ -21,8 +21,18 @@ use crate::types::OutlineEntry;
 /// startup (the registry is the source of truth for what the build handles).
 const REBOST_EXTENSIONS: &[&str] = &[
     "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "md", "markdown",
-    "txt", "rtf", "csv", "tsv", "eml", "msg", "epub",
+    "txt", "rtf", "csv", "tsv", "eml", "msg", "epub", "html", "htm", "xhtml",
 ];
+
+/// Web pages. They get their own cleanup (see [`html_options`]) and their
+/// `<html lang>` and first `<h1>` count for the Card.
+pub(crate) const HTML_EXTENSIONS: &[&str] = &["html", "htm", "xhtml"];
+
+pub(crate) fn is_html_file(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| HTML_EXTENSIONS.iter().any(|h| e.eq_ignore_ascii_case(h)))
+}
 
 /// Extensions Rebost offers, intersected with Xberg's registry.
 pub fn supported_extensions() -> &'static HashSet<String> {
@@ -319,6 +329,195 @@ fn build_config(settings: &ExtractorSettings, timeout_secs: u64) -> ExtractionCo
     }
 }
 
+/// Elements dropped whole from a web page: embedded frames and objects,
+/// and cookie or consent banners. The preset only drops elements whose
+/// class or id is exactly `cookie`, `consent`, … while real banners use
+/// compound names (`cookie-banner`, `onetrust-consent-sdk`). Kept specific so
+/// a page about, say, an informed-consent form keeps its text.
+const HTML_EXCLUDE: &[&str] = &[
+    "iframe",
+    "frame",
+    "object",
+    "embed",
+    "template",
+    "[id*=cookie]",
+    "[id*=Cookie]",
+    "[class*=cookie-banner]",
+    "[class*=cookie-consent]",
+    "[class*=cookie-notice]",
+    "[class*=cookie-bar]",
+    "[class*=cookie-law]",
+    "[class*=cookie-popup]",
+    "[class*=cookiebanner]",
+    "[class*=cookieconsent]",
+    "[class*=CookieConsent]",
+    "[id*=onetrust]",
+    "[class*=cc-window]",
+    "[id*=gdpr]",
+    "[class*=gdpr-]",
+    "[aria-label*=cookie]",
+    "[aria-label*=Cookie]",
+];
+
+/// HTML conversion for Shelf pages: main text only. The Aggressive preset
+/// drops `<nav>`, page-level `<header>`, `<footer>`, `<aside>`, `<noscript>`,
+/// forms and elements marked as menus, cookie or consent banners and ads;
+/// scripts and styles never reach the text. Images and frames are left out
+/// (their `src` would only add file names and `data:` payloads), and nothing
+/// a page links to is ever loaded.
+fn html_options() -> xberg::ConversionOptions {
+    use html_to_markdown_rs::{InlineDataMedia, PreprocessingOptions, PreprocessingPreset};
+    let mut options = xberg::ConversionOptions {
+        // `<title>` and `<html lang>` land in the result metadata.
+        extract_metadata: true,
+        preprocessing: PreprocessingOptions {
+            enabled: true,
+            preset: PreprocessingPreset::Aggressive,
+            remove_navigation: true,
+            remove_forms: true,
+        },
+        skip_images: true,
+        inline_data_media: InlineDataMedia::DropElement,
+        exclude_selectors: HTML_EXCLUDE.iter().map(|s| s.to_string()).collect(),
+        ..Default::default()
+    };
+    // Same marks Xberg uses for Markdown when it picks the options itself.
+    options.sup_symbol = "^".into();
+    options.sub_symbol = "~".into();
+    options
+}
+
+/// Per-file adjustments on top of [`build_config`].
+fn config_for(path: &Path, settings: &ExtractorSettings, timeout_secs: u64) -> ExtractionConfig {
+    let mut config = build_config(settings, timeout_secs);
+    if is_html_file(path) {
+        config.html_options = Some(html_options());
+        // A page's inline pictures are decoration far more often than text.
+        config.ocr_embedded_images = Some(false);
+    }
+    config
+}
+
+/// Xberg's Markdown for a web page opens with a YAML block of `<head>`
+/// metadata (title, description, links). It is not page text: keep it out
+/// of the cache, the index and the keywords.
+fn strip_front_matter(text: &str) -> &str {
+    let mut lines = text.split_inclusive('\n');
+    let Some(first) = lines.next() else {
+        return text;
+    };
+    if first.trim_end() != "---" {
+        return text;
+    }
+    let mut offset = first.len();
+    for line in lines {
+        offset += line.len();
+        if line.trim_end() == "---" {
+            return text[offset..].trim_start();
+        }
+    }
+    text
+}
+
+/// Turn Markdown links `[text](target)` into their text, so a page's URLs
+/// don't become keywords, passages or PII hits. Fenced code is left alone.
+fn strip_link_targets(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut in_fence = false;
+    for line in text.split_inclusive('\n') {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            in_fence = !in_fence;
+            out.push_str(line);
+            continue;
+        }
+        if in_fence || !line.contains("](") {
+            out.push_str(line);
+        } else {
+            out.push_str(&strip_line_links(line));
+        }
+    }
+    out
+}
+
+fn strip_line_links(line: &str) -> String {
+    let chars: Vec<char> = line.chars().collect();
+    let mut out = String::with_capacity(line.len());
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        if c == '\\' && i + 1 < chars.len() {
+            out.push(c);
+            out.push(chars[i + 1]);
+            i += 2;
+            continue;
+        }
+        if c == '[' {
+            if let Some((label_end, target_end)) = link_at(&chars, i) {
+                let label: String = chars[i + 1..label_end].iter().collect();
+                out.push_str(&strip_line_links(&label));
+                i = target_end + 1;
+                continue;
+            }
+        }
+        out.push(c);
+        i += 1;
+    }
+    out
+}
+
+/// For a `[` at `open`, the index of its `]` and of the `)` closing the
+/// target that follows it, when this is an inline link.
+fn link_at(chars: &[char], open: usize) -> Option<(usize, usize)> {
+    let mut depth = 0usize;
+    let mut i = open;
+    let label_end = loop {
+        match chars.get(i)? {
+            '\\' => i += 1,
+            '[' => depth += 1,
+            ']' => {
+                depth -= 1;
+                if depth == 0 {
+                    break i;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    };
+    if chars.get(label_end + 1) != Some(&'(') {
+        return None;
+    }
+    let mut i = label_end + 2;
+    if chars.get(i) == Some(&'<') {
+        while *chars.get(i)? != '>' {
+            i += 1;
+        }
+        i += 1;
+    }
+    let mut parens = 1usize;
+    loop {
+        match chars.get(i)? {
+            '\\' => i += 1,
+            '(' => parens += 1,
+            ')' => {
+                parens -= 1;
+                if parens == 0 {
+                    return Some((label_end, i));
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+}
+
+/// `<html lang="es-ES">` → `es`, when Rebost knows the language.
+fn html_lang(tag: &str) -> Option<&'static str> {
+    let primary = tag.trim().split(['-', '_']).next()?;
+    normalize_lang(primary)
+}
+
 /// Clean a filename into a presentable title: `bank-agreement_v2.pdf` →
 /// `bank agreement v2`.
 fn title_from_filename(path: &Path) -> String {
@@ -535,7 +734,7 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
             .unwrap_or(None)
     };
     let timeout_secs = timeout_for(settings.timeout_secs, pdf_pages);
-    let config = build_config(settings, timeout_secs);
+    let config = config_for(path, settings, timeout_secs);
     let input = ExtractInput::from_uri(path.to_string_lossy().as_ref());
     let started = std::time::Instant::now();
     let output = runtime
@@ -559,7 +758,15 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
         .next()
         .ok_or_else(|| anyhow!("no extraction result for {}", path.display()))?;
 
-    let content = limit_extracted(doc.content.trim().to_string());
+    let is_html = is_html_file(path);
+    let content = if is_html {
+        strip_link_targets(strip_front_matter(doc.content.trim()))
+            .trim()
+            .to_string()
+    } else {
+        doc.content.trim().to_string()
+    };
+    let content = limit_extracted(content);
     let ocr_used =
         doc.metadata.ocr_used || doc.extraction_method.map(|m| m.used_ocr()).unwrap_or(false);
 
@@ -569,14 +776,25 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
         return Err(anyhow!("couldn't read any text, even with OCR"));
     }
 
-    // Language: xberg emits ISO 639-3 tags (e.g. "spa", "fra", "eng").
-    let language_tag = doc
-        .detected_languages
-        .as_ref()
-        .and_then(|langs| langs.first())
-        .cloned();
-    let language = language_tag.as_deref().and_then(normalize_lang);
-    let language_card = language.map(|l| l.to_string()).or(language_tag.clone());
+    // Language: a page's own `<html lang>` first; otherwise xberg's
+    // detection, which emits ISO 639-3 tags (e.g. "spa", "fra", "eng").
+    let declared = if is_html {
+        doc.metadata.language.as_deref().and_then(html_lang)
+    } else {
+        None
+    };
+    let (language, language_card) = match declared {
+        Some(code) => (Some(code), Some(code.to_string())),
+        None => {
+            let language_tag = doc
+                .detected_languages
+                .as_ref()
+                .and_then(|langs| langs.first())
+                .cloned();
+            let language = language_tag.as_deref().and_then(normalize_lang);
+            (language, language.map(|l| l.to_string()).or(language_tag))
+        }
+    };
 
     // Structural blocks from the document tree; pages as fallback.
     let mut blocks: Vec<Block> = Vec::new();
@@ -740,13 +958,25 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
         }
     }
 
-    // Title: document metadata → top-level heading → cleaned filename.
+    // Title: document metadata (a page's `<title>`) → top-level heading (a
+    // page's first `<h1>`) → cleaned filename.
+    let first_h1 = is_html
+        .then(|| {
+            blocks.iter().find_map(|b| match b.kind {
+                BlockKind::Heading { level: 1 } if !b.text.trim().is_empty() => {
+                    Some(b.text.clone())
+                }
+                _ => None,
+            })
+        })
+        .flatten();
     let title = doc
         .metadata
         .title
         .clone()
         .filter(|t| !t.trim().is_empty())
         .or(structure_title)
+        .or(first_h1)
         .map(|t| tidy(&t, 120))
         .unwrap_or_else(|| title_from_filename(path));
 
@@ -939,9 +1169,16 @@ mod tests {
         assert!(is_supported_file(Path::new("brief.pdf")));
         assert!(is_supported_file(Path::new("note.md")));
         assert!(is_supported_file(Path::new("sheet.xlsx")));
+        assert!(is_supported_file(Path::new("page.html")));
+        assert!(is_supported_file(Path::new("old/PAGE.HTM")));
+        assert!(is_supported_file(Path::new("chapter.xhtml")));
         assert!(!is_supported_file(Path::new("package.json")));
-        assert!(!is_supported_file(Path::new("page.html")));
         assert!(!is_supported_file(Path::new("data.xml")));
+        assert!(!is_supported_file(Path::new("Page_files/app.js")));
+        assert!(!is_supported_file(Path::new("Page_files/style.css")));
+        assert!(!is_supported_file(Path::new("main.rs")));
+        assert!(!is_supported_file(Path::new("script.py")));
+        assert!(!is_supported_file(Path::new("archive.mhtml")));
         assert!(!is_supported_file(Path::new("~$lock.docx")));
         assert!(!is_supported_file(Path::new("~$Book.xlsx")));
         assert!(!is_supported_file(Path::new("scratch.tmp")));
@@ -1039,5 +1276,61 @@ mod tests {
         );
         assert_eq!(prose, "The clause lasts ninety days.");
         assert!(!prose.contains('#'));
+    }
+
+    #[test]
+    fn front_matter_is_dropped_from_page_text() {
+        let md = "---\ntitle: Horario\nmeta-description: d\n---\n\n# Horario\n\nAbre a las nueve.";
+        assert_eq!(strip_front_matter(md), "# Horario\n\nAbre a las nueve.");
+        assert_eq!(strip_front_matter("# No front matter"), "# No front matter");
+        // An unclosed block is left as it is rather than eating the page.
+        assert_eq!(strip_front_matter("---\nnot closed"), "---\nnot closed");
+        // A rule later on is page text.
+        assert_eq!(
+            strip_front_matter("Intro\n\n---\n\nMore"),
+            "Intro\n\n---\n\nMore"
+        );
+    }
+
+    #[test]
+    fn link_targets_are_dropped_but_text_kept() {
+        assert_eq!(
+            strip_link_targets("Consulte el [reglamento](https://example.org/r) hoy."),
+            "Consulte el reglamento hoy."
+        );
+        assert_eq!(
+            strip_link_targets("[a [nested] label](<with space.html>) and [b](x(1).html)"),
+            "a [nested] label and b"
+        );
+        assert_eq!(strip_link_targets("[not a link] (x)"), "[not a link] (x)");
+        assert_eq!(
+            strip_link_targets("broken [link](unclosed"),
+            "broken [link](unclosed"
+        );
+        assert_eq!(strip_link_targets("\\[kept](x)"), "\\[kept](x)");
+        assert_eq!(
+            strip_link_targets("```\n[code](kept)\n```\n[t](u)\n"),
+            "```\n[code](kept)\n```\nt\n"
+        );
+    }
+
+    #[test]
+    fn html_lang_takes_the_primary_subtag() {
+        assert_eq!(html_lang("es"), Some("es"));
+        assert_eq!(html_lang("ca-ES"), Some("ca"));
+        assert_eq!(html_lang(" en_GB "), Some("en"));
+        assert_eq!(html_lang("x-klingon"), None);
+        assert_eq!(html_lang(""), None);
+    }
+
+    #[test]
+    fn html_files_get_page_cleanup() {
+        let settings = ExtractorSettings::default();
+        let page = config_for(Path::new("Page.HTML"), &settings, 30);
+        assert!(page.html_options.is_some());
+        assert_eq!(page.ocr_embedded_images, Some(false));
+        let doc = config_for(Path::new("brief.docx"), &settings, 30);
+        assert!(doc.html_options.is_none());
+        assert_eq!(doc.ocr_embedded_images, None);
     }
 }

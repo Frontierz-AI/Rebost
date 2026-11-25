@@ -218,14 +218,35 @@ Please remember the ninety (90) days written notice in the Northwind agreement.\
     path
 }
 
-pub fn fixture_notice_html(dir: &Path) -> PathBuf {
-    let path = dir.join("kitchen.html");
+/// A browser "Save page as, complete": `Horario de la biblioteca.html` (a
+/// Spanish page with menus, a cookie banner, a footer, scripts and styles)
+/// plus its `Horario de la biblioteca_files/` folder with a framed page.
+pub fn fixture_saved_page(dir: &Path) -> PathBuf {
+    let page = dir.join("Horario de la biblioteca.html");
     std::fs::write(
-        &path,
-        "<!DOCTYPE html><html><body><h1>Kitchen</h1><p>The office kitchen is restocked every Tuesday morning.</p></body></html>\n",
+        &page,
+        include_str!("../fixtures/saved-page/Horario de la biblioteca.html"),
     )
     .unwrap();
-    path
+    let assets = dir.join("Horario de la biblioteca_files");
+    std::fs::create_dir_all(&assets).unwrap();
+    for (name, body) in [
+        (
+            "mapa.html",
+            include_str!("../fixtures/saved-page/Horario de la biblioteca_files/mapa.html"),
+        ),
+        (
+            "app.js",
+            include_str!("../fixtures/saved-page/Horario de la biblioteca_files/app.js"),
+        ),
+        (
+            "style.css",
+            include_str!("../fixtures/saved-page/Horario de la biblioteca_files/style.css"),
+        ),
+    ] {
+        std::fs::write(assets.join(name), body).unwrap();
+    }
+    page
 }
 
 pub fn fixture_office_note_docx(dir: &Path) -> PathBuf {
