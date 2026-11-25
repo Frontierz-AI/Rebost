@@ -162,6 +162,7 @@ pub(crate) fn open_shelf_file(tool: &ToolCtx<'_>, requested: &str) -> ToolOutcom
     let from_start = start == 0;
     let source = SourcePassage {
         anchor: None,
+        written_by_rebost: false,
         sid: sid.clone(),
         document_id: file.id.clone(),
         shelf_id: shelf_id.to_string(),
@@ -198,7 +199,10 @@ pub(crate) fn open_shelf_file(tool: &ToolCtx<'_>, requested: &str) -> ToolOutcom
             file.label
         )
     };
+    let mut source = source;
+    super::mark_written_by_rebost(tool.ctx, std::slice::from_mut(&mut source));
     ToolOutcome {
+        save: None,
         message: super::format_passages(&header, std::slice::from_ref(&source)),
         file: Some(clip_label(&file.label)).filter(|s| !s.is_empty()),
         change: SourceChange::OpenWindow {

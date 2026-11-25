@@ -258,6 +258,7 @@ mod tests {
     fn passage(score: f32, body: &str) -> SourcePassage {
         SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: String::new(),
             document_id: "d_x".into(),
             shelf_id: "s_x".into(),

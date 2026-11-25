@@ -788,6 +788,7 @@ mod tests {
             crate::timestamps::format(jiff::Timestamp::now() - jiff::SignedDuration::from_hours(1));
         crate::core::write_lock(&ctx.library).upsert_document(DocumentMeta {
             id: "d_scan".into(),
+            written_by_rebost: false,
             shelf_id: shelf.id.clone(),
             source_id: crate::shelf::Shelf::IMPORTED_SOURCE.into(),
             source_type: SourceType::Imported,

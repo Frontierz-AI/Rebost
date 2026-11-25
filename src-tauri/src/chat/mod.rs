@@ -12,7 +12,8 @@
 //!   → local AI (house rules · shelf file index · original message + first excerpts · recent context)
 //!     The AI may search the Shelf again, read more around a citation,
 //!     open a named file (one window at a time), or search earlier turns
-//!     of this conversation and others on the same Shelf
+//!     of this conversation and others on the same Shelf, or ask to save
+//!     the answer as a document on the Shelf (written after the turn ends)
 //!   → streamed answer with citations
 //! ```
 //!
@@ -26,6 +27,7 @@ pub mod images;
 mod neighbors;
 mod prompts;
 mod queries;
+pub mod save_doc;
 mod tools;
 pub(crate) mod web_approval;
 
@@ -60,6 +62,8 @@ pub struct ChatService {
     cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     /// One in-flight generation for the whole app. A second send waits here.
     generation: tokio::sync::Mutex<()>,
+    /// Queues documents Chat saves to a Shelf. Set once the workers start.
+    ingestor: std::sync::OnceLock<crate::ingest::Ingestor>,
 }
 
 impl ChatService {
@@ -69,7 +73,16 @@ impl ChatService {
             engine,
             cancels: Mutex::new(HashMap::new()),
             generation: tokio::sync::Mutex::new(()),
+            ingestor: std::sync::OnceLock::new(),
         })
+    }
+
+    pub fn attach_ingestor(&self, ingestor: crate::ingest::Ingestor) {
+        let _ = self.ingestor.set(ingestor);
+    }
+
+    pub(crate) fn ingestor(&self) -> Option<&crate::ingest::Ingestor> {
+        self.ingestor.get()
     }
 
     pub fn cancel(&self, message_id: &str) {
@@ -144,6 +157,7 @@ impl ChatService {
         // Persist + index the user message so later turns can search earlier chats.
         let user_message = StoredMessage {
             images,
+            saved: None,
             id: crate::ids::message_id(),
             role: "user".into(),
             text: text.clone(),
@@ -277,6 +291,7 @@ impl ChatService {
             }
         };
 
+        let save_request = prepared.as_mut().and_then(|p| p.save.take());
         // The model may cite only the source ids it received.
         let sources = prepared.map(|p| p.sources).unwrap_or_default();
         let valid_ids: Vec<String> = sources.iter().map(|s| s.sid.clone()).collect();
@@ -294,6 +309,7 @@ impl ChatService {
             .unwrap_or_default();
         let mut assistant_message = StoredMessage {
             images: Vec::new(),
+            saved: None,
             id: assistant_id.clone(),
             role: "assistant".into(),
             text: cleaned,
@@ -308,6 +324,15 @@ impl ChatService {
             sources: cited,
             status: status.to_string(),
         };
+        // A save asked for during the turn happens only when the turn finished.
+        assistant_message.saved = save_after_turn(
+            ctx,
+            self.ingestor(),
+            save_request,
+            status,
+            &assistant_message.text,
+            &assistant_message.sources,
+        );
         conversations::compact_message(&mut assistant_message);
         {
             Conversations::append(&ctx.paths, thread_id, &assistant_message)?;
@@ -325,6 +350,36 @@ impl ChatService {
         );
         Ok(assistant_message)
     }
+}
+
+/// Write the document `save_document` asked for, but only for a turn that
+/// finished cleanly. A stopped, interrupted or failed turn writes nothing.
+fn save_after_turn(
+    ctx: &Ctx,
+    ingestor: Option<&crate::ingest::Ingestor>,
+    request: Option<save_doc::SaveRequest>,
+    status: &str,
+    answer: &str,
+    sources: &[SourcePassage],
+) -> Option<save_doc::SavedDocument> {
+    let request = request.filter(|_| status == "done")?;
+    if let Some(reason) = request.refused.as_deref() {
+        return Some(save_doc::SavedDocument::failed(
+            request.file_label(),
+            request.format,
+            reason,
+        ));
+    }
+    let (saved, job) = save_doc::save_answer(
+        ctx,
+        &request.shelf_id,
+        &request.stem,
+        request.format,
+        answer,
+        sources,
+    );
+    save_doc::queue(ingestor, job);
+    Some(saved)
 }
 
 fn index_saved_message(ctx: Arc<Ctx>, thread_id: String, message: StoredMessage) {
@@ -426,6 +481,8 @@ async fn generate_with_tools(
         catalog_for_turn(ctx, shelf_id, upload_shelf_id)
     };
     let shelf_ok = !files.is_empty();
+    let save_shelf = turn.save_shelf.clone();
+    let save_ok = save_shelf.is_some();
     let chats_ok = Conversations::chats_worth_searching(
         &ctx.paths,
         thread_id,
@@ -456,8 +513,14 @@ async fn generate_with_tools(
             upload_shelf_id.is_some() || turn.sources.iter().any(focus::is_open_window);
         let max_rounds = focus::max_tool_rounds(think, named_or_upload, paging);
         let online = crate::core::read_lock(&ctx.settings).allow_online_research;
-        let allowed =
-            tools::ToolSet::new(shelf_ok, !turn.sources.is_empty(), online, chats_ok, &used);
+        let allowed = tools::ToolSet::new(
+            shelf_ok,
+            !turn.sources.is_empty(),
+            online,
+            chats_ok,
+            save_ok,
+            &used,
+        );
         let offer_tools = !answer_only && rounds < max_rounds && allowed.any();
         let mut options = ChatOptions::stream(0.7, answer_token_budget(ctx));
         options.thinking = thinking;
@@ -521,6 +584,7 @@ async fn generate_with_tools(
         };
 
         if !calls.is_empty() && rounds < max_rounds && !answer_only {
+            let mut saving: Option<String> = None;
             turn.messages.push(tools::assistant_tool_message(&calls));
             for call in &calls {
                 if cancel.load(Ordering::Relaxed) {
@@ -529,7 +593,7 @@ async fn generate_with_tools(
                 let hint = tools::status_hint(call, &turn.sources);
                 emit_tool_status(&emit, &hint);
                 let online = crate::core::read_lock(&ctx.settings).allow_online_research;
-                let outcome = tools::run_tool(
+                let mut outcome = tools::run_tool(
                     call,
                     &tools::ToolCtx {
                         ctx,
@@ -546,14 +610,20 @@ async fn generate_with_tools(
                             !turn.sources.is_empty(),
                             online,
                             chats_ok,
+                            save_ok,
                             &used,
                         ),
                         cancel: cancel.as_ref(),
                         open_next: used.open_next.clone(),
                         exclude_message_ids: &turn.history_ids,
+                        save_shelf_id: save_shelf.as_deref(),
                     },
                 )
                 .await;
+                if let Some(request) = outcome.save.take() {
+                    saving = Some(request.file_label());
+                    turn.save = Some(request);
+                }
                 if let Some(file) = outcome.file.as_deref() {
                     if hint.file.as_deref() != Some(file) {
                         emit_tool_status(
@@ -586,9 +656,14 @@ async fn generate_with_tools(
                 !turn.sources.is_empty(),
                 crate::core::read_lock(&ctx.settings).allow_online_research,
                 chats_ok,
+                save_ok,
                 &used,
             );
-            if !after.follow_up_useful() {
+            if let Some(file) = saving {
+                // The next answer is the document. Write it without more tools.
+                answer_only = true;
+                emit("status", json!({ "stage": "writing", "file": file }));
+            } else if !after.follow_up_useful() {
                 answer_only = true;
                 emit("status", json!({ "stage": "thinking" }));
             }
@@ -787,6 +862,10 @@ struct PreparedTurn {
     cited: Vec<SourcePassage>,
     /// Message ids already in the standing prompt (including this user turn).
     history_ids: Vec<String>,
+    /// Library Shelf `save_document` may write to this turn.
+    save_shelf: Option<String>,
+    /// A save the model asked for. Written only if the turn completes.
+    save: Option<save_doc::SaveRequest>,
 }
 
 fn apply_turn_images(
@@ -1129,6 +1208,7 @@ fn prepare_turn(
     let mut sources = upload_sources;
     sources.extend(library_sources);
     tools::assign_sids(&mut sources, &cited);
+    tools::mark_written_by_rebost(ctx, &mut sources);
 
     let (shelf_name, shelf_inventory) = shelf_prompt_bits(ctx, library_id, upload_id);
     let mut named_files = Vec::new();
@@ -1157,6 +1237,10 @@ fn prepare_turn(
         }
     }
     let named_notes = focus::format_named_file_notes(ctx, &named_files);
+    let save_shelf = library_id
+        .filter(|id| save_doc::writable_shelf(ctx, id).is_some())
+        .filter(|_| save_doc::save_intent(text))
+        .map(str::to_string);
     let online = crate::core::read_lock(&ctx.settings).allow_online_research;
     let avatar_name = Conversations::get(&ctx.paths, thread_id)
         .and_then(|thread| avatars::name_for(&thread.avatar_id).map(str::to_string))
@@ -1169,6 +1253,7 @@ fn prepare_turn(
         stuffed,
         (library_id.is_some() || upload_id.is_some()) && !stuffed,
         online,
+        save_shelf.is_some(),
         &avatar_name,
     );
 
@@ -1200,6 +1285,8 @@ fn prepare_turn(
         budget,
         cited,
         history_ids,
+        save_shelf,
+        save: None,
     })
 }
 
@@ -1207,6 +1294,16 @@ fn history_message_text(message: &StoredMessage) -> String {
     let mut text = gate::truncate_at_boundary(&message.text, HISTORY_MESSAGE_MAX_CHARS);
     if message.role == "user" {
         return text;
+    }
+    if let Some(saved) = message
+        .saved
+        .as_ref()
+        .filter(|saved| saved.status == save_doc::SaveStatus::Saved)
+    {
+        text.push_str(&format!(
+            "\n\n(Rebost saved this answer on the Shelf as {}.)",
+            saved.file_name
+        ));
     }
     let legend = format_citation_legend(&message.sources);
     if legend.is_empty() {
@@ -1463,6 +1560,7 @@ fn expand_top_files(
             .fold(0.0f32, f32::max);
         expanded.push(SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: String::new(),
             document_id: id.clone(),
             shelf_id: shelf_id.to_string(),
@@ -1501,6 +1599,7 @@ fn try_stuff_shelf_docs(ctx: &Ctx, shelf_id: &str, budget: usize) -> Option<Vec<
         let text = std::fs::read_to_string(&path).ok()?;
         sources.push(SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: String::new(),
             document_id: doc.id.clone(),
             shelf_id: shelf_id.to_string(),

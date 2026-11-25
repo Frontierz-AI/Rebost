@@ -73,6 +73,7 @@ async fn linked_document(ctx: &Arc<Ctx>, external: &Path) -> (String, DocumentMe
 
 fn message(text: &str, role: &str, status: &str) -> StoredMessage {
     StoredMessage {
+        saved: None,
         id: rebost::ids::message_id(),
         role: role.into(),
         text: text.into(),

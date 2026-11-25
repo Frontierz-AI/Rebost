@@ -64,7 +64,10 @@ fn build_docx(markdown: &str, fallback_title: &str, created: &str) -> Result<Vec
         ("_rels/.rels", package_rels()),
         ("docProps/core.xml", core_props(&title, created)),
         ("word/document.xml", document_xml(&builder.body)),
-        ("word/_rels/document.xml.rels", document_rels(&builder.links)),
+        (
+            "word/_rels/document.xml.rels",
+            document_rels(&builder.links),
+        ),
         ("word/styles.xml", styles_xml()),
         ("word/numbering.xml", numbering_xml(&builder.ordered_starts)),
     ];
@@ -275,9 +278,7 @@ w:color=\"auto\"/></w:pBdr></w:pPr></w:p>",
 
     fn end(&mut self, tag: TagEnd) {
         match tag {
-            TagEnd::Paragraph | TagEnd::HtmlBlock | TagEnd::FootnoteDefinition => {
-                self.close_para()
-            }
+            TagEnd::Paragraph | TagEnd::HtmlBlock | TagEnd::FootnoteDefinition => self.close_para(),
             TagEnd::Heading(_) => {
                 self.close_para();
                 self.heading = None;
@@ -860,7 +861,10 @@ See [the site](https://example.com/?a=1&b=2) or [local](notes.md).\n\n\
             assert_well_formed(name, xml);
         }
         let core = &parts["docProps/core.xml"];
-        assert!(core.contains("<dc:title>Quarterly report</dc:title>"), "{core}");
+        assert!(
+            core.contains("<dc:title>Quarterly report</dc:title>"),
+            "{core}"
+        );
         let doc = &parts["word/document.xml"];
         assert!(doc.contains("<w:pStyle w:val=\"Title\"/>"));
         assert!(doc.contains("<w:pStyle w:val=\"Heading2\"/>"));
@@ -882,14 +886,21 @@ See [the site](https://example.com/?a=1&b=2) or [local](notes.md).\n\n\
         assert_eq!(rels.matches("TargetMode=\"External\"").count(), 1);
         let numbering = &parts["word/numbering.xml"];
         assert!(numbering.contains("<w:num w:numId=\"2\">"));
-        assert!(numbering.contains("<w:startOverride w:val=\"3\"/>"), "{numbering}");
+        assert!(
+            numbering.contains("<w:startOverride w:val=\"3\"/>"),
+            "{numbering}"
+        );
         assert!(parts["word/styles.xml"].contains("w:styleId=\"Heading1\""));
     }
 
     #[test]
     fn title_falls_back_and_control_characters_are_dropped() {
-        let bytes = build_docx("Plain text\u{0007} only.", "My <notes>", "2026-01-01T00:00:00Z")
-            .unwrap();
+        let bytes = build_docx(
+            "Plain text\u{0007} only.",
+            "My <notes>",
+            "2026-01-01T00:00:00Z",
+        )
+        .unwrap();
         let parts = entries(&bytes);
         assert!(parts["docProps/core.xml"].contains("<dc:title>My &lt;notes&gt;</dc:title>"));
         let doc = &parts["word/document.xml"];
@@ -908,7 +919,13 @@ See [the site](https://example.com/?a=1&b=2) or [local](notes.md).\n\n\
 
     #[test]
     fn empty_and_odd_input_still_makes_a_valid_document() {
-        for input in ["", "| a |\n|---|\n| b |", "[unterminated](", "```\nno end", "<div>x</div>"] {
+        for input in [
+            "",
+            "| a |\n|---|\n| b |",
+            "[unterminated](",
+            "```\nno end",
+            "<div>x</div>",
+        ] {
             let bytes = build_docx(input, "Empty", "2026-01-01T00:00:00Z").unwrap();
             let parts = entries(&bytes);
             assert_well_formed(input, &parts["word/document.xml"]);

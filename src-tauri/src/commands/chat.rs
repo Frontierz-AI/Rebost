@@ -7,6 +7,7 @@ use tauri_plugin_dialog::DialogExt;
 use super::shelves::{shelf_view, ShelfView};
 use super::{friendly, require_id, require_optional_id, CmdResult};
 use crate::chat::conversations::{Conversations, ThreadMeta, ThreadPage};
+use crate::chat::save_doc::{self, DocFormat, SaveStatus, SavedDocument};
 use crate::chat::ChatService;
 use crate::core::Ctx;
 use crate::engine::Engine;
@@ -170,6 +171,97 @@ pub fn chat_send(
         }
     });
     Ok(())
+}
+
+/// Save one assistant answer as a document on the conversation's Shelf.
+#[tauri::command]
+pub async fn chat_save_message(
+    ctx: State<'_, Arc<Ctx>>,
+    chat: State<'_, Arc<ChatService>>,
+    thread_id: String,
+    message_id: String,
+    format: Option<String>,
+    file_name: Option<String>,
+) -> CmdResult<SavedDocument> {
+    require_id(&thread_id)?;
+    require_id(&message_id)?;
+    let thread = Conversations::get(&ctx.paths, &thread_id).ok_or("thread not found")?;
+    let shelf_id = thread
+        .shelf_id
+        .clone()
+        .filter(|id| save_doc::writable_shelf(&ctx, id).is_some())
+        .ok_or_else(|| rust_i18n::t!("errors.saveNeedsShelf").to_string())?;
+    let message = Conversations::messages(&ctx.paths, &thread_id)
+        .into_iter()
+        .find(|m| m.id == message_id && m.role == "assistant")
+        .ok_or("That item is no longer available.")?;
+    if message.text.trim().is_empty() {
+        return Err(rust_i18n::t!("errors.saveEmpty").to_string());
+    }
+    let format = format
+        .as_deref()
+        .and_then(DocFormat::parse)
+        .unwrap_or_default();
+    let stem = file_name
+        .filter(|name| !name.trim().is_empty())
+        .unwrap_or_else(|| save_doc::default_stem(&message.text, &thread.title));
+    let (saved, job) = {
+        let ctx = ctx.inner().clone();
+        let message = message.clone();
+        tokio::task::spawn_blocking(move || {
+            save_doc::save_answer(
+                &ctx,
+                &shelf_id,
+                &stem,
+                format,
+                &message.text,
+                &message.sources,
+            )
+        })
+        .await
+        .map_err(friendly)?
+    };
+    save_doc::queue(chat.ingestor(), job);
+    let stored = saved.clone();
+    Conversations::update_message(&ctx.paths, &thread_id, &message_id, move |m| {
+        m.saved = Some(stored);
+    })
+    .map_err(friendly)?;
+    Ok(saved)
+}
+
+/// Remove a document an answer saved, and its entry on the Shelf.
+#[tauri::command]
+pub async fn chat_undo_save(
+    ctx: State<'_, Arc<Ctx>>,
+    thread_id: String,
+    message_id: String,
+) -> CmdResult<SavedDocument> {
+    require_id(&thread_id)?;
+    require_id(&message_id)?;
+    let message = Conversations::messages(&ctx.paths, &thread_id)
+        .into_iter()
+        .find(|m| m.id == message_id)
+        .ok_or("That item is no longer available.")?;
+    let mut saved = message
+        .saved
+        .filter(|saved| saved.status == SaveStatus::Saved)
+        .ok_or_else(|| rust_i18n::t!("errors.saveUndoFailed").to_string())?;
+    {
+        let ctx = ctx.inner().clone();
+        let saved = saved.clone();
+        tokio::task::spawn_blocking(move || save_doc::undo(&ctx, &saved))
+            .await
+            .map_err(friendly)?
+            .map_err(|error| error.to_string())?;
+    }
+    saved.status = SaveStatus::Undone;
+    let stored = saved.clone();
+    Conversations::update_message(&ctx.paths, &thread_id, &message_id, move |m| {
+        m.saved = Some(stored);
+    })
+    .map_err(friendly)?;
+    Ok(saved)
 }
 
 /// Stop streaming the current answer.

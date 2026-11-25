@@ -220,6 +220,7 @@ async fn interrupted_reading_finishes_on_the_next_pass() {
         let mut library = app.ctx.library.write().unwrap();
         library.upsert_document(rebost::types::DocumentMeta {
             id: doc_id.clone(),
+            written_by_rebost: false,
             shelf_id: shelf_id.clone(),
             source_id: rebost::shelf::Shelf::IMPORTED_SOURCE.to_string(),
             source_type: rebost::types::SourceType::Imported,
@@ -353,6 +354,7 @@ async fn a_full_shelf_does_not_take_another_file() {
         for i in 0..rebost::shelf::DEFAULT_FILE_LIMIT {
             library.upsert_document(rebost::types::DocumentMeta {
                 id: format!("d_fill{i}"),
+                written_by_rebost: false,
                 shelf_id: shelf_id.clone(),
                 source_id: rebost::shelf::Shelf::IMPORTED_SOURCE.to_string(),
                 source_type: rebost::types::SourceType::Imported,

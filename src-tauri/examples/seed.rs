@@ -244,6 +244,7 @@ fn doc_named(ctx: &Ctx, shelf_id: &str, file_name: &str) -> Option<SourcePassage
         .to_string();
     Some(SourcePassage {
         anchor: None,
+        written_by_rebost: false,
         sid: "S1".into(),
         document_id: doc.id,
         shelf_id: doc.shelf_id,
@@ -280,6 +281,7 @@ fn user(ctx: &Ctx, thread_id: &str, shelf_id: Option<&str>, text: &str) -> anyho
     let ts = now();
     let message = StoredMessage {
         images: Vec::new(),
+        saved: None,
         id: rebost::ids::message_id(),
         role: "user".into(),
         text: text.into(),
@@ -308,6 +310,7 @@ fn assistant(
     let ts = now();
     let message = StoredMessage {
         images: Vec::new(),
+        saved: None,
         id: rebost::ids::message_id(),
         role: "assistant".into(),
         text: text.into(),

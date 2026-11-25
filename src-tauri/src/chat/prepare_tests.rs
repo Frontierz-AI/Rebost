@@ -87,11 +87,13 @@ fn tool_ctx<'a>(
             !sources.is_empty(),
             false,
             true,
+            false,
             &tools::ToolUse::default(),
         ),
         cancel: idle_cancel(),
         open_next: HashMap::new(),
         exclude_message_ids: &[],
+        save_shelf_id: None,
     }
 }
 
@@ -114,10 +116,11 @@ fn tool_ctx_used<'a>(
         cited: &[],
         budget,
         think: ThinkLevel::Off,
-        allowed: tools::ToolSet::new(true, !sources.is_empty(), false, true, used),
+        allowed: tools::ToolSet::new(true, !sources.is_empty(), false, true, false, used),
         cancel: idle_cancel(),
         open_next: used.open_next.clone(),
         exclude_message_ids: &[],
+        save_shelf_id: None,
     }
 }
 
@@ -677,6 +680,7 @@ async fn look_around_widens_an_excerpt() {
     let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
     let excerpt = SourcePassage {
         anchor: None,
+        written_by_rebost: false,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -714,6 +718,7 @@ async fn look_around_widens_an_excerpt() {
 
 fn user_line(text: &str) -> StoredMessage {
     StoredMessage {
+        saved: None,
         images: Vec::new(),
         id: crate::ids::message_id(),
         role: "user".into(),
@@ -771,10 +776,11 @@ async fn search_chats_returns_notes_from_other_threads_on_the_same_shelf() {
         cited: &[],
         budget: 9_000,
         think: ThinkLevel::Off,
-        allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
+        allowed: tools::ToolSet::new(false, false, false, true, false, &tools::ToolUse::default()),
         cancel: idle_cancel(),
         open_next: HashMap::new(),
         exclude_message_ids: &[],
+        save_shelf_id: None,
     };
     let call = ToolCall::function(
         "c1",
@@ -824,10 +830,11 @@ async fn search_chats_finds_earlier_turns_of_this_thread() {
         cited: &[],
         budget: 9_000,
         think: ThinkLevel::Off,
-        allowed: tools::ToolSet::new(false, false, false, true, &tools::ToolUse::default()),
+        allowed: tools::ToolSet::new(false, false, false, true, false, &tools::ToolUse::default()),
         cancel: idle_cancel(),
         open_next: HashMap::new(),
         exclude_message_ids: &skip,
+        save_shelf_id: None,
     };
     let call = ToolCall::function(
         "c1",
@@ -1011,6 +1018,7 @@ async fn open_shelf_file_pages_and_keeps_other_excerpts() {
     let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
     let mid = SourcePassage {
         anchor: None,
+        written_by_rebost: false,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -1136,6 +1144,7 @@ async fn look_around_continues_a_prefix_when_the_window_is_full() {
     let prefix = gate::truncate_at_boundary(&extracted, 400);
     let excerpt = SourcePassage {
         anchor: None,
+        written_by_rebost: false,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -1178,6 +1187,7 @@ async fn look_around_does_not_rewind_a_continued_window() {
     let files = super::tools::catalog(&fixture.ctx, &fixture.shelf.id);
     let excerpt = SourcePassage {
         anchor: None,
+        written_by_rebost: false,
         sid: "S1".into(),
         document_id: files[0].id.clone(),
         shelf_id: fixture.shelf.id.clone(),
@@ -1300,4 +1310,219 @@ async fn attachment_wait_includes_the_pre_extraction_stage() {
         .unwrap()
         .unwrap()
         .unwrap();
+}
+
+fn save_call(args: &str) -> ToolCall {
+    ToolCall::function("call_save", "save_document", args)
+}
+
+fn shelf_files(shelf: &crate::shelf::Shelf) -> Vec<String> {
+    let mut names: Vec<String> = std::fs::read_dir(&shelf.managed_path)
+        .unwrap()
+        .flatten()
+        .filter(|e| e.path().is_file())
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .collect();
+    names.sort();
+    names
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn save_document_records_a_pending_save_and_writes_nothing_yet() {
+    let fixture = shelf_with_file("brief.md", "The office moves to Gràcia in March.").await;
+    let before = shelf_files(&fixture.shelf);
+    let used = tools::ToolUse::default();
+    let mut tool = tool_ctx_used(
+        &fixture.ctx,
+        "t_save",
+        &fixture.shelf.id,
+        &[],
+        &[],
+        4_000,
+        &used,
+    );
+    tool.allowed = tools::ToolSet::new(false, false, false, false, true, &used);
+    tool.save_shelf_id = Some(&fixture.shelf.id);
+
+    let outcome = tools::run_tool(
+        &save_call(r#"{"file_name":"../Move plan.docx","format":"md"}"#),
+        &tool,
+    )
+    .await;
+    let request = outcome.save.expect("pending save");
+    assert_eq!(request.file_label(), "Move plan.md");
+    assert!(request.refused.is_none());
+    assert!(
+        outcome.message.contains("\"Move plan.md\""),
+        "{}",
+        outcome.message
+    );
+    assert!(outcome
+        .message
+        .contains("write the complete document as your answer"));
+    assert_eq!(
+        shelf_files(&fixture.shelf),
+        before,
+        "nothing is written by the tool call"
+    );
+
+    let mut used = tools::ToolUse::default();
+    tools::note_use(&mut used, &save_call("{}"), &tools::SourceChange::None);
+    let after = tools::ToolSet::new(false, false, false, false, true, &used);
+    assert!(!after.save_document, "one save per turn");
+    let mut tool = tool_ctx_used(
+        &fixture.ctx,
+        "t_save",
+        &fixture.shelf.id,
+        &[],
+        &[],
+        4_000,
+        &used,
+    );
+    tool.allowed = after;
+    tool.save_shelf_id = Some(&fixture.shelf.id);
+    let second = tools::run_tool(&save_call(r#"{"file_name":"Again"}"#), &tool).await;
+    assert!(second.save.is_none());
+    assert!(
+        second.message.contains("isn't available"),
+        "{}",
+        second.message
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_pending_save_is_written_only_when_the_turn_is_done() {
+    let fixture = shelf_with_file("brief.md", "The office moves to Gràcia in March.").await;
+    let before = shelf_files(&fixture.shelf);
+    let request = || save_doc::SaveRequest {
+        shelf_id: fixture.shelf.id.clone(),
+        stem: "Move plan".into(),
+        format: save_doc::DocFormat::Docx,
+        refused: None,
+    };
+    for status in ["stopped", "interrupted", "error"] {
+        let saved = save_after_turn(&fixture.ctx, None, Some(request()), status, "# Plan", &[]);
+        assert!(saved.is_none(), "{status} must not save");
+        assert_eq!(shelf_files(&fixture.shelf), before, "{status} wrote a file");
+    }
+    assert!(save_after_turn(&fixture.ctx, None, None, "done", "# Plan", &[]).is_none());
+
+    let saved = save_after_turn(
+        &fixture.ctx,
+        None,
+        Some(request()),
+        "done",
+        "# Plan\n\nGo.",
+        &[],
+    )
+    .unwrap();
+    assert_eq!(saved.status, save_doc::SaveStatus::Saved);
+    assert_eq!(saved.file_name, "Move plan.docx");
+    let path = std::path::PathBuf::from(saved.path.unwrap());
+    assert_eq!(path.parent().unwrap(), fixture.shelf.managed_path);
+    assert!(path.exists());
+
+    let mut full = request();
+    full.refused = Some(save_doc::ERROR_SHELF_FULL.into());
+    let refused = save_after_turn(&fixture.ctx, None, Some(full), "done", "# Plan", &[]).unwrap();
+    assert_eq!(refused.status, save_doc::SaveStatus::Failed);
+    assert_eq!(refused.error.as_deref(), Some(save_doc::ERROR_SHELF_FULL));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn save_is_offered_for_a_document_request_on_a_library_shelf_only() {
+    let fixture = shelf_with_file("brief.md", "The office moves to Gràcia in March.").await;
+    let ask = |text: &str, shelf: Option<&str>, upload: Option<&str>| {
+        prepare_turn(
+            &fixture.ctx,
+            "t_offer",
+            text,
+            shelf,
+            upload,
+            "m_user",
+            &[],
+            ThinkLevel::Off,
+            &[],
+        )
+        .unwrap()
+    };
+    let turn = ask(
+        "Write a short report about the move",
+        Some(&fixture.shelf.id),
+        None,
+    );
+    assert_eq!(turn.save_shelf.as_deref(), Some(fixture.shelf.id.as_str()));
+    let system = turn.messages[0].as_text();
+    assert!(system.contains("tool that saves documents"), "{system}");
+    assert!(
+        !system.contains("save_document"),
+        "the prompt does not name tools"
+    );
+
+    let plain = ask("When does the office move?", Some(&fixture.shelf.id), None);
+    assert!(plain.save_shelf.is_none());
+    assert!(!plain.messages[0]
+        .as_text()
+        .contains("tool that saves documents"));
+
+    let no_shelf = ask("Write a short report", None, None);
+    assert!(no_shelf.save_shelf.is_none());
+
+    let upload = crate::core::write_lock(&fixture.ctx.library)
+        .ensure_conversation_shelf(&fixture.ctx.paths, "t_offer")
+        .unwrap();
+    let upload_only = ask("Write a short report", None, Some(&upload.id));
+    assert!(
+        upload_only.save_shelf.is_none(),
+        "never into an upload Shelf"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_document_rebost_wrote_is_labelled_in_the_prompt() {
+    let fixture = shelf_with_file("brief.md", "The office moves to Gràcia in March.").await;
+    let (saved, job) = save_doc::save_answer(
+        &fixture.ctx,
+        &fixture.shelf.id,
+        "Move summary",
+        save_doc::DocFormat::Md,
+        "# Move summary\n\nThe kitchen opens in April.",
+        &[],
+    );
+    crate::ingest::process_file(&fixture.ctx, &job.unwrap())
+        .await
+        .unwrap();
+    assert_eq!(saved.status, save_doc::SaveStatus::Saved);
+    let turn = prepare_turn(
+        &fixture.ctx,
+        "t_label",
+        "When does the kitchen open?",
+        Some(&fixture.shelf.id),
+        None,
+        "m_user",
+        &[],
+        ThinkLevel::Off,
+        &[],
+    )
+    .unwrap();
+    let written = turn
+        .sources
+        .iter()
+        .find(|s| s.title == "Move summary.md")
+        .expect("the saved file is on the Shelf");
+    assert!(written.written_by_rebost);
+    let brief = turn.sources.iter().find(|s| s.title == "brief.md").unwrap();
+    assert!(!brief.written_by_rebost);
+    let user = turn.messages.last().unwrap().as_text();
+    assert!(
+        user.contains(&format!(
+            "Move summary.md{}",
+            prompts::WRITTEN_BY_REBOST_NOTE
+        )),
+        "{user}"
+    );
+    assert_eq!(
+        format_citation_legend(std::slice::from_ref(written)),
+        format!("{} Move summary.md (written by Rebost)", written.sid)
+    );
 }

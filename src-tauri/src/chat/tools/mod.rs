@@ -1,5 +1,6 @@
 //! OpenAI-style tools for Chat: search this Shelf, look around a citation,
-//! open a named file, search earlier conversations, and (when allowed) the web.
+//! open a named file, search earlier conversations, (when allowed) the web,
+//! and save the next answer as a document on the Shelf.
 
 mod open;
 mod parse;
@@ -11,6 +12,7 @@ use std::sync::atomic::AtomicBool;
 
 use serde_json::{json, Value};
 
+use super::save_doc::{self, DocFormat, SaveRequest};
 use crate::core::Ctx;
 use crate::engine::ToolCall;
 use crate::shelf::ThinkLevel;
@@ -29,6 +31,7 @@ pub(crate) const OPEN_SHELF_FILE: &str = "open_shelf_file";
 pub(crate) const SEARCH_CHATS: &str = "search_chats";
 pub(crate) const SEARCH_WEB: &str = "search_web";
 pub(crate) const READ_WEB_PAGE: &str = "read_web_page";
+pub(crate) const SAVE_DOCUMENT: &str = "save_document";
 pub(crate) const MAX_TOOL_ROUNDS: usize = 3;
 pub(crate) const MAX_OPENED_FILES: usize = 2;
 const MAX_SHELF_SEARCHES: usize = 2;
@@ -36,6 +39,7 @@ const MAX_LOOK_AROUNDS: usize = 2;
 const MAX_CHAT_SEARCHES: usize = 2;
 const MAX_WEB_SEARCHES: usize = 2;
 const MAX_PAGE_READS: usize = 2;
+const MAX_SAVES: usize = 1;
 const TOOL_ENUM_MAX: usize = 48;
 pub(crate) const MIN_TOOL_CHARS: usize = 256;
 
@@ -47,6 +51,7 @@ pub(crate) enum ToolName {
     SearchChats,
     SearchWeb,
     ReadWebPage,
+    SaveDocument,
 }
 
 impl ToolName {
@@ -58,6 +63,7 @@ impl ToolName {
             Self::SearchChats => SEARCH_CHATS,
             Self::SearchWeb => SEARCH_WEB,
             Self::ReadWebPage => READ_WEB_PAGE,
+            Self::SaveDocument => SAVE_DOCUMENT,
         }
     }
 
@@ -82,6 +88,8 @@ impl ToolName {
             }
             READ_WEB_PAGE | "get_web_page" | "fetch_url" | "open_url" | "read_url"
             | "browse_page" => Some(Self::ReadWebPage),
+            SAVE_DOCUMENT | "create_document" | "write_document" | "save_file" | "create_file"
+            | "save_to_shelf" | "save_doc" | "make_document" => Some(Self::SaveDocument),
             _ => None,
         }
     }
@@ -94,6 +102,7 @@ impl ToolName {
             Self::SearchChats => "chats",
             Self::SearchWeb => "web",
             Self::ReadWebPage => "page",
+            Self::SaveDocument => "writing",
         }
     }
 }
@@ -106,6 +115,7 @@ pub(crate) struct ToolSet {
     pub search_chats: bool,
     pub search_web: bool,
     pub read_web_page: bool,
+    pub save_document: bool,
 }
 
 impl ToolSet {
@@ -114,6 +124,7 @@ impl ToolSet {
         has_sources: bool,
         online: bool,
         chats_ok: bool,
+        save_ok: bool,
         used: &ToolUse,
     ) -> Self {
         Self {
@@ -123,11 +134,12 @@ impl ToolSet {
             search_chats: chats_ok && used.chats < MAX_CHAT_SEARCHES,
             search_web: online && used.web_searches < MAX_WEB_SEARCHES,
             read_web_page: online && used.page_reads < MAX_PAGE_READS,
+            save_document: save_ok && used.saves < MAX_SAVES,
         }
     }
 
-    /// Shelf or web tools that still need another look. `search_chats` alone
-    /// should not start another tool round.
+    /// Shelf or web tools that still need another look. `search_chats` or
+    /// `save_document` alone should not start another tool round.
     pub(crate) fn follow_up_useful(self) -> bool {
         self.search_shelf
             || self.look_around
@@ -143,6 +155,7 @@ impl ToolSet {
             || self.search_chats
             || self.search_web
             || self.read_web_page
+            || self.save_document
     }
 
     fn allows(self, name: ToolName) -> bool {
@@ -153,6 +166,7 @@ impl ToolSet {
             ToolName::SearchChats => self.search_chats,
             ToolName::SearchWeb => self.search_web,
             ToolName::ReadWebPage => self.read_web_page,
+            ToolName::SaveDocument => self.save_document,
         }
     }
 
@@ -164,6 +178,7 @@ impl ToolSet {
             (self.search_chats, SEARCH_CHATS),
             (self.search_web, SEARCH_WEB),
             (self.read_web_page, READ_WEB_PAGE),
+            (self.save_document, SAVE_DOCUMENT),
         ]
         .into_iter()
         .filter(|(on, _)| *on)
@@ -292,6 +307,30 @@ impl ToolSet {
                 }
             }));
         }
+        if self.save_document {
+            tools.push(json!({
+                "type": "function",
+                "function": {
+                    "name": SAVE_DOCUMENT,
+                    "description": "Save a document to this Shelf as a file. Use when the user asks you to create, write, or draft a document, report, letter, summary, or notes to keep. Pass only a short file name and the format, never the document text. After this call, write the whole document as your answer in Markdown.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "file_name": {
+                                "type": "string",
+                                "description": "Short file name without folders, like Quarterly report.",
+                            },
+                            "format": {
+                                "type": "string",
+                                "enum": ["docx", "md", "txt"],
+                                "description": "docx (Word, default), md (Markdown), or txt (plain text).",
+                            }
+                        },
+                        "required": ["file_name"]
+                    }
+                }
+            }));
+        }
         json!(tools)
     }
 }
@@ -306,6 +345,7 @@ pub(crate) struct ToolUse {
     chats: usize,
     web_searches: usize,
     page_reads: usize,
+    saves: usize,
 }
 
 impl ToolUse {
@@ -328,6 +368,7 @@ impl ToolUse {
             ToolName::SearchChats => self.chats += 1,
             ToolName::SearchWeb => self.web_searches += 1,
             ToolName::ReadWebPage => self.page_reads += 1,
+            ToolName::SaveDocument => self.saves += 1,
         }
     }
 }
@@ -350,6 +391,8 @@ pub(crate) struct ToolCtx<'a> {
     pub open_next: HashMap<String, usize>,
     /// Message ids already in the standing prompt. `search_chats` skips them.
     pub exclude_message_ids: &'a [String],
+    /// Library Shelf that `save_document` writes to.
+    pub save_shelf_id: Option<&'a str>,
 }
 
 impl ToolCtx<'_> {
@@ -386,6 +429,8 @@ pub(crate) struct ToolOutcome {
     pub message: String,
     pub change: SourceChange,
     pub file: Option<String>,
+    /// `save_document` asked to keep this turn's answer as a file.
+    pub save: Option<SaveRequest>,
 }
 
 impl ToolOutcome {
@@ -394,6 +439,7 @@ impl ToolOutcome {
             message: message.into(),
             change: SourceChange::None,
             file: None,
+            save: None,
         }
     }
 }
@@ -416,6 +462,13 @@ pub(crate) fn status_hint(call: &ToolCall, sources: &[SourcePassage]) -> StatusH
             .filter(|s| !s.is_empty()),
         ToolName::LookAround => look_around_label(call, sources),
         ToolName::ReadWebPage => web::page_label(&url_arg(call)),
+        ToolName::SaveDocument => {
+            let (stem, format) = save_args(call);
+            Some(clip_label(&save_doc::file_label(
+                &save_doc::sanitize_stem(&stem),
+                format,
+            )))
+        }
         ToolName::SearchShelf | ToolName::SearchChats | ToolName::SearchWeb => None,
     };
     StatusHint {
@@ -459,6 +512,7 @@ pub(crate) async fn run_tool(call: &ToolCall, tool: &ToolCtx<'_>) -> ToolOutcome
         ToolName::LookAround => search::look_around(tool, &id_arg(call)),
         ToolName::OpenFile => open_shelf_file(tool, &requested_file_name(call).unwrap_or_default()),
         ToolName::SearchChats => search::search_chats(tool, &query_arg(call)),
+        ToolName::SaveDocument => save_document(tool, call),
         ToolName::SearchWeb | ToolName::ReadWebPage => {
             let value = if name == ToolName::SearchWeb {
                 query_arg(call)
@@ -483,6 +537,58 @@ pub(crate) async fn run_tool(call: &ToolCall, tool: &ToolCtx<'_>) -> ToolOutcome
             }
         }
     }
+}
+
+/// Record the save; the document itself is the next answer.
+fn save_document(tool: &ToolCtx<'_>, call: &ToolCall) -> ToolOutcome {
+    let Some(shelf_id) = tool.save_shelf_id else {
+        return ToolOutcome::reply("Saving needs a Shelf. Answer normally.");
+    };
+    let (raw, format) = save_args(call);
+    let stem = save_doc::sanitize_stem(&raw);
+    let label = save_doc::file_label(&stem, format);
+    let room = save_doc::shelf_has_room(tool.ctx, shelf_id);
+    let message = if room {
+        format!(
+            "Rebost will save your next answer as \"{label}\" on this Shelf when it is complete. \
+Now write the complete document as your answer, in Markdown, starting with a # title. \
+Write only the document: no tool calls, no notes about saving, no preamble."
+        )
+    } else {
+        format!(
+            "This Shelf is full, so \"{label}\" cannot be saved. Tell the user the Shelf has \
+reached its file limit, then write the document as your answer so they can copy it."
+        )
+    };
+    ToolOutcome {
+        message,
+        change: SourceChange::None,
+        file: Some(clip_label(&label)),
+        save: Some(SaveRequest {
+            shelf_id: shelf_id.to_string(),
+            stem,
+            format,
+            refused: (!room).then(|| save_doc::ERROR_SHELF_FULL.to_string()),
+        }),
+    }
+}
+
+/// File stem and format from a `save_document` call. A format argument wins;
+/// otherwise an extension on the name decides; otherwise .docx.
+fn save_args(call: &ToolCall) -> (String, DocFormat) {
+    let name = arg_string(
+        &call.function.arguments,
+        &["file_name", "filename", "name", "title", "file"],
+    )
+    .unwrap_or_default();
+    let format = arg_string(
+        &call.function.arguments,
+        &["format", "type", "extension", "ext"],
+    )
+    .and_then(|raw| DocFormat::parse(&raw))
+    .or_else(|| save_doc::format_from_name(&name))
+    .unwrap_or_default();
+    (name, format)
 }
 
 pub(crate) fn apply_change(sources: &mut Vec<SourcePassage>, change: SourceChange) {
@@ -579,6 +685,17 @@ pub(crate) fn clip_label(name: &str) -> String {
     }
 }
 
+/// Flag passages from files Rebost wrote, so prompts and the source list
+/// say so.
+pub(crate) fn mark_written_by_rebost(ctx: &Ctx, passages: &mut [SourcePassage]) {
+    let library = crate::core::read_lock(&ctx.library);
+    for passage in passages {
+        if let Some(meta) = library.document(&passage.shelf_id, &passage.document_id) {
+            passage.written_by_rebost = meta.written_by_rebost;
+        }
+    }
+}
+
 pub(crate) fn sources_cost(sources: &[SourcePassage]) -> usize {
     sources.iter().map(crate::search::gate::passage_cost).sum()
 }
@@ -664,8 +781,13 @@ pub(crate) fn format_passages(header: &str, passages: &[SourcePassage]) -> Strin
     let mut out = header.to_string();
     out.push_str(" The user did not write this.");
     for source in passages {
+        let made = if source.written_by_rebost {
+            super::prompts::WRITTEN_BY_REBOST_NOTE
+        } else {
+            ""
+        };
         out.push_str(&format!(
-            "\n\n[{}] {}\n{}",
+            "\n\n[{}] {}{made}\n{}",
             source.sid, source.title, source.body
         ));
     }
@@ -762,6 +884,7 @@ impl AnswerHoldback {
             || t.starts_with("search_chats")
             || t.starts_with("search_web")
             || t.starts_with("read_web_page")
+            || t.starts_with("save_document")
             || t.starts_with("tool_call")
             || t.starts_with("call:")
     }
@@ -771,9 +894,9 @@ impl AnswerHoldback {
         if t.is_empty() || Self::is_toolish(t) {
             return false;
         }
-        t.chars()
-            .next()
-            .is_some_and(|c| c.is_alphabetic() || c.is_numeric() || c == '#' || c == '*')
+        t.chars().next().is_some_and(|c| {
+            c.is_alphabetic() || c.is_numeric() || matches!(c, '#' | '*' | '-' | '>' | '|' | '_')
+        })
     }
 }
 
@@ -784,7 +907,7 @@ mod tests {
     #[test]
     fn schema_lists_the_tools_that_are_on() {
         let used = ToolUse::default();
-        let all = ToolSet::new(true, true, false, true, &used);
+        let all = ToolSet::new(true, true, false, true, false, &used);
         let spec = all.schema(&["a.md".into(), "b.md".into()]);
         let names: Vec<&str> = spec
             .as_array()
@@ -812,7 +935,7 @@ mod tests {
             .get("offset")
             .is_none());
 
-        let stuffed = ToolSet::new(false, false, false, true, &used);
+        let stuffed = ToolSet::new(false, false, false, true, false, &used);
         let spec = stuffed.schema(&[]);
         assert_eq!(spec.as_array().unwrap().len(), 1);
         assert_eq!(spec[0]["function"]["name"], SEARCH_CHATS);
@@ -821,13 +944,13 @@ mod tests {
         assert!(chats.contains("this Shelf"));
         assert!(chats.contains("Skip it for a new request"));
 
-        let no_memory = ToolSet::new(false, false, false, false, &used);
+        let no_memory = ToolSet::new(false, false, false, false, false, &used);
         assert!(no_memory.schema(&[]).as_array().unwrap().is_empty());
         assert!(!no_memory.follow_up_useful());
-        assert!(!ToolSet::new(false, false, false, true, &used).follow_up_useful());
-        assert!(ToolSet::new(true, true, false, false, &used).follow_up_useful());
+        assert!(!ToolSet::new(false, false, false, true, false, &used).follow_up_useful());
+        assert!(ToolSet::new(true, true, false, false, false, &used).follow_up_useful());
 
-        let online = ToolSet::new(false, false, true, true, &used);
+        let online = ToolSet::new(false, false, true, true, false, &used);
         let spec = online.schema(&[]);
         let names: Vec<&str> = spec
             .as_array()
@@ -836,7 +959,7 @@ mod tests {
             .map(|t| t["function"]["name"].as_str().unwrap())
             .collect();
         assert_eq!(names, [SEARCH_CHATS, SEARCH_WEB, READ_WEB_PAGE]);
-        let web_only = ToolSet::new(false, false, true, false, &used);
+        let web_only = ToolSet::new(false, false, true, false, false, &used);
         let web_spec = web_only.schema(&[]);
         let names: Vec<&str> = web_spec
             .as_array()
@@ -868,6 +991,50 @@ mod tests {
     }
 
     #[test]
+    fn save_document_schema_carries_metadata_only() {
+        let used = ToolUse::default();
+        let save_only = ToolSet::new(false, false, false, false, true, &used);
+        assert!(save_only.any());
+        assert!(
+            !save_only.follow_up_useful(),
+            "saving alone is not a reason for more rounds"
+        );
+        let spec = save_only.schema(&[]);
+        assert_eq!(spec.as_array().unwrap().len(), 1);
+        let function = &spec[0]["function"];
+        assert_eq!(function["name"], SAVE_DOCUMENT);
+        let props = function["parameters"]["properties"].as_object().unwrap();
+        let mut keys: Vec<&str> = props.keys().map(String::as_str).collect();
+        keys.sort_unstable();
+        assert_eq!(
+            keys,
+            ["file_name", "format"],
+            "no field for the document text"
+        );
+        assert_eq!(props["format"]["enum"], json!(["docx", "md", "txt"]));
+        assert!(function["description"]
+            .as_str()
+            .unwrap()
+            .contains("never the document text"));
+        assert!(!ToolSet::new(true, true, false, true, false, &used)
+            .schema(&[])
+            .to_string()
+            .contains(SAVE_DOCUMENT));
+
+        let call = ToolCall::function("c", "write_document", r#"{"name":"Plan.md"}"#);
+        let hint = status_hint(&call, &[]);
+        assert_eq!(hint.stage, "writing");
+        assert_eq!(hint.file.as_deref(), Some("Plan.md"));
+        let call = ToolCall::function(
+            "c",
+            "save_document",
+            r#"{"file_name":"Plan.md","format":"docx"}"#,
+        );
+        assert_eq!(status_hint(&call, &[]).file.as_deref(), Some("Plan.docx"));
+        assert!(AnswerHoldback::is_toolish("save_document(file_name=\"x\")"));
+    }
+
+    #[test]
     fn aliases_normalize_to_canonical_names() {
         assert_eq!(ToolName::parse("read_file"), Some(ToolName::OpenFile));
         assert_eq!(
@@ -882,6 +1049,18 @@ mod tests {
         assert_eq!(ToolName::parse("web_search"), Some(ToolName::SearchWeb));
         assert_eq!(ToolName::parse("fetch_url"), Some(ToolName::ReadWebPage));
         assert_eq!(normalize_tool_name("read_file"), OPEN_SHELF_FILE);
+        for alias in [
+            "create_document",
+            "write_document",
+            "save_file",
+            "save_to_shelf",
+        ] {
+            assert_eq!(
+                ToolName::parse(alias),
+                Some(ToolName::SaveDocument),
+                "{alias}"
+            );
+        }
     }
 
     #[test]
@@ -896,6 +1075,7 @@ mod tests {
     fn passage(sid: &str, doc: &str) -> SourcePassage {
         SourcePassage {
             anchor: None,
+            written_by_rebost: false,
             sid: sid.into(),
             document_id: doc.into(),
             shelf_id: "s".into(),

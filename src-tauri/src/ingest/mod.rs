@@ -629,6 +629,7 @@ pub async fn process_file(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
                         .document(&job.shelf_id, &id)
                         .unwrap_or_else(|| DocumentMeta {
                             id,
+                            written_by_rebost: false,
                             shelf_id: job.shelf_id.clone(),
                             source_id: job.source_id.clone(),
                             source_type: job.source_type,
@@ -785,6 +786,8 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
 
     let mut meta = DocumentMeta {
         id: doc_id.clone(),
+        // A file Rebost saved from Chat stays marked across re-reads.
+        written_by_rebost: existing.as_ref().is_some_and(|e| e.written_by_rebost),
         shelf_id: job.shelf_id.clone(),
         source_id: job.source_id.clone(),
         source_type: job.source_type,
@@ -1009,6 +1012,7 @@ mod tests {
     fn meta(status: DocStatus, size: u64, mtime_ms: u64) -> DocumentMeta {
         DocumentMeta {
             id: "d_x".into(),
+            written_by_rebost: false,
             shelf_id: "s_x".into(),
             source_id: "imported".into(),
             source_type: SourceType::Imported,
