@@ -274,6 +274,9 @@
           />
         {:else if settled}
           <p class="px-2.5 py-3 text-[12px] break-words text-ink-faint">{announcement}</p>
+        {:else}
+          <!-- Message matches are still on their way (debounce + index read). -->
+          <p class="px-2.5 py-3 text-[12px] text-ink-faint">{t("chat.searching")}</p>
         {/if}
       {:else}
         {#each threads as thread (thread.id)}

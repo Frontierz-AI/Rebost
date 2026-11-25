@@ -217,6 +217,7 @@
     "searchTitles": "Titles",
     "searchMessages": "Messages",
     "searchNoResults": "No conversations match “%{query}”",
+    "searching": "Ricerca…",
     "oneConversationFound": "1 conversation found",
     "manyConversationsFound": "%{count} conversations found",
     "oneMoreMatch": "+1 more match",

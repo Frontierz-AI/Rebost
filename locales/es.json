@@ -216,6 +216,7 @@
     "searchTitles": "Títulos",
     "searchMessages": "Mensajes",
     "searchNoResults": "Ninguna conversación coincide con «%{query}»",
+    "searching": "Buscando…",
     "oneConversationFound": "1 conversación encontrada",
     "manyConversationsFound": "%{count} conversaciones encontradas",
     "oneMoreMatch": "+1 coincidencia más",

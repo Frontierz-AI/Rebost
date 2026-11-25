@@ -216,6 +216,7 @@
     "searchTitles": "Títols",
     "searchMessages": "Missatges",
     "searchNoResults": "Cap conversa coincideix amb «%{query}»",
+    "searching": "Cercant…",
     "oneConversationFound": "1 conversa trobada",
     "manyConversationsFound": "%{count} converses trobades",
     "oneMoreMatch": "+1 coincidència més",
