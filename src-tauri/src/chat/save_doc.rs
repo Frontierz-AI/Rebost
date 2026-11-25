@@ -133,34 +133,74 @@ pub(crate) fn file_label(stem: &str, format: DocFormat) -> String {
 /// Words that suggest the user wants a file. `save_document` is offered
 /// only then, so a plain question never tempts a small model into it. The
 /// "Save to Shelf" button covers everything else.
+///
+/// Short words must match whole (`doc` is not `doctor`, `word` is not
+/// `password`, `file` is not `profile`).
 #[rustfmt::skip]
-const SAVE_HINTS: &[&str] = &[
-    // en
-    "document", "doc", "file", "report", "letter", "memo", "draft", "write", "save", "summary",
-    "notes", "essay", "proposal", "minutes", "markdown", "brief", "outline", "checklist", "agenda",
-    "template", "handout", "resume", "cv ", "esquema", "plantilla", "txt", "word",
-    // es / ca / pt / it
-    "archivo", "fichero", "informe", "carta", "borrador", "redact", "escrib", "escriu", "guarda",
-    "desa", "resum", "nota", "acta", "propuesta", "proposta", "arxiu", "fitxer", "esborrany",
-    "arquivo", "ficheiro", "relatório", "rascunho", "escrev", "salva", "rapporto", "relazione",
-    "lettera", "bozza", "scrivi", "riassunto", "verbale",
-    // fr / de / nl
-    "fichier", "rapport", "lettre", "brouillon", "rédige", "écri", "enregistr", "sauvegard",
-    "résumé", "compte rendu", "dokument", "datei", "bericht", "brief", "entwurf", "schreib",
-    "speicher", "zusammenfass", "protokoll", "bestand", "verslag", "concept", "schrijf", "opslaan",
-    "samenvatting",
-    // sv / da / nb / fi / cs
-    "fil", "utkast", "udkast", "skriv", "spara", "gem ", "lagre", "sammanfatt", "sammendrag",
-    "asiakirja", "dokumentti", "tiedosto", "raportti", "kirje", "luonnos", "kirjoita", "tallenna",
-    "yhteenveto", "soubor", "zpráv", "dopis", "napiš", "ulož", "shrnutí",
-    // el / ja
-    "έγγραφ", "αρχείο", "αναφορ", "επιστολ", "γράψ", "αποθήκευ", "περίληψ", "文書", "ドキュメント", "ファイル",
-    "報告", "レポート", "手紙", "下書き", "書いて", "保存", "要約", "議事録",
+const SAVE_WORDS: &[&str] = &[
+    "doc", "docx", "file", "files", "filen", "word", "txt", "md", "cv", "memo", "brief", "notes",
+    "nota", "notas", "acta", "desa", "carta", "fil", "gem", "brev", "dopis", "document",
+    "documents", "documento", "documentos",
 ];
 
+/// Stems that match at the start of a word (`document` → `documents`, `documento`).
+#[rustfmt::skip]
+const SAVE_STEMS: &[&str] = &[
+    // en
+    "report", "letter", "draft", "write", "save", "summar", "essay", "proposal",
+    "markdown", "outline", "checklist", "agenda", "template", "handout", "briefing",
+    // es / ca / pt / it
+    "archivo", "fichero", "informe", "borrador", "redacta", "escrib", "escriu", "guarda", "resum",
+    "propuesta", "proposta", "esquema", "plantilla", "arxiu", "fitxer", "esborrany", "arquivo",
+    "ficheiro", "relatório", "rascunho", "escrev", "salva", "rapporto", "relazione", "lettera",
+    "bozza", "scrivi", "riassunt", "verbale",
+    // fr / de / nl
+    "fichier", "rapport", "lettre", "brouillon", "rédig", "écri", "enregistr", "sauvegard",
+    "résumé", "compte rendu", "dokument", "datei", "bericht", "entwurf", "schreib", "speicher",
+    "zusammenfass", "protokoll", "bestand", "verslag", "schrijf", "opslaan", "samenvatting",
+    // sv / da / nb / fi / cs / el
+    "utkast", "udkast", "skriv", "spara", "lagre", "sammanfatt", "sammendrag", "asiakirja",
+    "dokumentti", "tiedosto", "raportti", "kirje", "luonnos", "kirjoita", "tallenna",
+    "yhteenveto", "soubor", "zpráv", "napiš", "ulož", "shrnutí", "έγγραφ", "αρχεί", "αναφορ",
+    "επιστολ", "γράψ", "αποθήκευ", "περίληψ",
+];
+
+/// Japanese has no spaces between words, so these match anywhere.
+const SAVE_ANYWHERE: &[&str] = &[
+    "文書",
+    "ドキュメント",
+    "ファイル",
+    "報告",
+    "レポート",
+    "手紙",
+    "下書き",
+    "書いて",
+    "保存",
+    "要約",
+    "議事録",
+];
+
+fn save_intent_re() -> &'static regex::Regex {
+    static RE: OnceLock<regex::Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        let join = |list: &[&str]| {
+            list.iter()
+                .map(|hint| regex::escape(hint))
+                .collect::<Vec<_>>()
+                .join("|")
+        };
+        regex::Regex::new(&format!(
+            r"(?i)\b(?:{})\b|\b(?:{})|{}",
+            join(SAVE_WORDS),
+            join(SAVE_STEMS),
+            join(SAVE_ANYWHERE)
+        ))
+        .expect("save intent")
+    })
+}
+
 pub(crate) fn save_intent(text: &str) -> bool {
-    let lower = text.to_lowercase();
-    SAVE_HINTS.iter().any(|hint| lower.contains(hint))
+    save_intent_re().is_match(text)
 }
 
 /// Library Shelf that may receive a saved document (not an upload Shelf).
@@ -833,6 +873,17 @@ mod tests {
         assert!(save_intent("報告書を作成して"));
         assert!(!save_intent("When is the rent due?"));
         assert!(!save_intent("¿Cuánto cuesta el alquiler?"));
+        assert!(save_intent("Put this in a doc"));
+        assert!(save_intent("Desa-la com a document"));
+        assert!(save_intent("この文書を要約して"));
+        assert!(save_intent("Schreib mir einen Brief"));
+        assert!(!save_intent("Ask the doctor about my password and profile"));
+        assert!(
+            !save_intent("What did the documentary crew film?"),
+            "documentary"
+        );
+        assert!(!save_intent("The meeting starts in five minutes"));
+        assert!(!save_intent("Can you redact the names in this answer?"));
     }
 
     #[test]
