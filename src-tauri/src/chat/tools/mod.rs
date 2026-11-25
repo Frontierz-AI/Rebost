@@ -870,7 +870,7 @@ impl AnswerHoldback {
 
     pub(crate) fn is_toolish(text: &str) -> bool {
         let t = text.trim_start();
-        if Self::starts_markdown_fence(t) {
+        if Self::fenced_prose(t) == Some(true) {
             return false;
         }
         t.starts_with('{')
@@ -888,19 +888,32 @@ impl AnswerHoldback {
             || t.starts_with("call:")
     }
 
-    /// A document wrapped in a ```markdown fence is prose, not a tool dump.
-    fn starts_markdown_fence(t: &str) -> bool {
-        let Some(rest) = t.strip_prefix("```") else {
-            return false;
-        };
-        let lang = rest.split(['\n', '\r']).next().unwrap_or("");
-        rest.contains(['\n', '\r'])
-            && matches!(lang.trim().to_ascii_lowercase().as_str(), "markdown" | "md")
+    /// Whether text opening with a code fence is a document rather than a
+    /// tool dump. A ```markdown fence is always a document. A bare or
+    /// ```text fence (the ones `save_doc::unwrap_fence` also unwraps) is a
+    /// document unless its first line inside looks like a tool call. `None`
+    /// means not decided yet: the fence line or its first content is still
+    /// streaming in, or the text is not a fence.
+    fn fenced_prose(t: &str) -> Option<bool> {
+        let rest = t.strip_prefix("```")?;
+        let newline = rest.find(['\n', '\r'])?;
+        match rest[..newline].trim().to_ascii_lowercase().as_str() {
+            "markdown" | "md" => Some(true),
+            "" | "text" => {
+                let inner = rest[newline..].trim_start();
+                if inner.is_empty() {
+                    None
+                } else {
+                    Some(!Self::is_toolish(inner))
+                }
+            }
+            _ => Some(false),
+        }
     }
 
     fn looks_like_prose(text: &str) -> bool {
         let t = text.trim_start();
-        if Self::starts_markdown_fence(t) {
+        if Self::fenced_prose(t) == Some(true) {
             return true;
         }
         if t.is_empty() || Self::is_toolish(t) {
@@ -1059,6 +1072,41 @@ mod tests {
         let mut gate = AnswerHoldback::new(true);
         assert!(gate.push("```json\n{\"name\":\"save_document\"}").is_none());
         assert!(!gate.released());
+    }
+
+    #[test]
+    fn holdback_streams_a_document_in_a_bare_or_text_fence() {
+        // The writing round of a save: unwrap_fence strips these fences, so
+        // the holdback must not mistake them for a tool dump and drop them.
+        for open in ["```\n", "```text\n", "```TEXT\r\n"] {
+            let mut gate = AnswerHoldback::new(true);
+            assert!(gate.push("```").is_none(), "{open:?}");
+            assert!(gate.push(&open[3..]).is_none(), "{open:?} undecided");
+            let flushed = gate.push("# Quarterly report\n\nSales rose.").unwrap();
+            assert!(flushed.starts_with(open), "{open:?}");
+            assert!(gate.released());
+            let hidden = gate.take_hidden();
+            let answer = format!("{open}# Quarterly report\n\nSales rose.\n```");
+            assert_eq!(gate.visible_answer(&hidden, &answer), answer.trim());
+        }
+
+        // Unreleased text that arrives whole is still visible.
+        let gate = AnswerHoldback::new(true);
+        let doc = "```\n# Letter\n\nDear Ana,\n```";
+        assert_eq!(gate.visible_answer(doc, doc), doc);
+
+        // A tool call inside a bare fence stays hidden.
+        for dump in [
+            "```\n{\"name\":\"save_document\"}\n```",
+            "```text\nsave_document(file_name=\"x\")\n```",
+            "```\n<tool_call>{}</tool_call>\n```",
+        ] {
+            let mut gate = AnswerHoldback::new(true);
+            assert!(gate.push(dump).is_none(), "{dump:?}");
+            assert!(!gate.released());
+            let hidden = gate.take_hidden();
+            assert!(gate.visible_answer(&hidden, &hidden).is_empty(), "{dump:?}");
+        }
     }
 
     #[test]
