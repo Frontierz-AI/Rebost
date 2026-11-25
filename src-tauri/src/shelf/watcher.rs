@@ -265,7 +265,7 @@ impl WatcherHub {
             return;
         }
         if path.exists() {
-            if !crate::ingest::extract::is_supported_file(path) {
+            if !crate::shelf::is_shelf_document(path) {
                 return;
             }
             let Ok(rel) = path.strip_prefix(&source.root) else {

@@ -321,7 +321,7 @@
     "syncFolderHint": "Associe uma pasta deste computador. Os ficheiros novos aparecem aqui.",
     "emptyRegion": "Estante vazia",
     "dropToFill": "Largue ficheiros para os adicionar a esta estante",
-    "dropTypes": "PDF, documentos do Office, folhas de cálculo, apresentações e e-mail. O Rebost lê-os neste computador.",
+    "dropTypes": "PDF, documentos do Office, folhas de cálculo, apresentações, e-mail e páginas web. O Rebost lê-os neste computador.",
     "filterByName": "Filtrar por nome de ficheiro",
     "filterByNamePlaceholder": "Filtrar por nome",
     "filterBySource": "Filtrar por origem",

@@ -321,7 +321,7 @@
     "syncFolderHint": "Collega una cartella di questo computer. I file nuovi compaiono qui.",
     "emptyRegion": "Scaffale vuoto",
     "dropToFill": "Rilascia i file per aggiungerli a questo scaffale",
-    "dropTypes": "PDF, documenti Office, fogli di calcolo, presentazioni ed e-mail. Rebost li legge su questo computer.",
+    "dropTypes": "PDF, documenti Office, fogli di calcolo, presentazioni, e-mail e pagine web. Rebost li legge su questo computer.",
     "filterByName": "Filtra per nome file",
     "filterByNamePlaceholder": "Filtra per nome",
     "filterBySource": "Filtra per origine",

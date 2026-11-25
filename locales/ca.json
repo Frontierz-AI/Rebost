@@ -320,7 +320,7 @@
     "syncFolderHint": "Vincula una carpeta d'aquest ordinador. Els fitxers nous que hi afegeixis apareixeran aquí.",
     "emptyRegion": "Estant buit",
     "dropToFill": "Deixa anar fitxers per afegir-los a aquest estant",
-    "dropTypes": "PDF, documents d'Office, fulls de càlcul, presentacions i correu. Rebost els llegeix en aquest ordinador.",
+    "dropTypes": "PDF, documents d'Office, fulls de càlcul, presentacions, correu i pàgines web. Rebost els llegeix en aquest ordinador.",
     "filterByName": "Filtra per nom de fitxer",
     "filterByNamePlaceholder": "Filtra per nom",
     "filterBySource": "Filtra per origen",

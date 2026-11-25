@@ -321,7 +321,7 @@
     "syncFolderHint": "Propoj složku z tohoto počítače. Nové soubory v ní se objeví i tady.",
     "emptyRegion": "Prázdná police",
     "dropToFill": "Přetažením sem přidáš soubory na tuto polici",
-    "dropTypes": "PDF, dokumenty Office, tabulky, prezentace a e-maily. Rebost je čte na tomto počítači.",
+    "dropTypes": "PDF, dokumenty Office, tabulky, prezentace, e-maily a webové stránky. Rebost je čte na tomto počítači.",
     "filterByName": "Filtrovat podle názvu souboru",
     "filterByNamePlaceholder": "Filtrovat podle názvu",
     "filterBySource": "Filtrovat podle zdroje",

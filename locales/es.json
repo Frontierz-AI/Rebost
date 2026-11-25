@@ -320,7 +320,7 @@
     "syncFolderHint": "Vincula una carpeta de este ordenador. Los archivos nuevos aparecen aquí.",
     "emptyRegion": "Estante vacío",
     "dropToFill": "Suelta archivos para añadirlos a este estante",
-    "dropTypes": "PDF, documentos de Office, hojas de cálculo, presentaciones y correo. Rebost los lee en este ordenador.",
+    "dropTypes": "PDF, documentos de Office, hojas de cálculo, presentaciones, correo y páginas web. Rebost los lee en este ordenador.",
     "filterByName": "Filtrar por nombre de archivo",
     "filterByNamePlaceholder": "Filtrar por nombre",
     "filterBySource": "Filtrar por origen",
