@@ -8,7 +8,10 @@ mod longpath;
 
 pub(crate) use longpath::{dest_too_long, with_long_path};
 
-pub use scan::{rel_is_skipped, scan_new_files, DEFAULT_FILE_LIMIT, FILE_LIMIT_CHOICES};
+pub use scan::{
+    is_saved_page_asset, is_shelf_document, rel_is_skipped, scan_new_files, DEFAULT_FILE_LIMIT,
+    FILE_LIMIT_CHOICES,
+};
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};

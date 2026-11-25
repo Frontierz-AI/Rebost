@@ -288,23 +288,17 @@ async fn csv_and_eml_become_ready() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn html_and_json_are_not_ingested() {
+async fn json_and_code_are_not_ingested() {
     let app = test_app();
     let shelf_id = make_shelf(&app, "Web");
-    let html = fixture_notice_html(app.dir.path());
     let json = app.dir.path().join("blob.json");
     std::fs::write(&json, "{\"ok\":true}").unwrap();
-    for path in [&html, &json] {
-        let job = rebost::ingest::ProcessJob {
-            shelf_id: shelf_id.clone(),
-            source_id: rebost::shelf::Shelf::IMPORTED_SOURCE.to_string(),
-            source_type: rebost::types::SourceType::Imported,
-            source_label: "Imported".into(),
-            abs_path: path.clone(),
-            rel_path: path.file_name().unwrap().to_string_lossy().into(),
-            force: false,
-            epoch: 0,
-        };
+    let xml = app.dir.path().join("data.xml");
+    std::fs::write(&xml, "<root><item>x</item></root>").unwrap();
+    let code = app.dir.path().join("main.rs");
+    std::fs::write(&code, "fn main() {}").unwrap();
+    for path in [&json, &xml, &code] {
+        let job = imported_job(&shelf_id, path);
         rebost::ingest::process_file(&app.ctx, &job)
             .await
             .expect("skip");
@@ -316,7 +310,151 @@ async fn html_and_json_are_not_ingested() {
             .unwrap()
             .documents(&shelf_id)
             .is_empty(),
-        "HTML and JSON must not land on a Shelf"
+        "JSON, XML and code must not land on a Shelf"
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn saved_web_page_is_read_as_its_main_text() {
+    let app = test_app();
+    let shelf_id = make_shelf(&app, "Web");
+    let page = fixture_saved_page(app.dir.path());
+
+    let meta = ingest_file(&app, &shelf_id, &page).await;
+    assert_eq!(
+        meta.status,
+        DocStatus::Ready,
+        "html error: {:?}",
+        meta.error
+    );
+    assert!(!meta.ocr, "a web page needs no OCR");
+    assert!(meta.passage_count >= 2, "sections should become passages");
+
+    let card = rebost::ingest::card::read_card(&app.ctx.paths.card_path(&shelf_id, &meta.id))
+        .expect("card written");
+    assert_eq!(
+        card.title, "Horario de la biblioteca municipal",
+        "<title> wins"
+    );
+    assert_eq!(
+        card.language.as_deref(),
+        Some("es"),
+        "<html lang> sets the language"
+    );
+    assert!(
+        card.outline.iter().any(|o| o.title.contains("Préstamo")),
+        "outline should list the Préstamo heading, got {:?}",
+        card.outline
+    );
+
+    let extracted =
+        std::fs::read_to_string(app.ctx.paths.extracted_path(&shelf_id, &meta.id)).unwrap();
+    assert!(extracted.contains("hasta seis libros durante veintiún días"));
+    assert!(extracted.contains("club de lectura en català"));
+    assert!(
+        extracted.contains("consulte el reglamento de la biblioteca"),
+        "link text stays"
+    );
+    assert!(
+        !extracted.starts_with("---") && !extracted.contains("meta-description"),
+        "no YAML front matter in the page text:\n{extracted}"
+    );
+    for noise in [
+        "https://example.org", // link target
+        "galletas",            // cookie banner
+        "Cabecera",            // page header
+        "Menú inicio",         // nav
+        "Publicidad lateral",  // aside
+        "Buscador del portal", // form
+        "Active JavaScript",   // noscript
+        "Pie de página",       // footer
+        "rastreador",          // inline script
+        "texto de estilo",     // inline style
+        "Marco incrustado",    // iframe content is never loaded
+        "_files",              // asset paths
+    ] {
+        assert!(
+            !extracted.contains(noise),
+            "{noise:?} should not be in the page text:\n{extracted}"
+        );
+    }
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn web_page_title_falls_back_to_h1_then_file_name() {
+    let app = test_app();
+    let shelf_id = make_shelf(&app, "Web");
+    let with_h1 = app.dir.path().join("untitled-page.htm");
+    std::fs::write(
+        &with_h1,
+        "<html><body><header><p>Portal intern</p></header><article><header><h1>Normes del menjador</h1></header><p>El menjador obre de dotze a tres.</p></article></body></html>",
+    )
+    .unwrap();
+    let plain = app.dir.path().join("kitchen_notice.html");
+    std::fs::write(
+        &plain,
+        "<html><body><p>The office kitchen is restocked every Tuesday morning.</p></body></html>",
+    )
+    .unwrap();
+
+    let h1 = ingest_file(&app, &shelf_id, &with_h1).await;
+    assert_eq!(h1.status, DocStatus::Ready, "htm error: {:?}", h1.error);
+    let card =
+        rebost::ingest::card::read_card(&app.ctx.paths.card_path(&shelf_id, &h1.id)).expect("card");
+    assert_eq!(
+        card.title, "Normes del menjador",
+        "an article's own header stays"
+    );
+    let extracted =
+        std::fs::read_to_string(app.ctx.paths.extracted_path(&shelf_id, &h1.id)).unwrap();
+    assert!(!extracted.contains("Portal intern"), "the page header goes");
+
+    let named = ingest_file(&app, &shelf_id, &plain).await;
+    assert_eq!(
+        named.status,
+        DocStatus::Ready,
+        "html error: {:?}",
+        named.error
+    );
+    let card = rebost::ingest::card::read_card(&app.ctx.paths.card_path(&shelf_id, &named.id))
+        .expect("card");
+    assert_eq!(card.title, "kitchen notice");
+    assert_eq!(card.language.as_deref(), Some("en"), "no lang: detected");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn saved_page_assets_are_not_ingested() {
+    let app = test_app();
+    let shelf_id = make_shelf(&app, "Web");
+    let page = fixture_saved_page(app.dir.path());
+    let assets = app.dir.path().join("Horario de la biblioteca_files");
+
+    // The folder walk offers the page only.
+    let found =
+        rebost::shelf::scan_new_files(app.dir.path(), 100, &std::collections::HashSet::new()).files;
+    assert_eq!(found, vec![page.clone()]);
+
+    // A watcher event for the framed page is dropped too.
+    let frame = assets.join("mapa.html");
+    let mut job = imported_job(&shelf_id, &frame);
+    job.rel_path = "Horario de la biblioteca_files/mapa.html".into();
+    rebost::ingest::process_file(&app.ctx, &job)
+        .await
+        .expect("skip");
+    for asset in ["app.js", "style.css"] {
+        let job = imported_job(&shelf_id, &assets.join(asset));
+        rebost::ingest::process_file(&app.ctx, &job)
+            .await
+            .expect("skip");
+    }
+    assert!(
+        app.ctx
+            .library
+            .read()
+            .unwrap()
+            .documents(&shelf_id)
+            .is_empty(),
+        "a saved page's _files folder must not land on a Shelf"
     );
 }
 

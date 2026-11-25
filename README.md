@@ -65,7 +65,7 @@ Once installed, Rebost checks GitHub for a newer release and shows it in the sid
 
 ### Chat
 
-Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. When the installed AI and computer support images, an image button also appears: attach or paste a PNG/JPEG, preview it, and ask about it locally. Rebost prepares images to fit the computer and keeps them with the conversation. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation. Opening the citation shows the passage used for that answer and the source file. With a Shelf selected, Chat can also write a document there: ask for a report, letter or summary, or use Save to Shelf under any answer, and Rebost saves it as a Word, Markdown or text file in that Shelf's folder.
+Chat is the main window. The installed AI answers each question there without the question leaving the machine. A file can be attached to a single conversation, either through the composer or by dropping it onto Chat; attachments belong to that conversation and do not become a Shelf. When the installed AI and computer support images, an image button also appears: attach or paste a PNG/JPEG, preview it, and ask about it locally. Rebost prepares images to fit the computer and keeps them with the conversation. Picking a Shelf in the composer instead points the question at a whole folder. Answers that used a file carry a citation. Opening the citation shows the passage used for that answer and the source file. The search field above the conversation list finds earlier conversations by title or by what was said in them, without leaving the computer. With a Shelf selected, Chat can also write a document there: ask for a report, letter or summary, or use Save to Shelf under any answer, and Rebost saves it as a Word, Markdown or text file in that Shelf's folder.
 
 <p align="center">
   <img src="docs/assets/conversation.webp" alt="Rebost Chat: a Shelf selected and an answer with citations." width="880" />
@@ -74,6 +74,8 @@ Chat is the main window. The installed AI answers each question there without th
 ### Shelves
 
 A Shelf is how a folder becomes available to Chat. Creating a Shelf and linking a folder, or dropping files into it, is what lets Rebost read those documents and search them later. Linking does not move or copy the folder, and renaming a Shelf inside Rebost leaves the folder on disk untouched. How thoroughly Chat searches is configured per Shelf.
+
+A Shelf reads PDFs, Word, Excel, and PowerPoint files, their OpenDocument equivalents, email (`.eml`, `.msg`), EPUB, Markdown, plain text, RTF, CSV, and saved web pages (`.html`, `.htm`). A web page is read as its main text, without menus, cookie banners, or scripts, and the folder of images and scripts a browser saves beside it is ignored. Other files in a linked folder are skipped quietly.
 
 <p align="center">
   <img src="docs/assets/shelves.webp" alt="Rebost Shelves: a Shelf created from a folder on disk." width="880" />

@@ -16,7 +16,7 @@ use crate::types::{MemorySnippet, SourcePassage};
 
 /// Closed-class words dropped from search queries. Folded (unaccented) forms
 /// only — the exact analyzer already ascii-folds. Keep `any` out: Catalan year.
-fn is_search_stopword(token: &str) -> bool {
+pub(super) fn is_search_stopword(token: &str) -> bool {
     matches!(
         token,
         "a" | "an"
@@ -196,7 +196,7 @@ impl SearchIndex {
 
     /// Query tokens with function words removed so "which / the / have"
     /// cannot dominate ranking.
-    fn content_tokens(&self, text: &str) -> Vec<String> {
+    pub(super) fn content_tokens(&self, text: &str) -> Vec<String> {
         let mut out = Vec::new();
         for token in self.exact_tokens(text) {
             if is_search_stopword(&token) {
@@ -217,7 +217,7 @@ impl SearchIndex {
             .collect()
     }
 
-    fn stem_tokens(&self, lang: &str, text: &str) -> Vec<String> {
+    pub(super) fn stem_tokens(&self, lang: &str, text: &str) -> Vec<String> {
         let Some(mut analyzer) = self.index.tokenizers().get(&format!("rebost_stem_{lang}")) else {
             return Vec::new();
         };

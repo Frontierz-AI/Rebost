@@ -30,6 +30,7 @@ Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the A
 | Activate a button | `Space` or `Return` |
 | Send chat | `Return` (composer; Shift+Return for newline, see ChatView) |
 | New conversation | `⌘N` (Windows: `Ctrl+N`) |
+| Search conversations | `⌘⇧F` (Windows: `Ctrl+Shift+F`) from anywhere, or `⌘F` (`Ctrl+F`) while the conversation list has focus. In a narrow window it opens the conversation drawer first. `↑` `↓` move through results, `Return` opens one, `Escape` clears the field and a second `Escape` returns to the composer. The field is a searchbox; results are a listbox followed with `aria-activedescendant`, and a polite live region announces how many conversations matched |
 | Chat / Shelves / Recipes | `⌘1` / `⌘2` / `⌘3` (Windows: `Ctrl+1`–`3`) |
 | Settings | `⌘,` (Windows: `Ctrl+,`) |
 | Larger / smaller text | `⌘+` / `⌘-` (Windows: `Ctrl+` / `Ctrl-`). Three steps: Default, Large, Larger |
@@ -39,7 +40,7 @@ Document drawer, source panel, the Reset Rebost dialog, Explore other AIs, the A
 | Read earlier Chat messages | `Read more` at the top of a long conversation |
 | Move in a long Shelf file table | `↑` `↓` `Home` `End` on a row. Or enable Show all rows for the full native table |
 
-VoiceOver rotor: form controls and buttons. Headings exist in Shelves/Settings; Chat thread list is a list of buttons.
+VoiceOver rotor: form controls and buttons. Headings exist in Shelves/Settings; Chat thread list is a list of buttons, and conversation search results are a listbox grouped into Titles and Messages.
 
 ## Known gaps (0.9.2)
 

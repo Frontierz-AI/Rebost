@@ -28,6 +28,7 @@ mod neighbors;
 mod prompts;
 mod queries;
 pub mod save_doc;
+pub mod thread_search;
 mod tools;
 pub(crate) mod web_approval;
 

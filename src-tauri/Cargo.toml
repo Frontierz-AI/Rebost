@@ -55,6 +55,9 @@ xberg = { version = "=1.4.0", git = "https://github.com/xberg-io/xberg", rev = "
     "ocr",
     "bundle-tessdata-eng",
 ] }
+# Named directly only to pick the HTML cleanup preset for Shelf pages; the
+# same requirement as Xberg's, so Cargo resolves one shared copy.
+html-to-markdown-rs = { version = "3.19.1", default-features = false }
 
 # Local retrieval
 tantivy = "0.27.0"

@@ -68,6 +68,8 @@ export const chatState = $state({
   draft: "",
   /** Bumped when a Recipe lands a prompt, so the composer grabs focus. */
   draftFocus: 0,
+  /** Set by the search shortcut; Chat opens the conversation list and focuses its search. */
+  searchFocusPending: false,
   /** Shelf the composer shows; synced from the open thread when there is one. */
   selectedShelfId: null as string | null,
   /** Hidden upload Shelf for the open conversation, if files were attached. */
@@ -197,6 +199,11 @@ export function handleMenuAction(action: MenuAction) {
   switch (action) {
     case "new-conversation":
       void newConversation();
+      return;
+    case "search-conversations":
+      if (!app.ready || app.onboarding) return;
+      goView("chat");
+      chatState.searchFocusPending = true;
       return;
     case "view-chat":
       goView("chat");
