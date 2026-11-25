@@ -2,6 +2,7 @@
 //! messages. Lexical, deterministic, no embeddings.
 
 pub mod gate;
+mod highlight;
 mod query;
 pub(crate) mod restore;
 pub(crate) mod schema;

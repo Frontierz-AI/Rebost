@@ -5,6 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+- Search conversations from the top of the conversation list. Titles filter as you type, and message text is searched through the local index with stemming, so "vacances" also finds "vacança". Each result shows a short highlighted snippet, who said it and when. ⌘F (Ctrl+F) focuses the field while the list has focus, and ⌘⇧F (Ctrl+Shift+F) works from anywhere; arrow keys and Return open a result, and Escape clears.
 - Shelves read saved web pages (`.html`, `.htm`, `.xhtml`). Rebost keeps a page's main text and drops menus, page headers and footers, sidebars, forms, cookie banners, scripts, and styles. The page's title and language come from the page itself. For a page saved with "Save page as, complete", the folder of images, scripts, and frames saved beside it is ignored. Nothing a page links to is downloaded.
 
 ## [1.2.1] - 2026-11-24

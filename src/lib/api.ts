@@ -118,6 +118,25 @@ export interface ThreadMeta {
   avatarId: string;
 }
 
+/** Snippet text with matched words marked. Render as text, never as HTML. */
+export interface SnippetSegment {
+  text: string;
+  mark: boolean;
+}
+
+/** One conversation whose saved messages match a sidebar search. */
+export interface ThreadSearchHit {
+  threadId: string;
+  messageId: string;
+  role: string;
+  snippet: SnippetSegment[];
+  createdAt: string;
+  /** Matching messages in this conversation, within the search window. */
+  matches: number;
+  /** The search window filled up, so `matches` may be higher in reality. */
+  matchesCapped: boolean;
+}
+
 export interface ChatActivityStep {
   stage: ChatPrepareStage;
   file?: string | null;
@@ -599,6 +618,8 @@ export const api = {
   revealItem: (path: string) => invoke<void>("reveal_item", { path }),
 
   threadsList: () => invoke<ThreadMeta[]>("threads_list"),
+  threadsSearch: (query: string, limit?: number) =>
+    invoke<ThreadSearchHit[]>("threads_search", { query, limit: limit ?? null }),
   threadCreate: (shelfId?: string | null) => invoke<ThreadMeta>("thread_create", { shelfId }),
   threadMessages: (threadId: string, beforeId?: string | null) =>
     invoke<ThreadPage>("thread_messages", { threadId, beforeId: beforeId ?? null }),
@@ -738,6 +759,7 @@ export function onEvent<T>(name: string, handler: (payload: T) => void): Promise
 
 export type MenuAction =
   | "new-conversation"
+  | "search-conversations"
   | "view-chat"
   | "view-shelves"
   | "view-recipes"
