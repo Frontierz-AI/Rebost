@@ -167,8 +167,10 @@
           type="button"
           class="btn-ghost btn-icon shrink-0"
           onclick={() => (opened = null)}
-          aria-label={t("images.closePreview")}><X size={16} aria-hidden="true" /></button
+          aria-label={t("images.closePreview")}
         >
+          <X size={16} aria-hidden="true" />
+        </button>
       </div>
       <img
         src={opened.url}

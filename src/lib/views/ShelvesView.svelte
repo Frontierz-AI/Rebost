@@ -334,12 +334,12 @@
             autofocus
             onkeydown={(e) => e.key === "Enter" && createShelf()}
           />
-          <button type="button" class="btn-amber" onclick={createShelf}
-            >{t("shelves.create")}</button
-          >
-          <button type="button" class="btn-ghost !py-1.5" onclick={() => (creating = false)}
-            >{t("shelves.cancel")}</button
-          >
+          <button type="button" class="btn-amber" onclick={createShelf}>
+            {t("shelves.create")}
+          </button>
+          <button type="button" class="btn-ghost !py-1.5" onclick={() => (creating = false)}>
+            {t("shelves.cancel")}
+          </button>
         </div>
       {/if}
 
@@ -354,9 +354,10 @@
           <p class="mt-1 mb-5 max-w-md text-[13px] leading-relaxed text-ink-soft">
             {t("shelves.emptyBody")}
           </p>
-          <button type="button" class="btn-primary" onclick={() => (creating = true)}
-            ><Plus size={15} /> {t("shelves.createFirst")}</button
-          >
+          <button type="button" class="btn-primary" onclick={() => (creating = true)}>
+            <Plus size={15} />
+            {t("shelves.createFirst")}
+          </button>
         </div>
       {:else}
         <div class="grid grid-cols-1 gap-4 min-[900px]:grid-cols-2">
@@ -365,12 +366,12 @@
             <div class="card group flex items-stretch hover:shadow-pop dark:hover:shadow-none">
               {#if renamingId === shelfCard.id}
                 <div class="flex min-w-0 flex-1 items-center gap-3 px-5 py-4">
-                  <span class="rounded-xl bg-navy-900 p-2.5 text-mint"
-                    ><LibraryBig size={18} aria-hidden="true" /></span
-                  >
-                  <label class="sr-only" for="rename-shelf-{shelfCard.id}"
-                    >{t("shelves.shelfName")}</label
-                  >
+                  <span class="rounded-xl bg-navy-900 p-2.5 text-mint">
+                    <LibraryBig size={18} aria-hidden="true" />
+                  </span>
+                  <label class="sr-only" for="rename-shelf-{shelfCard.id}">
+                    {t("shelves.shelfName")}
+                  </label>
                   <!-- svelte-ignore a11y_autofocus -->
                   <input
                     id="rename-shelf-{shelfCard.id}"
@@ -389,17 +390,17 @@
                   onclick={() => (app.openShelfId = shelfCard.id)}
                 >
                   <div class="flex items-center gap-3">
-                    <span class="rounded-xl bg-navy-900 p-2.5 text-mint"
-                      ><LibraryBig size={18} aria-hidden="true" /></span
-                    >
+                    <span class="rounded-xl bg-navy-900 p-2.5 text-mint">
+                      <LibraryBig size={18} aria-hidden="true" />
+                    </span>
                     <span class="min-w-0">
-                      <span class="block truncate text-[15px] font-semibold text-ink"
-                        >{shelfCard.name}</span
-                      >
+                      <span class="block truncate text-[15px] font-semibold text-ink">
+                        {shelfCard.name}
+                      </span>
                       <span class="mt-0.5 flex flex-wrap items-center gap-2">
-                        <span class="text-[12px] text-ink-soft"
-                          >{t("shelves.fileCount", { count: shelfCard.stats.files })}</span
-                        >
+                        <span class="text-[12px] text-ink-soft">
+                          {t("shelves.fileCount", { count: shelfCard.stats.files })}
+                        </span>
                         {#if status}
                           <span
                             class="chip !cursor-default !px-2 !py-0.5 !text-[11px] {shelfListStatusClass(

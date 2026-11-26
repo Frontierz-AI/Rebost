@@ -142,6 +142,9 @@ pub struct Extraction {
     pub page_count: Option<u32>,
     /// True when any of the text came from local OCR.
     pub ocr_used: bool,
+    /// The time limit stopped reading early: Xberg returns the pages it
+    /// finished (since 1.4) instead of failing, so the text is incomplete.
+    pub partial: bool,
 }
 
 /// One structural block, in document order.
@@ -769,6 +772,13 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
     let content = limit_extracted(content);
     let ocr_used =
         doc.metadata.ocr_used || doc.extraction_method.map(|m| m.used_ocr()).unwrap_or(false);
+    let partial = cut_short(&doc.processing_warnings);
+    if partial {
+        log::warn!(
+            "{}: reading stopped at the {timeout_secs}s limit; indexing the pages read so far",
+            path.display()
+        );
+    }
 
     // A scan that even OCR couldn't read is an error; a genuinely empty
     // file is not — it simply becomes Ready with nothing to index.
@@ -1035,7 +1045,15 @@ pub async fn extract_file(path: &Path, settings: &ExtractorSettings) -> Result<E
         blocks: limit_blocks(blocks),
         page_count: final_page_count,
         ocr_used,
+        partial,
     })
+}
+
+/// Xberg's mark for a document cut short by `extraction_timeout_secs`.
+fn cut_short(warnings: &[xberg::types::ProcessingWarning]) -> bool {
+    warnings
+        .iter()
+        .any(|warning| matches!(warning.source.as_ref(), "timeout" | "pdf_time_limit"))
 }
 
 fn render_table(grid: &xberg::types::document_structure::TableGrid) -> String {
@@ -1064,6 +1082,18 @@ fn render_table(grid: &xberg::types::document_structure::TableGrid) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_time_limit_warning_marks_the_text_partial() {
+        let warning = |source: &'static str| xberg::types::ProcessingWarning {
+            source: source.into(),
+            message: "stopped".into(),
+        };
+        assert!(!cut_short(&[]));
+        assert!(!cut_short(&[warning("language_detection")]));
+        assert!(cut_short(&[warning("timeout")]));
+        assert!(cut_short(&[warning("chunking"), warning("pdf_time_limit")]));
+    }
 
     #[test]
     fn timeout_grows_with_pdf_pages() {

@@ -95,8 +95,9 @@
         <div class="flex min-w-0 items-start gap-3">
           <span
             class="mt-0.5 rounded-lg bg-navy-100 p-2 text-navy-700 dark:bg-white/10 dark:text-navy-200"
-            ><FileText size={16} /></span
           >
+            <FileText size={16} />
+          </span>
           <div class="min-w-0">
             <p class="truncate text-[14.5px] font-semibold text-ink" title={doc.fileName}>
               {doc.fileName}
@@ -116,8 +117,10 @@
           type="button"
           class="btn-ghost !p-1.5"
           aria-label={t("documents.close")}
-          onclick={onClose}><X size={15} /></button
+          onclick={onClose}
         >
+          <X size={15} />
+        </button>
       </div>
     </div>
 
@@ -128,8 +131,10 @@
           <button
             type="button"
             class="btn-ghost !py-1 !text-[11.5px]"
-            onclick={() => (extractedText = null)}>{t("documents.backToDetails")}</button
+            onclick={() => (extractedText = null)}
           >
+            {t("documents.backToDetails")}
+          </button>
         </div>
         {#if hasBefore || hasAfter}
           <div class="mb-2 flex items-center justify-between gap-2">
@@ -223,9 +228,9 @@
               {#each card.outline.slice(0, 14) as entry}
                 <li class="flex items-baseline justify-between gap-3 text-[12.5px]">
                   <span class="truncate text-ink">{entry.title}</span>
-                  {#if entry.page}<span class="shrink-0 text-ink-faint"
-                      >{t("documents.pageAbbrev", { page: entry.page })}</span
-                    >{/if}
+                  {#if entry.page}<span class="shrink-0 text-ink-faint">
+                      {t("documents.pageAbbrev", { page: entry.page })}
+                    </span>{/if}
                 </li>
               {/each}
             </ul>

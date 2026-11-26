@@ -901,6 +901,7 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
         keywords: &keywords,
         outline: &extraction.outline,
         ocr_used: extraction.ocr_used,
+        partial: extraction.partial,
         privacy: &privacy,
     });
     card::write_card(&ctx.paths.card_path(&job.shelf_id, &doc_id), &card)?;
@@ -925,7 +926,7 @@ async fn process_file_inner(ctx: &Arc<Ctx>, job: &ProcessJob) -> Result<()> {
         let keywords = keywords.clone();
         let title = extraction.title.clone();
         let language = extraction.language;
-        let quality = if extraction.ocr_used { "ocr" } else { "full" };
+        let quality = card::quality_label(extraction.ocr_used, extraction.partial);
         tokio::task::spawn_blocking(move || {
             ctx2.search.index_document(
                 &meta2, &summary, &keywords, &passages, language, quality, &title,

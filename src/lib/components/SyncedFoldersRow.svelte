@@ -105,9 +105,9 @@
       />
       <span class="max-w-[160px] truncate">{name}</span>
       {#if linked.available === false}
-        <span class="shrink-0 font-medium {selected ? 'text-white/80' : 'text-ink-faint'}"
-          >{t("shelves.unavailable")}</span
-        >
+        <span class="shrink-0 font-medium {selected ? 'text-white/80' : 'text-ink-faint'}">
+          {t("shelves.unavailable")}
+        </span>
       {/if}
     </button>
     <button

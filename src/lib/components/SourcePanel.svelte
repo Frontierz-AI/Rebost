@@ -102,8 +102,9 @@
     <div class="flex items-start gap-3 border-b border-paper-line bg-paper-soft px-4 py-3">
       <span
         class="mt-0.5 rounded-md bg-navy-100 p-1.5 text-navy-700 dark:bg-white/10 dark:text-navy-200"
-        ><FileText size={15} /></span
       >
+        <FileText size={15} />
+      </span>
       <div class="min-w-0 flex-1">
         <p class="truncate text-[13px] font-semibold text-ink">{source.title}</p>
         {#if location}<p class="text-[12px] text-ink-soft">{location}</p>{/if}
@@ -111,15 +112,17 @@
             {t("chat.writtenByRebostTitle")}
           </p>{/if}
       </div>
-      <span class="rounded-md bg-navy-900 px-1.5 py-0.5 text-[10.5px] font-bold text-white"
-        >{source.sid}</span
-      >
+      <span class="rounded-md bg-navy-900 px-1.5 py-0.5 text-[10.5px] font-bold text-white">
+        {source.sid}
+      </span>
       <button
         type="button"
         class="btn-ghost !p-1"
         onclick={onClose}
-        aria-label={t("documents.close")}><X size={15} /></button
+        aria-label={t("documents.close")}
       >
+        <X size={15} />
+      </button>
     </div>
     <div bind:this={scrollEl} class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
       {#if source.anchor?.quote}

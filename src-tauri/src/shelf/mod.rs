@@ -650,7 +650,9 @@ pub fn import_into_shelf(
     }
     let imports_root = shelf.managed_path.join("Imports");
     std::fs::create_dir_all(longpath::with_long_path(&imports_root))?;
-    let stamp = jiff::Zoned::now().strftime("%Y-%m-%d %H-%M").to_string();
+    let stamp = jiff::ZonedDateTime::now()
+        .strftime("%Y-%m-%d %H-%M")
+        .to_string();
     let mut import_dir = imports_root.join(&stamp);
     let mut counter = 2;
     while longpath::with_long_path(&import_dir).exists() {

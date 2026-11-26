@@ -291,12 +291,12 @@
             class="sticky top-0 z-10 border-b border-navy-950/15 bg-paper-soft text-[12px] font-semibold text-ink dark:border-white/15 dark:bg-white/10"
           >
             <tr>
-              <th scope="col" class="px-5 py-3 font-semibold whitespace-nowrap"
-                >{t("explore.colName")}</th
-              >
-              <th scope="col" class="px-3 py-3 font-semibold whitespace-nowrap"
-                >{t("explore.colPublisher")}</th
-              >
+              <th scope="col" class="px-5 py-3 font-semibold whitespace-nowrap">
+                {t("explore.colName")}
+              </th>
+              <th scope="col" class="px-3 py-3 font-semibold whitespace-nowrap">
+                {t("explore.colPublisher")}
+              </th>
               <th
                 scope="col"
                 class="px-3 py-3 font-semibold whitespace-nowrap"
@@ -474,11 +474,11 @@
       {#if remaining > 0}
         <button type="button" class="btn-outline !py-1.5 !text-[12px]" onclick={() => (page += 1)}>
           {t("explore.seeMore")}
-          <span class="text-ink-faint"
-            >{t("explore.moreCount", {
+          <span class="text-ink-faint">
+            {t("explore.moreCount", {
               count: Math.min(remaining, EXPLORE_PAGE_SIZE),
-            })}</span
-          >
+            })}
+          </span>
         </button>
       {/if}
     </div>

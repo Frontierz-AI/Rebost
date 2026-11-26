@@ -54,7 +54,10 @@ struct DiskList(Vec<(PathBuf, u64)>);
 
 impl DiskList {
     fn read() -> Self {
-        let disks = sysinfo::Disks::new_with_refreshed_list();
+        let Ok(disks) = sysinfo::Disks::new_with_refreshed_list() else {
+            log::warn!("could not list mounted disks");
+            return Self(Vec::new());
+        };
         Self(
             disks
                 .iter()

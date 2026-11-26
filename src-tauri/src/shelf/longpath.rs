@@ -16,20 +16,20 @@ const WIN_EXTENDED_MAX: usize = 32_767;
 const COMPONENT_MAX: usize = 255;
 
 pub fn dest_too_long(path: &Path) -> bool {
-    if path.components().any(|component| match component {
+    let name_too_long = path.components().any(|component| match component {
         Component::Normal(name) => os_unit_len(name) > COMPONENT_MAX,
         _ => false,
-    }) {
-        return true;
-    }
+    });
     #[cfg(windows)]
     {
-        let abs = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
-        os_unit_len(abs.as_os_str()) > WIN_EXTENDED_MAX.saturating_sub(10)
+        name_too_long || {
+            let abs = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
+            os_unit_len(abs.as_os_str()) > WIN_EXTENDED_MAX.saturating_sub(10)
+        }
     }
     #[cfg(not(windows))]
     {
-        false
+        name_too_long
     }
 }
 

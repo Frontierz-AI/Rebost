@@ -147,7 +147,7 @@ Anything that looks like local files leaking belongs in [SECURITY.md](SECURITY.m
 
 - macOS (Apple Silicon or Intel), Windows 10/11 (x64 with Vulkan, or ARM64), or Linux (x86_64 or aarch64; Ubuntu 22.04+, Debian 12+, Fedora 43+)
 - Disk space for a GGUF model (several GB)
-- Rust 1.99.1, Node 22.22.2+ on the 22.x line, pnpm 12 (`rust-toolchain.toml` and `.nvmrc`)
+- Rust 1.100.0, Node 22.22.2+ on the 22.x line, pnpm 12 (`rust-toolchain.toml` and `.nvmrc`)
 - macOS: Xcode Command Line Tools
 - Windows: MSVC toolchain. Windows 11 includes WebView2. On Windows 10, install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`. The release installer adds it when needed.
 - Linux: WebKitGTK 4.1 and GTK 3 development packages. On Debian and Ubuntu: `sudo apt install build-essential cmake pkg-config file libwebkit2gtk-4.1-dev libgtk-3-dev libsoup-3.0-dev librsvg2-dev libdbus-1-dev`. On Fedora: `sudo dnf install gcc-c++ cmake file webkit2gtk4.1-devel gtk3-devel libsoup3-devel librsvg2-devel dbus-devel`.

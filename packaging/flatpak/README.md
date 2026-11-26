@@ -16,7 +16,7 @@ Only the Flatpak uses the new ID: the desktop entry, icon and metainfo are named
 ## What the manifest does
 
 - **Runtime:** GNOME 51. WebKitGTK 4.1, which Tauri 2 uses, is in the GNOME runtime and not in the Freedesktop one; Flathub asks for the latest runtime at submission. Its Freedesktop SDK 26.08 has `glslc` for llama.cpp's Vulkan shaders.
-- **Rust:** `org.freedesktop.Sdk.Extension.rust-stable`, with `--ignore-rust-version` while the extension is on Rust 1.98 (the project pins 1.99.1; this release builds with 1.98.1).
+- **Rust:** `org.freedesktop.Sdk.Extension.rust-stable`, with `--ignore-rust-version` while the extension is on Rust 1.98 (the project pins 1.100.0; this release builds with 1.98.1).
 - **Frontend:** `org.freedesktop.Sdk.Extension.node24`, pnpm's own Linux binary (`@pnpm/exe.linux-*`), and `node-sources.json`, which fills an offline pnpm store from `pnpm-lock.yaml`.
 - **Crates:** `cargo-sources.json` vendors every crate in `src-tauri/Cargo.lock`. Source generation uses the project Cargo toolchain to select the locked Git workspace members and normalize their manifests.
 - **Tesseract and Leptonica:** xberg-tesseract's build script downloads them; the manifest declares the same archives with their checksums and seeds its cache (`TESSERACT_RS_CACHE_DIR`), so the build stays offline.

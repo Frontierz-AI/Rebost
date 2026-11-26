@@ -56,9 +56,9 @@
     onmousedown={(event) => event.preventDefault()}
     onclick={() => onOpen(row.thread.id)}
   >
-    <span class="flex shrink-0 items-center pt-0.5"
-      ><ConversationFace avatarId={row.thread.avatarId} /></span
-    >
+    <span class="flex shrink-0 items-center pt-0.5">
+      <ConversationFace avatarId={row.thread.avatarId} />
+    </span>
     <span class="min-w-0 flex-1">
       <span class="block truncate text-[12.5px] font-medium text-ink">{row.thread.title}</span>
       {#if row.thread.shelfId}
@@ -66,17 +66,19 @@
         {#if subtitle}<span class="block truncate text-[11px] text-ink-faint">{subtitle}</span>{/if}
       {/if}
       {#if hit && hit.snippet.length > 0}
-        <span class="mt-0.5 line-clamp-2 text-[11.5px] leading-snug break-words text-ink-soft"
-          >{#each hit.snippet as segment, i (i)}{#if segment.mark}<mark
-                class="rounded-[3px] bg-navy-500/25 px-px text-ink">{segment.text}</mark
-              >{:else}{segment.text}{/if}{/each}</span
-        >
-        <span class="mt-0.5 block truncate text-[10.5px] text-ink-faint"
-          >{hit.role === "user" ? t("chat.searchRoleYou") : t("appName")} · {formatWhen(
+        <span class="mt-0.5 line-clamp-2 text-[11.5px] leading-snug break-words text-ink-soft">
+          {#each hit.snippet as segment, i (i)}{#if segment.mark}<mark
+                class="rounded-[3px] bg-navy-500/25 px-px text-ink"
+              >
+                {segment.text}
+              </mark>{:else}{segment.text}{/if}{/each}
+        </span>
+        <span class="mt-0.5 block truncate text-[10.5px] text-ink-faint">
+          {hit.role === "user" ? t("chat.searchRoleYou") : t("appName")} · {formatWhen(
             hit.createdAt,
           )}{#if more}
-            · {more}{/if}</span
-        >
+            · {more}{/if}
+        </span>
       {/if}
     </span>
   </div>

@@ -162,8 +162,9 @@
         <button
           class="btn-primary"
           onclick={() => bootstrap().catch((error) => console.error(error))}
-          >{t("shelves.tryAgain")}</button
         >
+          {t("shelves.tryAgain")}
+        </button>
       {/if}
     </div>
   </div>

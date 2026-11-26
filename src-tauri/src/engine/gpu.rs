@@ -139,7 +139,9 @@ fn adreno_present() -> bool {
 fn cpu_looks_like_snapdragon() -> bool {
     use sysinfo::CpuRefreshKind;
 
-    let mut sys = sysinfo::System::new();
+    let Ok(mut sys) = sysinfo::System::new() else {
+        return false;
+    };
     sys.refresh_cpu_list(CpuRefreshKind::nothing());
     let brand = sys
         .cpus()

@@ -44,9 +44,9 @@
       onchange={onChange}
     >
       {#each choices as choice (choice)}
-        <option value={choice}
-          >{t("shelves.fileLimitChoice", { count: formatCount(choice) })}</option
-        >
+        <option value={choice}>
+          {t("shelves.fileLimitChoice", { count: formatCount(choice) })}
+        </option>
       {/each}
     </select>
     <svg
