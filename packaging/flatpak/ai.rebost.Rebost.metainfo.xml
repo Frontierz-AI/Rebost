@@ -93,6 +93,9 @@
   </keywords>
 
   <releases>
+    <release version="1.3.0" date="2026-11-26">
+      <description><p>Chat can save its answer as a document in the Shelf, conversations can be searched from the conversation list, and Shelves read saved web pages. Text from PDFs and scans is cleaner.</p></description>
+    </release>
     <release version="1.2.1" date="2026-11-24">
       <description><p>Rebost picks a better AI for each computer: Ornith-1.5 9B from 12 GB of memory, including Windows and Linux PCs with a graphics card, and larger models on computers with 96 GB or more.</p></description>
     </release>
