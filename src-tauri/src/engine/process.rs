@@ -174,6 +174,37 @@ fn unpack_zip(archive: &Path, extract_dir: &Path) -> Result<()> {
 
 /// Locate `llama-server` / `llama-server.exe` after unpack. Prefers the
 /// shallowest match so a nested copy does not win over the real binary.
+/// Let llama-server find the Visual C++ runtime on Windows. The official
+/// llama.cpp builds import `MSVCP140.dll` and `VCRUNTIME140.dll` without
+/// shipping them, and a fresh Windows may not have them installed. The
+/// installer puts them next to `rebost.exe`, so that folder joins the
+/// engine's `PATH`. Windows searches `PATH` after the system folders, so an
+/// installed runtime still wins.
+pub(crate) fn use_app_runtime(command: &mut std::process::Command) {
+    #[cfg(windows)]
+    {
+        let app_dir = std::env::current_exe()
+            .ok()
+            .and_then(|exe| exe.parent().map(Path::to_path_buf));
+        if let Some(path) = app_dir.and_then(|dir| path_with_first(std::env::var_os("PATH"), &dir))
+        {
+            command.env("PATH", path);
+        }
+    }
+    #[cfg(not(windows))]
+    let _ = command;
+}
+
+/// `dir` first, then the existing `PATH` entries without repeating it.
+#[cfg(any(windows, test))]
+fn path_with_first(current: Option<std::ffi::OsString>, dir: &Path) -> Option<std::ffi::OsString> {
+    let mut dirs = vec![dir.to_path_buf()];
+    if let Some(current) = current {
+        dirs.extend(std::env::split_paths(&current).filter(|entry| entry != dir));
+    }
+    std::env::join_paths(dirs).ok()
+}
+
 pub(crate) fn find_llama_server(root: &Path) -> Option<PathBuf> {
     let mut best: Option<PathBuf> = None;
     let mut best_depth = usize::MAX;
@@ -358,6 +389,20 @@ pub(crate) fn force_kill_pid(pid: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_app_folder_goes_first_on_path_once() {
+        let app = std::env::temp_dir().join("rebost-app");
+        let other = std::env::temp_dir().join("other");
+        let current = std::env::join_paths([other.clone(), app.clone()]).unwrap();
+        let path = path_with_first(Some(current), &app).unwrap();
+        assert_eq!(
+            std::env::split_paths(&path).collect::<Vec<_>>(),
+            [app.clone(), other]
+        );
+        let alone = path_with_first(None, &app).unwrap();
+        assert_eq!(std::env::split_paths(&alone).collect::<Vec<_>>(), [app]);
+    }
 
     #[test]
     fn free_port_is_ephemeral() {

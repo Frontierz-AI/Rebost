@@ -61,6 +61,53 @@ if ([string]::IsNullOrWhiteSpace($env:TAURI_SIGNING_PRIVATE_KEY) -and
     Write-Error "Set TAURI_SIGNING_PRIVATE_KEY in .env.signing or the GitHub secret (in-app updater)."
 }
 
+# Copy the Visual C++ runtime DLLs for the installer's architecture into
+# src-tauri/windows/vcrt/. The NSIS hook (windows/installer-hooks.nsh) puts
+# them next to rebost.exe: Tesseract (in rebost.exe) and llama.cpp's
+# llama-server import MSVCP140.dll and VCRUNTIME140.dll, and a fresh Windows
+# may not have them (issue #130). Microsoft allows this app-local copy of the
+# redistributable files.
+function Copy-VcRuntime {
+    param([string]$Arch)
+
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+    if (-not (Test-Path $vswhere)) {
+        throw "vswhere.exe not found; install Visual Studio Build Tools with the C++ workload."
+    }
+    $vsPath = & $vswhere -latest -products * -property installationPath
+    $redistRoot = Join-Path $vsPath "VC\Redist\MSVC"
+    $crt = Get-ChildItem -Path $redistRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^\d+\.\d+' } |
+        Sort-Object { [version]($_.Name -replace '[^\d.].*$', '') } -Descending |
+        ForEach-Object { Get-ChildItem -Path (Join-Path $_.FullName $Arch) -Directory -Filter "Microsoft.VC*.CRT" -ErrorAction SilentlyContinue } |
+        Select-Object -First 1
+    if (-not $crt) {
+        throw "Visual C++ redistributable ($Arch) not found under $redistRoot."
+    }
+    $dest = Join-Path $Root "src-tauri\windows\vcrt"
+    if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+    New-Item -ItemType Directory -Path $dest | Out-Null
+    Get-ChildItem -Path $crt.FullName -File |
+        Where-Object { $_.Name -match '^(msvcp140.*|vcruntime140.*|concrt140)\.dll$' } |
+        Copy-Item -Destination $dest
+    foreach ($required in @("msvcp140.dll", "vcruntime140.dll")) {
+        if (-not (Test-Path (Join-Path $dest $required))) {
+            throw "$required is missing from $($crt.FullName)."
+        }
+    }
+    $names = (Get-ChildItem $dest -File | ForEach-Object Name) -join ", "
+    Write-Host "Visual C++ runtime ($Arch) from $($crt.FullName): $names"
+}
+
+$vcArch = switch -Wildcard ($Target) {
+    "aarch64-*" { "arm64" }
+    "x86_64-*" { "x64" }
+    default {
+        if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x64" }
+    }
+}
+Copy-VcRuntime -Arch $vcArch
+
 if ($Target) {
     rustup target add $Target
     Write-Host "Staging engine pin for $Target…"

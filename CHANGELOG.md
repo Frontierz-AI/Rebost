@@ -15,6 +15,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Windows: files with very long paths can be dropped onto Rebost, and the window reopens on the right monitor when screens use different scaling.
 - Fixed a crash when quitting while a scanned PDF was still being read. Folder watching on macOS no longer leaks resources after many changes.
 - Updated the document reader (Xberg 1.5), Tauri 2.12.7, Svelte 5.59.2, Rust 1.100 and current frontend and Rust packages. Type checking uses TypeScript 7's native compiler and runs several times faster.
+- Windows: Rebost starts on a PC without the Visual C++ runtime. The installer now includes `MSVCP140.dll` and `VCRUNTIME140.dll`, which the app and the AI engine need ([#130](https://github.com/Frontierz-AI/Rebost/issues/130)).
 
 ## [1.2.1] - 2026-11-24
 

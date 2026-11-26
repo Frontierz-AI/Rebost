@@ -47,6 +47,7 @@ pub(crate) async fn device_listed(binary: &std::path::Path, backend: &'static st
     }
     let mut command = tokio::process::Command::new(binary);
     crate::host::use_desktop_env(command.as_std_mut());
+    super::process::use_app_runtime(command.as_std_mut());
     if let Some(home) = binary.parent() {
         command.current_dir(home);
     }

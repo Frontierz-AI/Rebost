@@ -93,3 +93,6 @@ packaging/aur/rebost-bin/*.deb
 packaging/aur/rebost-bin/LICENSE-*
 packaging/aur/rebost-bin/src/
 packaging/aur/rebost-bin/pkg/
+
+# Visual C++ runtime DLLs staged for the Windows installer (release-windows.ps1).
+src-tauri/windows/vcrt/
