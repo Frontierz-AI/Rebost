@@ -14,7 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Saved web pages from documentation sites keep their paragraphs apart, and nested layout tables read as separate blocks.
 - Windows: files with very long paths can be dropped onto Rebost, and the window reopens on the right monitor when screens use different scaling.
 - Fixed a crash when quitting while a scanned PDF was still being read. Folder watching on macOS no longer leaks resources after many changes.
-- Updated the document reader (Xberg 1.5), Tauri 2.12.7, Rust 1.100 and current frontend and Rust packages. Type checking uses TypeScript 7's native compiler and runs several times faster.
+- Updated the document reader (Xberg 1.5), Tauri 2.12.7, Svelte 5.59.2, Rust 1.100 and current frontend and Rust packages. Type checking uses TypeScript 7's native compiler and runs several times faster.
 
 ## [1.2.1] - 2026-11-24
 
