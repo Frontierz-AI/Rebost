@@ -490,8 +490,9 @@
               class="btn-outline shrink-0"
               onclick={enableVision}
               disabled={enablingVision || chatBusy || !!modelDownload}
-              >{t(enablingVision ? "images.enabling" : "images.enable")}</button
             >
+              {t(enablingVision ? "images.enabling" : "images.enable")}
+            </button>
           </div>
         {/if}
       </InstalledModels>

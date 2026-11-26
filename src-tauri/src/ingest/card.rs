@@ -18,7 +18,21 @@ pub struct CardInputs<'a> {
     pub keywords: &'a [String],
     pub outline: &'a [OutlineEntry],
     pub ocr_used: bool,
+    /// Reading stopped at its time limit; only the first pages are in.
+    pub partial: bool,
     pub privacy: &'a PiiSummary,
+}
+
+/// How complete and how direct the text is: `partial` (cut short at the time
+/// limit), `ocr` (read from images) or `full`.
+pub fn quality_label(ocr_used: bool, partial: bool) -> &'static str {
+    if partial {
+        "partial"
+    } else if ocr_used {
+        "ocr"
+    } else {
+        "full"
+    }
 }
 
 pub fn build_card(inputs: CardInputs) -> Card {
@@ -34,7 +48,7 @@ pub fn build_card(inputs: CardInputs) -> Card {
         summary: inputs.summary.to_string(),
         keywords: inputs.keywords.to_vec(),
         outline: inputs.outline.to_vec(),
-        quality: if inputs.ocr_used { "ocr" } else { "full" }.to_string(),
+        quality: quality_label(inputs.ocr_used, inputs.partial).to_string(),
         privacy: inputs.privacy.clone(),
     }
 }
@@ -80,6 +94,7 @@ mod tests {
                 page: Some(14),
             }],
             ocr_used: false,
+            partial: false,
             privacy: &privacy,
         });
         let path = dir.path().join("card.yml");
@@ -87,6 +102,8 @@ mod tests {
         let text = std::fs::read_to_string(&path).unwrap();
         assert!(text.starts_with("schema: rebost-card/v1"));
         assert!(text.contains("quality: full"));
+        assert_eq!(quality_label(true, false), "ocr");
+        assert_eq!(quality_label(true, true), "partial");
         // Counts only — no raw identifiers anywhere.
         assert!(text.contains("email: 2"));
         let read = read_card(&path).unwrap();

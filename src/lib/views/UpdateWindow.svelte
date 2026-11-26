@@ -167,9 +167,9 @@
   {/if}
 
   <div class="about-reveal mt-auto flex justify-end gap-2 px-7 py-6">
-    <button type="button" class="btn-ghost" disabled={installing} onclick={close}
-      >{t("update.later")}</button
-    >
+    <button type="button" class="btn-ghost" disabled={installing} onclick={close}>
+      {t("update.later")}
+    </button>
     {#if info}
       <button type="button" class="btn-primary" disabled={installing} onclick={install}>
         {installing ? t("update.updating") : t("update.update")}

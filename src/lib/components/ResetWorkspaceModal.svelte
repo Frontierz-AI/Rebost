@@ -74,9 +74,9 @@
       {/if}
     </div>
     <div class="flex items-center justify-end gap-2 border-t border-paper-line px-5 py-3">
-      <button type="button" class="btn-outline" onclick={onClose} disabled={busy}
-        >{t("dialog.cancel")}</button
-      >
+      <button type="button" class="btn-outline" onclick={onClose} disabled={busy}>
+        {t("dialog.cancel")}
+      </button>
       <button
         type="submit"
         class="btn-danger"

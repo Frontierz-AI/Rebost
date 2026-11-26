@@ -127,15 +127,17 @@
   {#if formOpen}
     <div class="card mb-5 px-5 py-4">
       <div class="mb-3 flex items-center justify-between">
-        <span class="text-[13.5px] font-semibold text-ink"
-          >{editingId ? t("recipes.editRecipe") : t("recipes.newRecipe")}</span
-        >
+        <span class="text-[13.5px] font-semibold text-ink">
+          {editingId ? t("recipes.editRecipe") : t("recipes.newRecipe")}
+        </span>
         <button
           type="button"
           class="btn-ghost !p-1.5"
           aria-label={editingId ? t("recipes.cancelEdit") : t("recipes.cancelNew")}
-          onclick={cancelForm}><X size={14} aria-hidden="true" /></button
+          onclick={cancelForm}
         >
+          <X size={14} aria-hidden="true" />
+        </button>
       </div>
       <label class="sr-only" for="recipe-name">{t("recipes.name")}</label>
       <!-- svelte-ignore a11y_autofocus -->
@@ -185,9 +187,9 @@
             class="flex min-w-0 flex-1 items-center gap-2.5 text-left"
             onclick={() => use(recipe)}
           >
-            <span class="rounded-lg bg-navy-900 p-2 text-mint"
-              ><ChefHat size={14} aria-hidden="true" /></span
-            >
+            <span class="rounded-lg bg-navy-900 p-2 text-mint">
+              <ChefHat size={14} aria-hidden="true" />
+            </span>
             <span class="flex-1 truncate text-[14px] font-semibold text-ink">{recipe.name}</span>
             <span
               class="rounded-md p-1.5 text-navy-600 dark:text-navy-300"
@@ -224,8 +226,9 @@
           {#each previewParts(recipe.prompt) as part}
             {#if part.ph}<span
                 class="rounded-md bg-navy-100 px-1 py-px font-medium text-navy-800 dark:bg-navy-500/15 dark:text-navy-200 dark:inset-ring dark:inset-ring-navy-500/45"
-                >{part.text}</span
-              >{:else}{part.text}{/if}
+              >
+                {part.text}
+              </span>{:else}{part.text}{/if}
           {/each}
         </button>
       </div>

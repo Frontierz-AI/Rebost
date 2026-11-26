@@ -388,7 +388,7 @@ fn rank_search_results(results: &mut [ModelSearchResult], budget: u64) {
     rank_search_results_on(
         results,
         jiff::Timestamp::now()
-            .to_zoned(jiff::tz::TimeZone::UTC)
+            .to_zoned_datetime(jiff::tz::TimeZone::UTC)
             .date(),
         budget,
     );

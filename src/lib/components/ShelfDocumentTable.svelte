@@ -89,9 +89,9 @@
   </div>
 {:else}
   {#if visibleDocs.length > 100}
-    <label class="mx-8 my-2 flex items-center gap-2 text-xs text-ink-soft"
-      ><input type="checkbox" bind:checked={showAll} />{t("shelves.showAllRows")}</label
-    >
+    <label class="mx-8 my-2 flex items-center gap-2 text-xs text-ink-soft">
+      <input type="checkbox" bind:checked={showAll} />{t("shelves.showAllRows")}
+    </label>
   {/if}
   <div
     bind:this={viewport}
@@ -115,15 +115,17 @@
             <th
               scope="col"
               class="sticky top-0 z-10 truncate border-b border-paper-line bg-paper py-2 font-medium whitespace-nowrap text-ink-faint {column.thClass}"
-              title={column.header}>{column.header}</th
+              title={column.header}
             >
+              {column.header}
+            </th>
           {/each}
         </tr>
       </thead>
       <tbody>
-        {#if window.before > 0}<tr aria-hidden="true"
-            ><td colspan="6" style={`height:${window.before}px; padding:0; border:0`}></td></tr
-          >{/if}
+        {#if window.before > 0}<tr aria-hidden="true">
+            <td colspan="6" style={`height:${window.before}px; padding:0; border:0`}></td>
+          </tr>{/if}
         {#each rows as doc, offset (doc.id)}
           <tr
             aria-rowindex={window.start + offset + 2}
@@ -143,8 +145,10 @@
                 onclick={(event) => {
                   event.stopPropagation();
                   onOpen(doc);
-                }}>{doc.fileName}</button
+                }}
               >
+                {doc.fileName}
+              </button>
             </td>
             <td
               class="truncate border-b border-paper-line/70 px-2.5 py-2.5 text-ink-soft"
@@ -154,9 +158,9 @@
                 ? t("shelves.imported")
                 : t("documents.linked", { label: doc.sourceLabel })}
             </td>
-            <td class="truncate border-b border-paper-line/70 px-2.5 py-2.5 text-ink-soft"
-              >{fileTypeLabel(doc)}</td
-            >
+            <td class="truncate border-b border-paper-line/70 px-2.5 py-2.5 text-ink-soft">
+              {fileTypeLabel(doc)}
+            </td>
             <td class="border-b border-paper-line/70 px-2.5 py-2.5">
               {#if doc.status === "ready"}
                 <span class="text-ready-ink dark:text-navy-300">{t("shelves.ready")}</span>
@@ -170,9 +174,9 @@
                 </span>
               {:else}
                 <span class="inline-flex items-center gap-2">
-                  <span class="text-red-700/80 dark:text-red-400" title={doc.error}
-                    >{t("shelves.error")}</span
-                  >
+                  <span class="text-red-700/80 dark:text-red-400" title={doc.error}>
+                    {t("shelves.error")}
+                  </span>
                   <button
                     type="button"
                     class="btn-ghost !px-1.5 !py-0.5 !text-[11.5px]"
@@ -180,8 +184,10 @@
                     onclick={(event) => {
                       event.stopPropagation();
                       onRetry(doc);
-                    }}>{t("shelves.tryAgain")}</button
+                    }}
                   >
+                    {t("shelves.tryAgain")}
+                  </button>
                 </span>
               {/if}
             </td>
@@ -190,14 +196,14 @@
             >
               {doc.piiTotal > 0 ? doc.piiTotal : "—"}
             </td>
-            <td class="truncate border-b border-paper-line/70 py-2.5 pr-8 pl-2.5 text-ink-soft"
-              >{formatWhen(doc.updatedAt)}</td
-            >
+            <td class="truncate border-b border-paper-line/70 py-2.5 pr-8 pl-2.5 text-ink-soft">
+              {formatWhen(doc.updatedAt)}
+            </td>
           </tr>
         {/each}
-        {#if window.after > 0}<tr aria-hidden="true"
-            ><td colspan="6" style={`height:${window.after}px; padding:0; border:0`}></td></tr
-          >{/if}
+        {#if window.after > 0}<tr aria-hidden="true">
+            <td colspan="6" style={`height:${window.after}px; padding:0; border:0`}></td>
+          </tr>{/if}
       </tbody>
     </table>
   </div>

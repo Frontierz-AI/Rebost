@@ -214,9 +214,9 @@
           <X size={15} aria-hidden="true" />
         </button>
       {/if}
-      <span class="pointer-events-none text-[11px] font-semibold text-ink-faint"
-        >{t("chat.conversations")}</span
-      >
+      <span class="pointer-events-none text-[11px] font-semibold text-ink-faint">
+        {t("chat.conversations")}
+      </span>
       <button
         type="button"
         class="btn-ghost !p-1.5"
@@ -311,14 +311,14 @@
                 ondblclick={(e) => beginRename(thread, e)}
               >
                 <span class="min-w-0 flex-1">
-                  <span class="block truncate text-[12.5px] font-medium text-ink"
-                    >{thread.title}</span
-                  >
+                  <span class="block truncate text-[12.5px] font-medium text-ink">
+                    {thread.title}
+                  </span>
                   {#if thread.shelfId}
                     {@const subtitle = threadShelfSubtitle(thread, shelves)}
-                    {#if subtitle}<span class="block truncate text-[11px] text-ink-faint"
-                        >{subtitle}</span
-                      >{/if}
+                    {#if subtitle}<span class="block truncate text-[11px] text-ink-faint">
+                        {subtitle}
+                      </span>{/if}
                   {/if}
                 </span>
               </button>
