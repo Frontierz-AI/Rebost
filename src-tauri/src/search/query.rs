@@ -1,7 +1,7 @@
 //! Ranking queries over the passage and conversation-memory indexes.
 
 use anyhow::Result;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use tantivy::collector::{Count, TopDocs};
 use tantivy::query::{
     BooleanQuery, BoostQuery, FuzzyTermQuery, Occur, PhraseQuery, Query, TermQuery,
@@ -13,6 +13,12 @@ use tantivy::{TantivyDocument, Term};
 use super::schema::{weights, STEM_LANGS};
 use super::{compact_hyphens, searchable_filename, SearchIndex};
 use crate::types::{MemorySnippet, SourcePassage};
+
+/// Shortest unfinished word searched as the start of longer words.
+pub(super) const MIN_PREFIX_CHARS: usize = 3;
+/// Most words one unfinished word expands to, per segment and in total. The
+/// body field also holds Shelf passages, so this leaves room for their words.
+const MAX_PREFIX_TERMS: usize = 128;
 
 /// Closed-class words dropped from search queries. Folded (unaccented) forms
 /// only — the exact analyzer already ascii-folds. Keep `any` out: Catalan year.
@@ -581,10 +587,79 @@ impl SearchIndex {
         exclude_message_ids: &[String],
         limit: usize,
     ) -> Result<Vec<MemorySnippet>> {
+        self.search_messages_with(
+            message,
+            exclude_thread,
+            only_threads,
+            exclude_message_ids,
+            limit,
+            false,
+        )
+    }
+
+    /// Message search for a query typed in the conversation list: like
+    /// [`search_messages`](Self::search_messages), but the last word may be
+    /// unfinished, so it also matches words that start with it ("tomat"
+    /// finds "tomato" and "tomates").
+    pub fn search_messages_as_typed(
+        &self,
+        message: &str,
+        limit: usize,
+    ) -> Result<Vec<MemorySnippet>> {
+        self.search_messages_with(message, None, None, &[], limit, true)
+    }
+
+    /// The last content word of `query` when it is long enough to search as
+    /// the start of a word. Shorter prefixes would expand to too many words.
+    pub(super) fn typed_prefix(&self, query: &str) -> Option<String> {
+        self.content_tokens(query)
+            .pop()
+            .filter(|token| token.chars().count() >= MIN_PREFIX_CHARS)
+    }
+
+    /// Indexed message words that start with `prefix`, in dictionary order,
+    /// at most [`MAX_PREFIX_TERMS`]. Walks only the matching slice of each
+    /// segment's term dictionary.
+    fn prefix_terms(&self, searcher: &tantivy::Searcher, prefix: &str) -> Result<Vec<String>> {
+        let mut found: BTreeSet<String> = BTreeSet::new();
+        for segment in searcher.segment_readers() {
+            let inverted = segment.inverted_index(self.fields.body)?;
+            let mut stream = inverted
+                .terms()
+                .range()
+                .ge(prefix.as_bytes())
+                .into_stream()?;
+            let mut taken = 0;
+            while taken < MAX_PREFIX_TERMS && stream.advance() {
+                let key = stream.key();
+                if !key.starts_with(prefix.as_bytes()) {
+                    break;
+                }
+                if key.len() > prefix.len() {
+                    if let Ok(word) = std::str::from_utf8(key) {
+                        found.insert(word.to_string());
+                    }
+                }
+                taken += 1;
+            }
+        }
+        Ok(found.into_iter().take(MAX_PREFIX_TERMS).collect())
+    }
+
+    fn search_messages_with(
+        &self,
+        message: &str,
+        exclude_thread: Option<&str>,
+        only_threads: Option<&[String]>,
+        exclude_message_ids: &[String],
+        limit: usize,
+        last_word_as_prefix: bool,
+    ) -> Result<Vec<MemorySnippet>> {
         let tokens = self.content_tokens(message);
         if tokens.is_empty() {
             return Ok(Vec::new());
         }
+        let searcher = self.reader.searcher();
         let mut should: Vec<(Occur, Box<dyn Query>)> = Vec::new();
         for token in &tokens {
             let term = Term::from_field_text(self.fields.body, token);
@@ -592,6 +667,17 @@ impl SearchIndex {
                 Occur::Should,
                 Box::new(TermQuery::new(term, IndexRecordOption::WithFreqs)),
             ));
+        }
+        if last_word_as_prefix {
+            if let Some(prefix) = self.typed_prefix(message) {
+                for word in self.prefix_terms(&searcher, &prefix)? {
+                    let term = Term::from_field_text(self.fields.body, &word);
+                    let tq: Box<dyn Query> =
+                        Box::new(TermQuery::new(term, IndexRecordOption::WithFreqs));
+                    // Below a whole-word match, so finished words rank first.
+                    should.push((Occur::Should, Box::new(BoostQuery::new(tq, 0.6))));
+                }
+            }
         }
         let stem_text = tokens.join(" ");
         for lang in STEM_LANGS {
@@ -658,7 +744,6 @@ impl SearchIndex {
             None => {}
         }
         let query = BooleanQuery::new(clauses);
-        let searcher = self.reader.searcher();
         let top = searcher.search(&query, &TopDocs::with_limit(limit).order_by_score())?;
         let mut hits = Vec::new();
         for (score, address) in top {

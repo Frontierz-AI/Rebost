@@ -194,3 +194,46 @@ fn snippets_are_plain_text_around_the_match() {
     }
     assert_eq!(marks(&hits[0]), ["termination"]);
 }
+
+#[test]
+fn an_unfinished_last_word_finds_longer_words() {
+    let app = test_app();
+    let garden = thread(&app);
+    let other = thread(&app);
+    say(
+        &app,
+        &garden,
+        "m_1",
+        "Plant the tomato seedlings after the last frost.",
+        Some("en"),
+    );
+    say(
+        &app,
+        &other,
+        "m_2",
+        "The tomb was closed on Monday.",
+        Some("en"),
+    );
+
+    let hits = search(&app.ctx, "tomat", 50).unwrap();
+    assert_eq!(hits.len(), 1, "tomb does not start with tomat");
+    assert_eq!(hits[0].thread_id, garden);
+    assert_eq!(marks(&hits[0]), ["tomato"]);
+
+    // An earlier word still has to match whole.
+    assert!(search(&app.ctx, "seed tomat", 50).unwrap().len() == 1);
+    assert!(search(&app.ctx, "plan", 50).unwrap().len() == 1);
+    // Two letters are too few to expand.
+    assert!(search(&app.ctx, "to", 50).unwrap().is_empty());
+    // A finished word ranks above a word that only starts with it.
+    say(
+        &app,
+        &other,
+        "m_3",
+        "Tomatoes are cheap this week.",
+        Some("en"),
+    );
+    let hits = search(&app.ctx, "tomato", 50).unwrap();
+    assert_eq!(hits.len(), 2);
+    assert_eq!(hits[0].thread_id, garden);
+}

@@ -54,9 +54,7 @@ pub fn search(ctx: &Ctx, query: &str, limit: usize) -> Result<Vec<ThreadSearchHi
     let query: String = query.chars().take(MAX_QUERY_CHARS).collect();
     let limit = limit.clamp(1, MAX_LIMIT);
     let window = limit * 4;
-    let hits = ctx
-        .search
-        .search_messages(&query, None, None, &[], window)?;
+    let hits = ctx.search.search_messages_as_typed(&query, window)?;
     if hits.is_empty() {
         return Ok(Vec::new());
     }
@@ -110,7 +108,7 @@ pub fn snippet(search: &SearchIndex, body: &str, query: &str) -> Vec<SnippetSegm
     // The language guess runs on the stored text, as it did when indexing.
     let lang = crate::chat::guess_message_lang(body);
     let plain = plain_text(body);
-    let ranges = search.highlight_ranges(&plain, query, lang);
+    let ranges = search.highlight_ranges(&plain, query, lang, true);
     clip(&plain, &ranges, SNIPPET_CHARS)
 }
 
