@@ -499,6 +499,7 @@ impl Engine {
 
         let mut command = Command::new(binary);
         crate::host::use_desktop_env(command.as_std_mut());
+        super::process::use_app_runtime(command.as_std_mut());
         // In the environment, not argv, so the process list does not show it.
         command.env("LLAMA_API_KEY", self.api_key());
         if let Some(home) = binary.parent() {

@@ -9,6 +9,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Search conversations from the top of the conversation list. Titles filter as you type, and message text is searched through the local index with stemming, so "vacances" also finds "vacança". The last word can be unfinished: "tomat" finds "tomato". Each result shows a short highlighted snippet, who said it and when. ⌘F (Ctrl+F) focuses the field while the list has focus, and ⌘⇧F (Ctrl+Shift+F) works from anywhere; arrow keys and Return open a result, and Escape clears.
 - Shelves read saved web pages (`.html`, `.htm`, `.xhtml`). Rebost keeps a page's main text and drops menus, page headers and footers, sidebars, forms, cookie banners, scripts, and styles. The page's title and language come from the page itself. For a page saved with "Save page as, complete", the folder of images, scripts, and frames saved beside it is ignored. Nothing a page links to is downloaded.
 
+- Windows: Rebost starts on a PC without the Visual C++ runtime. The installer now includes `MSVCP140.dll` and `VCRUNTIME140.dll`, which the app and the AI engine need ([#130](https://github.com/Frontierz-AI/Rebost/issues/130)).
 ## [1.2.1] - 2026-11-24
 
 - First-run picks use Artificial Analysis's new Progress Index. Computers with 8 GB of memory or less now get Liquid AI's LFM3 1.7B, with Qwen3.5 2B and Gemma 3 1B as alternatives. LFM3 1.7B replaces LFM2.5 2.6B, and Gemma 4 31B is back as the larger Gemma on 48 GB machines.

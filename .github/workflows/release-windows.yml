@@ -208,3 +208,11 @@ jobs:
           $engine = if ($expected -eq 0xaa64) { '*opencl-adreno-arm64.zip' } else { '*vulkan-x64.zip' }
           if (-not ($archives | Where-Object Name -like $engine)) { throw "Missing $engine" }
           if (-not ($archives | Where-Object Name -like '*cpu-*.zip')) { throw 'Missing CPU fallback' }
+          # rebost.exe and llama-server need the Visual C++ runtime; a fresh Windows may lack it (#130).
+          foreach ($dll in 'msvcp140.dll', 'vcruntime140.dll') {
+            $path = Join-Path $dir $dll
+            if (-not (Test-Path $path)) { throw "Missing $dll next to rebost.exe" }
+            $dllBytes = [IO.File]::ReadAllBytes($path)
+            $dllMachine = [BitConverter]::ToUInt16($dllBytes, [BitConverter]::ToInt32($dllBytes, 0x3c) + 4)
+            if ($dllMachine -ne $expected) { throw "$dll is PE machine $dllMachine, expected $expected" }
+          }
