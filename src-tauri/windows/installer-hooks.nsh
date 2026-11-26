@@ -31,8 +31,24 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
-  ; Before Tauri removes $INSTDIR, which only works once it is empty.
-  Delete "$INSTDIR\msvcp140*.dll"
-  Delete "$INSTDIR\vcruntime140*.dll"
-  Delete "$INSTDIR\concrt140.dll"
+  ; Before Tauri removes $INSTDIR, which only works once it is empty. Tauri
+  ; closes a running Rebost only after this hook, and the open app keeps these
+  ; DLLs in use, so close it first (the later check then finds nothing).
+  !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+  ; An update runs this uninstaller and then installs fresh copies over the
+  ; same files, so keep them; a delete queued for restart would remove the
+  ; new ones. On a real uninstall a llama-server still shutting down can hold
+  ; them too: those go at the next restart.
+  ${If} $UpdateMode <> 1
+    Delete /REBOOTOK "$INSTDIR\msvcp140*.dll"
+    Delete /REBOOTOK "$INSTDIR\vcruntime140*.dll"
+    Delete /REBOOTOK "$INSTDIR\concrt140.dll"
+  ${EndIf}
+!macroend
+
+!macro NSIS_HOOK_POSTUNINSTALL
+  ; Tauri's RMDir "$INSTDIR" fails while a DLL above waits for a restart.
+  ${If} $UpdateMode <> 1
+    RMDir /REBOOTOK "$INSTDIR"
+  ${EndIf}
 !macroend
