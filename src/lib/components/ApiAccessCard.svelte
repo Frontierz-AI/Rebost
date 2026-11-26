@@ -66,8 +66,9 @@
           {#if access.url}
             <code
               class="min-w-0 flex-1 truncate rounded-lg border border-paper-line bg-paper-soft px-3 py-1.5 font-mono text-[12px] text-ink"
-              >{access.url}</code
             >
+              {access.url}
+            </code>
             {@render copyButton("url", access.url)}
           {:else}
             <p class="text-[12.5px] text-ink-faint">{t("apiAccess.notRunning")}</p>
@@ -79,8 +80,9 @@
         <dd class="flex min-w-0 items-center gap-2">
           <code
             class="min-w-0 flex-1 truncate rounded-lg border border-paper-line bg-paper-soft px-3 py-1.5 font-mono text-[12px] text-ink"
-            >{showKey ? access.key : "•".repeat(24)}</code
           >
+            {showKey ? access.key : "•".repeat(24)}
+          </code>
           <button
             type="button"
             class="btn-ghost shrink-0 !px-2 !py-1 !text-[11.5px]"

@@ -6,7 +6,7 @@ Issues, pull requests, and discussions here are covered by the [Code of Conduct]
 
 ## First 30 minutes
 
-1. Install [Rust](https://rustup.rs/) 1.99.1 (`rust-toolchain.toml` pins this), Node 22.22.2+ on the 22.x line (`.nvmrc`), [pnpm](https://pnpm.io) 12, and [just](https://github.com/casey/just).
+1. Install [Rust](https://rustup.rs/) 1.100.0 (`rust-toolchain.toml` pins this), Node 22.22.2+ on the 22.x line (`.nvmrc`), [pnpm](https://pnpm.io) 12, and [just](https://github.com/casey/just).
 2. macOS: Xcode Command Line Tools. Windows: MSVC toolchain. First OCR build needs **CMake** and a C++ compiler (Xberg compiles Tesseract). Windows x64 also needs a Vulkan driver from the GPU vendor. Windows 11 includes WebView2; on Windows 10 install the [Evergreen WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) before `pnpm tauri dev`.
 3. From the repo root:
 
@@ -45,7 +45,7 @@ CI runs frontend checks and `cargo deny` on every push. The Rust job runs only w
 
 ## TypeScript
 
-`pnpm check` (`svelte-check`) and the local `tsc` command use **TypeScript 6** (`typescript` in `package.json`). Keep this version until the checker supports TypeScript 7 through its standard integration.
+`pnpm check` runs `svelte-check --tsgo`, which type-checks with **TypeScript 7**'s native compiler (`@typescript/native` in `package.json`, an alias of `typescript@7`). svelte-check still needs **TypeScript 6** (`typescript`) installed beside it for its language-service API, and editors use that one too. Keep both until svelte-check supports TypeScript 7 on its own. Known `--tsgo` gaps: a missing `.svelte` import is not reported, and a file that starts with an emoji is rejected.
 
 ## Verification
 

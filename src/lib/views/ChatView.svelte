@@ -629,13 +629,13 @@
                             onclick={() => (openSource = chip.source)}
                           >
                             <span class="font-bold">{chip.sids.join(" · ")}</span>
-                            <span class="max-w-[220px] truncate font-normal"
-                              >{chip.source.title}</span
-                            >
+                            <span class="max-w-[220px] truncate font-normal">
+                              {chip.source.title}
+                            </span>
                             {#if chip.showSection && chip.source.section}
-                              <span class="max-w-[140px] truncate text-navy-400 dark:text-navy-300"
-                                >{chip.source.section}</span
-                              >
+                              <span class="max-w-[140px] truncate text-navy-400 dark:text-navy-300">
+                                {chip.source.section}
+                              </span>
                             {/if}
                             {#if page}
                               <span class="text-navy-400 dark:text-navy-300">{page}</span>
@@ -644,8 +644,9 @@
                               <span
                                 class="text-navy-400 italic dark:text-navy-300"
                                 title={t("chat.writtenByRebostTitle")}
-                                >{t("chat.writtenByRebost")}</span
                               >
+                                {t("chat.writtenByRebost")}
+                              </span>
                             {/if}
                           </button>
                         {/each}
@@ -659,14 +660,17 @@
                         <button
                           class="btn-ghost"
                           disabled={generating}
-                          onclick={() => retry(message)}>{t("shelves.tryAgain")}</button
+                          onclick={() => retry(message)}
                         >
+                          {t("shelves.tryAgain")}
+                        </button>
                         {#if message.text}<button
                             class="btn-ghost"
                             disabled={generating}
                             onclick={() => fillDraft(t("chat.continuePrompt"))}
-                            >{t("chat.continue")}</button
-                          >{/if}
+                          >
+                            {t("chat.continue")}
+                          </button>{/if}
                       </div>
                     {/if}
                   </div>
@@ -774,13 +778,15 @@
           <button
             class="btn-primary"
             onclick={() => api.chatApproveWeb(request.id, true).catch(notifyInvokeError)}
-            >{t("chat.allowOnce")}</button
           >
+            {t("chat.allowOnce")}
+          </button>
           <button
             class="btn-ghost"
             onclick={() => api.chatApproveWeb(request.id, false).catch(notifyInvokeError)}
-            >{t("chat.keepLocal")}</button
           >
+            {t("chat.keepLocal")}
+          </button>
         </div>
       </div>
     {/if}

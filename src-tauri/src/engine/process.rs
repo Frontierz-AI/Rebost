@@ -249,7 +249,10 @@ fn kill_recorded_pid(data_dir: &Path, pid: u32) {
 fn kill_orphans_under_data_dir(data_dir: &Path) {
     use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
-    let mut sys = System::new();
+    let Ok(mut sys) = System::new() else {
+        log::warn!("could not list processes to stop leftover llama-server");
+        return;
+    };
     sys.refresh_processes_specifics(
         ProcessesToUpdate::All,
         true,
@@ -288,7 +291,9 @@ fn process_is_our_llama(data_dir: &Path, pid: u32) -> bool {
     use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
     let pid = Pid::from_u32(pid);
-    let mut sys = System::new();
+    let Ok(mut sys) = System::new() else {
+        return false;
+    };
     sys.refresh_processes_specifics(
         ProcessesToUpdate::Some(&[pid]),
         true,
@@ -304,7 +309,10 @@ fn process_is_alive(pid: u32) -> bool {
     use sysinfo::{Pid, ProcessesToUpdate, System};
 
     let pid = Pid::from_u32(pid);
-    let mut sys = System::new();
+    // Without a process list, stop waiting rather than spin until the deadline.
+    let Ok(mut sys) = System::new() else {
+        return false;
+    };
     sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
     sys.process(pid).is_some()
 }

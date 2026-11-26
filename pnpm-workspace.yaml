@@ -1,3 +1,7 @@
 packages:
   - "."
 minimumReleaseAge: 1440
+# Checked by hand on 2026-11-26: published by sveltejs/svelte's release
+# workflow with SLSA provenance, no advisories. Remove once it is a day old.
+minimumReleaseAgeExclude:
+  - svelte@5.59.2

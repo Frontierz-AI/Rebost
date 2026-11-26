@@ -395,7 +395,10 @@ impl Ctx {
     /// free, between 1 and [`MAX_INGEST_WORKERS`] — index work must never
     /// starve the machine.
     pub fn ingest_concurrency() -> usize {
-        let mut sys = sysinfo::System::new();
+        // sysinfo 0.40 can fail to start; one worker is the safe floor.
+        let Ok(mut sys) = sysinfo::System::new() else {
+            return 1;
+        };
         sys.refresh_memory();
         let available = sys.available_memory();
         ((available / (6 * 1024 * 1024 * 1024)) as usize).clamp(1, MAX_INGEST_WORKERS)

@@ -8,6 +8,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Chat can save a document to the conversation's Shelf. Ask it to write a report, letter or summary and it saves the answer as a Word file (or Markdown or plain text) in the Shelf folder, never replacing an existing file. Every answer also has a Save to Shelf button, and a saved file can be opened or undone from the conversation. Files Rebost wrote are marked as such when later answers cite them.
 - Search conversations from the top of the conversation list. Titles filter as you type, and message text is searched through the local index with stemming, so "vacances" also finds "vacança". The last word can be unfinished: "tomat" finds "tomato". Each result shows a short highlighted snippet, who said it and when. ⌘F (Ctrl+F) focuses the field while the list has focus, and ⌘⇧F (Ctrl+Shift+F) works from anywhere; arrow keys and Return open a result, and Escape clears.
 - Shelves read saved web pages (`.html`, `.htm`, `.xhtml`). Rebost keeps a page's main text and drops menus, page headers and footers, sidebars, forms, cookie banners, scripts, and styles. The page's title and language come from the page itself. For a page saved with "Save page as, complete", the folder of images, scripts, and frames saved beside it is ignored. Nothing a page links to is downloaded.
+- Text read from PDFs and scans is cleaner: page headers and footers that only differ by page number are dropped, fewer words are split at ligatures ("fi nancial"), multi-column scans read in order, and tables are no longer merged or repeated. A PDF that shows the same picture on every page is read much faster.
+- A very long PDF that reaches the reading time limit is now indexed up to the last page read instead of failing. Its card says `quality: partial`.
+- Spreadsheets with a sheet over the size limit open with that sheet left empty instead of failing. RTF files no longer include text deleted with tracked changes.
+- Saved web pages from documentation sites keep their paragraphs apart, and nested layout tables read as separate blocks.
+- Windows: files with very long paths can be dropped onto Rebost, and the window reopens on the right monitor when screens use different scaling.
+- Fixed a crash when quitting while a scanned PDF was still being read. Folder watching on macOS no longer leaks resources after many changes.
+- Updated the document reader (Xberg 1.5), Tauri 2.12.7, Svelte 5.59.2, Rust 1.100 and current frontend and Rust packages. Type checking uses TypeScript 7's native compiler and runs several times faster.
 
 ## [1.2.1] - 2026-11-24
 

@@ -6,10 +6,10 @@ authors = ["Frontierz", "Pau Garcia-Mila <info-rebost-app@frontierz.com>"]
 license = "MIT"
 # About Rebost and the in-app updater read this. Change it if the GitHub repo moves.
 repository = "https://github.com/Frontierz-AI/Rebost"
-homepage = "https://github.com/Frontierz-AI/Rebost"
+homepage = "https://rebost.ai/"
 documentation = "https://github.com/Frontierz-AI/Rebost#readme"
 readme = "../README.md"
-rust-version = "1.99"
+rust-version = "1.100"
 edition = "2021"
 
 [lib]
@@ -21,7 +21,7 @@ tauri-build = { version = "2.7.4", features = [] }
 
 [dependencies]
 # Desktop shell
-tauri = { version = "2.12.5", features = [] }
+tauri = { version = "2.12.7", features = [] }
 tauri-plugin-dialog = "2.8.4"
 tauri-plugin-log = "2.10.1"
 tauri-plugin-opener = "2.7.2"
@@ -38,8 +38,7 @@ tauri-plugin-window-state = "2.5.0"
 # enabled so the binary stays lean and fully offline. OCR is vendored
 # tesseract, statically linked, with English data bundled at build time.
 # Extra `*.traineddata` packs in `resources/tessdata/` are copied on first extract.
-# Upstream calamine security fix, pending the next Xberg crates.io release.
-xberg = { version = "=1.4.0", git = "https://github.com/xberg-io/xberg", rev = "803749692abb0e37a0f3f3afa379cffcb114199e", default-features = false, features = [
+xberg = { version = "=1.5.4", default-features = false, features = [
     "tokio-runtime",
     "simd-utf8",
     "pdf",
@@ -57,7 +56,7 @@ xberg = { version = "=1.4.0", git = "https://github.com/xberg-io/xberg", rev = "
 ] }
 # Named directly only to pick the HTML cleanup preset for Shelf pages; the
 # same requirement as Xberg's, so Cargo resolves one shared copy.
-html-to-markdown-rs = { version = "3.19.1", default-features = false }
+html-to-markdown-rs = { version = "3.23.3", default-features = false }
 
 # Local retrieval
 tantivy = "0.27.0"
@@ -80,7 +79,7 @@ tantivy-stemmers = { version = "0.4.0", default-features = false, features = [
 pii-vault = "0.2.0"
 
 # Core plumbing
-notify = "8.2.1"
+notify = "9.0.0"
 tokio = { version = "1.54.1", features = ["full"] }
 reqwest = { version = "0.13.5", features = ["json", "stream", "gzip", "query", "charset", "http2"] }
 bytes = "1"
@@ -89,7 +88,7 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg"]
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 serde_yaml_ng = "0.10.0"
-sysinfo = { version = "0.39.6", default-features = false, features = ["system", "disk"] }
+sysinfo = { version = "0.40.4", default-features = false, features = ["system", "disk"] }
 sha2 = "0.11.1"
 # File identity (dev+inode, volume serial+file index) for safe model moves.
 same-file = "1.0.6"
@@ -98,7 +97,7 @@ same-file = "1.0.6"
 regex = "1"
 anyhow = "1"
 log = "0.4"
-jiff = "0.2.39"
+jiff = "1.0.3"
 uuid = { version = "1.29.0", features = ["v4"] }
 futures-util = "0.3"
 tar = "0.4"

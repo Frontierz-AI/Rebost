@@ -208,8 +208,9 @@
         <span>{t("chat.needsAi")}</span>
         <span
           class="font-semibold text-navy-700 group-hover:text-navy-900 dark:text-navy-200 dark:group-hover:text-white"
-          >{t("chat.install")}</span
         >
+          {t("chat.install")}
+        </span>
       </button>
     {/if}
     {#if chatState.uploadShelf && (uploadDocs.length > 0 || uploadReading > 0)}
@@ -217,33 +218,34 @@
         class="mb-2 rounded-lg border border-paper-line bg-paper-soft px-3 py-2 text-xs text-ink-soft"
         open={uploadErrors.length > 0}
       >
-        <summary class="cursor-pointer"
-          >{t("chat.filesInConversation")} · {t("chat.fileCount", {
+        <summary class="cursor-pointer">
+          {t("chat.filesInConversation")} · {t("chat.fileCount", {
             count: uploadDocs.length,
           })}{uploadReading > 0 ? ` · ${t("documents.reading")}` : ""}{uploadErrors.length > 0
             ? ` · ${t("shelves.error")}`
-            : ""}</summary
-        >
+            : ""}
+        </summary>
         <ul class="mt-2 max-h-32 overflow-auto">
           {#each uploadDocs as doc (doc.id)}
             <li class="flex items-center justify-between gap-2 py-1">
-              <span class="min-w-0 truncate" title={doc.relPath}>{doc.fileName}</span><span
-                >{t(
+              <span class="min-w-0 truncate" title={doc.relPath}>{doc.fileName}</span><span>
+                {t(
                   doc.status === "ready"
                     ? "shelves.ready"
                     : doc.status === "reading"
                       ? "documents.reading"
                       : "shelves.error",
-                )}</span
-              >
+                )}
+              </span>
             </li>
           {/each}
         </ul>
         {#if uploadErrors.length > 0}<button
             class="btn-ghost mt-1"
             onclick={() => api.shelfRetryFailed(chatState.uploadShelf!.id).catch(notifyInvokeError)}
-            >{t("shelves.tryAgain")}</button
-          >{/if}
+          >
+            {t("shelves.tryAgain")}
+          </button>{/if}
       </details>
     {/if}
     <div class="card relative flex flex-col gap-1 !rounded-2xl px-3 pt-2.5 pb-2">
@@ -281,11 +283,11 @@
               onmousedown={(event) => event.preventDefault()}
               onclick={() => pickFile(doc)}
             >
-              <span class="min-w-0 truncate"
-                >{doc.fileName}<small class="block truncate font-normal text-ink-soft"
-                  >{doc.sourceLabel} · {doc.path}</small
-                ></span
-              >
+              <span class="min-w-0 truncate">
+                {doc.fileName}<small class="block truncate font-normal text-ink-soft">
+                  {doc.sourceLabel} · {doc.path}
+                </small>
+              </span>
             </button>
           {/each}
         </div>
@@ -368,9 +370,9 @@
                     }}
                   >
                     {t("chat.noShelf")}
-                    <span class="ml-auto text-[10.5px] text-ink-faint"
-                      >{t("chat.generalQuestions")}</span
-                    >
+                    <span class="ml-auto text-[10.5px] text-ink-faint">
+                      {t("chat.generalQuestions")}
+                    </span>
                   </button>
                   {#each app.shelves as shelf (shelf.id)}
                     <button
@@ -386,9 +388,9 @@
                     >
                       <LibraryBig size={12.5} class="text-ink-faint" />
                       {shelfDisplayName(shelf)}
-                      <span class="ml-auto text-[10.5px] text-ink-faint"
-                        >{t("chat.fileCount", { count: shelf.stats.searchable })}</span
-                      >
+                      <span class="ml-auto text-[10.5px] text-ink-faint">
+                        {t("chat.fileCount", { count: shelf.stats.searchable })}
+                      </span>
                     </button>
                   {/each}
                 </div>

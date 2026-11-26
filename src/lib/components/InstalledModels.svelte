@@ -133,8 +133,10 @@
         type="button"
         class="btn-outline !h-8"
         disabled={busy || !!switchingTo}
-        onclick={() => onRestore(model)}>{t("settings.downloadAgain")}</button
+        onclick={() => onRestore(model)}
       >
+        {t("settings.downloadAgain")}
+      </button>
     {:else}
       <span
         class="rounded-full px-2 py-1 text-[10.5px] font-semibold
