@@ -227,38 +227,41 @@
         <Plus size={15} />
       </button>
     </div>
-    <div class="relative shrink-0 px-2 pb-2">
-      <Search
-        size={13}
-        class="pointer-events-none absolute top-1/2 left-4.5 -translate-y-1/2 text-ink-faint"
-        aria-hidden="true"
-      />
-      <input
-        bind:this={searchInput}
-        bind:value={query}
-        oninput={onQueryInput}
-        onkeydown={onSearchKey}
-        type="text"
-        role="searchbox"
-        aria-label={t("chat.searchConversations")}
-        aria-controls={trimmed ? listboxId : undefined}
-        aria-activedescendant={active >= 0 ? `${listboxId}-${active}` : undefined}
-        placeholder={t("chat.searchConversations")}
-        autocomplete="off"
-        spellcheck="false"
-        class="w-full rounded-lg border border-paper-line bg-paper-soft py-1.5 pr-7 pl-7 text-[12.5px] text-ink outline-none placeholder:text-ink-faint focus:border-navy-500 focus:ring-2 focus:ring-navy-100 dark:bg-white/5 dark:focus:ring-white/10"
-      />
-      {#if query}
-        <button
-          type="button"
-          class="btn-ghost absolute top-1/2 right-3 -translate-y-1/2 !p-1"
-          aria-label={t("chat.clearSearch")}
-          title={t("chat.clearSearch")}
-          onclick={clearSearch}
-        >
-          <X size={12} aria-hidden="true" />
-        </button>
-      {/if}
+    <div class="shrink-0 px-2 pb-2">
+      <!-- Icons centre on this wrapper, which has no padding of its own. -->
+      <div class="relative">
+        <Search
+          size={13}
+          class="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-ink-faint"
+          aria-hidden="true"
+        />
+        <input
+          bind:this={searchInput}
+          bind:value={query}
+          oninput={onQueryInput}
+          onkeydown={onSearchKey}
+          type="text"
+          role="searchbox"
+          aria-label={t("chat.searchConversations")}
+          aria-controls={trimmed ? listboxId : undefined}
+          aria-activedescendant={active >= 0 ? `${listboxId}-${active}` : undefined}
+          placeholder={t("chat.searchConversations")}
+          autocomplete="off"
+          spellcheck="false"
+          class="w-full rounded-lg border border-paper-line bg-paper-soft py-1.5 pr-7 pl-7 text-[12.5px] text-ink outline-none placeholder:text-ink-faint focus:border-navy-500 focus:ring-2 focus:ring-navy-100 dark:bg-white/5 dark:focus:ring-white/10"
+        />
+        {#if query}
+          <button
+            type="button"
+            class="btn-ghost absolute top-1/2 right-1 -translate-y-1/2 !p-1"
+            aria-label={t("chat.clearSearch")}
+            title={t("chat.clearSearch")}
+            onclick={clearSearch}
+          >
+            <X size={12} aria-hidden="true" />
+          </button>
+        {/if}
+      </div>
       <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{announcement}</div>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
